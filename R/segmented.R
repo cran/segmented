@@ -12,7 +12,7 @@ segmented.default<-function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE
 
 #--method for lm objects
 segmented.lm <-
-#revisione 13/05/03; 22/09/03; 02/10/03; 9/10/03; 3/11/03; 27/11/03
+#revisione 13/05/03; 22/09/03; 02/10/03; 9/10/03; 3/11/03; 27/11/03; 20/01/04
 function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE,...){
 if(is.data.frame(eval(obj$call$data))){
     attach(eval(obj$call$data))
@@ -90,7 +90,7 @@ colnames(X)[(ncol(X)+1-ncol(Vxb)):ncol(X)]<-nameVxb
 nameU<- if(k==1) paste("U",".",name.Z,sep="") else paste("U", 1:k, ".", name.Z, sep="")
 colnames(X)[(ncol(X)-2*ncol(Vxb)+1):(ncol(X)-ncol(Vxb))]<-nameU
 obj0$model[,nameU]<-U
-obj0$model[,nameVxb]<-V
+obj0$model[,nameVxb]<-Vxb
 obj.final<- update(obj0,formula=
 as.formula(
 paste(deparse(formula(obj0)),paste("`",nameU,"`",collapse="+",sep=""),paste("`",nameVxb,"`",collapse="+",sep=""),sep="+"))
@@ -119,7 +119,7 @@ return(list.obj)
 
 #--method for glm objects
 segmented.glm <-
-#revisione 22/09/03; 02/10/03; 03/11/03; 27/11/03
+#revisione 22/09/03; 02/10/03; 03/11/03; 27/11/03; 20/01/04
 function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE, ...){
 if(is.data.frame(obj$data)){
         attach(obj$data)
@@ -199,7 +199,7 @@ colnames(X)[(ncol(X)+1-ncol(Vxb)):ncol(X)]<-nameVxb
 nameU<- if(k==1) paste("U",".",name.Z,sep="") else paste("U", 1:k, ".", name.Z, sep="") #aggiunto
 colnames(X)[(ncol(X)-2*ncol(Vxb)+1):(ncol(X)-ncol(Vxb))]<-nameU #aggiunto
 obj0$model[,nameU]<-U
-obj0$model[,nameVxb]<-V
+obj0$model[,nameVxb]<-Vxb
 obj.final<- update(obj0,formula=
 as.formula(
 paste(deparse(formula(obj0)),paste("`",nameU,"`",collapse="+",sep=""),paste("`",nameVxb,"`",collapse="+",sep=""),sep="+"))
