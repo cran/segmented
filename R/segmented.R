@@ -1,26 +1,27 @@
 
 #--generic function
-segmented<-function(obj, Z, psi, W, it.max, toll, visual, last){
+segmented<-function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE, ...){
             UseMethod("segmented")
             }
 
 
 #--default method
-segmented.default<-function(obj, Z, psi, W, it.max, toll, visual, last){
+segmented.default<-function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE, ...){
             stop("No default method for segmented")
             }
 
 #--method for lm objects
 segmented.lm <-
-#revisione 13/05/03; 22/09/03; 02/10/03
-function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE){
+#revisione 13/05/03; 22/09/03; 02/10/03; 9/10/03; 3/11/03; 27/11/03
+function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE,...){
 if(is.data.frame(eval(obj$call$data))){
     attach(eval(obj$call$data))
     on.exit(detach(eval(obj$call$data)))}
     if(is.null(obj$y) || is.null(dim(obj$x))) obj<-update(obj,x=TRUE,y=TRUE) 
     y<-obj$y
-    if(is.matrix(Z)) name.Z<-dimnames(Z)[[2]]
+    if(is.matrix(Z)) name.Z<-colnames(Z)
         else name.Z<-deparse(substitute(Z))
+#Da aggiungere da qua....
     if(!missing(W) && !is.matrix(Z)) {#L groups
                 if(length(table(W))!=length(psi)) stop("number of levels of W and length(psi) do not match")
                         Z<-model.matrix(~ factor(W)-1)*Z
@@ -30,7 +31,7 @@ if(is.data.frame(eval(obj$call$data))){
                         Z<-matrix(rep(Z,length(psi)),ncol=length(psi))}
     k<-ncol(Z)
     dimnames(Z)<-list(NULL, rep("",k))
-            if(ncol(Z)!=length(psi)) stop("number of Z variables and length(psi) don't match")
+            if(ncol(Z)!=length(psi)) stop("number of Z variables and length(psi) do not match")
             if(nrow(Z)!=length(obj$y)) stop("length(Z) is different from length(obj$y)")
     PSI<- matrix(rep(psi, rep(nrow(Z),ncol(Z))), ncol=ncol(Z))
     if(it.max==0){
@@ -45,6 +46,7 @@ if(is.data.frame(eval(obj$call$data))){
     XREG<-obj$x    
     o<-if(!is.null(obj$offset)) obj$offset else NULL
     w<-if(is.null(obj$weights)) rep(1,length(y)) else obj$weights 
+    obj0<-obj
     list.obj<-list(obj)
         while(abs(epsilon)>toll){
             U<-pmax((Z -PSI), 0) 
@@ -67,8 +69,9 @@ if(is.data.frame(eval(obj$call$data))){
             obj$psi<-psi
             dev.new<-sum(obj$residuals^2)
                 if(visual) {
-                    if(it==1) cat(0,"",round(dev.old,3),"","(No breakpoint(s))","\n")
-                              cat(it,"",round(dev.new,3),"\n")}
+                    if(it==1) cat(0," ",formatC(dev.new,3,format="f"),"","(No breakpoint(s))","\n")
+                              spp<-if(it<10) "" else NULL
+                              cat(it,spp,"",formatC(dev.new,3,format="f"),"\n")}
             epsilon<- (dev.new-dev.old)/dev.old
             obj$epsilon<-epsilon
             it<- it+1
@@ -77,19 +80,24 @@ if(is.data.frame(eval(obj$call$data))){
             list.obj[[length(list.obj)+ifelse(last==TRUE,0,1)]]<-obj
             if(it>it.max) break
             }
-if(it>it.max) warning("Convergence attained with max iterations")
+if(it>it.max) warning("max number of iterations attained",call.=FALSE)
 Vxb <-t(t(V)*beta.c)
 X[,(dim(X)[2]+1-dim(Vxb)[2]):dim(X)[2]]<-Vxb
 rownames(X)<-NULL
+#
 nameVxb<- if(k==1) paste("psi",".",name.Z,sep="") else paste("psi", 1:k, ".", name.Z, sep="")
 colnames(X)[(ncol(X)+1-ncol(Vxb)):ncol(X)]<-nameVxb
 nameU<- if(k==1) paste("U",".",name.Z,sep="") else paste("U", 1:k, ".", name.Z, sep="")
 colnames(X)[(ncol(X)-2*ncol(Vxb)+1):(ncol(X)-ncol(Vxb))]<-nameU
-obj.final<- lm(y~X-1, offset=o,weights=w)
-names(obj.final$coefficients)<- colnames(X)
+obj0$model[,nameU]<-U
+obj0$model[,nameVxb]<-V
+obj.final<- update(obj0,formula=
+as.formula(
+paste(deparse(formula(obj0)),paste("`",nameU,"`",collapse="+",sep=""),paste("`",nameVxb,"`",collapse="+",sep=""),sep="+"))
+,data=obj0$model,...)
 Cov<-summary(obj.final)$cov.unscaled*summary(obj.final)$sigma^2
-dimnames(Cov)<-list(colnames(X),colnames(X))
 testo<- if(k==1) paste("psi",".",name.Z,sep="") else paste("psi", 1:k, ".", name.Z, sep="")
+if(length(grep(":",name.Z))>0) testo<-paste("`",testo,"`",sep="")
 vv<- if(k==1) Cov[testo,testo] else diag(Cov[testo,testo])
 obj.final$psi<-cbind(initial, psi, sqrt(vv))
 dimnames(obj.final$psi)[[1]] <-if(length(name.Z)==1) c(name.Z,rep("",k-1)) else name.Z
@@ -108,10 +116,11 @@ return(list.obj)
 
 
 
+
 #--method for glm objects
 segmented.glm <-
-#revisione 22/09/03; 02/10/03
-function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE){
+#revisione 22/09/03; 02/10/03; 03/11/03; 27/11/03
+function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE, ...){
 if(is.data.frame(obj$data)){
         attach(obj$data)
         on.exit(detach(obj$data))}
@@ -147,12 +156,11 @@ if(is.data.frame(obj$data)){
     o<-obj$offset
     contr<-obj$control
     w<-obj$prior.weights
+    obj0<-obj
     list.obj<-list(obj)
         while(abs(epsilon)>toll){
             U<-pmax((Z -PSI), 0) 
             V<-ifelse((Z >PSI), -1, 0)
-            #dimnames(V)<-list(NULL, 1:k) #forse superfluo
-            #dimnames(U)<-list(NULL, 1:k) #forse superfluo
             dev.old<-obj$dev
             X<-cbind(XREG,U,V)
             rownames(X)<-NULL
@@ -171,8 +179,9 @@ if(is.data.frame(obj$data)){
             obj$psi<-psi
             dev.new<-obj$dev 
                 if(visual) {
-                    if(it==1) cat(0,"",round(dev.old,3),"","(No breakpoint(s))","\n")
-                              cat(it,"",round(dev.new,3),"\n")}
+                    if(it==1) cat(0," ",formatC(dev.new,3,format="f"),"","(No breakpoint(s))","\n")
+                              spp<-if(it<10) "" else NULL 
+                              cat(it,spp,"",formatC(dev.new,3,format="f"),"\n")}
             epsilon<- (dev.new-dev.old)/dev.old
             obj$epsilon<-epsilon
             it<- it+1
@@ -181,20 +190,24 @@ if(is.data.frame(obj$data)){
             list.obj[[length(list.obj)+ifelse(last==TRUE,0,1)]]<-obj
             if(it>it.max) break
             }
-if(it>it.max) warning("Convergence attained with max iterations")
+if(it>it.max) warning("max number of iterations attained",call.=FALSE)
 Vxb <-t(t(V)*beta.c)
 X[,(dim(X)[2]+1-dim(Vxb)[2]):dim(X)[2]]<-Vxb
 rownames(X)<-NULL
-nameVxb<- if(k==1) paste("psi",".",name.Z,sep="") else paste("psi", 1:k, ".", name.Z, sep="")
+nameVxb<- if(k==1) paste("psi",".",name.Z,sep="") else paste("psi", 1:k, ".", name.Z, sep="")#nuovo
 colnames(X)[(ncol(X)+1-ncol(Vxb)):ncol(X)]<-nameVxb
-nameU<- if(k==1) paste("U",".",name.Z,sep="") else paste("U", 1:k, ".", name.Z, sep="") 
-colnames(X)[(ncol(X)-2*ncol(Vxb)+1):(ncol(X)-ncol(Vxb))]<-nameU 
-obj.final<- glm(y~X-1, offset=o,weights=w,family=fam,control=contr)
-names(obj.final$coefficients)<- colnames(X)
+nameU<- if(k==1) paste("U",".",name.Z,sep="") else paste("U", 1:k, ".", name.Z, sep="") #aggiunto
+colnames(X)[(ncol(X)-2*ncol(Vxb)+1):(ncol(X)-ncol(Vxb))]<-nameU #aggiunto
+obj0$model[,nameU]<-U
+obj0$model[,nameVxb]<-V
+obj.final<- update(obj0,formula=
+as.formula(
+paste(deparse(formula(obj0)),paste("`",nameU,"`",collapse="+",sep=""),paste("`",nameVxb,"`",collapse="+",sep=""),sep="+"))
+,data=obj0$model,...)
 Cov<-summary(obj.final)$cov.scaled
-dimnames(Cov)<-list(colnames(X),colnames(X))
-testo<- if(k==1) paste("psi",".",name.Z,sep="") else paste("psi", 1:k, ".", name.Z, sep="") 
-vv<- if(k==1) Cov[testo,testo] else diag(Cov[testo,testo])
+testo<- if(k==1) paste("psi",".",name.Z,sep="") else paste("psi", 1:k, ".", name.Z, sep="") #nuovo
+if(length(grep(":",name.Z))>0) testo<-paste("`",testo,"`",sep="")
+vv<- if(k==1) Cov[testo,testo] else diag(Cov[testo,testo])#nuovo
 obj.final$psi<-cbind(initial, psi, sqrt(vv))
 dimnames(obj.final$psi)[[1]] <-if(length(name.Z)==1) c(name.Z,rep("",k-1)) else name.Z
 dimnames(obj.final$psi)[[2]] <-c("Initial","Est","St.Err")
@@ -207,6 +220,7 @@ class(list.obj)<-"segmented"
 if(last) list.obj<-list.obj[[length(list.obj)]]
 return(list.obj)
 }
+
 
 
 ##Funzioni metodo
@@ -242,9 +256,8 @@ if("Arima"%in%class(x)){
     invisible(x)
 }
 
-summary.segmented<-function(object, ...){
-#revisione 13/05/03;7/10/03
-# con segmented.lm()?
+summary.segmented<-function(object, short=FALSE, ...){
+#revisione 13/05/03;7/10/03;28/11/03
 if(is.null(object$psi)) object<-object[[length(object)]]
 iV<-(1:(length(object$coef)-length(object$psi[,2])))#indices of all but the Vs
 beta.c<- if(length(object$psi[,1])==1) object$coef["U"] else object$coef[paste("U", 1:length(object$psi[,1]), sep="")]
@@ -256,6 +269,7 @@ beta.c<- if(length(object$psi[,1])==1) object$coef["U"] else object$coef[paste("
         summ$gap<-cbind(coeff[-iV]*beta.c,v[-iV]*beta.c,coeff[-iV]/v[-iV])
         dimnames(summ$gap)<-list(rep("",nrow(object$psi)),c("Est.","SE","t value"))
         summ[c("it","epsilon")]<-object[c("it","epsilon")]
+        summ$short<-short #AGG
         class(summ) <- c("summary.segmented", "summary.lm")
         return(summ)}
     if("glm"%in%class(object)){
@@ -266,6 +280,7 @@ beta.c<- if(length(object$psi[,1])==1) object$coef["U"] else object$coef[paste("
         summ$gap<-cbind(coeff[-iV]*beta.c,v[-iV]*beta.c,coeff[-iV]/v[-iV])
         dimnames(summ$gap)<-list(rep("",nrow(object$psi)),c("Est.","SE","t value"))
         summ[c("it","epsilon")]<-object[c("it","epsilon")]
+        summ$short<-short #AGG
         class(summ) <- c("summary.segmented", "summary.glm")
         return(summ)}
     if("Arima"%in%class(object)){
@@ -276,6 +291,7 @@ beta.c<- if(length(object$psi[,1])==1) object$coef["U"] else object$coef[paste("
         dimnames(object$gap)<-list(rep("",nrow(object$psi)),c("Est.","SE","t value"))
         colnames(Ttable)<-c("Estimate","Std. Error","t value")
         object$Ttable<-Ttable
+        object$short<-short #AGG
         summ<-object 
         class(summ) <- "summary.segmented"
         return(summ)}
@@ -283,8 +299,8 @@ beta.c<- if(length(object$psi[,1])==1) object$coef["U"] else object$coef[paste("
 
 #--------------
 
-print.summary.segmented<-function(x,digits = max(3, getOption("digits") - 3),...){
-#revisione 15/05/03;7/10/03
+print.summary.segmented<-function(x,digits = max(3, getOption("digits") - 3),short=x$short,...){
+#revisione 15/05/03;7/10/03;28/11/03
 # con segmented.lm()
     cat("\n\t***Regression Model with Segmented Relationship(s)***\n\n")
     cat( "Call: \n" )
@@ -293,8 +309,11 @@ print.summary.segmented<-function(x,digits = max(3, getOption("digits") - 3),...
     print(signif(x$psi[,-1],4))
     cat("\nt value for the gap-variable(s) V: ",x$gap[,3],"\n")
 if(any(abs(x$gap[,3])>1.96)) cat("    Warning: some coefficient of the gap-variable is significant at 0.05 level\n")
-    cat("\nMeaningful coefficients of the linear terms:\n")
-        print(x$Ttable)
+    if(short){ 
+    cat("\nDifference-in-slopes parameter(s):\n")
+    print(x$Ttable[(nrow(x$Ttable)-nrow(x$psi)+1):nrow(x$Ttable),])}
+    else {cat("\nMeaningful coefficients of the linear terms:\n")
+        print(x$Ttable)}
     cat("\n")
 if("summary.lm"%in%class(x)){ #for lm
     cat("\nResidual standard error:", format(signif(x$sigma, 
@@ -329,3 +348,70 @@ if(!"summary.lm"%in%class(x) && !"summary.glm"%in%class(x)){#for Arima
 invisible(x) 
 cat("\nConvergence attained in",x$it,"iterations with relative change",x$epsilon,"\n")
 }
+
+#-------------------------
+
+slope.segmented<-function(ogg, level=0.95){
+#2/10/03; 21/10/03; 4/11/03
+#Ad ogni chiamata di grep() è stato aggiunto l'argomento extended=F per consentire Z=log(x)
+#returns Est., St.Err., t value and Conf Interv (1-level) for the slopes
+#      of the variables having a segmented relationship in the model.
+#ogg: a segmented object returned by segmented().
+        if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
+        nome<-rownames(ogg$psi)
+        NOME<-names(coef(eval(ogg$call$obj)))
+        index<-NULL
+        nome1<-as.character(parse("",text=nome))
+        cc<-grep(nome1, NOME, extended=FALSE) 
+        if(length(nome1)==1) { 
+                index<-grep(nome1, names(coef(ogg)), extended=FALSE)
+                index<-list(index[1:(length(index)-nrow(ogg$psi))])
+                    
+                    if(length(cc)>1) {
+                        index<-unlist(index)
+                        index<-cbind(index[-length(index)],index[length(index)])
+                        index<-apply(index,1,list)}
+                            if(length(cc)==1 && !is.null(ogg$call$W)) { #quando c'è W e cc=1
+                                index<-unlist(index)
+                                index<-cbind(index[1],index[-1])
+                                index<-apply(index,1,list)
+                                        }
+                                }
+            else {
+                for(i in 1:length(nome1)){
+                        aa<-grep(nome1[i], names(coef(ogg)), extended=FALSE)
+                        index[[i]]<-list(aa[1:(length(aa)-1)])
+                        }
+                }
+        Ris<-list()   
+        for(i in 1:length(index)){
+            ind<-unlist(index[[i]])
+            M<-matrix(1,length(ind),length(ind))
+            M[row(M)<col(M)]<-0
+            cof<-ogg$coef[ind]
+            covv<- if("Arima"%in%class(ogg)){
+                    ogg$var.coef[ind,ind] } else 
+                    {if("glm"%in%class(ogg)) summary.glm(ogg)$cov.scaled[ind,ind]
+                        else summary.glm(ogg)$cov.unscaled[ind,ind]*summary(ogg)$sigma^2
+                        }
+            cof.out<-M%*%cof 
+            cov.out<-M%*%covv%*%t(M)
+            se.out<-sqrt(diag(cov.out))
+            k<-abs(qnorm((1-level)/2))*se.out
+            ris<-cbind(cof.out,se.out,(cof.out/se.out),(cof.out-k),(cof.out+k))
+            cin<-paste("CI","(",level*100,"%",")",c(".l",".u"),sep="")
+            dimnames(ris)<-list(paste("slope", 1:length(ind), sep=""),c("Est.","St.Err.","t value",cin[1],cin[2]))
+            Ris[[nome1[i]]]<-ris}
+            if(any(is.na(names(Ris)))){
+                nn1<-paste(":",deparse(ogg$call$Z),sep="")
+                nn2<-paste(deparse(ogg$call$Z),":",sep="")
+                l<-list(grep(nn1, NOME, extended=FALSE), grep(nn2, NOME, extended=FALSE))
+                f<-sapply(l,function(x){length(x)!=0})
+#                if(!is.null(ogg$call$W) || length(l[f])>0) {
+                nomeW<-if(!is.null(ogg$call$W)) 
+                        paste(deparse(ogg$call$W),1:length(index),":",deparse(ogg$call$Z),sep="")
+                            else names(ogg$coef)[unlist(l[f])]
+            names(Ris)<-nomeW #}
+                    }
+            Ris
+            }

@@ -15,7 +15,7 @@ explanatory variables. Break-point estimates are provided.
 %- usa \cr per rompere una linea.
 \usage{
 segmented(obj, Z, psi, W, it.max=20, toll=0.0001, 
-    visual=FALSE, last=TRUE)
+    visual=FALSE, last=TRUE, ...)
 
 %segmented.glm(obj, Z, psi, W, it.max=20, toll=0.0001, 
 %    visual=FALSE, last=TRUE)
@@ -31,6 +31,7 @@ segmented(obj, Z, psi, W, it.max=20, toll=0.0001,
   \item{toll}{ the tolerance value used to stop the algorithm.}
   \item{visual}{ logical value indicating whether the process fitting should be printed at each iteration. }
   \item{last}{ logical value indicating whether only the last object should be returned. }
+  \item{...}{ further arguments passed to \code{lm} or \code{glm} when the algorithm stops. }
 }
 \details{
 Given a linear regression model (of class \code{"lm"} or \code{"glm"}), \code{segmented} 
