@@ -1,6 +1,6 @@
 Package: segmented
-Version: 0.1-3 
-Date: 2004-01-20
+Version: 0.1-4 
+Date: 2004-02-17
 Title: Segmented relationships in regression models
 Author: Vito M. R. Muggeo 
 Maintainer: Vito M. R. Muggeo <vito.muggeo@giustizia.it>

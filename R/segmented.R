@@ -12,7 +12,7 @@ segmented.default<-function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE
 
 #--method for lm objects
 segmented.lm <-
-#revisione 13/05/03; 22/09/03; 02/10/03; 9/10/03; 3/11/03; 27/11/03; 20/01/04
+#revisione 13/05/03; 22/09/03; 02/10/03; 9/10/03; 3/11/03; 27/11/03; 20/01/04; 17/02/04
 function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE,...){
 if(is.data.frame(eval(obj$call$data))){
     attach(eval(obj$call$data))
@@ -93,8 +93,8 @@ obj0$model[,nameU]<-U
 obj0$model[,nameVxb]<-Vxb
 obj.final<- update(obj0,formula=
 as.formula(
-paste(deparse(formula(obj0)),paste("`",nameU,"`",collapse="+",sep=""),paste("`",nameVxb,"`",collapse="+",sep=""),sep="+"))
-,data=obj0$model,...)
+paste(deparse(formula(obj0),width.cutoff=450), paste("`",nameU,"`",collapse="+",sep=""),
+paste("`",nameVxb,"`",collapse="+",sep=""),sep="+")),data=obj0$model,...)
 Cov<-summary(obj.final)$cov.unscaled*summary(obj.final)$sigma^2
 testo<- if(k==1) paste("psi",".",name.Z,sep="") else paste("psi", 1:k, ".", name.Z, sep="")
 if(length(grep(":",name.Z))>0) testo<-paste("`",testo,"`",sep="")
@@ -119,7 +119,7 @@ return(list.obj)
 
 #--method for glm objects
 segmented.glm <-
-#revisione 22/09/03; 02/10/03; 03/11/03; 27/11/03; 20/01/04
+#revisione 22/09/03; 02/10/03; 03/11/03; 27/11/03; 20/01/04; 17/02/04
 function(obj, Z, psi, W, it.max=20, toll=0.0001, visual=FALSE, last=TRUE, ...){
 if(is.data.frame(obj$data)){
         attach(obj$data)
@@ -202,8 +202,8 @@ obj0$model[,nameU]<-U
 obj0$model[,nameVxb]<-Vxb
 obj.final<- update(obj0,formula=
 as.formula(
-paste(deparse(formula(obj0)),paste("`",nameU,"`",collapse="+",sep=""),paste("`",nameVxb,"`",collapse="+",sep=""),sep="+"))
-,data=obj0$model,...)
+paste(deparse(formula(obj0),width.cutoff=450),paste("`",nameU,"`",collapse="+",sep=""),
+paste("`",nameVxb,"`",collapse="+",sep=""),sep="+")),data=obj0$model,...)
 Cov<-summary(obj.final)$cov.scaled
 testo<- if(k==1) paste("psi",".",name.Z,sep="") else paste("psi", 1:k, ".", name.Z, sep="") #nuovo
 if(length(grep(":",name.Z))>0) testo<-paste("`",testo,"`",sep="")
