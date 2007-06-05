@@ -1,10 +1,11 @@
 Package: segmented
-Version: 0.1-4 
-Date: 2004-02-17
+Type: Package
 Title: Segmented relationships in regression models
-Author: Vito M. R. Muggeo 
-Maintainer: Vito M. R. Muggeo <vito.muggeo@giustizia.it>
-Depends: R (>= 1.8.0)
-Description: Functions to estimate break-points of segmented 
-    relationships in regression models (GLMs) 
-License: GPL version 2 or newer
+Version: 0.2-0
+Date: 2007-06-05
+Author: Vito M.R. Muggeo <vmuggeo@dssm.unipa.it>
+Maintainer: Vito M.R. Muggeo <vmuggeo@dssm.unipa.it>
+Description: Given a (generalized) linear model, segmented `updates' the model by adding one or more
+		segmented relationships. Several variables with multiple breakpoints are allowed.
+License: GPL
+                                                           

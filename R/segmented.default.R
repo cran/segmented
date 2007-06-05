@@ -1,4 +1,4 @@
-`segmented` <-
+`segmented.default` <-
 function(obj, seg.Z, psi, control=seg.control(), model.frame=TRUE, ...){
-            UseMethod("segmented")
+            stop("No default method for segmented")
             }
