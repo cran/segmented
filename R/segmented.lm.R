@@ -76,25 +76,32 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
                 else colnames(X)[(ncol(XREG)+1):ncol(X)]<-c(paste("U", 1:k, sep=""),paste("V", 1:k, sep=""))
             obj<-lm.wfit(x=X,y=y,w=w,offset=o)
             dev.new<-sum(obj$residuals^2)
-            epsilon<- (dev.new-dev.old)/dev.old
-            obj$epsilon<-epsilon
-            it<- it+1
-            obj$it<-it
-            class(obj)<-c("segmented",class(obj))
-            list.obj[[length(list.obj)+ifelse(last==TRUE,0,1)]]<-obj
-            if(it>it.max) break
-            if(visual) {
-                    if(it==1) cat(0," ",formatC(dev.old,3,format="f"),"","(No breakpoint(s))","\n")
-                              spp<-if(it<10) "" else NULL
-                              cat(it,spp,"",formatC(dev.new,3,format="f"),"\n")}
-            #se non-break, aggiorna le stime:
-            if(k==1) {
-                beta.c<-coef(obj)["U"]
-                gamma.c<-coef(obj)["V"]}
-                  else {
-                beta.c<-coef(obj)[paste("U", 1:k, sep="")]
-                gamma.c<-coef(obj)[paste("V", 1:k, sep="")]
-                  }
+            if (visual) {
+                if (it == 1)
+                  cat(0, " ", formatC(dev.old, 3, format = "f"),
+                  "", "(No breakpoint(s))", "\n")
+                spp <- if (it < 10)
+                  ""
+                    else NULL
+            cat(it, spp, "", formatC(dev.new, 3, format = "f"),"\n")
+            }
+        epsilon <- (dev.new - dev.old)/dev.old
+        obj$epsilon <- epsilon
+        it <- it + 1
+        obj$it <- it
+        class(obj) <- c("segmented", class(obj))
+        list.obj[[length(list.obj) + ifelse(last == TRUE, 0,
+            1)]] <- obj
+        if (it > it.max)
+            break
+        if (k == 1) {
+            beta.c <- coef(obj)["U"]
+            gamma.c <- coef(obj)["V"]
+        }
+        else {
+            beta.c <- coef(obj)[paste("U", 1:k, sep = "")]
+            gamma.c <- coef(obj)[paste("V", 1:k, sep = "")]
+        }
             psi.old<- psi
             psi<-psi.old+gamma.c/beta.c
             PSI<- matrix(rep(psi, rep(nrow(Z),ncol(Z))), ncol=ncol(Z))

@@ -11,9 +11,10 @@ function(ogg, level=0.95){
         nomeZ<-ogg$nameUV[[3]]
         nomi<-names(coef(ogg))
         nomi<-nomi[-match(nomepsi,nomi)] #escludi i coef delle V
-        index<-NULL
+        index<-vector(mode = "list", length = length(nomeZ))
         for(i in 1:length(nomeZ)) index[[i]]<-grep(nomeZ[i], nomi, extended=FALSE) 
         Ris<-list()   
+        digits <- max(3, getOption("digits") - 3)
         for(i in 1:length(index)){
             ind<-unlist(index[[i]])
             M<-matrix(1,length(ind),length(ind))
@@ -30,7 +31,7 @@ function(ogg, level=0.95){
             if(identical(length(ind),length(grep(nomeZ[i], nomeU, extended=FALSE)))){
                     ris<-rbind(c(0,rep(NA,(ncol(ris)-1))),ris)}
             dimnames(ris)<-list(paste("slope", 1:nrow(ris), sep=""),c("Est.","St.Err.","t value",cin[1],cin[2]))
-            Ris[[nomeZ[i]]]<-ris
+            Ris[[nomeZ[i]]]<-signif(ris,digits)
                 }
             Ris
             }

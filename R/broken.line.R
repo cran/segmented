@@ -11,7 +11,7 @@ function(ogg,term=NULL,gap=FALSE,link=FALSE){
         nomeZ<-ogg$nameUV[[3]]
         nomi<-names(coef(ogg))
         nomi<-nomi[-match(nomepsi,nomi)] #escludi i coef delle V
-        index<-NULL
+        index<-vector(mode = "list", length = length(nomeZ))
         for(i in 1:length(nomeZ)) index[[i]]<-grep(nomeZ[i], nomi, extended=FALSE)
         variabili<-Ris<-list()
         for(i in 1:length(index)){

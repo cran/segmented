@@ -28,7 +28,7 @@ segmented.glm(obj, seg.Z, psi, control = seg.control(),
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{obj}{ standard `linear' model of class "lm" or "glm". }
-  \item{seg.Z}{ formula indicating the (continuous) explanatory
+  \item{seg.Z}{ a formula with no response variable, indicating the (continuous) explanatory
                variables having segmented relationships with the response
                }
   \item{psi}{ named list of vectors. The names have to match the variables of the \code{seg.Z} argument.

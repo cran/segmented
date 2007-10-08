@@ -4,6 +4,7 @@ function(ogg,level=0.95,Fieller=FALSE){
         if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
         nomeZ<-ogg$nameUV[[3]] #nomi delle variabili segmented
         Ris<-list()
+        digits <- max(3, getOption("digits") - 3)
         for(i in 1:length(nomeZ)){
           id<-grep(nomeZ[i], rownames(ogg$psi), extended=FALSE)
           psi<-ogg$psi[id,2]
@@ -12,7 +13,7 @@ function(ogg,level=0.95,Fieller=FALSE){
           r<-cbind(psi,psi-k,psi+k)
           colnames(r)<-c("Est.",paste("CI","(",level*100,"%",")",c(".l",".u"),sep=""))
           rownames(r)<-rownames(ogg$psi)[id]
-          Ris[[nomeZ[i]]]<-r
+          Ris[[nomeZ[i]]]<-signif(r,digits)
           }
         Ris
         }
