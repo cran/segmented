@@ -6,12 +6,12 @@
   Computes slopes of each `segmented' relationship in the fitted model.
 }
 \usage{
-slope(ogg, level = 0.95)
+slope(ogg, conf.level = 0.95)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{ogg}{ an object of class \code{"segmented"}, returned by any \code{segmented} method. }
-  \item{level}{ the confidence level required. }
+  \item{conf.level}{ the confidence level required. }
 }
 \details{
   To fit broken-line relationships, \code{segmented} uses a parameterization whose coefficients are not 

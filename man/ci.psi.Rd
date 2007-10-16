@@ -6,12 +6,12 @@
   \code{ci.psi} returns confidence intervals for the breakpoints from a fitted segmented model.
 }
 \usage{
-ci.psi(ogg, level = 0.95, Fieller = FALSE)
+ci.psi(ogg, conf.level = 0.95, Fieller = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{ogg}{ a fitted object of class "segmented". }
-  \item{level}{ confidence level of the interval. Default to 0.95. }
+  \item{conf.level}{ confidence level of the interval. Default to 0.95. }
   \item{Fieller}{ if TRUE, the Fieller's method is applied. Currently unimplemented. }
 }
 \details{

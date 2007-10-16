@@ -10,7 +10,7 @@ broken.line(ogg, term = NULL, gap = FALSE, link = FALSE)
 }
 \arguments{
   \item{ogg}{ A fitted object of class segmented (returned by any \code{segmented} method). }
-  \item{term}{ A character meaning for which segmented variables prediction should be computed.}
+  \item{term}{ A character meaning for which segmented variable prediction should be computed.}
   \item{gap}{ Should the `gaps' of the segmented relationships be plotted? Default to \code{FALSE}. Currently unimplemented.}
   \item{link}{ Should the predictions be computed on the scale of the link function? Default to \code{FALSE}. }
 }
@@ -37,6 +37,7 @@ par(mfrow=c(1,2))
 plot(z,y)
 points(z,broken.line(o.seg,link=FALSE),col=2,pch=20)
 plot(z,broken.line(o.seg,link=TRUE),ylab="log(Fitted)")
+point.psi(o.seg,"z",col=2,pch="x",bottom=FALSE)
     }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
