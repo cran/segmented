@@ -1,5 +1,5 @@
 `broken.line` <-
-function(ogg,term=NULL,gap=FALSE,link=FALSE){
+function(ogg,term=NULL,gap=FALSE,linkinv=FALSE){
 #returns the fitted straight lines from a `segmented' model
 #term: a character vector meaning the segmented variable.
 #     If NULL every segmented variable is considered and a matrix is returned
@@ -24,6 +24,6 @@ function(ogg,term=NULL,gap=FALSE,link=FALSE){
             }
         o<-mapply(function(xx,yy)drop(xx%*%yy),variabili,Ris)+coef(ogg)["(Intercept)"]
         if(!is.null(term)) o<-o[,term]
-        if(inherits(ogg,what="glm",FALSE) && !link) o<-apply(o,2,ogg$family$linkinv)
+        if(inherits(ogg,what="glm",FALSE) && linkinv) o<-apply(o,2,ogg$family$linkinv)
         return(o)
         }

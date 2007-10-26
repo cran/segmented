@@ -6,7 +6,7 @@
   \code{segmented} is a generic function, and \code{segmented.default} its default method.
   }
 \usage{
-segmented.default(obj, seg.Z, psi, control = seg.control(), model.frame = TRUE, ...)
+\method{segmented}{default}(obj, seg.Z, psi, control = seg.control(), model.frame = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

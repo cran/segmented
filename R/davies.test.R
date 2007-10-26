@@ -1,7 +1,7 @@
 `davies.test` <- 
 function (ogg, term, k = 10, alternative = c("two.sided", "less", "greater")) {
 #ho messo as.expression(formula(ogg)) potresti anche as.expression(ogg$call)
-#Non funziona se ogg non è chiamato con l'argomento data.
+#Non funziona se ogg non è chiamato con l'argomento data. FALSO!!!
     if (!is.character(term))
         stop("term must be character")
     alternative <- match.arg(alternative)
@@ -33,26 +33,35 @@ function (ogg, term, k = 10, alternative = c("two.sided", "less", "greater")) {
     onesided <- TRUE
     if (alternative == "less") {
         M <- min(ris.valori)
+        best<-valori[which.min(ris.valori)]
         p.naiv <- pnorm(M, lower = TRUE)
     }
     else if (alternative == "greater") {
         M <- max(ris.valori)
+        best<-valori[which.max(ris.valori)]
         p.naiv <- pnorm(M, lower = FALSE)
     }
     else {
         M <- max(abs(ris.valori))
+        best<-valori[which.max(abs(ris.valori))]
         p.naiv <- pnorm(M, lower = FALSE)
         onesided <- FALSE
     }
     approxx <- V * exp(-(M^2)/2)/sqrt(8 * pi)
     p.adj <- p.naiv + approxx
     p.adj <- ifelse(onesided, 1, 2) * p.adj
+    if(is.null(ogg$family$family)) {
+          famiglia<-"gaussian"
+          legame<-"identity"} else {
+               famiglia<-ogg$family$family
+               legame<-ogg$family$link
+          }
     out <- list(method = "Davies' test for a change in the slope",
-        data.name=paste("Model = ",ogg$family$family,", link =", ogg$family$link,
+        data.name=paste("Model = ",famiglia,", link =", legame,
         "\nformula =", as.expression(formula(ogg)),
 #        data.name = paste(as.expression(ogg$call),
         "\nsegmented variable =", term),
-        statistic = c("`Best' at" = valori[which.max(ris.valori)]),
+        statistic = c("`Best' at" = best),
         parameter = c(n.points = length(valori)), p.value = min(p.adj,1),
         alternative = alternative)
     class(out) <- "htest"

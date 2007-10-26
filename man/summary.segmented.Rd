@@ -6,7 +6,7 @@
   summary method for class \code{segmented}.
 }
 \usage{
-summary.segmented(object, short = FALSE, ...)
+\method{summary}{segmented}(object, short = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

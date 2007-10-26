@@ -6,7 +6,7 @@
   Printing the most important feautures of a segmented model.
 }
 \usage{
-print.segmented(x, digits = max(3, getOption("digits") - 3), ...)
+\method{print}{segmented}(x, digits = max(3, getOption("digits") - 3), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

@@ -13,14 +13,14 @@ fixed number of break-points.
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.2-2\cr
-Date: \tab 2007-10-16\cr
+Version: \tab 0.2-3\cr
+Date: \tab 2007-10-26\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models
  having one or more segmented relationships in the linear predictor. Estimates of the slopes and
  of the possibly multiple breakpoints are provided. The package includes testing/estimating
- functions and methods to print and summarize the results.
+ functions and methods to print, summarize and plot the results.
 }
 \author{
 Vito M.R. Muggeo <vmuggeo@dssm.unipa.it> (thanks to Marco Enea for his partial support)

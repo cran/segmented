@@ -66,6 +66,8 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
     epsilon<-10
     obj0<-obj
     list.obj<-list(obj)
+    psi.values<-NULL
+    rangeZ<-apply(Z,2,range)
         while(abs(epsilon)>toll){
             U<-pmax((Z -PSI), 0)
             V<-ifelse((Z >PSI), -1, 0)
@@ -92,8 +94,6 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
         class(obj) <- c("segmented", class(obj))
         list.obj[[length(list.obj) + ifelse(last == TRUE, 0,
             1)]] <- obj
-        if (it > it.max)
-            break
         if (k == 1) {
             beta.c <- coef(obj)["U"]
             gamma.c <- coef(obj)["V"]
@@ -102,7 +102,8 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
             beta.c <- coef(obj)[paste("U", 1:k, sep = "")]
             gamma.c <- coef(obj)[paste("V", 1:k, sep = "")]
         }
-            psi.old<- psi
+            if (it > it.max) break
+            psi.values[[length(psi.values)+1]]<-psi.old<- psi
             psi<-psi.old+gamma.c/beta.c
             PSI<- matrix(rep(psi, rep(nrow(Z),ncol(Z))), ncol=ncol(Z))
             a<-apply((Z<PSI),2,all)
@@ -111,8 +112,12 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
                 stop("(Some) estimated psi out of its range")
             obj$psi<-psi
             } #end while
+    psi.values[[length(psi.values)+1]]<- psi
     id.warn<-FALSE
-    if(it>it.max) {warning("max number of iterations attained",call.=FALSE); id.warn<-TRUE}
+    if(it>it.max) {
+        warning("max number of iterations attained",call.=FALSE)
+        id.warn<-TRUE
+        }
     Vxb <-V%*%diag(beta.c,ncol=length(beta.c)) #prima era: Vxb <-t(t(V)*beta.c)
     colnames(U)<-paste(ripetizioni,nomiZ,sep=".")
     colnames(Vxb)<-paste(ripetizioni,nomiZ,sep=".")
@@ -133,9 +138,11 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
     Cov<-vcov(objF)
     id<-match(paste("psi",colnames(Vxb),sep=""),names(coef(objF)))
     vv<-if(length(id)==1) Cov[id,id] else diag(Cov[id,id])
-    psi<-cbind(initial, psi.old, sqrt(vv))
+    psi<-cbind(initial, psi, sqrt(vv))
     rownames(psi)<-colnames(Cov)[id]
     colnames(psi)<-c("Initial","Est.","St.Err")
+    objF$rangeZ<-rangeZ
+    objF$psi.history<-psi.values
     objF$psi<-psi
     objF$it<-(it-1)
     objF$epsilon<-epsilon

@@ -73,6 +73,8 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
     obj0 <- obj
     list.obj <- list(obj)
     maxit.glm <- control$maxit.glm
+    psi.values<-NULL
+    rangeZ<-apply(Z,2,range)
     while (abs(epsilon) > toll) {
         eta0 <- obj$linear.predictors
         U <- pmax((Z - PSI), 0)
@@ -105,8 +107,6 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
         class(obj) <- c("segmented", class(obj))
         list.obj[[length(list.obj) + ifelse(last == TRUE, 0,
             1)]] <- obj
-        if (it > it.max)
-            break
         if (k == 1) {
             beta.c <- coef(obj)["U"]
             gamma.c <- coef(obj)["V"]
@@ -115,7 +115,8 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
             beta.c <- coef(obj)[paste("U", 1:k, sep = "")]
             gamma.c <- coef(obj)[paste("V", 1:k, sep = "")]
         }
-        psi.old <- psi
+        if (it > it.max) break
+        psi.values[[length(psi.values)+1]]<-psi.old <- psi
         psi <- psi.old + gamma.c/beta.c
         PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
         a <- apply((Z < PSI), 2, all)
@@ -124,6 +125,7 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
             stop("(Some) estimated psi out of its range")
         obj$psi <- psi
     }
+    psi.values[[length(psi.values)+1]]<- psi
     id.warn <- FALSE
     if (it > it.max) {
         warning("max number of iterations attained", call. = FALSE)
@@ -147,9 +149,11 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
     vv <- if (length(id) == 1)
         Cov[id, id]
     else diag(Cov[id, id])
-    psi <- cbind(initial, psi.old, sqrt(vv))
+    psi <- cbind(initial, psi, sqrt(vv))
     rownames(psi) <- colnames(Cov)[id]
     colnames(psi) <- c("Initial", "Est.", "St.Err")
+    objF$rangeZ<-rangeZ
+    objF$psi.history<-psi.values
     objF$psi <- psi
     objF$it <- (it - 1)
     objF$epsilon <- epsilon

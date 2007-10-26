@@ -18,10 +18,10 @@ Segmented relationships in regression models
 segmented(obj, seg.Z, psi, control = seg.control(), 
     model.frame = TRUE, ...)
 
-segmented.lm(obj, seg.Z, psi, control = seg.control(), 
+\method{segmented}{lm}(obj, seg.Z, psi, control = seg.control(),
     model.frame = TRUE, ...)
 
-segmented.glm(obj, seg.Z, psi, control = seg.control(), 
+\method{segmented}{glm}(obj, seg.Z, psi, control = seg.control(),
     model.frame = TRUE, ...)
 
 }
@@ -62,6 +62,8 @@ original object \code{obj} with additionally the followings:
   \item{it }{number of iterations employed}
   \item{epsilon }{difference in the objective function when the algorithm stops}
   \item{mframe}{ the model frame}
+  \item{psi.history}{A list or a vector including the breakpoint estimates at each step}
+
   Other components are not of direct interest of the user.
   }
 
@@ -114,7 +116,7 @@ zz<-runif(100)
 yy<-2+1.5*pmax(xx-35,0)-1.5*pmax(xx-70,0)+15*pmax(zz-.5,0)+rnorm(100,0,2)
 dati<-data.frame(x=xx,y=yy,z=zz)
 out.lm<-lm(y~x,data=dati)
-o<-segmented(out.lm,seg.Z=~x,psi=list(x=c(30,60)),
+o<-\method{segmented}{lm}(out.lm,seg.Z=~x,psi=list(x=c(30,60)),
     control=seg.control(display=FALSE))
 slope(o)
 

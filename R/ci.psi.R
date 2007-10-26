@@ -1,10 +1,9 @@
 `ci.psi` <-
-function(ogg,conf.level=0.95,Fieller=FALSE){
+function(ogg,conf.level=0.95,Fieller=FALSE,digits=max(3, getOption("digits") - 3)){
 #restituisce CI per i psi
         if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
         nomeZ<-ogg$nameUV[[3]] #nomi delle variabili segmented
         Ris<-list()
-        digits <- max(3, getOption("digits") - 3)
         for(i in 1:length(nomeZ)){
           id<-grep(nomeZ[i], rownames(ogg$psi), extended=FALSE)
           psi<-ogg$psi[id,2]
