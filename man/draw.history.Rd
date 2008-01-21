@@ -1,7 +1,7 @@
 \name{draw.history}
 \alias{draw.history}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ draws history for the breakpoint estimate }
+\title{ History for the breakpoint estimates }
 \description{
   Displays breakpoint iteration values for segmented fits.
 }

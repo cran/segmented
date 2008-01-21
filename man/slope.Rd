@@ -6,12 +6,17 @@
   Computes slopes of each `segmented' relationship in the fitted model.
 }
 \usage{
-slope(ogg, conf.level = 0.95)
+slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{ogg}{ an object of class \code{"segmented"}, returned by any \code{segmented} method. }
+  \item{parm}{ the segmented variable whose slopes have to be computed. If missing all the segmented variables are considered. }
   \item{conf.level}{ the confidence level required. }
+  \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled otherwise.
+  when \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
+    therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.}
+
 }
 \details{
   To fit broken-line relationships, \code{segmented} uses a parameterization whose coefficients are not 

@@ -1,19 +1,19 @@
-\name{point.psi}
-\alias{point.psi}
+\name{lines.segmented}
+\alias{lines.segmented}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ Draws interval estimates for the breakpoints }
+\title{ Bars for interval estimate of the breakpoints }
 \description{
   Draws bars relevant to breakpoint estimates (point estimate and confidence limits)
   on the current device
 }
 \usage{
-point.psi(obj, term, bottom = TRUE, conf.level = 0.95, k = 50, 
+\method{lines}{segmented}(x, term, bottom = TRUE, conf.level = 0.95, k = 50, 
     pch = 18, rev.sgn = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{ an object of class \code{segmented} }
-  \item{term}{ the segmented variable of the breakpoints being drawn }
+  \item{x}{ an object of class \code{segmented} }
+  \item{term}{ the segmented variable of the breakpoints being drawn. It may be unspecified when there is a single segmented variable}
   \item{bottom}{ logical, indicating if the bars should be plotted at the bottom (TRUE) or at the top (FALSE)}
   \item{conf.level}{ the confidence level of the confidence intervals for the breakpoints }
   \item{k}{ a positive integer regulating the vertical position of the drawn bars. See Details }
@@ -23,7 +23,7 @@ point.psi(obj, term, bottom = TRUE, conf.level = 0.95, k = 50,
   \item{\dots}{ further arguments passed to \code{\link{segments}} }
 }
 \details{
-  \code{point.ci} simply draws on the current device the point estimates and relevant
+  \code{lines.segmented} simply draws on the current device the point estimates and relevant
   confidence limits of the estimated breakpoints from a "segmented" object. The y coordinate
   where the bars are drawn is computed as \code{usr[3]+h} if \code{bottom=TRUE} or
   \code{usr[4]-h} when \code{bottom=FALSE}, where \code{h=(usr[4]-usr[3])/abs(k)} and
@@ -44,9 +44,9 @@ point.psi(obj, term, bottom = TRUE, conf.level = 0.95, k = 50,
 %\note{ ~~further notes~~
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
-%\seealso{ ~~objects to See Also as \code{\link{help}}, ~~~ }
+\seealso{ \code{\link{plot.segmented}} }
 \examples{
-## See ?broken.line
+## See ?plot.segmented
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

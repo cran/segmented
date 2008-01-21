@@ -1,9 +1,11 @@
 `segmented.glm` <-
 function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
-    it.max <- control$it.max
+    it.max <- old.it.max<- control$it.max
     toll <- control$toll
     visual <- control$visual
     last <- control$last
+    h<-min(abs(control$h),1)
+    if(h<1) it.max<-it.max+round(it.max/2)
     objframe <- update(obj, model = TRUE)
     .y <- model.response(objframe$model)
     a <- model.matrix(seg.Z, data = obj$data)
@@ -12,6 +14,9 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
     Z <- list()
     for (i in colnames(a)) Z[[length(Z) + 1]] <- a[, i]
     name.Z <- names(Z) <- colnames(a)
+    if(length(Z)==1 && is.vector(psi) && is.numeric(psi)){
+        psi <- list(as.numeric(psi))
+        names(psi)<-name.Z}
     if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) ||
         is.null(names(psi)))
         stop("Z and psi have to be *named* list")
@@ -75,6 +80,7 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
     maxit.glm <- control$maxit.glm
     psi.values<-NULL
     rangeZ<-apply(Z,2,range)
+    H<-1
     while (abs(epsilon) > toll) {
         eta0 <- obj$linear.predictors
         U <- pmax((Z - PSI), 0)
@@ -117,7 +123,8 @@ function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
         }
         if (it > it.max) break
         psi.values[[length(psi.values)+1]]<-psi.old <- psi
-        psi <- psi.old + gamma.c/beta.c
+        if(it>=old.it.max && h<1) H<-h
+        psi <- psi.old + H*gamma.c/beta.c
         PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
         a <- apply((Z < PSI), 2, all)
         b <- apply((Z > PSI), 2, all)

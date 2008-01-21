@@ -21,7 +21,7 @@ function(object, short=FALSE, ...){
         summ$Ttable[idU,4]<-NA
         coeff<-summ$coefficients[,1]
         v<-summ$coefficients[,2]
-        summ$gap<-cbind(coeff[idV]*beta.c,v[idV]*beta.c,coeff[idV]/v[idV])
+        summ$gap<-cbind(coeff[idV]*beta.c,abs(v[idV]*beta.c),coeff[idV]/v[idV])
         #dimnames(summ$gap)<-list(rep("",nrow(object$psi)),c("Est.","SE","t value"))
         colnames(summ$gap)<-c("Est.","SE","t value")
         rownames(summ$gap)<-nomiU
@@ -35,7 +35,7 @@ function(object, short=FALSE, ...){
         summ$Ttable[idU,4]<-NA
         coeff<-summ$coefficients[,1]
         v<-summ$coefficients[,2]
-        summ$gap<-cbind(coeff[idV]*beta.c,v[idV]*beta.c,coeff[idV]/v[idV])
+        summ$gap<-cbind(coeff[idV]*beta.c,abs(v[idV]*beta.c),coeff[idV]/v[idV])
         #dimnames(summ$gap)<-list(rep("",nrow(object$psi)),c("Est.","SE","t value"))
         colnames(summ$gap)<-c("Est.","SE","t value")
         rownames(summ$gap)<-nomiU

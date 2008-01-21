@@ -1,0 +1,49 @@
+`confint.segmented` <-
+function(object, parm, level=0.95, rev.sgn=FALSE, digits=max(3, getOption("digits") - 3), ...){
+#restituisce CI per i psi
+        if(!"segmented"%in%class(object)) stop("A segmented model is needed")
+        #nomi delle variabili segmented:
+        if(missing(parm)) {
+          nomeZ<- object$nameUV[[3]]
+          if(length(rev.sgn)==1) rev.sgn<-rep(rev.sgn,length(nomeZ))
+          }
+             else {
+                if(! parm %in% object$nameUV[[3]]) {stop("invalid parm")}
+                  else {nomeZ<-parm}
+                  }
+        if(length(rev.sgn)!=length(nomeZ)) rev.sgn<-rep(rev.sgn, length.out=length(nomeZ))
+        rr<-list()
+        z<-abs(qnorm((1-level)/2))
+        for(i in 1:length(nomeZ)){ #per ogni variabile segmented `parm' (tutte o selezionata)..
+            nomi.U<-grep(nomeZ[i],object$nameUV$U,extended=FALSE,value=TRUE)
+            nomi.V<-grep(nomeZ[i],object$nameUV$V,extended=FALSE,value=TRUE)
+            m<-matrix(,length(nomi.U),3)
+            rownames(m)<-nomi.V
+            colnames(m)<-c("Est.",paste("CI","(",level*100,"%",")",c(".l",".u"),sep=""))
+            for(j in 1:length(nomi.U)){ #per ogni psi della stessa variabile segmented..
+                    sel<-c(nomi.V[j],nomi.U[j])
+                    V<-vcov(object)[sel,sel] #questa è vcov di (psi,U)
+                    b<-coef(object)[sel[2]] #diff-Slope
+                    th<-c(b,1)
+                    orig.coef<-drop(diag(th)%*%coef(object)[sel]) #sono i (gamma,beta) th*coef(ogg)[sel]
+                    gammma<-orig.coef[1]
+                    est.psi<-object$psi[sel[1],2]
+                    V<-diag(th)%*%V%*%diag(th) #2x2 vcov() di gamma e beta
+                    se.psi<-sqrt((V[1,1]+V[2,2]*(gammma/b)^2-2*V[1,2]*(gammma/b))/b^2)
+                    r<-c(est.psi, est.psi-z*se.psi, est.psi+z*se.psi)
+                    if(rev.sgn[i]) r<-c(-r[1],rev(-r[2:3]))
+                    m[j,]<-r
+                    } #end loop j (ogni psi della stessa variabile segmented)
+            #CONTROLLA QUESTO:..sarebbe più bello
+            if(nrow(m)==1) rownames(m)<-""
+            if(rev.sgn[i]) {
+                m<-m[nrow(m):1,]
+                rownames(m)<-rev(rownames(m))
+                }
+            rr[[length(rr)+1]]<-signif(m,digits)
+            } #end loop i (ogni variabile segmented)
+        names(rr)<-nomeZ
+        return(rr)
+          } #end_function
+
+

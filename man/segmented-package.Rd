@@ -13,8 +13,8 @@ fixed number of break-points.
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.2-3\cr
-Date: \tab 2007-10-26\cr
+Version: \tab 0.2-4\cr
+Date: \tab 2008-01-21\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models
@@ -27,13 +27,17 @@ Vito M.R. Muggeo <vmuggeo@dssm.unipa.it> (thanks to Marco Enea for his partial s
   }
 \references{
 
+Davies, R.B. (1987) Hypothesis testing when a nuisance parameter is present only under the alternative.
+    \emph{Biometrika} \bold{74}, 33--43.
+
 Seber, G.A.F. and Wild, C.J. (1989) \emph{Nonlinear Regression}. Wiley, New York.
+
+Bacon D.W., Watts D.G. (1971) Estimating the transistion between two intersecting straight lines.
+  \emph{Biometrika} \bold{58}: 525 -- 534.
 
 Muggeo, V.M.R. (2003) Estimating regression models with unknown break-points.
     \emph{Statistics in Medicine} \bold{22}, 3055--3071.
 
-Davies, R.B. (1987) Hypothesis testing when a nuisance parameter is present only under the alternative.
-    \emph{Biometrika} \bold{74}, 33--43.
     }
 
 \keyword{ regression }

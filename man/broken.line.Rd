@@ -15,7 +15,7 @@ broken.line(ogg, term = NULL, gap = FALSE, linkinv = FALSE)
   \item{linkinv}{ Should the predictions be computed on the scale of the link function? Default to \code{FALSE}. }
 }
 \details{
-  If \code{term=NULL} predictions for each segmented variable in the fitted model are computed. Argument \code{link}
+  If \code{term=NULL} predictions for each segmented variable in the fitted model are computed. Argument \code{linkinv}
   is ignored whether \code{ogg} does not inherit from the class "glm".
     }
 \value{
@@ -26,18 +26,15 @@ broken.line(ogg, term = NULL, gap = FALSE, linkinv = FALSE)
 %\note{ ~~further notes~~
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
-%\seealso{ See Also \code{\link{segmented}}, \code{\link{predict.glm}}  }
+\seealso{ \code{\link{segmented}}, \code{\link{predict.glm}}  }
 \examples{
 set.seed(1234)
 z<-runif(100)
 y<-rpois(100,exp(2+1.8*pmax(z-.6,0)))
 o<-glm(y~z,family=poisson)
 o.seg<-segmented(o,seg.Z=~z,psi=list(z=.5))
-par(mfrow=c(1,2))
 plot(z,y)
-points(z,broken.line(o.seg,link=FALSE),col=2,pch=20)
-plot(z,broken.line(o.seg,link=TRUE),ylab="log(Fitted)")
-point.psi(o.seg,"z",col=2,pch="x",bottom=FALSE)
+points(z,broken.line(o.seg,linkinv=TRUE),col=2,pch=20)
     }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

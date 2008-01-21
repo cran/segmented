@@ -33,7 +33,7 @@ segmented(obj, seg.Z, psi, control = seg.control(),
                }
   \item{psi}{ named list of vectors. The names have to match the variables of the \code{seg.Z} argument.
       Each vector includes starting values for the break-point(s) for the corresponding
-      variable in \code{seg.Z} }
+      variable in \code{seg.Z}. If \code{seg.Z} includes only a variable, \code{psi} may be a numeric vector. }
   \item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
   \item{model.frame}{ logical value indicating if the model.frame should be returned.}
@@ -86,6 +86,9 @@ labelled with `U.name\_of\_variable'.
   \item \code{print.segmented}
   \item \code{summary.segmented}
   \item \code{print.summary.segmented}
+  \item \code{plot.segmented}
+  \item \code{lines.segmented}
+  \item \code{confint.segmented}
             }
 
 Others are inherited from the class \code{"lm"} or \code{"glm"} depending on the

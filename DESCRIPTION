@@ -1,8 +1,8 @@
 Package: segmented
 Type: Package
 Title: Segmented relationships in regression models
-Version: 0.2-3
-Date: 2007-10-26
+Version: 0.2-4
+Date: 2008-01-21
 Author: Vito M.R. Muggeo <vmuggeo@dssm.unipa.it>
 Maintainer: Vito M.R. Muggeo <vmuggeo@dssm.unipa.it>
 Description: Given a (generalized) linear model, segmented `updates' the model by adding one or more
