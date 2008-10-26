@@ -8,7 +8,8 @@
 }
 \usage{
 \method{plot}{segmented}(x, term = NULL, se = FALSE, const = coef(x)["(Intercept)"],
-  add = FALSE, linkinv = FALSE, show.gap=TRUE, rev.sgn=FALSE, n.points = 10, ...)
+  add = FALSE, linkinv = FALSE, show.gap=TRUE, rev.sgn=FALSE,
+  n.points = 10, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -39,7 +40,7 @@
 \value{
 None.
 }
-\references{ }
+%\references{ }
 \author{ Vito M.R. Muggeo }
 %\note{ ~~further notes~~
 %

@@ -6,7 +6,8 @@
   in the linear predictor.
 }
 \usage{
-davies.test(ogg, term, k = 10, alternative = c("two.sided", "less", "greater"))
+davies.test(ogg, term, k = 10,
+  alternative = c("two.sided", "less", "greater"))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

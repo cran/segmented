@@ -32,7 +32,7 @@ seg.control(toll = 1e-04, it.max = 20, display = FALSE, last = TRUE,
   (actually \code{min(abs(h),1)} is considered) causes the following alterations to the algorithm:
   (i) the actual maximum number of iterations is increased up to \code{it.max+round(it.max/2)} and
   (ii) the breakpoint update is computed via \code{psi.new=psi.old+h*increm}
-  after the \code{it.max}th iteration.
+  after the \code{it.max}-th iteration.
 }
 \value{
   A list with the arguments as components.

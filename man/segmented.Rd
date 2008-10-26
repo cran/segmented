@@ -67,8 +67,14 @@ original object \code{obj} with additionally the followings:
   Other components are not of direct interest of the user.
   }
 
-\references{ Muggeo, V.M.R. (2003) Estimating regression models with unknown 
-  break-points. \emph{Statistics in Medicine} \bold{22}, 3055--3071.}
+\references{ 
+Muggeo, V.M.R. (2003) Estimating regression models with unknown 
+  break-points. \emph{Statistics in Medicine} \bold{22}, 3055--3071.
+
+Muggeo, V.M.R. (2008) Segmented: an R package to fit regression 
+  models with broken-line relationships. \emph{Rnews} \bold{8/1}, 20--25.
+  }
+
     
 \author{ Vito M. R. Muggeo, \email{vmuggeo@dssm.unipa.it} }
 
@@ -119,11 +125,11 @@ zz<-runif(100)
 yy<-2+1.5*pmax(xx-35,0)-1.5*pmax(xx-70,0)+15*pmax(zz-.5,0)+rnorm(100,0,2)
 dati<-data.frame(x=xx,y=yy,z=zz)
 out.lm<-lm(y~x,data=dati)
-o<-\method{segmented}{lm}(out.lm,seg.Z=~x,psi=list(x=c(30,60)),
+o<-segmented(out.lm,seg.Z=~x,psi=list(x=c(30,60)),
     control=seg.control(display=FALSE))
 slope(o)
 
-out.lm1<-lm(y~z,data=dati)
+out.lm<-lm(y~z,data=dati)
 o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 
             }
