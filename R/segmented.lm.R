@@ -159,6 +159,7 @@ function (obj, seg.Z, psi, control = seg.control(), model.frame = TRUE, ...) {
     objF$call <- match.call()
     objF$nameUV <- list(U = paste("U", colnames(Vxb), sep = ""), 
         V = rownames(psi), Z = name.Z)
+    objF$id.group <- if(length(name.Z)<=1) -rowSums(as.matrix(V))
     objF$id.warn <- id.warn
     if (model.frame) 
         objF$mframe <- data.frame(as.list(KK))

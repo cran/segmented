@@ -13,8 +13,8 @@ fixed number of break-points.
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.2-4\cr
-Date: \tab 2008-01-21\cr
+Version: \tab 0.2-6\cr
+Date: \tab 2009-11-05\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models
@@ -38,6 +38,8 @@ Bacon D.W., Watts D.G. (1971) Estimating the transistion between two intersectin
 Muggeo, V.M.R. (2003) Estimating regression models with unknown break-points.
     \emph{Statistics in Medicine} \bold{22}, 3055--3071.
 
+Muggeo, V.M.R. (2008) Segmented: an R package to fit regression 
+  models with broken-line relationships. \emph{Rnews} \bold{8/1}, 20--25.
     }
 
 \keyword{ regression }

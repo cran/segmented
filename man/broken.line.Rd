@@ -33,8 +33,8 @@ z<-runif(100)
 y<-rpois(100,exp(2+1.8*pmax(z-.6,0)))
 o<-glm(y~z,family=poisson)
 o.seg<-segmented(o,seg.Z=~z,psi=list(z=.5))
-plot(z,y)
-points(z,broken.line(o.seg,linkinv=TRUE),col=2,pch=20)
+\dontrun{plot(z,y)}
+\dontrun{points(z,broken.line(o.seg,linkinv=TRUE),col=2,pch=20)}
     }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

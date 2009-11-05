@@ -12,10 +12,11 @@ function(ogg,term=NULL,gap=FALSE,linkinv=FALSE){
         nomi<-names(coef(ogg))
         nomi<-nomi[-match(nomepsi,nomi)] #escludi i coef delle V
         index<-vector(mode = "list", length = length(nomeZ))
-        for(i in 1:length(nomeZ)) index[[i]]<-grep(nomeZ[i], nomi, extended=FALSE)
+        for(i in 1:length(nomeZ)) index[[i]]<-c(match(nomeZ[i],nomi),
+          grep(paste("\\.",nomeZ[i],"$",sep=""), nomi,value=FALSE))
         variabili<-Ris<-list()
         for(i in 1:length(index)){
-            ind<-unlist(index[[i]])
+            ind<-as.numeric(na.omit(unlist(index[[i]])))
             #M<-matrix(1,length(ind),length(ind))
             #M[row(M)<col(M)]<-0
             cof<-coef(ogg)[ind] #questo è il vettore di coef per la variabile seg

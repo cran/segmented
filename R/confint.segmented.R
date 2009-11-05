@@ -1,7 +1,11 @@
 `confint.segmented` <-
-function(object, parm, level=0.95, rev.sgn=FALSE, digits=max(3, getOption("digits") - 3), ...){
+function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, getOption("digits") - 3), ...){
 #restituisce CI per i psi
         if(!"segmented"%in%class(object)) stop("A segmented model is needed")
+        if(var.diff && length(object$nameUV$Z)>1) {
+            var.diff<-FALSE
+            warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)
+            }
         #nomi delle variabili segmented:
         if(missing(parm)) {
           nomeZ<- object$nameUV[[3]]
@@ -15,14 +19,14 @@ function(object, parm, level=0.95, rev.sgn=FALSE, digits=max(3, getOption("digit
         rr<-list()
         z<-abs(qnorm((1-level)/2))
         for(i in 1:length(nomeZ)){ #per ogni variabile segmented `parm' (tutte o selezionata)..
-            nomi.U<-grep(nomeZ[i],object$nameUV$U,extended=FALSE,value=TRUE)
-            nomi.V<-grep(nomeZ[i],object$nameUV$V,extended=FALSE,value=TRUE)
+            nomi.U<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$U,value=TRUE)
+            nomi.V<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$V,value=TRUE)
             m<-matrix(,length(nomi.U),3)
             rownames(m)<-nomi.V
             colnames(m)<-c("Est.",paste("CI","(",level*100,"%",")",c(".l",".u"),sep=""))
             for(j in 1:length(nomi.U)){ #per ogni psi della stessa variabile segmented..
                     sel<-c(nomi.V[j],nomi.U[j])
-                    V<-vcov(object)[sel,sel] #questa è vcov di (psi,U)
+                    V<-vcov(object,var.diff=var.diff)[sel,sel] #questa è vcov di (psi,U)
                     b<-coef(object)[sel[2]] #diff-Slope
                     th<-c(b,1)
                     orig.coef<-drop(diag(th)%*%coef(object)[sel]) #sono i (gamma,beta) th*coef(ogg)[sel]

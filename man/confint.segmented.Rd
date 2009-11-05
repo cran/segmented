@@ -6,19 +6,21 @@
   Computes confidence intervals for the breakpoints in a fitted `segmented' model.
 }
 \usage{
-\method{confint}{segmented}(object, parm, level=0.95, rev.sgn=FALSE,
+\method{confint}{segmented}(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE,
         digits=max(3, getOption("digits") - 3), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{object}{ a fitted \code{segmented} object. }
-  \item{parm}{ the segmented variable of interest. If missing all the segmented variables are considered. }
-  \item{level}{ the confidence level required (default to 0.95).}
-  \item{rev.sgn}{ vector of logicals. The length should be equal to the length of \code{parm}; recycled otherwise.
+  \item{object}{a fitted \code{segmented} object. }
+  \item{parm}{the segmented variable of interest. If missing all the segmented variables are considered. }
+  \item{level}{the confidence level required (default to 0.95).}
+  \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}; recycled otherwise.
    when \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
     therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.}
-  \item{digits}{ controls the number of digits to print when printing the output. }
-  \item{\dots}{ additional parameters }
+  \item{var.diff}{logical. If \code{var.diff=TRUE} and there is a single segmented variable, the standard error is 
+    based on sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.}
+  \item{digits}{controls the number of digits to print when printing the output. }
+  \item{\dots}{additional parameters }
 }
 \details{
   Currently \code{confint.segmented} computes confidence limits using standard errors coming from the Delta
@@ -30,9 +32,8 @@
 \value{
     A list of matrices. Each matrix includes point estimate and confidence limits of the breakpoint(s) for each
     segmented variable in the model.
-
 }
-\references{ }
+%\references{ }
 \author{ Vito M.R. Muggeo }
 %\note{ ~~further notes~~
 %

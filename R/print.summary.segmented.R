@@ -1,13 +1,13 @@
 `print.summary.segmented` <-
-function(x,digits = max(3, getOption("digits") - 3),short=x$short,...){
-#revisione 15/05/03;7/10/03; 28/11/03; 24/02/04
+function(x,digits = max(3, getOption("digits") - 3),signif.stars = getOption("show.signif.stars"),
+  short = x$short, var.diff = x$var.diff, ...){
     cat("\n\t***Regression Model with Segmented Relationship(s)***\n\n")
     cat( "Call: \n" )
     print( x$call )
     cat("\nEstimated Break-Point(s):\n ")
     print(signif(x$psi[,-1],4))
     cat("\nt value for the gap-variable(s) V: ",x$gap[,3],"\n")
-if(any(abs(x$gap[,3])>1.96)) cat("    Warning: some coefficient of the gap-variable is significant at 0.05 level\n")
+if(any(abs(x$gap[,3])>1.96)) cat("    Warning:", sum(abs(x$gap[,3])>1.96),"gap coefficient(s) significant at 0.05 level\n")
     if(short){ 
     cat("\nDifference-in-slopes parameter(s):\n")
     #print(x$Ttable[(nrow(x$Ttable)-nrow(x$psi)+1):nrow(x$Ttable),])}
@@ -20,17 +20,23 @@ if(any(abs(x$gap[,3])>1.96)) cat("    Warning: some coefficient of the gap-varia
     #idU<-match(nomiU,rownames(x$Ttable))
     print(x$Ttable[nomiU,])}
     else {cat("\nMeaningful coefficients of the linear terms:\n")
-        print(x$Ttable)}
-    cat("\n")
+        printCoefmat(x$Ttable, digits = digits, signif.stars = signif.stars,na.print = "NA", ...)
+        #print(x$Ttable)
+        }
 if("summary.lm"%in%class(x)){ #for lm
+    if(var.diff){
+    for(i in 1:length(x$sigma.new)){
+    cat("\nResidual standard error ",i,":", format(signif(x$sigma.new[i], 
+        digits)), "on", x$df.new[i], "degrees of freedom")}
+    cat("\n")    
+    } else {
     cat("\nResidual standard error:", format(signif(x$sigma, 
-        digits)), "on", x$df[2], "degrees of freedom\n")
+        digits)), "on", x$df[2], "degrees of freedom\n")}
     if (!is.null(x$fstatistic)) {
         cat("Multiple R-Squared:", formatC(x$r.squared, digits = digits))
         cat(",  Adjusted R-squared:", formatC(x$adj.r.squared, 
             digits = digits), "\n")}
         }
-
 if("summary.glm"%in%class(x)){ #for glm
     cat("(Dispersion parameter for ", x$family$family, " family taken to be ", 
         format(x$dispersion), ")\n\n", apply(cbind(paste(format.default(c("Null", 
@@ -41,7 +47,6 @@ if("summary.glm"%in%class(x)){ #for glm
             1, paste, collapse = " "), "AIC: ", format(x$aic, 
             digits = max(4, digits + 1)), "\n", sep = "")
         }
-
 if(!"summary.lm"%in%class(x) && !"summary.glm"%in%class(x)){#for Arima 
     cm <- x$call$method
     if (is.null(cm) || cm != "CSS") 

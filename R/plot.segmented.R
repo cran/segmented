@@ -20,7 +20,8 @@ plot.segmented<-function (x, term = NULL, se = FALSE, const = coef(x)["(Intercep
     id.Z <- match(x$nameUV$Z, names(coef(x)))
     id.U <- match(x$nameUV$U, names(coef(x)))
     id.V <- match(x$nameUV$V, names(coef(x)))
-    id.term <- grep(term, names(coef(x)), extended = FALSE)
+    id.term <- c(match(term,names(coef(x))), 
+        grep(paste("\\.",term,"$",sep=""), names(coef(x)), value = FALSE))
     id.U <- id.term[id.term %in% id.U]
     id.V <- id.term[id.term %in% id.V]
     id.Z <- id.term[id.term %in% id.Z]
@@ -34,12 +35,13 @@ plot.segmented<-function (x, term = NULL, se = FALSE, const = coef(x)["(Intercep
         cof <- A %*% coef(x)[id.ok]
         var.cof <- A %*% vcov(x)[id.ok, id.ok] %*% A
     }
-    idpsi <- grep(term, rownames(x$psi), extended = FALSE)
+    idpsi <- grep(paste("\\.",term,"$",sep=""), rownames(x$psi), value = FALSE)
     psi <- x$psi[idpsi, 2]
     xx <- seq(min(x$rangeZ[, term]), max(x$rangeZ[, term]), length = n.points)
+    xx<- sort(c(xx,psi,(psi+psi/10000)))
     #xx <- sort(c(xx,psi,psi+diff(range(xx))/300,psi-diff(range(xx))/300))
-    xx <- sort(c(xx, psi, psi + .Machine$double.eps*diff(range(xx)),
-              psi - .Machine$double.neg.eps*diff(range(xx))))
+    #xx <- sort(c(xx, psi, psi + .Machine$double.eps*diff(range(xx)),
+    #          psi - .Machine$double.neg.eps*diff(range(xx))))
     #double.neg.eps
     #if(rev.sgn) xx<- sort(-xx)
     nn <- length(xx)

@@ -1,7 +1,10 @@
 `slope` <-
-function(ogg, parm, conf.level=0.95, rev.sgn=FALSE){
-#Ad ogni chiamata di grep() è stato aggiunto l'argomento extended=F per consentire Z=log(x)
+function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE){
         if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
+        if(var.diff && length(ogg$nameUV$Z)>1) {
+            var.diff<-FALSE
+            warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)
+            }
         nomepsi<-rownames(ogg$psi) #OK
         nomeU<-ogg$nameUV[[1]]
         nomeZ<-ogg$nameUV[[3]]
@@ -17,16 +20,17 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE){
         nomi<-names(coef(ogg))
         nomi<-nomi[-match(nomepsi,nomi)] #escludi i coef delle V
         index<-vector(mode = "list", length = length(nomeZ))
-        for(i in 1:length(nomeZ)) index[[i]]<-grep(nomeZ[i], nomi, extended=FALSE) 
+        for(i in 1:length(nomeZ)) index[[i]]<-c(match(nomeZ[i],nomi),
+          grep(paste("\\.",nomeZ[i],"$",sep=""), nomi,value=FALSE))
         Ris<-list()   
         digits <- max(3, getOption("digits") - 3)
         rev.sgn<-rep(rev.sgn, length.out=length(nomeZ))
         for(i in 1:length(index)){
-            ind<-unlist(index[[i]])
+            ind<-as.numeric(na.omit(unlist(index[[i]])))
             M<-matrix(1,length(ind),length(ind))
             M[row(M)<col(M)]<-0
             cof<-coef(ogg)[ind]
-            covv<-vcov(ogg)[ind,ind] 
+            covv<-vcov(ogg,var.diff=var.diff)[ind,ind] 
             cof.out<-M%*%cof 
             cov.out<-M%*%covv%*%t(M)
             se.out<-sqrt(diag(cov.out))
@@ -34,7 +38,7 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE){
             ris<-cbind(cof.out,se.out,(cof.out/se.out),(cof.out-k),(cof.out+k))
             cin<-paste("CI","(",conf.level*100,"%",")",c(".l",".u"),sep="")
             #se la left slope è nulla....
-            if(identical(length(ind),length(grep(nomeZ[i], nomeU, extended=FALSE)))){
+            if(identical(length(ind),length(grep(paste("\\.",nomeZ[i],"$",sep=""), nomeU)))){
                     ris<-rbind(c(0,rep(NA,(ncol(ris)-1))),ris)}
             if(rev.sgn[i]){
                 ris<-cbind(-ris[nrow(ris):1,1],ris[nrow(ris):1,2],-ris[nrow(ris):1,3],

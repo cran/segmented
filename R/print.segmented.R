@@ -7,9 +7,9 @@ cat( "Call: " )
 print( x$call )
 cat("\nMeaningful coefficients of the linear terms:\n")
 #print(x$coef[(1:(length(x$coef)-length(x$psi[,2])))])
-iV<- -match(x$nameUV[[2]],names(coef(x)))
-#iV<- -grep("psi.",names(coef(x)))#indices all but V
-print(x$coef[iV])
+iV<- -match(x$nameUV[[2]],names(coef(x)))#iV<- -grep("psi.",names(coef(x)))#indices all but V
+#print(x$coef[iV])
+print.default(format(x$coef[iV], digits = digits), print.gap = 2, quote = FALSE)
 cat("\n")
 cat("Estimated Break-Point(s)",dimnames(x$psi)[[1]],":",
     format(signif(x$psi[,2],digits)),"\n")

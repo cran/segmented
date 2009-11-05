@@ -28,8 +28,10 @@ segmented(obj, seg.Z, psi, control = seg.control(),
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{obj}{ standard `linear' model of class "lm" or "glm". }
-  \item{seg.Z}{ a formula with no response variable, indicating the (continuous) explanatory
-               variables having segmented relationships with the response
+  \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1+x2}, indicating the 
+      (continuous) explanatory variables having segmented relationships with the response. 
+      Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or \code{seg.Z=~sqrt(x1)}, 
+      or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed.
                }
   \item{psi}{ named list of vectors. The names have to match the variables of the \code{seg.Z} argument.
       Each vector includes starting values for the break-point(s) for the corresponding
@@ -58,11 +60,11 @@ segmented(obj, seg.Z, psi, control = seg.control(),
 
 An object of class "segmented" is a list containing the components of the
 original object \code{obj} with additionally the followings:
-  \item{psi }{estimated break-points and relevant (approximate) standard errors}
-  \item{it }{number of iterations employed}
-  \item{epsilon }{difference in the objective function when the algorithm stops}
-  \item{mframe}{ the model frame}
-  \item{psi.history}{A list or a vector including the breakpoint estimates at each step}
+  \item{psi}{estimated break-points and relevant (approximate) standard errors}
+  \item{it}{number of iterations employed}
+  \item{epsilon}{difference in the objective function when the algorithm stops}
+  \item{mframe}{the model frame}
+  \item{psi.history}{A list or a vector including the breakpoint estimates at each step}\cr
 
   Other components are not of direct interest of the user.
   }
@@ -95,6 +97,7 @@ labelled with `U.name\_of\_variable'.
   \item \code{plot.segmented}
   \item \code{lines.segmented}
   \item \code{confint.segmented}
+  \item \code{vcov.segmented}
             }
 
 Others are inherited from the class \code{"lm"} or \code{"glm"} depending on the

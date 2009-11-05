@@ -4,7 +4,7 @@ draw.history<-function(obj,term,...){
                else {term<-obj$nameUV$Z}
                }
       range.ok<-obj$rangeZ[,term]
-      id.ok<-grep(term, rownames(obj$psi), extended=FALSE)
+      id.ok<-grep(paste("\\.",term,"$",sep=""),  rownames(obj$psi),value=FALSE)
       est.psi<-obj$psi[id.ok,2]
 
       A<-matrix(unlist(obj$psi.history),nrow=nrow(obj$psi),byrow=FALSE)
@@ -17,10 +17,3 @@ draw.history<-function(obj,term,...){
       abline(h=est.psi,lty=3)
       }
       
-
-#da cancellare??!??!!
-
-
-
-
-
