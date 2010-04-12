@@ -1,179 +1,200 @@
 `segmented.glm` <-
-function(obj, seg.Z, psi, control=seg.control() , model.frame=TRUE, ...){
+#objF$id.group???
+function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
+    maxit.glm <- control$maxit.glm
     it.max <- old.it.max<- control$it.max
     toll <- control$toll
     visual <- control$visual
+    stop.if.error<-control$stop.if.error
+###    if() stop.if.error<-FALSE
     last <- control$last
+    K<-control$K
     h<-min(abs(control$h),1)
     if(h<1) it.max<-it.max+round(it.max/2)
-    objframe <- update(obj, model = TRUE)
-    .y <- model.response(objframe$model)
-    a <- model.matrix(seg.Z, data = obj$data)
-    a <- subset(a, select = colnames(a)[-1])
-    .n <- nrow(a)
-    Z <- list()
-    for (i in colnames(a)) Z[[length(Z) + 1]] <- a[, i]
-    name.Z <- names(Z) <- colnames(a)
-    if(length(Z)==1 && is.vector(psi) && is.numeric(psi)){
+#    if(!stop.if.error) objInitial<-obj        
+    #-------------------------------
+#    #una migliore soluzione.........
+#    objframe <- update(obj, model = TRUE, x = TRUE, y = TRUE)
+#    y <- objframe$y
+#    a <- model.matrix(seg.Z, data = eval(obj$call$data))
+#    a <- subset(a, select = colnames(a)[-1])
+    Call<-mf<-obj$call
+    m <- match(c("formula", "data", "subset", "weights", "na.action"), names(mf), 0L)
+    mf <- mf[c(1, m)]
+    mf$drop.unused.levels <- TRUE
+    mf[[1L]] <- as.name("model.frame")
+    mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+    mf <- eval(mf, parent.frame())
+
+    weights <- as.vector(model.weights(mf))
+    offs <- as.vector(model.offset(mf))
+    
+    if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
+      names(mf)[which(names(mf)=="(weights)")]<-as.character(Call$weights)
+      # mf["(weights)"]<-weights
+      }
+    
+    mt <- attr(mf, "terms")
+    interc<-attr(mt,"intercept")
+    y <- model.response(mf, "any")
+    XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
+
+    nomeRispo<-strsplit(paste(formula(obj))[2],"/")[[1]]
+    if(length(nomeRispo)>=2) mf[nomeRispo[1]]<-weights*y
+    
+    id.duplic<-match(all.vars(formula(obj)),all.vars(seg.Z),nomatch=0)>0
+    if(any(id.duplic)) {
+        #new.mf<-mf[,id.duplic,drop=FALSE]
+        new.mf<-mf[,all.vars(formula(obj))[id.duplic],drop=FALSE]
+        new.XREGseg<-data.matrix(new.mf)
+        XREG<-cbind(XREG,new.XREGseg)
+        }
+    n.Seg <- if(is.list(psi)) length(psi) else 1
+    n.psi<- length(unlist(psi))
+    id.n.Seg<-(ncol(XREG)-n.Seg+1):ncol(XREG)
+    XREGseg<-XREG[,id.n.Seg,drop=FALSE]
+    #XREG<-XREG[,-id.n.Seg,drop=FALSE]
+    #XREG<-model.matrix(obj0) non va bene perché non elimina gli eventuali mancanti in seg.Z..
+    #Due soluzioni
+    #XREG<-XREG[,colnames(model.matrix(obj)),drop=FALSE]
+    XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
+    n <- nrow(XREG)
+    #Z <- list(); for (i in colnames(XREGseg)) Z[[length(Z) + 1]] <- XREGseg[, i]
+    Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
+    name.Z <- names(Z) <- colnames(XREGseg)
+    if(length(Z)==1 && is.vector(psi) && (is.numeric(psi)||is.na(psi))){
         psi <- list(as.numeric(psi))
-        names(psi)<-name.Z}
-    if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) ||
-        is.null(names(psi)))
-        stop("Z and psi have to be *named* list")
-    nomiZpsi <- match(names(Z), names(psi))
-    if (!identical(length(Z), length(psi)) || any(is.na(nomiZpsi)))
+        names(psi)<-name.Z
+        }
+    if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) || is.null(names(psi))) stop("Z and psi have to be *named* list")
+    id.nomiZpsi <- match(names(Z), names(psi))
+    if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi))) 
         stop("Length or names of Z and psi do not match")
-    dd <- match(names(Z), names(psi))
-    nome <- names(psi)[dd]
+    #dd <- match(names(Z), names(psi))
+    nome <- names(psi)[id.nomiZpsi]
     psi <- psi[nome]
-    a <- sapply(psi, length)
-    b <- rep(1:length(a), times = a)
-    Znew <- list()
-    for (i in 1:length(psi)) Znew[[length(Znew) + 1]] <- rep(Z[i],
-        a[i])
-    Z <- matrix(unlist(Znew), nrow = .n)
-    colnames(Z) <- rep(nome, a)
+    for(i in 1:length(psi)) {
+        if(any(is.na(psi[[i]]))) psi[[i]]<-quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
+        }
+    
+    a <- sapply(psi, length)#b <- rep(1:length(a), times = a)
+
+    #Znew <- list()
+    #for (i in 1:length(psi)) Znew[[length(Znew) + 1]] <- rep(Z[i], a[i])
+    #Z <- matrix(unlist(Znew), nrow = n)
+    Z<-matrix(unlist(mapply(function(x,y)rep(x,y),Z,a,SIMPLIFY = TRUE)),nrow=n)
     psi <- unlist(psi)
     k <- ncol(Z)
-    PSI <- matrix(rep(psi, rep(.n, k)), ncol = k)
-    nomiZ <- rep(nome, times = a)
-    ripetizioni <- as.numeric(unlist(sapply(table(nomiZ)[order(unique(nomiZ))],
-        function(xxx) {
-            1:xxx
-        })))
+    PSI <- matrix(rep(psi, rep(n, k)), ncol = k)
+    colnames(Z) <- nomiZ <- rep(nome, times = a)
+    ripetizioni <- as.numeric(unlist(sapply(table(nomiZ)[order(unique(nomiZ))], function(xxx) {1:xxx})))
     nomiU <- paste("U", ripetizioni, sep = "")
     nomiU <- paste(nomiU, nomiZ, sep = ".")
-    KK <- new.env()
-    if(is.null(dim(obj$data))){
-    for (i in 1:ncol(objframe$model)) assign(all.vars(formula(obj))[i],
-                eval(parse(text=all.vars(formula(obj))[i])), envir = KK)
-            } else {
-    for (i in 1:length(all.vars(formula(obj)))) assign(all.vars(formula(obj))[i],
-                obj$data[,all.vars(formula(obj))[i]], envir = KK)
-        }
+    nomiV <- paste("V", ripetizioni, sep = "")
+    nomiV <- paste(nomiV, nomiZ, sep = ".")
+    #forse non serve crearsi l'ambiente KK, usa mf..
+    #obj <- update(obj, formula = Fo, data = mf)
+    #if (model.frame) obj$model <- mf
+  #controlla che model.frame() funzioni sull'oggetto restituito    
+#    KK <- new.env()
+#    for (i in 1:ncol(objframe$model)) assign(names(objframe$model[i]), objframe$model[[i]], envir = KK)
     if (it.max == 0) {
         U <- pmax((Z - PSI), 0)
         colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
         nomiU <- paste("U", colnames(U), sep = "")
-        for (i in 1:ncol(U)) assign(nomiU[i], U[, i], envir = KK)
-        Fo <- update.formula(formula(obj), as.formula(paste(".~.+",
-            paste(nomiU, collapse = "+"))))
-        obj <- update(obj, formula = Fo, data = KK)
-        if (model.frame)
-            obj$model <- data.frame(as.list(KK))
+        #for (i in 1:ncol(U)) assign(nomiU[i], U[, i], envir = KK)
+        #è necessario il for? puoi usare colnames(U)<-nomiU;mf[nomiU]<-U
+        for(i in 1:ncol(U)) mf[nomiU[i]]<-U[,i]
+        Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
+        #obj <- update(obj, formula = Fo, data = KK)
+        obj <- update(obj, formula = Fo, data = mf)
+        if (model) obj$model <-mf  #obj$model <- data.frame(as.list(KK))
         obj$psi <- psi
         return(obj)
     }
-    XREG <- model.matrix(objframe)
+    #XREG <- model.matrix(obj) creata sopra         
+    #o <- model.offset(objframe)
+    #w <- model.weights(objframe)
+    if (is.null(weights)) weights <- rep(1, n)
+    if (is.null(offs)) offs <- rep(0, n)
     fam <- family(obj)
-    o <- model.offset(objframe$model)
-    w <- model.weights(objframe$model)
-    if (is.null(w))
-        w <- rep(1, .n)
-    if (is.null(o))
-        o <- rep(0, .n)
     initial <- psi
-    it <- 1
-    epsilon <- 10
     obj0 <- obj
+    dev0<-obj$dev
     list.obj <- list(obj)
-    maxit.glm <- control$maxit.glm
-    psi.values<-NULL
-    rangeZ<-apply(Z,2,range)
-    H<-1
-    while (abs(epsilon) > toll) {
-        eta0 <- obj$linear.predictors
-        U <- pmax((Z - PSI), 0)
-        V <- ifelse((Z > PSI), -1, 0)
-        dev.old <- obj$dev
-        X <- cbind(XREG, U, V)
-        rownames(X) <- NULL
-        if (ncol(V) == 1)
-            colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c("U", "V")
-        else colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U",
-            1:k, sep = ""), paste("V", 1:k, sep = ""))
-        obj <- suppressWarnings(glm.fit(x = X, y = .y, offset = o,
-            weights = w, family = fam, control = glm.control(maxit = maxit.glm),
-            etastart = eta0))
-        dev.new <- obj$dev
-        if (visual) {
-            if (it == 1)
-                cat(0, " ", formatC(dev.old, 3, format = "f"),
-                  "", "(No breakpoint(s))", "\n")
-            spp <- if (it < 10)
-                ""
-            else NULL
-            cat(it, spp, "", formatC(dev.new, 3, format = "f"),
-                "\n")
+#    psi.values <- NULL
+    nomiOK<-nomiU
+    opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
+        fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm)
+    obj<-seg.glm.fit(y,XREG,Z,PSI,weights,offs,opz)
+    if(!is.list(obj)){
+        warning("No breakpoint estimated", call. = FALSE)
+        return(obj0)
         }
-        epsilon <- (dev.new - dev.old)/dev.old
-        obj$epsilon <- epsilon
-        it <- it + 1
-        obj$it <- it
-        class(obj) <- c("segmented", class(obj))
-        list.obj[[length(list.obj) + ifelse(last == TRUE, 0,
-            1)]] <- obj
-        if (k == 1) {
-            beta.c <- coef(obj)["U"]
-            gamma.c <- coef(obj)["V"]
-        }
-        else {
-            beta.c <- coef(obj)[paste("U", 1:k, sep = "")]
-            gamma.c <- coef(obj)[paste("V", 1:k, sep = "")]
-        }
-        if (it > it.max) break
-        psi.values[[length(psi.values)+1]]<-psi.old <- psi
-        if(it>=old.it.max && h<1) H<-h
-        psi <- psi.old + H*gamma.c/beta.c
-        PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
-        a <- apply((Z < PSI), 2, all)
-        b <- apply((Z > PSI), 2, all)
-        if (sum(a + b) != 0 || is.na(sum(a + b)))
-            stop("(Some) estimated psi out of its range")
-        obj$psi <- psi
-    }
-    psi.values[[length(psi.values)+1]]<- psi
+    nomiOK<-obj$nomiOK
+    it<-obj$it
+    psi<-obj$psi
+    k<-length(psi)
+    psi.values<-obj$psi.values
+    U<-obj$U
+    V<-obj$V
+    rangeZ<-obj$rangeZ 
+    obj<-obj$obj
+    beta.c<-if(k == 1) coef(obj)["U"] else coef(obj)[paste("U", 1:ncol(U), sep = "")]
+    psi.values[[length(psi.values) + 1]] <- psi
     id.warn <- FALSE
     if (it > it.max) {
         warning("max number of iterations attained", call. = FALSE)
         id.warn <- TRUE
     }
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
-    colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
-    colnames(Vxb) <- paste(ripetizioni, nomiZ, sep = ".")
+    colnames(U) <- colnames(Vxb) <-sapply(strsplit(nomiOK,"U"),function(x)x[2])
+    #colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
+    #colnames(Vxb) <- paste(ripetizioni, nomiZ, sep = ".")
     nomiU <- paste("U", colnames(U), sep = "")
     nomiVxb <- paste("psi", colnames(Vxb), sep = "")
-    for (i in 1:ncol(U)) {
-        assign(nomiU[i], U[, i], envir = KK)
-        assign(nomiVxb[i], Vxb[, i], envir = KK)
-    }
+    for(i in 1:ncol(U)) {
+        mf[nomiU[i]]<-U[,i]
+        mf[nomiVxb[i]]<-Vxb[,i]
+        }
+#    for (i in 1:ncol(U)) {
+#        assign(nomiU[i], U[, i], envir = KK)
+#        assign(nomiVxb[i], Vxb[, i], envir = KK)
+#    }
     nnomi <- c(nomiU, nomiVxb)
-    Fo <- update.formula(formula(obj0), as.formula(paste(".~.+",
+    Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", 
         paste(nnomi, collapse = "+"))))
-    objF <- update(obj0, formula = Fo, data = KK)
+    if(is.matrix(y)&& (fam$family=="binomial" || fam$family=="quasibinomial")){
+              mf<-cbind(mf[[1]], mf[,-1])
+    }
+    objF <- update(obj0, formula = Fo, data = mf)
+    if(any(is.na(objF$coefficients))){
+     stop("some estimate is NA: premature stopping with a large number of breakpoints?",
+      call. = FALSE)
+    }
     Cov <- vcov(objF)
-    id <- match(paste("psi", colnames(Vxb), sep = ""), names(coef(objF)))
-    vv <- if (length(id) == 1)
-        Cov[id, id]
-    else diag(Cov[id, id])
+    id <- match(nomiVxb, names(coef(objF)))
+    #cat(id,"\n")
+    #return(objF)
+    vv <- if (length(id) == 1) Cov[id, id] else diag(Cov[id, id])
+    if(length(initial)!=length(psi)) initial<-rep(NA,length(psi)) 
     psi <- cbind(initial, psi, sqrt(vv))
     rownames(psi) <- colnames(Cov)[id]
     colnames(psi) <- c("Initial", "Est.", "St.Err")
-    objF$rangeZ<-rangeZ
-    objF$psi.history<-psi.values
+    objF$rangeZ <- rangeZ
+    objF$psi.history <- psi.values
     objF$psi <- psi
     objF$it <- (it - 1)
-    objF$epsilon <- epsilon
+    objF$epsilon <- obj$epsilon
     objF$call <- match.call()
-    objF$nameUV <- list(U = paste("U", colnames(Vxb), sep = ""),
-        V = rownames(psi), Z = name.Z)
+    objF$nameUV <- list(U = nomiU, V = rownames(psi), Z = name.Z)
+    objF$id.group <- if(length(name.Z)<=1) -rowSums(as.matrix(V))
     objF$id.warn <- id.warn
-    if (model.frame)
-        objF$mframe <- data.frame(as.list(KK))
+    if (model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
     class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"
-    if (last)
+    if (last) 
         list.obj <- list.obj[[length(list.obj)]]
     return(list.obj)
 }

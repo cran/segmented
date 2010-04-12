@@ -1,0 +1,21 @@
+*********************************
+	Changes in segmented
+*********************************
+
+
+==============
+version 0.2-6
+==============
+* vcov.segmented added
+* option var.diff for robust covariance matrix has been added in summary.segmented, print.summary.segmented, slope, and confint.
+* Some bugs fixed
+
+
+==============
+version 0.2-7
+==============
+* A sort of automatic procedure for breakpoint estimation is implemented. See argument
+	stop.if.error in seg.control()
+* davies.test() now accepts a one-sided formula (~x) rather than character ("x") to mean the
+	segmented variable to be tested. davies.test also gains the arguments `beta0' and `dispersion'
+* Some bugs fixed

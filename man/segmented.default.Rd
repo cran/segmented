@@ -6,7 +6,8 @@
   \code{segmented} is a generic function, and \code{segmented.default} its default method.
   }
 \usage{
-\method{segmented}{default}(obj, seg.Z, psi, control = seg.control(), model.frame = TRUE, ...)
+\method{segmented}{default}(obj, seg.Z, psi, control = seg.control(), 
+    model = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -14,7 +15,7 @@
   \item{seg.Z}{ see \code{\link{segmented}} }
   \item{psi}{ see \code{\link{segmented}} }
   \item{control}{ see \code{\link{segmented}} }
-  \item{model.frame}{ see \code{\link{segmented}} }
+  \item{model}{ see \code{\link{segmented}} }
   \item{\dots}{ see \code{\link{segmented}} }
 }
 \details{

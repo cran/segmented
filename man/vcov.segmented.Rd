@@ -26,7 +26,7 @@ The full matrix of the estimated covariances between the parameter estimates, in
 the breakpoints.
 }
 %\references{}
-\author{Vito M. R. Muggeo, \email{vmuggeo@dssm.unipa.it}}
+\author{Vito M. R. Muggeo, \email{vito.muggeo@unipa.it}}
 \note{\code{var.diff=TRUE} works when there is a single segmented variable.}
 \seealso{\code{\link{summary.segmented}}}
 \examples{

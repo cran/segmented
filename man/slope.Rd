@@ -31,7 +31,7 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, var.diff=FALSE)
 \references{Muggeo, V.M.R. (2003) Estimating regression models with unknown break-points. 
     \emph{Statistics in Medicine} \bold{22}, 3055--3071.
     }
-\author{Vito M. R. Muggeo, \email{vmuggeo@dssm.unipa.it} 
+\author{Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} 
 }
 \note{The returned summary is based on limiting Gaussian distribution for the model parameters involved 
     in the computations. Sometimes, even with large sample sizes such approximations are questionable 

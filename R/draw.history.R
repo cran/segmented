@@ -11,7 +11,8 @@ draw.history<-function(obj,term,...){
       rownames(A)<-rownames(obj$psi)
 
       matplot(1:ncol(A),t(A)[,id.ok],type="b",pch=1:length(est.psi),col=1,
-        xlab="iterations",ylab=term,ylim=range.ok,xaxt="n",...)
+        xlab="iterations",ylab=paste("breakpoint ","(",term,")",sep=""),
+        ylim=range.ok,xaxt="n",...)
       axis(1,at=1:ncol(A),cex.axis=.7)
       #if(rug) points(rep(1))
       abline(h=est.psi,lty=3)

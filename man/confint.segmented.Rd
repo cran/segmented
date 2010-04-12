@@ -23,8 +23,8 @@
   \item{\dots}{additional parameters }
 }
 \details{
-  Currently \code{confint.segmented} computes confidence limits using standard errors coming from the Delta
-  method for the ratio of two random variables of the estimated. This value is a better approximation of the
+  Currently \code{confint.segmented} computes confidence limits for the breakpoints using the standard error coming from the Delta
+  method for the ratio of two random variables. This value is an approximation (slightly) better than the 
   one reported in the `psi' component of the list returned by any \code{segmented} method. The resulting
   confidence intervals are based on the asymptotic Normal distribution of the breakpoint
   estimator which is reliable just for clear-cut kink relationships. See Details in \code{\link{segmented}}.

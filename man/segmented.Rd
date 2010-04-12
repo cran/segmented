@@ -16,13 +16,13 @@ Segmented relationships in regression models
 }
 \usage{
 segmented(obj, seg.Z, psi, control = seg.control(), 
-    model.frame = TRUE, ...)
+    model = TRUE, ...)
 
 \method{segmented}{lm}(obj, seg.Z, psi, control = seg.control(),
-    model.frame = TRUE, ...)
+    model = TRUE, ...)
 
 \method{segmented}{glm}(obj, seg.Z, psi, control = seg.control(),
-    model.frame = TRUE, ...)
+    model = TRUE, ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -35,10 +35,12 @@ segmented(obj, seg.Z, psi, control = seg.control(),
                }
   \item{psi}{ named list of vectors. The names have to match the variables of the \code{seg.Z} argument.
       Each vector includes starting values for the break-point(s) for the corresponding
-      variable in \code{seg.Z}. If \code{seg.Z} includes only a variable, \code{psi} may be a numeric vector. }
+      variable in \code{seg.Z}. If \code{seg.Z} includes only a variable, \code{psi} may be a numeric vector. 
+      A \code{NA} value means that `\code{K}' quantiles are used as starting values, where \code{K} is fixed 
+      via the \code{\link{seg.control}} auxiliary function. }
   \item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
-  \item{model.frame}{ logical value indicating if the model.frame should be returned.}
+  \item{model}{ logical value indicating if the model.frame should be returned.}
   \item{\dots}{ optional arguments. }
 }
 \details{
@@ -63,9 +65,10 @@ original object \code{obj} with additionally the followings:
   \item{psi}{estimated break-points and relevant (approximate) standard errors}
   \item{it}{number of iterations employed}
   \item{epsilon}{difference in the objective function when the algorithm stops}
-  \item{mframe}{the model frame}
-  \item{psi.history}{A list or a vector including the breakpoint estimates at each step}\cr
-
+  \item{model}{the model frame}
+  \item{psi.history}{A list or a vector including the breakpoint estimates at each step}
+  \cr
+  \cr
   Other components are not of direct interest of the user.
   }
 
@@ -74,11 +77,11 @@ Muggeo, V.M.R. (2003) Estimating regression models with unknown
   break-points. \emph{Statistics in Medicine} \bold{22}, 3055--3071.
 
 Muggeo, V.M.R. (2008) Segmented: an R package to fit regression 
-  models with broken-line relationships. \emph{Rnews} \bold{8/1}, 20--25.
+  models with broken-line relationships. \emph{R News} \bold{8/1}, 20--25.
   }
 
     
-\author{ Vito M. R. Muggeo, \email{vmuggeo@dssm.unipa.it} }
+\author{ Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
 
 \note{
 \enumerate{
@@ -87,7 +90,7 @@ Muggeo, V.M.R. (2008) Segmented: an R package to fit regression
  break-point(s) fixed at the values reported in \code{psi}.
  
 \item In the returned object, the name of the difference-in-slopes parameter is 
-labelled with `U.name\_of\_variable'.
+labelled with `U.nameOfVariable'.
 
 \item Methods specific to the class \code{"segmented"} are
     \itemize{
@@ -134,6 +137,10 @@ slope(o)
 
 out.lm<-lm(y~z,data=dati)
 o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
+
+#automatic procedure to estimate breakpoints in the covariate x
+o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
+    control=seg.control(stop.if.error=FALSE))
 
             }
 

@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Plot method for segmented objects  }
 \description{
-  Takes a fitted \code{segmented} object returned by \code{segmented()} and plots (or add)
+  Takes a fitted \code{segmented} object returned by \code{segmented()} and plots (or adds)
   the fitted broken-line for the selected segmented term.
 }
 \usage{
