@@ -21,6 +21,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
+    if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
     mf <- eval(mf, parent.frame())
 

@@ -1,14 +1,15 @@
 *********************************
-	Changes in segmented
+*					  *
+*	Changes in segmented	  *
+*					  *
 *********************************
 
 
 ==============
-version 0.2-6
+version 0.2-7.1
 ==============
-* vcov.segmented added
-* option var.diff for robust covariance matrix has been added in summary.segmented, print.summary.segmented, slope, and confint.
-* Some bugs fixed
+* segmented.lm (and segmented.glm) now accept objects without 'explicit' formulas, namely returned by lm(my_fo,..) (and glm(my_fo,..)) where
+	my_fo was defined earlier. Thanks to Y. Iwasaki for finding the error.
 
 
 ==============
@@ -19,3 +20,13 @@ version 0.2-7
 * davies.test() now accepts a one-sided formula (~x) rather than character ("x") to mean the
 	segmented variable to be tested. davies.test also gains the arguments `beta0' and `dispersion'
 * Some bugs fixed
+
+
+==============
+version 0.2-6
+==============
+* vcov.segmented added
+* option var.diff for robust covariance matrix has been added in summary.segmented, print.summary.segmented, slope, and confint.
+* Some bugs fixed
+
+
