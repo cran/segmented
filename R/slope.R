@@ -34,7 +34,8 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE){
             cof.out<-M%*%cof 
             cov.out<-M%*%covv%*%t(M)
             se.out<-sqrt(diag(cov.out))
-            k<-abs(qnorm((1-conf.level)/2))*se.out
+            k<-if("lm"%in%class(ogg)) abs(qt((1-conf.level)/2,df=ogg$df.residual)) else abs(qnorm((1-conf.level)/2))
+            k<-k*se.out
             ris<-cbind(cof.out,se.out,(cof.out/se.out),(cof.out-k),(cof.out+k))
             cin<-paste("CI","(",conf.level*100,"%",")",c(".l",".u"),sep="")
             #se la left slope è nulla....

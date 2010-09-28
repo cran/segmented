@@ -17,7 +17,7 @@ function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, 
                   }
         if(length(rev.sgn)!=length(nomeZ)) rev.sgn<-rep(rev.sgn, length.out=length(nomeZ))
         rr<-list()
-        z<-abs(qnorm((1-level)/2))
+        z<-if("lm"%in%class(object)) abs(qt((1-level)/2,df=object$df.residual)) else abs(qnorm((1-level)/2))
         for(i in 1:length(nomeZ)){ #per ogni variabile segmented `parm' (tutte o selezionata)..
             nomi.U<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$U,value=TRUE)
             nomi.V<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$V,value=TRUE)

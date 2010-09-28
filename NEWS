@@ -6,9 +6,17 @@
 
 
 ==============
+version 0.2-7.2
+==============
+* segmented.lm and segmented.glm now accept objects with formulas y~., Thanks to G. Ferrara for finding the error. 
+* Some bugs fixed (slope and confint were using the normal (rather than the t-distribution) to compute the CIs 
+	in gaussian models)
+
+
+==============
 version 0.2-7.1
 ==============
-* segmented.lm (and segmented.glm) now accept objects without 'explicit' formulas, namely returned by lm(my_fo,..) (and glm(my_fo,..)) where
+* segmented.lm and segmented.glm now accept objects without 'explicit' formulas, namely returned by lm(my_fo,..) (and glm(my_fo,..)) where
 	my_fo was defined earlier. Thanks to Y. Iwasaki for finding the error.
 
 

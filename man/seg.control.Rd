@@ -18,7 +18,8 @@ seg.control(toll = 1e-04, it.max = 20, display = FALSE,
   \item{display}{ logical indicating if output should be produced for each iteration. }
   \item{stop.if.error}{ logical indicating if non-admissible break-points should be removed 
     during the estimating algorithm. Set to \code{FALSE} if you want to perform a sort of 
-    `automatic' breakpoint selection .}
+    `automatic' breakpoint selection, provided that several starting values are provided for the breakpoint.
+    See argument \code{psi} in \code{\link{segmented.lm}} or \code{\link{segmented.glm}}. }
   \item{K}{ the number of quantiles to supply as starting values for the breakpoints when \code{NA} is 
     specified in the \code{psi} argument of \code{segmented}.} 
   \item{last}{ logical indicating if output should include only the last fitted model.}

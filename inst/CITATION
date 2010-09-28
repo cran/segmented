@@ -14,7 +14,7 @@ citEntry(entry="Article",
 )
 
 citEntry(entry="Article",
-         title = "segmented: an R Software to Fit Regression Models with Broken-Line Relationships.",
+         title = "segmented: an R Package to Fit Regression Models with Broken-Line Relationships.",
          author = personList(as.person("Vito M.R. Muggeo")),
          journal      = "R News",
          year         = "2008",
@@ -24,7 +24,7 @@ citEntry(entry="Article",
          url          = "http://cran.r-project.org/doc/Rnews/",
          textVersion = 
          paste("Vito M. R. Muggeo (2008).", 
-               "segmented: an R Software to Fit Regression Models with Broken-Line Relationships.",
+               "segmented: an R Package to Fit Regression Models with Broken-Line Relationships.",
                "R News, 8/1, 20-25.",
 	       "URL http://cran.r-project.org/doc/Rnews/.")
 )

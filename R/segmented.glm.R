@@ -18,12 +18,16 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    y <- objframe$y
 #    a <- model.matrix(seg.Z, data = eval(obj$call$data))
 #    a <- subset(a, select = colnames(a)[-1])
-    Call<-mf<-obj$call
+    orig.call<-Call<-mf<-obj$call
+    orig.call$formula<-mf$formula<-formula(obj) #per consentire lm(y~.)
     m <- match(c("formula", "data", "subset", "weights", "na.action"), names(mf), 0L)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
+    n.Seg <- if(is.list(psi)) length(psi) else 1
+    if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
+    orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z))) #utile per plotting
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
     mf <- eval(mf, parent.frame())
 
@@ -50,7 +54,6 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         new.XREGseg<-data.matrix(new.mf)
         XREG<-cbind(XREG,new.XREGseg)
         }
-    n.Seg <- if(is.list(psi)) length(psi) else 1
     n.psi<- length(unlist(psi))
     id.n.Seg<-(ncol(XREG)-n.Seg+1):ncol(XREG)
     XREGseg<-XREG[,id.n.Seg,drop=FALSE]
@@ -191,6 +194,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     objF$nameUV <- list(U = nomiU, V = rownames(psi), Z = name.Z)
     objF$id.group <- if(length(name.Z)<=1) -rowSums(as.matrix(V))
     objF$id.warn <- id.warn
+    objF$orig.call<-orig.call
     if (model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
     class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF
