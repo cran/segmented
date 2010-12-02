@@ -1,19 +1,27 @@
 `broken.line` <-
-function(ogg,term=NULL,gap=FALSE,linkinv=FALSE){
-#returns the fitted straight lines from a `segmented' model
+function(ogg,term=NULL,gap=FALSE,linkinv=FALSE,interc=TRUE){
+#returns the fitted values according to each piecewise relationship from a `segmented' model
 #term: a character vector meaning the segmented variable.
 #     If NULL every segmented variable is considered and a matrix is returned
-#gap: should the gap be accounted for? Currently unimplemented
+#gap: should the gap be accounted for? 
 #Problema: se ci sono poche osservazioni le linee risultano "brutte"..
-        if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
+#1/12/10
+        if(!"segmented"%in%class(ogg)) stop("A segmented model is requested")
         nomepsi<-rownames(ogg$psi) #OK
-        nomeU<-ogg$nameUV[[1]]
-        nomeZ<-ogg$nameUV[[3]]
-        nomi<-names(coef(ogg))
-        nomi<-nomi[-match(nomepsi,nomi)] #escludi i coef delle V
+        nomeU<-ogg$nameUV$U
+        nomeZ<-ogg$nameUV$Z
+        nomiSenzaV<-nomiSenzaU<-nomi<-names(coef(ogg))
+#        nomiSenzaV<-nomi[-match(nomepsi,nomi)] #setdiff(nomi, nomepsi)
+        nomiSenzaU[match(nomeU,nomi)]<-""
+        nomiSenzaV[match(nomepsi,nomi)]<-""
         index<-vector(mode = "list", length = length(nomeZ))
-        for(i in 1:length(nomeZ)) index[[i]]<-c(match(nomeZ[i],nomi),
-          grep(paste("\\.",nomeZ[i],"$",sep=""), nomi,value=FALSE))
+        for(i in 1:length(nomeZ)) {
+          index[[i]]<-c( match(nomeZ[i],nomi), 
+                    grep(paste("\\.",nomeZ[i],"$",sep=""), nomiSenzaV,value=FALSE))
+          if(gap) index[[i]]<-c(index[[i]], 
+                      grep(paste("\\.",nomeZ[i],"$",sep=""), nomiSenzaU,value=FALSE)
+                    )
+          }
         variabili<-Ris<-list()
         for(i in 1:length(index)){
             ind<-as.numeric(na.omit(unlist(index[[i]])))
@@ -21,10 +29,14 @@ function(ogg,term=NULL,gap=FALSE,linkinv=FALSE){
             #M[row(M)<col(M)]<-0
             cof<-coef(ogg)[ind] #questo è il vettore di coef per la variabile seg
             Ris[[nomeZ[i]]]<-cof
-            variabili[[nomeZ[i]]]<-data.matrix(ogg$mframe[names(cof)])
+            variabili[[nomeZ[i]]]<-data.matrix(ogg$model[names(cof)])
             }
-        o<-mapply(function(xx,yy)drop(xx%*%yy),variabili,Ris)+coef(ogg)["(Intercept)"]
-        if(!is.null(term)) o<-o[,term]
-        if(inherits(ogg,what="glm",FALSE) && linkinv) o<-apply(o,2,ogg$family$linkinv)
-        return(o)
+        ris<-mapply(function(xx,yy)drop(xx%*%yy),variabili,Ris)
+        if(interc) ris<-ris + coef(ogg)["(Intercept)"]
+        if(!is.null(term)) ris<-ris[,term]
+        if(inherits(ogg,what="glm",FALSE) && linkinv) ris<-apply(ris,2,ogg$family$linkinv)
+        return(ris)
         }
+
+
+    

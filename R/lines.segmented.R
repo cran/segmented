@@ -1,4 +1,4 @@
-lines.segmented<-function(x, term, bottom=TRUE, conf.level=0.95, k=50, 
+lines.segmented<-function(x, term, bottom=TRUE, shift=TRUE, conf.level=0.95, k=50, 
   pch=18, rev.sgn=FALSE,...){
   if(missing(term)){
           if(length(x$nameUV$Z)>1 ) {stop("please, specify `term'")}
@@ -15,9 +15,13 @@ lines.segmented<-function(x, term, bottom=TRUE, conf.level=0.95, k=50,
   #if(rev.sgn) m<- -m
   #ma invece serve il seguente (se length(psi)=1 e rev.sgn=T):
   m<-matrix(m,ncol=3)
+  if(nrow(m)>1) m<-m[order(m[,1]),]
   est.psi<-m[,1]
   lower.psi<-m[,2]
   upper.psi<-m[,3]
+  if(length(est.psi)>1) {
+      if(shift) y<-y+seq(-h/2,h/2,length=length(est.psi)) else rep(y,length(est.psi))
+      }
   segments(lower.psi, y, upper.psi, y, ...)
-  points(est.psi,rep(y,length(est.psi)),type="p",pch=pch,col=colore)
+  points(est.psi,y,type="p",pch=pch,col=colore)
   }

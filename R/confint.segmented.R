@@ -39,7 +39,7 @@ function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, 
                     m[j,]<-r
                     } #end loop j (ogni psi della stessa variabile segmented)
             #CONTROLLA QUESTO:..sarebbe più bello
-            if(nrow(m)==1) rownames(m)<-""
+            if(nrow(m)==1) rownames(m)<-"" else m<-m[order(m[,1]),]
             if(rev.sgn[i]) {
                 m<-m[nrow(m):1,]
                 rownames(m)<-rev(rownames(m))

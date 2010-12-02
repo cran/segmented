@@ -4,25 +4,34 @@
 *					  *
 *********************************
 
+===============
+version 0.2-7.3
+===============
+* argument APC added to the slope() function to compute the `annual percent change'.
+* Some minor bugs fixed (confint and slope were not working correctly when the estimated breakpoints were returned
+	in non-increasing order; offset was ignored in segmented.lm and segmented.glm; broken.line() was not working correctly
+	(and its argument gap was unimplemented), thanks to M. Rennie for pointing out that; 
+	summary.segmented() was not working for models with no linear term, i.e. fitted via segmented(lm(y~0),..))
 
-==============
+
+===============
 version 0.2-7.2
-==============
+===============
 * segmented.lm and segmented.glm now accept objects with formulas y~., Thanks to G. Ferrara for finding the error. 
 * Some bugs fixed (slope and confint were using the normal (rather than the t-distribution) to compute the CIs 
 	in gaussian models)
 
 
-==============
+===============
 version 0.2-7.1
-==============
+===============
 * segmented.lm and segmented.glm now accept objects without 'explicit' formulas, namely returned by lm(my_fo,..) (and glm(my_fo,..)) where
 	my_fo was defined earlier. Thanks to Y. Iwasaki for finding the error.
 
 
-==============
+===============
 version 0.2-7
-==============
+===============
 * A sort of automatic procedure for breakpoint estimation is implemented. See argument
 	stop.if.error in seg.control()
 * davies.test() now accepts a one-sided formula (~x) rather than character ("x") to mean the
@@ -30,9 +39,9 @@ version 0.2-7
 * Some bugs fixed
 
 
-==============
+===============
 version 0.2-6
-==============
+===============
 * vcov.segmented added
 * option var.diff for robust covariance matrix has been added in summary.segmented, print.summary.segmented, slope, and confint.
 * Some bugs fixed

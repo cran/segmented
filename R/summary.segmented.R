@@ -13,12 +13,12 @@ function(object, short=FALSE, var.diff=FALSE, ...){
       warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)
       }
     nomiU<-object$nameUV[[1]]
-    idU<-match(nomiU,names(coef(object)[!is.na(coef(object))]))
     nomiV<-object$nameUV[[2]]
     idU<-match(nomiU,names(coef(object)[!is.na(coef(object))]))
     idV<-match(nomiV,names(coef(object)[!is.na(coef(object))]))
     beta.c<- coef(object)[nomiU]
     if("lm"%in%class(object) && !"glm"%in%class(object)){
+    #if(!inherits(object, "glm")){
         summ <- c(summary.lm(object, ...), object["psi"])
         summ$Ttable<-summ$coefficients
         if(var.diff){
@@ -45,8 +45,8 @@ function(object, short=FALSE, var.diff=FALSE, ...){
         coeff<-summ$Ttable[,1]#summ$coefficients[,1]
         v<-summ$Ttable[,2] #summ$coefficients[,2]
         summ$gap<-cbind(coeff[idV]*beta.c,abs(v[idV]*beta.c),coeff[idV]/v[idV])
-        summ$Ttable<-summ$Ttable[-idV,] 
         summ$Ttable[idU,4]<-NA
+        summ$Ttable<-summ$Ttable[-idV,] 
         #dimnames(summ$gap)<-list(rep("",nrow(object$psi)),c("Est.","SE","t value"))
         colnames(summ$gap)<-c("Est.","SE","t value")
         rownames(summ$gap)<-nomiU
@@ -56,10 +56,11 @@ function(object, short=FALSE, var.diff=FALSE, ...){
         class(summ) <- c("summary.segmented", "summary.lm")
         return(summ)
         }
-    if("glm"%in%class(object)){
+    #if("glm"%in%class(object)){
+    if(inherits(object, "glm")){
         summ <- c(summary.glm(object, ...), object["psi"])
-        summ$Ttable<-summ$coefficients[-idV,]
         summ$Ttable[idU,4]<-NA
+        summ$Ttable<-summ$coefficients[-idV,]
         coeff<-summ$coefficients[,1]
         v<-summ$coefficients[,2]
         summ$gap<-cbind(coeff[idV]*beta.c,abs(v[idV]*beta.c),coeff[idV]/v[idV])

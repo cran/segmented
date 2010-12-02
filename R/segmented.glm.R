@@ -1,6 +1,13 @@
 `segmented.glm` <-
 #objF$id.group???
 function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
+    n.Seg<-1
+    if(is.list(psi)){
+      if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
+      if(any(is.na(match(all.vars(seg.Z),names(psi), nomatch = NA)))) stop("Variables in `seg.Z' and `psi' do not match")
+      n.Seg <- length(psi)
+      }
+    if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
     maxit.glm <- control$maxit.glm
     it.max <- old.it.max<- control$it.max
     toll <- control$toll
@@ -20,13 +27,13 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    a <- subset(a, select = colnames(a)[-1])
     orig.call<-Call<-mf<-obj$call
     orig.call$formula<-mf$formula<-formula(obj) #per consentire lm(y~.)
-    m <- match(c("formula", "data", "subset", "weights", "na.action"), names(mf), 0L)
+    m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
-    n.Seg <- if(is.list(psi)) length(psi) else 1
-    if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
+#    n.Seg <- if(is.list(psi)) length(psi) else 1
+#    if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
     orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z))) #utile per plotting
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
     mf <- eval(mf, parent.frame())
@@ -82,12 +89,13 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         }
     
     a <- sapply(psi, length)#b <- rep(1:length(a), times = a)
-
+    id.psi.group <- rep(1:length(a), times = a) #identificativo di apparteneza alla variabile
     #Znew <- list()
     #for (i in 1:length(psi)) Znew[[length(Znew) + 1]] <- rep(Z[i], a[i])
     #Z <- matrix(unlist(Znew), nrow = n)
     Z<-matrix(unlist(mapply(function(x,y)rep(x,y),Z,a,SIMPLIFY = TRUE)),nrow=n)
     psi <- unlist(psi)
+    psi<-unlist(tapply(psi,id.psi.group,sort))
     k <- ncol(Z)
     PSI <- matrix(rep(psi, rep(n, k)), ncol = k)
     colnames(Z) <- nomiZ <- rep(nome, times = a)
@@ -129,7 +137,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    psi.values <- NULL
     nomiOK<-nomiU
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
-        fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm)
+        fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group)
     obj<-seg.glm.fit(y,XREG,Z,PSI,weights,offs,opz)
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)

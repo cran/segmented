@@ -11,6 +11,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,o,opz){
     dev.new<-opz$dev0
     visual<-opz$visual
     it.max<-old.it.max<-opz$it.max
+    id.psi.group<-opz$id.psi.group
     rangeZ <- apply(Z, 2, range)
     #k<-ncol(Z)
     psi<-PSI[1,]
@@ -64,6 +65,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,o,opz){
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
         if(it>=old.it.max && h<1) H<-h
         psi <- psi.old + H*gamma.c/beta.c
+        #psi<-unlist(tapply(psi,id.psi.group,sort))
         PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <

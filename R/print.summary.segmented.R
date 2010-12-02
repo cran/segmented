@@ -18,10 +18,15 @@ if(any(abs(x$gap[,3])>1.96)) cat("    Warning:", sum(abs(x$gap[,3])>1.96),"gap c
     #cc<-intersect(aa,bb) #indices of diff-slope parameters
     nomiU<-rownames(x$gap)
     #idU<-match(nomiU,rownames(x$Ttable))
-    print(x$Ttable[nomiU,])}
-    else {cat("\nMeaningful coefficients of the linear terms:\n")
+    print(x$Ttable[nomiU,])
+      } else {cat("\nMeaningful coefficients of the linear terms:\n")
+        if(is.null(dim(x$Ttable))){
+        print(x$Ttable)
+        #printCoefmat(matrix(x$Ttable,nrow=1,ncol=4,dimnames=list(" ",names(x$Ttable))),has.Pvalue=FALSE)
+        } else {
         printCoefmat(x$Ttable, digits = digits, signif.stars = signif.stars,na.print = "NA", ...)
-        #print(x$Ttable)
+        }
+        
         }
 if("summary.lm"%in%class(x)){ #for lm
     if(var.diff){

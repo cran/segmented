@@ -6,6 +6,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
     stop.if.error<-opz$stop.if.error
     dev.new<-opz$dev0
     visual<-opz$visual
+    id.psi.group<-opz$id.psi.group
     it.max<-old.it.max<-opz$it.max
     rangeZ <- apply(Z, 2, range)
     psi<-PSI[1,]
@@ -13,6 +14,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
     it <- 1
     epsilon <- 10
     psi.values <- NULL
+    id.psi.ok<-rep(TRUE, length(psi))
     while (abs(epsilon) > toll) {
         k<-ncol(Z)
         U <- pmax((Z - PSI), 0)
@@ -32,8 +34,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
                 cat(0, " ", formatC(dev.old, 3, format = "f"),
                   "", "(No breakpoint(s))", "\n")
             spp <- if (it < 10) "" else NULL
-            cat(it, spp, "", formatC(dev.new, 3, format = "f"),
-                "\n")
+            cat(it, spp, "", formatC(dev.new, 3, format = "f"), "\n")
         }
         epsilon <- (dev.new - dev.old)/dev.old
         obj$epsilon <- epsilon
@@ -53,7 +54,10 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
         if(it>=old.it.max && h<1) H<-h
         psi <- psi.old + H*gamma.c/beta.c
-        PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
+        #aggiorna id.psi.group.. ovvero id.psi.group[id.psi.ok]
+        #psi<-unlist(tapply(psi, id.psi.group, sort))
+        #PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
+        PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <
         b <- apply((Z >= PSI), 2, all) #prima era solo >

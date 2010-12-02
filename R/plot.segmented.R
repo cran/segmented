@@ -61,9 +61,8 @@ plot.segmented<-function (x, term = NULL, se = FALSE, const = coef(x)["(Intercep
         se.yhat <- sqrt(diag(X %*% tcrossprod(var.cof, X)))
         inf.yhat <- yhat - 1.96 * se.yhat
         sup.yhat <- yhat + 1.96 * se.yhat
-    }
-    else {
-        yhat <- yhat + const
+    } else {        
+    yhat <- yhat + const
     }
     ylab <- "link(Fitted Values)"
     if (inherits(x, what = "glm", which = FALSE) && linkinv) {

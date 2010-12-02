@@ -6,7 +6,8 @@
   Computes slopes of each `segmented' relationship in the fitted model.
 }
 \usage{
-slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, var.diff=FALSE)
+slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, var.diff=FALSE, 
+  APC=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,7 +18,9 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, var.diff=FALSE)
   when \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
     therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.}
   \item{var.diff}{logical. If \code{var.diff=TRUE} and there is a single segmented variable, the computed standard errors 
-    are based on a sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}}. 
+    are based on a sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.} 
+  \item{APC}{logical. If \code{APC=TRUE} the `annual percent changes', i.e. \eqn{100\times(\exp(\beta)-1)}{100*(exp(b)-1)}, 
+  are computed for each interval (\eqn{\beta}{b} is the slope). Only point estimates and confidence intervals are returned.} 
 }
 \details{
   To fit broken-line relationships, \code{segmented} uses a parameterization whose coefficients are not 

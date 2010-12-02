@@ -7,7 +7,7 @@
   on the current device
 }
 \usage{
-\method{lines}{segmented}(x, term, bottom = TRUE, conf.level = 0.95, k = 50, 
+\method{lines}{segmented}(x, term, bottom = TRUE, shift=TRUE, conf.level = 0.95, k = 50, 
     pch = 18, rev.sgn = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -15,6 +15,8 @@
   \item{x}{ an object of class \code{segmented} }
   \item{term}{ the segmented variable of the breakpoints being drawn. It may be unspecified when there is a single segmented variable}
   \item{bottom}{ logical, indicating if the bars should be plotted at the bottom (TRUE) or at the top (FALSE)}
+  \item{shift}{ logical, indicating if the bars should be `shifted' on the y-axis before plotting. Useful for multiple breakpoints
+        with overlapped confidence intervals}
   \item{conf.level}{ the confidence level of the confidence intervals for the breakpoints }
   \item{k}{ a positive integer regulating the vertical position of the drawn bars. See Details }
   \item{pch}{ either an integer specifying a symbol or a single character to be used
