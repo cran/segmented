@@ -22,7 +22,8 @@
   \item{pch}{ either an integer specifying a symbol or a single character to be used
         in plotting the point estimates of the breakpoints. See \code{\link{points}} }
   \item{rev.sgn}{ should the signs of the breakpoint estimates be changed before plotting? see Details }
-  \item{\dots}{ further arguments passed to \code{\link{segments}} }
+  \item{\dots}{ further arguments passed to \code{\link{segments}}, for instance `col' that 
+  can be a vector. }
 }
 \details{
   \code{lines.segmented} simply draws on the current device the point estimates and relevant

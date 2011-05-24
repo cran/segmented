@@ -27,9 +27,11 @@
 %  ~~ possibly secondary sources and usages ~~
 %}
 \examples{
+\dontrun{
 data(plant)
 attach(plant)
 %lattice::xyplot(y~time,groups=group,pch=19,col=2:4,auto.key=list(space="right"))
 lattice::xyplot(y~time,groups=group,auto.key=list(space="right"))
+}
 }
 \keyword{datasets}

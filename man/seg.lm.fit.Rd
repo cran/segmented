@@ -3,7 +3,7 @@
 \alias{seg.glm.fit}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Fitter Function for Segmented Linear Models
+Fitter Functions for Segmented Linear Models
 }
 \description{
 \code{seg.lm.fit} is called by \code{segmented.lm} to fit segmented linear 

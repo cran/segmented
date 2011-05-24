@@ -31,7 +31,8 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
   specified via the argument \code{beta0}. Roughtly speaking, the procedure computes \code{k} `naive' (i.e. assuming
   fixed and known the breakpoint) Wald statistics for the difference-in-slope,
   seeks the `best' value (according to the alternative hypothesis), and then corrects the selected
-  (minimum) p-value. The \code{k} evaluation points are the quantiles of the variable reported in \code{seg.Z}.
+  (minimum) p-value. The \code{k} evaluation points are \code{k} equally spaced values between the 0.05 and 0.95 
+  quantiles of the variable reported in \code{seg.Z}.
 }
 \value{
   A list with class '\code{htest}' containing the following components:

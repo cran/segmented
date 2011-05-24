@@ -59,8 +59,8 @@ function(object, short=FALSE, var.diff=FALSE, ...){
     #if("glm"%in%class(object)){
     if(inherits(object, "glm")){
         summ <- c(summary.glm(object, ...), object["psi"])
-        summ$Ttable[idU,4]<-NA
         summ$Ttable<-summ$coefficients[-idV,]
+        summ$Ttable[idU,4]<-NA
         coeff<-summ$coefficients[,1]
         v<-summ$coefficients[,2]
         summ$gap<-cbind(coeff[idV]*beta.c,abs(v[idV]*beta.c),coeff[idV]/v[idV])

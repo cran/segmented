@@ -38,7 +38,8 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     tvalue
     }#end extract.t.value.U.glm 
 
-    
+    if(class(obj)[1]=="segmented") stop("A 'lm' or 'glm' object (non 'segmented') is requested")
+    if(class(seg.Z)!="formula") stop("'seg.Z' should be an one-sided formula")
     alternative <- match.arg(alternative)
 #-------------------------------------------------------------------------------
 #    it.max <- old.it.max<- 0

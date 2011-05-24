@@ -5,8 +5,15 @@ plot.segmented<-function (x, term = NULL, se = FALSE, const = coef(x)["(Intercep
         se <- FALSE
         warning("se=TRUE not (yet) implemented", call. = FALSE)
     }
+    colori<-list(...)$col
+    if(length(colori)<=0) colori<-1
+    lwds<-list(...)$lwd
+    if(length(lwds)<=0) lwds<-1
+    ltys<-list(...)$lty
+    if(length(ltys)<=0) ltys<-1
+    
     mio.plot <- function(..., col, lty, lwd) plot.default(...)
-    mio.lines <- function(..., ylim, xlim, pch, xlab, ylab) lines(...)
+    mio.lines <- function(..., col, ylim, xlim, pch, xlab, ylab) lines(..., col=col)
     if (missing(term)) {
         if (length(x$nameUV$Z) > 1) {
             stop("please, specify `term'")
@@ -74,10 +81,15 @@ plot.segmented<-function (x, term = NULL, se = FALSE, const = coef(x)["(Intercep
         ylab <- "Fitted Values"
     }
     sel.g <- rowSums(V)
+    sel.g<-abs(sel.g)+1
+    if(length(colori)<length(unique(sel.g))) colori<-rep(colori, length.out=length(unique(sel.g)))
+    if(length(lwds)<length(unique(sel.g))) lwds<-rep(lwds, length.out=length(unique(sel.g)))
+    if(length(ltys)<length(unique(sel.g))) ltys<-rep(ltys, length.out=length(unique(sel.g)))
+    
     if(rev.sgn) xx<- -xx
     if (!add) {
         if (!se) {
-            mio.plot(xx, yhat, type = "n", ylab = ylab, xlab = term,
+            mio.plot(xx, yhat, type = "n", ylab = ylab, xlab = term, 
                 ...)
         }
         else {
@@ -85,8 +97,15 @@ plot.segmented<-function (x, term = NULL, se = FALSE, const = coef(x)["(Intercep
                 ylab = ylab, xlab = term, ...)
         }
     }
-    for (i in sel.g) mio.lines(xx[sel.g == i], yhat[sel.g ==
-        i], ...)
+    #for (i in sel.g) mio.lines(xx[sel.g == i], yhat[sel.g ==i], ...)
+    for (i in sel.g) {
+        list.lines<-c(list(x=xx[sel.g == i], y=yhat[sel.g ==i] ) , list(...))
+        list.lines$col<-colori[i]
+        list.lines$lwd<-lwds[i]
+        list.lines$lty<-ltys[i]
+        do.call(lines, list.lines)
+        }
+    
     if (se) {
         for (i in sel.g) mio.lines(xx[sel.g == i], inf.yhat[sel.g ==
             i], ...)

@@ -25,7 +25,8 @@
   \item{rev.sgn}{ when \code{TRUE} it is assumed that current \code{term} is `minus' the actual segmented variable,
     therefore the sign is reversed before plotting. This is useful when a null-constraint has been set on the last slope}
   \item{n.points}{ number of points where the fitted lines have to be computed}
-  \item{\dots}{ other graphics parameters to pass on to plotting commands }
+  \item{\dots}{ other graphics parameters to pass on to plotting commands; for instance, `col', `lwd' and `lty' that 
+  can be vectors (see the example below)}
 }
 \details{
   Produces (or adds to the current device) the fitted segmented relationship between the
@@ -56,7 +57,8 @@ o.seg<-segmented(o,seg.Z=~z,psi=list(z=.5))
 par(mfrow=c(1,2))
 plot(o.seg)
 plot(z,y)
-plot(o.seg,add=TRUE,linkinv=TRUE,lwd=2,col=2)
+## add the fitted lines using different colors and styles..
+plot(o.seg,add=TRUE,linkinv=TRUE,lwd=2,col=2:3, lty=c(1,3))
 lines(o.seg,col=2,pch=19,bottom=FALSE,lwd=2)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

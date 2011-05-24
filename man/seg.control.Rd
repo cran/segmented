@@ -19,9 +19,12 @@ seg.control(toll = 1e-04, it.max = 20, display = FALSE,
   \item{stop.if.error}{ logical indicating if non-admissible break-points should be removed 
     during the estimating algorithm. Set to \code{FALSE} if you want to perform a sort of 
     `automatic' breakpoint selection, provided that several starting values are provided for the breakpoint.
-    See argument \code{psi} in \code{\link{segmented.lm}} or \code{\link{segmented.glm}}. }
+    See argument \code{psi} in \code{\link{segmented.lm}} or \code{\link{segmented.glm}}. 
+    The idea of removing `non-admissible' break-points during the iterative process is discussed in 
+    Muggeo and Adelfio (2011)}
   \item{K}{ the number of quantiles to supply as starting values for the breakpoints when \code{NA} is 
-    specified in the \code{psi} argument of \code{segmented}.} 
+    specified in the \code{psi} argument of \code{segmented}. \code{K} is ignored when \code{psi} is different
+    from \code{NA}.} 
   \item{last}{ logical indicating if output should include only the last fitted model.}
   \item{maxit.glm}{ integer giving the maximum number of inner IWLS iterations (see details). }
   \item{h}{ positive factor (from zero to one) modifying the increments in breakpoint estimation (see details). }
@@ -33,7 +36,7 @@ seg.control(toll = 1e-04, it.max = 20, display = FALSE,
 
   When the starting value for the breakpoints is set to \code{NA} for any segmented variable specified
   in \code{seg.Z}, \code{K} quantiles are selected as starting values for the breakpoints. In this case, it may 
-  be useful to set also \code{stop.if.error=FALSE} to automize the procedure.
+  be useful to set also \code{stop.if.error=FALSE} to automize the procedure, see Muggeo and Adelfio (2011).
 
   If \code{last=TRUE}, the object resulting from \code{segmented.lm} (or \code{segmented.glm}) is a
   list of fitted GLM; the i-th model is the segmented model with the values of the breakpoints at the i-th iteration. 
@@ -48,7 +51,8 @@ seg.control(toll = 1e-04, it.max = 20, display = FALSE,
 \value{
   A list with the arguments as components.
 }
-%\references{ ~put references to the literature/web site here ~ }
+\references{ Muggeo, V.M.R., Adelfio, G. (2011) Efficient change point detection in genomic sequences of 
+    continuous measurements. \emph{Bioinformatics} \bold{27}, 161--166. }
 %\author{ ~~who you are~~ }
 %\note{ ~~further notes~~ 
 % ~Make other sections like Warning with \section{Warning }{....} ~

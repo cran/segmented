@@ -30,11 +30,13 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
         dev.old<-dev.new
         dev.new <- sum(obj$residuals^2)
         if (visual) {
+            flush.console()
             if (it == 1)
                 cat(0, " ", formatC(dev.old, 3, format = "f"),
                   "", "(No breakpoint(s))", "\n")
             spp <- if (it < 10) "" else NULL
-            cat(it, spp, "", formatC(dev.new, 3, format = "f"), "\n")
+            cat(it, spp, "", formatC(dev.new, 3, format = "f"), "",length(psi),"\n")
+            #cat(paste("iter = ", it, spp," dev = ",formatC(dev.new,digits=3,format="f"), " n.psi = ",formatC(length(psi),digits=0,format="f"), sep=""), "\n")
         }
         epsilon <- (dev.new - dev.old)/dev.old
         obj$epsilon <- epsilon
