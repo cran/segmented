@@ -45,7 +45,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     interc<-attr(mt,"intercept")
     y <- model.response(mf, "any")
     XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
-
+    namesXREG0<-colnames(XREG)
     id.duplic<-match(all.vars(formula(obj)),all.vars(seg.Z),nomatch=0)>0
     if(any(id.duplic)) {
         #new.mf<-mf[,id.duplic,drop=FALSE]
@@ -60,7 +60,9 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     #XREG<-model.matrix(obj0) non va bene perché non elimina gli eventuali mancanti in seg.Z..
     #Due soluzioni
     #XREG<-XREG[,colnames(model.matrix(obj)),drop=FALSE]
-    XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
+    #XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
+    XREG <- XREG[, match(c("(Intercept)", namesXREG0),colnames(XREG), nomatch = 0), drop = FALSE]
+
     n <- nrow(XREG)
     #Z <- list(); for (i in colnames(XREGseg)) Z[[length(Z) + 1]] <- XREGseg[, i]
     Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
@@ -115,8 +117,9 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         #è necessario il for? puoi usare colnames(U)<-nomiU;mf[nomiU]<-U
         for(i in 1:ncol(U)) mf[nomiU[i]]<-U[,i]
         Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
-        #obj <- update(obj, formula = Fo, data = KK)
-        obj <- update(obj, formula = Fo, data = mf)
+        obj <- update(obj, formula = Fo, data = mf, eval=FALSE)
+        if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
+        obj<-eval(obj, envir=mf)
         if (model) obj$model <-mf  #obj$model <- data.frame(as.list(KK))
         obj$psi <- psi
         return(obj)
@@ -174,7 +177,9 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", 
         paste(nnomi, collapse = "+"))))
     #objF <- update(obj0, formula = Fo, data = KK)
-    objF <- update(obj0, formula = Fo, data = mf)
+    objF <- update(obj0, formula = Fo, data = mf, evaluate=FALSE)
+    if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
+    objF<-eval(objF, envir=mf)
     if(any(is.na(objF$coefficients))){
     stop("some estimate is NA: premature stopping with a large number of breakpoints?",
       call. = FALSE)    

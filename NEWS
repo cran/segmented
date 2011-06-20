@@ -6,6 +6,15 @@
 
 
 ===============
+version 0.2-8.1
+===============
+* Some minor bugs fixed (segmented.lm and segmented.glm were not working correctly with subsetted datasets or when the starting 
+	linear model included several intercepts (e.g., see the example about data("plant"), thanks to Nicola Ferrari for finding the error); 
+	davies.test() did not work when the variable name of its argument `seg.Z' included reserved words, e.g. `seg.Z~dist'. thanks to Thom 
+	White for finding the error). 
+
+
+===============
 version 0.2-8
 ===============
 * intercept() added. It computes the intercepts of the regression lines for each segment of the fitted segmented relationship.

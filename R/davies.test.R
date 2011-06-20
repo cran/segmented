@@ -2,10 +2,11 @@
 function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), beta0=0, dispersion=NULL) {
     extract.t.value.U<-function(x){
         #estrae il t-value dell'ultimo coeff in un oggetto restituito da lm.fit
+        #non serve... in realtà viene usata extract.t.value.U.glm()
             #x<-x$obj
             R<-qr.R(x$qr)
             p<-ncol(R)
-            n<-length(x$fitte.values)
+            n<-length(x$fitted.values)
             invR<-backsolve(R,diag(p))
             hat.sigma2<-sum(x$residuals^2)/(n-p)
             #solve(crossprod(qr.X(x$qr)))
@@ -53,6 +54,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     if(length(all.vars(seg.Z))>1) warning("multiple segmented variables ignored in 'seg.Z'",call.=FALSE)
     isGLM<-"glm"%in%class(obj)
     Call<-mf<-obj$call
+    mf$formula<-formula(obj)
     m <- match(c("formula", "data", "subset", "weights", "na.action"), names(mf), 0L)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
