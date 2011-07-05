@@ -46,6 +46,8 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     y <- model.response(mf, "any")
     XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
     namesXREG0<-colnames(XREG)
+    nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
+    namesXREG0<-setdiff(namesXREG0, nameLeftSlopeZero)
     id.duplic<-match(all.vars(formula(obj)),all.vars(seg.Z),nomatch=0)>0
     if(any(id.duplic)) {
         #new.mf<-mf[,id.duplic,drop=FALSE]

@@ -41,7 +41,7 @@ function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, 
             #CONTROLLA QUESTO:..sarebbe più bello
             if(nrow(m)==1) rownames(m)<-"" else m<-m[order(m[,1]),]
             if(rev.sgn[i]) {
-                m<-m[nrow(m):1,]
+                #m<-m[nrow(m):1,]
                 rownames(m)<-rev(rownames(m))
                 }
             rr[[length(rr)+1]]<-signif(m,digits)

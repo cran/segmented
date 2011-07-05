@@ -1,14 +1,14 @@
 Package: segmented
 Type: Package
 Title: Segmented relationships in regression models
-Version: 0.2-8.1
-Date: 2011-06-20
+Version: 0.2-8.2
+Date: 2011-07-05
 Author: Vito M.R. Muggeo <vito.muggeo@unipa.it>
 Maintainer: Vito M.R. Muggeo <vito.muggeo@unipa.it>
 Description: Given a (generalized) linear model, segmented `updates'
         the model by adding one or more segmented relationships.
         Several variables with multiple breakpoints are allowed.
 License: GPL
-Packaged: 2011-06-20 12:51:00 UTC; user
+Packaged: 2011-07-05 09:22:38 UTC; user
 Repository: CRAN
-Date/Publication: 2011-06-20 17:59:55
+Date/Publication: 2011-07-05 11:39:05

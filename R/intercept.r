@@ -1,5 +1,5 @@
 `intercept` <-
-function(ogg, parm, rev.sgn=FALSE){#conf.level=0.95, var.diff=FALSE
+function(ogg, parm, rev.sgn=FALSE, var.diff=FALSE){#conf.level=0.95
         if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
         if(var.diff && length(ogg$nameUV$Z)>1) {
             var.diff<-FALSE

@@ -6,11 +6,19 @@
 
 
 ===============
+version 0.2-8.2
+===============
+* Some minor bugs fixed (segmented.lm and segmented.glm *alway* included the left slope in the estimation process, although the number of 
+	parameters was correct in the returned final fit. confint.segmented did not order the estimated changepoints for the variable having
+	rev.sgn=TRUE; intercept() miss the (currently meaningless) argument var.diff (thanks to Eric Fuchs for pointing out that). )
+
+
+===============
 version 0.2-8.1
 ===============
 * Some minor bugs fixed (segmented.lm and segmented.glm were not working correctly with subsetted datasets or when the starting 
-	linear model included several intercepts (e.g., see the example about data("plant"), thanks to Nicola Ferrari for finding the error); 
-	davies.test() did not work when the variable name of its argument `seg.Z' included reserved words, e.g. `seg.Z~dist'. thanks to Thom 
+	linear model included several intercepts (e.g., see the example about data("plant"); thanks to Nicola Ferrari for finding the error). 
+	davies.test() did not work when the variable name of its argument `seg.Z' included reserved words, e.g. `seg.Z~dist'; thanks to Thom 
 	White for finding the error). 
 
 
