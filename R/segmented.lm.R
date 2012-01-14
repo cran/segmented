@@ -31,9 +31,14 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     mf[[1L]] <- as.name("model.frame")
     if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
     orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z))) #utile per plotting
+    if(length(all.vars(formula(obj)))>1){
+    mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj))[-1],collapse="+")))
+    } else {
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+    }
     mf <- eval(mf, parent.frame())
-
+    #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene
+    #       altrimenti nel model.frame non risulta l'offset
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
     
@@ -161,7 +166,6 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         id.warn <- TRUE
     }
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
-    
     colnames(U) <- colnames(Vxb) <-sapply(strsplit(nomiOK,"U"),function(x)x[2])
     #colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
     #colnames(Vxb) <- paste(ripetizioni, nomiZ, sep = ".")

@@ -71,7 +71,7 @@ plot.segmented<-function (x, term = NULL, se = FALSE, const = coef(x)["(Intercep
     } else {        
     yhat <- yhat + const
     }
-    ylab <- "link(Fitted Values)"
+    ylab <- "Fitted Values (on the link scale)"
     if (inherits(x, what = "glm", which = FALSE) && linkinv) {
         yhat <- x$family$linkinv(yhat)
         if (se) {

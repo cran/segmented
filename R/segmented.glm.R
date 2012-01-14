@@ -32,12 +32,16 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
-#    n.Seg <- if(is.list(psi)) length(psi) else 1
-#    if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
     orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z))) #utile per plotting
-    mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+    #la linea sotto aggiunge nel mf anche la variabile offs..
+    if(length(all.vars(formula(obj)))>1){
+      mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj))[-1],collapse="+")))
+    } else {
+      mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+    }
     mf <- eval(mf, parent.frame())
-
+    #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene
+    #       altrimenti nel model.frame non risulta l'offset
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
     

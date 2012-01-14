@@ -4,6 +4,12 @@
 *					  *
 *********************************
 
+===============
+version 0.2-8.3
+===============
+* Some minor bugs fixed: segmented.lm and segmented.glm did not find the offset variable in the dataframe where the initial (g)lm was called for;
+	segmented.lm and segmented.glm sometimes returned an error when the automated algorithm was used (thanks to Paul Cohen for finding the error).
+
 
 ===============
 version 0.2-8.2
