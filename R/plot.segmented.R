@@ -1,6 +1,6 @@
 plot.segmented<-function (x, term = NULL, se = FALSE, const = coef(x)["(Intercept)"],
     add = FALSE, linkinv = FALSE, show.gap = TRUE, rev.sgn=FALSE, n.points=10, ...){
-    if(is.na(const)) stop("Undefined `const' argument")
+    if(is.na(const)) stop("Undefined `const' argument.. a fitted model without intercept?")
     if (se) {
         se <- FALSE
         warning("se=TRUE not (yet) implemented", call. = FALSE)

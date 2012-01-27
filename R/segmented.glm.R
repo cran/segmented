@@ -33,9 +33,15 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     mf[[1L]] <- as.name("model.frame")
     if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
     orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z))) #utile per plotting
+    
+    nomeRispo<-strsplit(paste(formula(obj))[2],"/")[[1]] #eventuali doppi nomi (tipo "y/n" per GLM binom)
     #la linea sotto aggiunge nel mf anche la variabile offs..
     if(length(all.vars(formula(obj)))>1){
-      mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj))[-1],collapse="+")))
+      id.rispo<-1
+      if(length(nomeRispo)>=2) id.rispo<-1:2      
+      #questo serve quando formula(obj) ha solo l'intercept
+      agg<-if(length(all.vars(formula(obj))[-id.rispo])==0) "" else "+"
+      mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),agg,paste(all.vars(formula(obj))[-id.rispo],collapse="+")))
     } else {
       mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
     }
@@ -58,7 +64,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
     namesXREG0<-setdiff(namesXREG0, nameLeftSlopeZero)
     
-    nomeRispo<-strsplit(paste(formula(obj))[2],"/")[[1]]
+    #nomeRispo<-strsplit(paste(formula(obj))[2],"/")[[1]] #portato sopra
     if(length(nomeRispo)>=2) mf[nomeRispo[1]]<-weights*y
     
     id.duplic<-match(all.vars(formula(obj)),all.vars(seg.Z),nomatch=0)>0

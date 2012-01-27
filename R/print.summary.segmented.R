@@ -1,6 +1,6 @@
 `print.summary.segmented` <-
-function(x,digits = max(3, getOption("digits") - 3),signif.stars = getOption("show.signif.stars"),
-  short = x$short, var.diff = x$var.diff, ...){
+function(x, short = x$short, var.diff = x$var.diff, 
+    digits = max(3, getOption("digits") - 3), signif.stars = getOption("show.signif.stars"),...){
     cat("\n\t***Regression Model with Segmented Relationship(s)***\n\n")
     cat( "Call: \n" )
     print( x$call )

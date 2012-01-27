@@ -7,6 +7,10 @@
 }
 \usage{
 \method{summary}{segmented}(object, short = FALSE, var.diff = FALSE, ...)
+
+\method{print}{summary.segmented}(x, short=x$short, var.diff=x$var.diff, 
+    digits = max(3, getOption("digits") - 3), signif.stars = getOption("show.signif.stars"),...)
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -14,6 +18,9 @@
   \item{short}{ logical indicating if the `short' summary should be printed. }
   \item{var.diff}{ logical indicating if different error variances should be computed 
     in each interval of the segmented variable, see Details. }
+  \item{x}{a \code{summary.segmented} object produced by \code{summary.segmented()}.}
+  \item{digits}{controls number of digits printed in output.}
+  \item{signif.stars}{logical, should stars be printed on summary tables of coefficients?}
   \item{\dots}{ further arguments. }
 }
 \details{

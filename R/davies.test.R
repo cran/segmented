@@ -135,17 +135,17 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     if (alternative == "less") {
         M <- min(ris.valori)
         best<-valori[which.min(ris.valori)]
-        p.naiv <- pnorm(M, lower = TRUE)
+        p.naiv <- pnorm(M, lower.tail = TRUE)
     }
     else if (alternative == "greater") {
         M <- max(ris.valori)
         best<-valori[which.max(ris.valori)]
-        p.naiv <- pnorm(M, lower = FALSE)
+        p.naiv <- pnorm(M, lower.tail = FALSE)
     }
     else {
         M <- max(abs(ris.valori))
         best<-valori[which.max(abs(ris.valori))]
-        p.naiv <- pnorm(M, lower = FALSE)
+        p.naiv <- pnorm(M, lower.tail = FALSE)
         onesided <- FALSE
     }
     approxx <- V * exp(-(M^2)/2)/sqrt(8 * pi)

@@ -91,7 +91,12 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,o,opz){
     rownames(X) <- NULL
     if (ncol(V) == 1) colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c("U", "V")
         else colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U", 1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
-    obj <- lm.wfit(x = X, y = y, w = w, offset = o)
+    #tolto il suppressWarnings(
+    obj <- glm.fit(x = X, y = y, offset = o,
+            weights = w, family = fam, control = glm.control(maxit = maxit.glm),
+            etastart = eta0)
+    obj$epsilon <- epsilon
+    obj$it <- it
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,
         epsilon=epsilon,nomiOK=nomiOK)

@@ -5,6 +5,12 @@
 *********************************
 
 ===============
+version 0.2-8.4
+===============
+* Some bugs fixed: segmented.glm fitted a lm (the error was introduced incidentally from 0.2-8.3, thanks to Véronique Storme for finding the error); broken.line() was not working for models without intercept and a null left slope; intercept() was not working correctly with multiple segmented variables.
+
+
+===============
 version 0.2-8.3
 ===============
 * Some minor bugs fixed: segmented.lm and segmented.glm did not find the offset variable in the dataframe where the initial (g)lm was called for;
