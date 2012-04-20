@@ -1,8 +1,13 @@
-seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
-#opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0)
+seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
+#aggiunge la SS.ok (che esclude i gap)
+    c1 <- apply((Z <= PSI), 2, all)
+    c2 <- apply((Z >= PSI), 2, all)
+    if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
+    #
     nomiOK<-opz$nomiOK
     toll<-opz$toll
     h<-opz$h
+    gap<-opz$gap
     stop.if.error<-opz$stop.if.error
     dev.new<-opz$dev0
     visual<-opz$visual
@@ -15,6 +20,8 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
     epsilon <- 10
     psi.values <- NULL
     id.psi.ok<-rep(TRUE, length(psi))
+    sel.col.XREG<-unique(sapply(colnames(XREG), function(x)match(x,colnames(XREG))))
+    XREG<-XREG[,sel.col.XREG]
     while (abs(epsilon) > toll) {
         k<-ncol(Z)
         U <- pmax((Z - PSI), 0)
@@ -26,7 +33,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
             colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c("U", "V")
         else colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U",
             1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
-        obj <- lm.wfit(x = X, y = y, w = w, offset = o)
+        obj <- lm.wfit(x = X, y = y, w = w, offset = offs)
         dev.old<-dev.new
         dev.new <- sum(obj$residuals^2)
         if (visual) {
@@ -82,11 +89,20 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,o,opz){
     rownames(X) <- NULL
     if (ncol(V) == 1) colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c("U", "V")
         else colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U", 1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
-    obj <- lm.wfit(x = X, y = y, w = w, offset = o)
+    obj <- lm.wfit(x = X, y = y, w = w, offset = offs)
     obj$epsilon <- epsilon
     obj$it <- it
+    obj.new <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
+    SS.new<-sum(obj.new$residuals^2)
+    if(!gap){
+          names.coef<-names(obj$coefficients)
+          obj$coefficients<-c(obj.new$coefficients, rep(0,ncol(V)))
+          names(obj$coefficients)<-names.coef
+          obj$residuals<-obj.new$residuals
+          obj$fitted.values<-obj.new$fitted.values
+          }
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,
-        epsilon=epsilon,nomiOK=nomiOK)
+        epsilon=epsilon,nomiOK=nomiOK, SumSquares.no.gap=SS.new)
     return(obj)
     }

@@ -13,7 +13,14 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     toll <- control$toll
     visual <- control$visual
     stop.if.error<-control$stop.if.error
-###    if() stop.if.error<-FALSE
+    n.boot<-control$n.boot
+    size.boot<-control$size.boot
+    gap<-control$gap
+    visualBoot<-FALSE
+    if(n.boot>0){
+        if(visual) {visual<-FALSE; visualBoot<-TRUE}#warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
+        if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
+     }
     last <- control$last
     K<-control$K
     h<-min(abs(control$h),1)
@@ -32,7 +39,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
-    orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z))) #utile per plotting
+    #orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z))) #utile per plotting
     
     nomeRispo<-strsplit(paste(formula(obj))[2],"/")[[1]] #eventuali doppi nomi (tipo "y/n" per GLM binom)
     #la linea sotto aggiunge nel mf anche la variabile offs..
@@ -133,10 +140,11 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         for(i in 1:ncol(U)) mf[nomiU[i]]<-U[,i]
         Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         #obj <- update(obj, formula = Fo, data = KK)
-        obj <- update(obj, formula = Fo, data = mf, eval=FALSE)
+        obj <- update(obj, formula = Fo, data = mf, evaluate=FALSE)
         if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
         obj<-eval(obj, envir=mf)
         if (model) obj$model <-mf  #obj$model <- data.frame(as.list(KK))
+        names(psi)<-paste(paste("psi", ripetizioni, sep = ""), nomiZ, sep=".")
         obj$psi <- psi
         return(obj)
     }
@@ -153,8 +161,13 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    psi.values <- NULL
     nomiOK<-nomiU
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
-        fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group)
-    obj<-seg.glm.fit(y,XREG,Z,PSI,weights,offs,opz)
+        fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group,gap=gap,visualBoot=visualBoot)
+
+    if(n.boot<=0){
+      obj<-seg.glm.fit(y,XREG,Z,PSI,weights,offs,opz)
+    } else {
+      obj<-seg.glm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot)
+      }
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)
         return(obj0)
@@ -163,7 +176,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     it<-obj$it
     psi<-obj$psi
     k<-length(psi)
-    psi.values<-obj$psi.values
+    psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
     U<-obj$U
     V<-obj$V
     rangeZ<-obj$rangeZ 
@@ -171,7 +184,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     beta.c<-if(k == 1) coef(obj)["U"] else coef(obj)[paste("U", 1:ncol(U), sep = "")]
     psi.values[[length(psi.values) + 1]] <- psi
     id.warn <- FALSE
-    if (it > it.max) {
+    if (n.boot<=0 && it > it.max) {
         warning("max number of iterations attained", call. = FALSE)
         id.warn <- TRUE
     }
@@ -198,6 +211,14 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     objF <- update(obj0, formula = Fo, data = mf, evaluate=FALSE)
     if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<-eval(objF, envir=mf)
+#c'è un problema..controlla obj (ha due "(Intercepts)"
+    if(!gap){
+        names.coef<-names(objF$coefficients)
+        objF$coefficients<- if(sum("(Intercept)"==names(obj$coef))==2) obj$coefficients[-2] else obj$coefficients
+        names(objF$coefficients)<-names.coef
+        objF$fitted.values<-obj$fitted.values
+        objF$residuals<-obj$residuals
+        }
     if(any(is.na(objF$coefficients))){
      stop("some estimate is NA: premature stopping with a large number of breakpoints?",
       call. = FALSE)

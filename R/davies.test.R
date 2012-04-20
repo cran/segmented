@@ -28,6 +28,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
             est.disp <- TRUE
             NaN
         }
+    dispersion<-max(c(dispersion, 1e-10))
     p <- object$rank
     p1 <- 1L:p
     Qr <- object$qr
@@ -164,7 +165,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
         "\nsegmented variable =", name.Z),
         statistic = c("`Best' at" = best),
         parameter = c(n.points = length(valori)), p.value = min(p.adj,1),
-        alternative = alternative)
+        alternative = alternative, process=cbind(psi.values=valori, stat.values=ris.valori))
     class(out) <- "htest"
     return(out)
 }

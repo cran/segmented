@@ -9,7 +9,8 @@
 \method{summary}{segmented}(object, short = FALSE, var.diff = FALSE, ...)
 
 \method{print}{summary.segmented}(x, short=x$short, var.diff=x$var.diff, 
-    digits = max(3, getOption("digits") - 3), signif.stars = getOption("show.signif.stars"),...)
+    digits = max(3, getOption("digits") - 3),
+    signif.stars = getOption("show.signif.stars"),...)
 
 }
 %- maybe also 'usage' for other objects documented here.

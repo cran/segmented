@@ -14,7 +14,7 @@ broken.line(ogg, term = NULL, gap = FALSE, linkinv = FALSE,
   \item{term}{ A character meaning for which segmented variable prediction should be computed.}
   \item{gap}{ Should the `gaps' of the segmented relationships be plotted? Default to \code{FALSE}.}
   \item{linkinv}{ Should the predictions be computed on the scale of the link function? Default to \code{FALSE}. }
-  \item{interc}{ Should the model intercept be added?}
+  \item{interc}{ Should the model intercept be added? (provided it exists).}
 }
 \details{
   If \code{term=NULL} predictions for each segmented variable in the fitted model are computed. Argument \code{linkinv}

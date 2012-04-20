@@ -7,9 +7,10 @@
      only used when calling any 'segmented' method (\code{segmented.lm} or \code{segmented.glm}).
 }
 \usage{
-seg.control(toll = 1e-04, it.max = 20, display = FALSE, 
-    stop.if.error = TRUE, K = 10, last = TRUE, 
-    maxit.glm = 25, h = 1)
+seg.control(toll = 1e-04, it.max = 10, display = FALSE,
+    stop.if.error = TRUE, K = 10, last = TRUE, maxit.glm = 25, h = 1, 
+    n.boot=10, size.boot=NULL, gap=FALSE, jt=FALSE, nonParam=TRUE,
+    random=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,18 +18,30 @@ seg.control(toll = 1e-04, it.max = 20, display = FALSE,
   \item{it.max}{ integer giving the maximal number of iterations. }
   \item{display}{ logical indicating if output should be produced for each iteration. }
   \item{stop.if.error}{ logical indicating if non-admissible break-points should be removed 
-    during the estimating algorithm. Set to \code{FALSE} if you want to perform a sort of 
-    `automatic' breakpoint selection, provided that several starting values are provided for the breakpoint.
+    during the estimating algorithm. Set it to \code{FALSE} if you want to perform a sort of
+    `automatic' breakpoint selection, provided that several starting values are provided for the breakpoints.
     See argument \code{psi} in \code{\link{segmented.lm}} or \code{\link{segmented.glm}}. 
     The idea of removing `non-admissible' break-points during the iterative process is discussed in 
-    Muggeo and Adelfio (2011)}
+    Muggeo and Adelfio (2011) and it is not compatible with the bootstrap restart algorithm.}
   \item{K}{ the number of quantiles to supply as starting values for the breakpoints when \code{NA} is 
     specified in the \code{psi} argument of \code{segmented}. \code{K} is ignored when \code{psi} is different
     from \code{NA}.} 
   \item{last}{ logical indicating if output should include only the last fitted model.}
   \item{maxit.glm}{ integer giving the maximum number of inner IWLS iterations (see details). }
-  \item{h}{ positive factor (from zero to one) modifying the increments in breakpoint estimation (see details). }
-}
+  \item{h}{ positive factor (from zero to one) modifying the increments in breakpoint updates during
+    the estimation process (see details). }
+  \item{n.boot}{ number of bootstrap samples used in the bootstrap restarting algorithm. If 0 the standard algorithm,
+    i.e. without bootstrap restart, is used. Default to 10.}
+  \item{size.boot}{the size of the bootstrap samples. If \code{NULL}, it is taken equal to the actual sample size.}
+  \item{gap}{logical, if \code{FALSE} the gap coefficients are \emph{always} constrained to zero at the convergence.}
+  \item{jt}{logical. If \code{TRUE} the values of the segmented variable(s) are jittered before fitting the model to the
+  bootstrap resamples.}
+  \item{nonParam}{
+  if \code{TRUE} nonparametric bootstrap (i.e. case-resampling) is used, otherwise residual-based. }
+  \item{random}{
+  if \code{TRUE}, when the algorithm fails to obtain a solution, random values are employed to obtain candidate values.}
+  }
+
 \details{
   Fitting a `segmented' GLM model is attained via fitting iteratively standard GLMs. The number of (outer) 
   iterations is governed by \code{it.max}, while the (maximum) number of (inner) iterations to fit the GLM at 
@@ -47,13 +60,23 @@ seg.control(toll = 1e-04, it.max = 20, display = FALSE,
   (i) the actual maximum number of iterations is increased up to \code{it.max+round(it.max/2)} and
   (ii) the breakpoint update is computed via \code{psi.new=psi.old+h*increm}
   after the \code{it.max}-th iteration.
+
+  Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood (2011).
+  The bootstrap restarting is expected to escape the local optima of the objective function when the
+  segmented relationship is flat. Notice bootstrap restart runs \code{n.boot} iterations regardless of 
+  \code{toll} that only affects convergence within the inner loop.
 }
 \value{
   A list with the arguments as components.
 }
 \references{ Muggeo, V.M.R., Adelfio, G. (2011) Efficient change point detection in genomic sequences of 
-    continuous measurements. \emph{Bioinformatics} \bold{27}, 161--166. }
-%\author{ ~~who you are~~ }
+    continuous measurements. \emph{Bioinformatics} \bold{27}, 161--166. 
+
+Wood, S. N. (2001) Minimizing model fitting objectives that contain spurious local minima
+    by bootstrap restarting. \emph{Biometrics} \bold{57}, 240--244. 
+    }
+
+\author{ Vito Muggeo }
 %\note{ ~~further notes~~ 
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}

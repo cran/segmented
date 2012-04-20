@@ -7,26 +7,29 @@
   the fitted broken-line for the selected segmented term.
 }
 \usage{
-\method{plot}{segmented}(x, term = NULL, se = FALSE, const = coef(x)["(Intercept)"],
-  add = FALSE, linkinv = FALSE, show.gap=TRUE, rev.sgn=FALSE,
-  n.points = 10, ...)
-}
+\method{plot}{segmented}(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE, linkinv = FALSE,
+      res.col=1,  rev.sgn=FALSE, const=0, ...)
+      }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{ a fitted \code{segmented} object }
-  \item{term}{ the segmented variable whose piece-wise relationship has to be plotted. 
-      If there is a single segmented variable, \code{term} can be omitted}
+  \item{x}{ a fitted \code{segmented} object. }
+  \item{term}{ the segmented variable having the piece-wise relationship to be plotted.
+      If there is a single segmented variable, \code{term} can be omitted.}
+  \item{add}{ when \code{TRUE} the fitted lines are added to the current device.}
+  \item{res}{ when \code{TRUE} the fitted lines are plotted along with corresponding partial residuals.}
   \item{se}{ when \code{TRUE} pointwise confidence intervals are drawn. Currently unimplemented. }
-  \item{const}{ constant to add to each fitted segmented relationship (on the scale of the linear predictor) before plotting }
-  \item{add}{ when \code{TRUE} the fitted lines are added to the current device }
-  \item{linkinv}{ when \code{TRUE}, the fitted lines are (possibly) tranformed on the inverse link scale
-    before plotting; in this case it could be useful to increase \code{n.points} to get smooth curves}
-  \item{show.gap}{ should the gap between the fitted lines at the estimated breakpoints to be shown?}
+  \item{show.gap}{ when \code{FALSE} the (possible) gaps between the fitted lines at the estimated breakpoints
+      are hidden.}
+  \item{linkinv}{ when \code{TRUE}, the fitted lines are tranformed on the inverse link (i.e. response) scale
+    before plotting.}
+  \item{res.col}{when \code{res=TRUE} it means the color of the points representing the partial residuals.}
   \item{rev.sgn}{ when \code{TRUE} it is assumed that current \code{term} is `minus' the actual segmented variable,
-    therefore the sign is reversed before plotting. This is useful when a null-constraint has been set on the last slope}
-  \item{n.points}{ number of points where the fitted lines have to be computed}
-  \item{\dots}{ other graphics parameters to pass on to plotting commands; for instance, `col', `lwd' and `lty' that 
-  can be vectors (see the example below)}
+    therefore the sign is reversed before plotting. This is useful when a null-constraint has been set on the last slope.}
+  \item{const}{ constant to add to each fitted segmented relationship (on the scale of the linear predictor) before plotting.}
+  \item{\dots}{ other graphics parameters to pass on to plotting commands: `col', `lwd' and `lty' (that
+  can be vectors, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub' when a new plot
+  is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}).
+  }
 }
 \details{
   Produces (or adds to the current device) the fitted segmented relationship between the
@@ -34,9 +37,11 @@
   \code{term} may be omitted. Due to the parameterization of the segmented terms, sometimes
   the fitted lines may not appear to join at the estimated breakpoints. If this is the case, the apparent
   `gap' would indicate some lack-of-fit. However such `gap' may be hidden by setting \code{show.gap=FALSE}:
-  in this case the new fitted values are re-computed by means of a linear model fit. Note that, as hidding
-  could lead to a wrong impression of the fit, \code{show.gap=TRUE} is suggested only when the gap coefficients
-  are nonsignificant.
+  \code{show.gap=TRUE} is suggested only when the gap coefficients are nonsignificant, see
+  \code{summary.segmented(..)$gap}.
+  The partial residuals are computed as `fitted + residuals', where `fitted' are the fitted values of the
+  segmented relationship. Notice that for GLMs the residuals are the response residuals if \code{linkinv=TRUE} and
+  the working residuals if \code{linkinv=FALSE}.
   }
 \value{
 None.

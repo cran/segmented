@@ -1,4 +1,6 @@
 broken.line<-function (ogg, term = NULL, gap = FALSE, linkinv = FALSE, interc = TRUE)
+#NB Modifica anche il file di help
+#interc: Should the model intercept be added? (provided that it exists)
 {
     if (!"segmented" %in% class(ogg))
         stop("A segmented model is requested")
@@ -24,8 +26,10 @@ broken.line<-function (ogg, term = NULL, gap = FALSE, linkinv = FALSE, interc = 
         variabili[[nomeZ[i]]] <- data.matrix(ogg$model[names(cof)])
     }
     ris <- mapply(function(xx, yy) drop(xx %*% yy), variabili,Ris)
-    if (interc)
-        ris <- ris + coef(ogg)["(Intercept)"]
+    if (interc){
+        mod.inter<-ifelse(!is.na(coef(ogg)["(Intercept)"]),coef(ogg)["(Intercept)"],0)
+        ris <- ris + mod.inter
+        }
     if (!is.null(term))
         ris <- ris[, term, drop=FALSE]
     if (inherits(ogg, what = "glm", FALSE) && linkinv)

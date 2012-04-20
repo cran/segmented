@@ -52,6 +52,11 @@ segmented(obj, seg.Z, psi, control = seg.control(),
   values for the break-points must be specified. The model
   is estimated simultaneously yielding point estimates and relevant approximate
    standard errors of all the model parameters, including the break-points.
+
+  Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood.
+  The bootstrap restarting is expected to escape the local optima of the objective function when the
+  segmented relationship is flat and the log likelihood can have multiple local optima.
+
 }
 \value{
   The returned object depends on the \code{last} component returned by \code{seg.control}.
@@ -118,7 +123,8 @@ scatter-plot is usually a good way to obtain some idea on breakpoint location.
 Moreover it is also advisable to look at the coefficients of the `gap' variables. At the
 convergence they should be small or at least, non-significantly different from zero.
 \code{\link{summary.segmented}} and \code{\link{print.summary.segmented}} return
-information of the `gap' coefficients.
+information of the `gap' coefficients. The bootstrap restarting option is to deal with
+poor clear cut relationships.
 }
 
 \seealso{ \code{\link{lm}}, \code{\link{glm}} }
@@ -139,8 +145,9 @@ out.lm<-lm(y~z,data=dati)
 o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 
 #automatic procedure to estimate breakpoints in the covariate x
+# Notice: bootstrap restart is not allowed!
 o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
-    control=seg.control(stop.if.error=FALSE))
+    control=seg.control(stop.if.error=FALSE,n.boot=0))
 
             }
 

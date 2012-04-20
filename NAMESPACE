@@ -1,9 +1,8 @@
 export(segmented, segmented.default, segmented.lm, segmented.glm, 
 	broken.line ,confint.segmented,davies.test,draw.history,
 	intercept,lines.segmented,plot.segmented,print.segmented,
-	seg.control,seg.lm.fit,slope,summary.segmented,print.summary.segmented,vcov.segmented)
-
-
+	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
+	slope, summary.segmented,print.summary.segmented,vcov.segmented)
 
 S3method(segmented,default)
 S3method(segmented,lm)

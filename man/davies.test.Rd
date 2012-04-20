@@ -41,6 +41,7 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
   \item{statistic }{the point at which the maximum (or the minimum if \code{alternative="less"}) occurs}
   \item{parameter }{number of evaluation points}
   \item{p.value }{the adjusted p-value}
+  \item{process}{a two-column matrix including the evaluation points and corresponding values of the statistic}
 }
 \references{Davies, R.B. (1987) Hypothesis testing when a nuisance parameter is present only under the alternative.
     \emph{Biometrika} \bold{74}, 33--43. }

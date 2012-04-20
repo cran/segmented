@@ -4,6 +4,18 @@
 *					  *
 *********************************
 
+
+
+===============
+version 0.2-9.0
+===============
+* Some bugs fixed: davies.test() did not work correctly for deterministic data (thanks to Glenn Roberts for finding the error). davies.test() also
+  returns the `process', i.e. the different values of the evaluation points and corresponding test statistic.
+* plot.segmented() has been re-written. Now it produces nicer (and typically smaller) plots, and also it gains argument `res' for plotting partial 
+residuals along with the fitted piecewise lines.
+* Bootstrap restarting implemented to deal with problems coming from flat segmented relationships.   
+
+
 ===============
 version 0.2-8.4
 ===============

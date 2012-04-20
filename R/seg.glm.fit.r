@@ -1,5 +1,7 @@
-seg.glm.fit<-function(y,XREG,Z,PSI,w,o,opz){
-#opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0)
+seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
+    c1 <- apply((Z <= PSI), 2, all) #prima era solo <
+    c2 <- apply((Z >= PSI), 2, all) #prima era solo >
+    if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
     eta0<-opz$eta0
     fam<-opz$fam
     maxit.glm<-opz$maxit.glm
@@ -12,6 +14,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,o,opz){
     visual<-opz$visual
     it.max<-old.it.max<-opz$it.max
     id.psi.group<-opz$id.psi.group
+    gap<-opz$gap
     rangeZ <- apply(Z, 2, range)
     #k<-ncol(Z)
     psi<-PSI[1,]
@@ -32,7 +35,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,o,opz){
             1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
         #obj <- lm.wfit(x = X, y = y, w = w, offset = o)
         #controlla******************
-        obj <- suppressWarnings(glm.fit(x = X, y = y, offset = o,
+        obj <- suppressWarnings(glm.fit(x = X, y = y, offset = offs,
             weights = w, family = fam, control = glm.control(maxit = maxit.glm),
             etastart = eta0))
         eta0 <- obj$linear.predictors
@@ -92,13 +95,24 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,o,opz){
     if (ncol(V) == 1) colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c("U", "V")
         else colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U", 1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
     #tolto il suppressWarnings(
-    obj <- glm.fit(x = X, y = y, offset = o,
+    obj <- glm.fit(x = X, y = y, offset = offs,
             weights = w, family = fam, control = glm.control(maxit = maxit.glm),
             etastart = eta0)
     obj$epsilon <- epsilon
     obj$it <- it
+    obj.new <- glm.fit(x = cbind(XREG, U), y = y, offset = offs,
+            weights = w, family = fam, control = glm.control(maxit = maxit.glm),
+            etastart = eta0)
+    SS.new<- obj.new$dev
+    if(!gap){
+          names.coef<-names(obj$coefficients)
+          obj$coefficients<-c(obj.new$coefficients, rep(0,ncol(V)))
+          names(obj$coefficients)<-names.coef
+          obj$residuals<-obj.new$residuals
+          obj$fitted.values<-obj.new$fitted.values
+          }
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,
-        epsilon=epsilon,nomiOK=nomiOK)
+        epsilon=epsilon,nomiOK=nomiOK, dev.no.gap=SS.new)
     return(obj)
     }
