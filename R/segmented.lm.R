@@ -16,8 +16,12 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     n.boot<-control$n.boot
     size.boot<-control$size.boot
     gap<-control$gap
+    random<-control$random
+    pow<-control$pow
+    visualBoot<-FALSE
     if(n.boot>0){
-        if(visual) {visual<-FALSE; warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
+        if(!is.null(control$seed)) set.seed(control$seed)
+        if(visual) {visual<-FALSE; visualBoot<-TRUE}# warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
         if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
      }
     last <- control$last
@@ -156,11 +160,11 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    psi.values <- NULL
     nomiOK<-nomiU
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
-        nomiOK=nomiOK,id.psi.group=id.psi.group,gap=gap)
+        nomiOK=nomiOK,id.psi.group=id.psi.group,gap=gap,visualBoot=visualBoot,pow=pow)
     if(n.boot<=0){
     obj<-seg.lm.fit(y,XREG,Z,PSI,weights,offs,opz)
     } else {
-    obj<-seg.lm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot)
+    obj<-seg.lm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random) #jt, nonParam
       }
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)
@@ -172,6 +176,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
     U<-obj$U
     V<-obj$V
+    if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
     rangeZ<-obj$rangeZ
     obj<-obj$obj
     k<-length(psi)

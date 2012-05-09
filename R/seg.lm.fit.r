@@ -1,9 +1,20 @@
-seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
+seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
 #aggiunge la SS.ok (che esclude i gap)
+#argomento return.all.sol
+#opz$pow (passata da seg.control) che necessita di dpmax()
+#step halving more straightforward (deleted H)
+#-----------------
+dpmax<-function(x,y,pow=1){
+#deriv pmax
+        if(pow==1) ifelse(x>y, -1, 0)
+         else -pow*pmax(x-y,0)^(pow-1)
+         }
+#-----------
     c1 <- apply((Z <= PSI), 2, all)
     c2 <- apply((Z >= PSI), 2, all)
     if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
     #
+    pow<-opz$pow
     nomiOK<-opz$nomiOK
     toll<-opz$toll
     h<-opz$h
@@ -15,18 +26,17 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
     it.max<-old.it.max<-opz$it.max
     rangeZ <- apply(Z, 2, range)
     psi<-PSI[1,]
-    H<-1
+    #H<-1
     it <- 1
     epsilon <- 10
-    psi.values <- NULL
+    dev.values<-psi.values <- NULL
     id.psi.ok<-rep(TRUE, length(psi))
     sel.col.XREG<-unique(sapply(colnames(XREG), function(x)match(x,colnames(XREG))))
     XREG<-XREG[,sel.col.XREG]
     while (abs(epsilon) > toll) {
         k<-ncol(Z)
-        U <- pmax((Z - PSI), 0)
-        V <- ifelse((Z > PSI), -1, 0)
-        #dev.old <- sum(obj$residuals^2)
+        U <- pmax((Z - PSI), 0)^pow[1]#U <- pmax((Z - PSI), 0)
+        V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
         X <- cbind(XREG, U, V)
         rownames(X) <- NULL
         if (ncol(V) == 1)
@@ -35,7 +45,9 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
             1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
         obj <- lm.wfit(x = X, y = y, w = w, offset = offs)
         dev.old<-dev.new
-        dev.new <- sum(obj$residuals^2)
+        dev.new <- dev.new1 <-sum(obj$residuals^2)
+        if(return.all.sol) dev.new1 <- sum(lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)$residuals^2)
+        dev.values[[length(dev.values) + 1]] <- dev.new1
         if (visual) {
             flush.console()
             if (it == 1)
@@ -61,8 +73,8 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
         }
         if (it > it.max) break
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
-        if(it>=old.it.max && h<1) H<-h
-        psi <- psi.old + H*gamma.c/beta.c
+ #       if(it>=old.it.max && h<1) H<-h
+        psi <- psi.old + h*gamma.c/beta.c
         #aggiorna id.psi.group.. ovvero id.psi.group[id.psi.ok]
         #psi<-unlist(tapply(psi, id.psi.group, sort))
         #PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
@@ -71,7 +83,10 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
         a <- apply((Z <= PSI), 2, all) #prima era solo <
         b <- apply((Z >= PSI), 2, all) #prima era solo >
         if(stop.if.error) {
-            if(sum(a + b) != 0 || is.na(sum(a + b))) stop("(Some) estimated psi out of its range")
+        isErr<- (sum(a + b) != 0 || is.na(sum(a + b)))
+            if(isErr) {
+              if(return.all.sol) return(list(dev.values, psi.values)) else stop("(Some) estimated psi out of its range")
+              }
             } else {
             id.psi.ok<-!is.na((a+b)<=0)&(a+b)<=0
             Z <- Z[,id.psi.ok,drop=FALSE]

@@ -1,4 +1,5 @@
 draw.history<-function(obj,term,...){
+#show.history() se c'è stato boot restart potrebbe produrre un grafico 2x1 di "dev vs it" and "no.of distinct vs it"
       if(missing(term)){
           if(length(obj$nameUV$Z)>1 ) {stop("please, specify `term'")}
                else {term<-obj$nameUV$Z}

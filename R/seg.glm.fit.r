@@ -1,7 +1,15 @@
-seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
+seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
+#-------------------------
+dpmax<-function(x,y,pow=1){
+#deriv pmax
+        if(pow==1) ifelse(x>y, -1, 0)
+         else -pow*pmax(x-y,0)^(pow-1)
+         }
+#--------------------
     c1 <- apply((Z <= PSI), 2, all) #prima era solo <
     c2 <- apply((Z >= PSI), 2, all) #prima era solo >
     if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
+    pow<-opz$pow
     eta0<-opz$eta0
     fam<-opz$fam
     maxit.glm<-opz$maxit.glm
@@ -18,14 +26,14 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
     rangeZ <- apply(Z, 2, range)
     #k<-ncol(Z)
     psi<-PSI[1,]
-    H<-1
+#    H<-1
     it <- 1
     epsilon <- 10
-    psi.values <- NULL
+    dev.values<-psi.values <- NULL
     while (abs(epsilon) > toll) {
         k<-ncol(Z)
-        U <- pmax((Z - PSI), 0)
-        V <- ifelse((Z > PSI), -1, 0)
+        U <- pmax((Z - PSI), 0)^pow[1]
+        V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
         #dev.old <- sum(obj$residuals^2)
         X <- cbind(XREG, U, V)
         rownames(X) <- NULL
@@ -41,7 +49,9 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
         eta0 <- obj$linear.predictors
         #---
         dev.old<-dev.new
-        dev.new <- obj$dev
+        dev.new <- dev.new1<- obj$dev
+        if(return.all.sol) dev.new1 <- glm.fit(x=cbind(XREG, U),y=y, family=fam, weights=w, offset=offs, etastart=eta0)$dev
+        dev.values[[length(dev.values) + 1]] <- dev.new1
         if (visual) {
             flush.console()
             if (it == 1)
@@ -68,15 +78,18 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
         }
         if (it > it.max) break
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
-        if(it>=old.it.max && h<1) H<-h
-        psi <- psi.old + H*gamma.c/beta.c
+        #if(it>=old.it.max && h<1) H<-h
+        psi <- psi.old + h*gamma.c/beta.c
         #psi<-unlist(tapply(psi,id.psi.group,sort))
         PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <
         b <- apply((Z >= PSI), 2, all) #prima era solo >
         if(stop.if.error) {
-            if(sum(a + b) != 0 || is.na(sum(a + b))) stop("(Some) estimated psi out of its range")
+            isErr <- sum(a + b) != 0 || is.na(sum(a + b))
+            if(isErr) {
+                if(return.all.sol) return(list(dev.values, psi.values)) else stop("(Some) estimated psi out of its range")
+                }
             } else {
             id.psi.ok<-!is.na((a+b)<=0)&(a+b)<=0
             Z <- Z[,id.psi.ok,drop=FALSE]
@@ -110,6 +123,10 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz){
           names(obj$coefficients)<-names.coef
           obj$residuals<-obj.new$residuals
           obj$fitted.values<-obj.new$fitted.values
+          obj$linear.predictors<-obj.new$linear.predictors
+          obj$deviance<-obj.new$deviance
+          obj$weights<-obj.new$weights
+          obj$aic<-obj.new$aic
           }
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,

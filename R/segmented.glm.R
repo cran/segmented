@@ -16,8 +16,11 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     n.boot<-control$n.boot
     size.boot<-control$size.boot
     gap<-control$gap
+    random<-control$random
+    pow<-control$pow
     visualBoot<-FALSE
     if(n.boot>0){
+        if(!is.null(control$seed)) set.seed(control$seed)
         if(visual) {visual<-FALSE; visualBoot<-TRUE}#warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
         if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
      }
@@ -161,12 +164,13 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    psi.values <- NULL
     nomiOK<-nomiU
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
-        fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group,gap=gap,visualBoot=visualBoot)
+        fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group,gap=gap,
+        pow=pow, visualBoot=visualBoot)
 
     if(n.boot<=0){
       obj<-seg.glm.fit(y,XREG,Z,PSI,weights,offs,opz)
     } else {
-      obj<-seg.glm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot)
+      obj<-seg.glm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random) #jt, nonParam
       }
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)
@@ -179,6 +183,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
     U<-obj$U
     V<-obj$V
+    if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
     rangeZ<-obj$rangeZ 
     obj<-obj$obj
     beta.c<-if(k == 1) coef(obj)["U"] else coef(obj)[paste("U", 1:ncol(U), sep = "")]
@@ -217,7 +222,11 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         objF$coefficients<- if(sum("(Intercept)"==names(obj$coef))==2) obj$coefficients[-2] else obj$coefficients
         names(objF$coefficients)<-names.coef
         objF$fitted.values<-obj$fitted.values
+        objF$linear.predictors<-obj$linear.predictors
         objF$residuals<-obj$residuals
+        objF$deviance<-obj$deviance
+        objF$aic<-obj$aic
+        objF$weights<-obj$weights
         }
     if(any(is.na(objF$coefficients))){
      stop("some estimate is NA: premature stopping with a large number of breakpoints?",

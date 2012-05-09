@@ -72,7 +72,7 @@ plot.segmented<-function(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE,
     rr<-rbind(r,r1)
     fit<-c(y.val,y.val1)
     if(res) {
-        ress<-if (inherits(x, what = "glm", which = FALSE)) residuals(x,"working") else resid(x)
+        ress<-if (inherits(x, what = "glm", which = FALSE)) residuals(x,"working")*sqrt(x$weights) else resid(x)
         fit<-broken.line(x,term,gap=show.gap,linkinv=linkinv,interc=TRUE)+ress + const
         }
     if(!add) plot(rr, type="n", xlab=xlabs, ylab=ylabs, main=opz$main, sub=opz$sub, ylim=range(fit))

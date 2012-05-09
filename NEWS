@@ -5,15 +5,22 @@
 *********************************
 
 
+===============
+version 0.2-9.1
+===============
+* Some bugs fixed: segmented.lm() and segmented.glm() did not finish correctly when no breakpoint was found; now segmented.lm() and segmented.glm() take care of flat relationships; plot.segmented() did not compute correctly the partial residuals for segmented glm fits. 
+
 
 ===============
 version 0.2-9.0
 ===============
+* Bootstrap restarting implemented to deal with problems coming from flat segmented relationships. segmented now is less sensitive to starting values
+supplied for 'psi'. 
+* At the convergence segmented now constrains the gap coefficients to be exactly zero. This is the default and it can be altered by the 'gap' argument 
+in seg.control().
+* plot.segmented() has been re-written. It gains argument `res' for plotting partial residuals along with the fitted piecewise lines, and now it produces nicer (and typically smaller) plots.
 * Some bugs fixed: davies.test() did not work correctly for deterministic data (thanks to Glenn Roberts for finding the error). davies.test() also
   returns the `process', i.e. the different values of the evaluation points and corresponding test statistic.
-* plot.segmented() has been re-written. Now it produces nicer (and typically smaller) plots, and also it gains argument `res' for plotting partial 
-residuals along with the fitted piecewise lines.
-* Bootstrap restarting implemented to deal with problems coming from flat segmented relationships.   
 
 
 ===============

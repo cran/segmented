@@ -13,12 +13,12 @@ Fitter Functions for Segmented Linear Models
 generalized segmented linear models. These functions should usually not be used directly by the user.
 }
 \usage{
-seg.lm.fit(y, XREG, Z, PSI, w, offs, opz)
+seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)
 
 seg.lm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, 
     jt=FALSE, nonParam=TRUE, random=FALSE)
 
-seg.glm.fit(y, XREG, Z, PSI, w, offs, opz)
+seg.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)
 
 seg.glm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, 
     jt=FALSE, nonParam=TRUE, random=FALSE)
@@ -55,13 +55,18 @@ appropriate matrix including the segmented variables whose breakpoints have to b
 }
   \item{jt}{
   logical. If \code{TRUE} the values of the segmented variable(s) are jittered before fitting the model to the
-  bootstrap resamples.  
+  bootstrap resamples.
 }
   \item{nonParam}{
-  if \code{TRUE} nonparametric bootstrap (i.e. case-resampling) is used, otherwise residual-based. 
+  if \code{TRUE} nonparametric bootstrap (i.e. case-resampling) is used, otherwise residual-based.
+
 }
   \item{random}{
-  if \code{TRUE}, when the algorithm fails to obtain a solution, random values are employed to obtain candidate values.
+  if \code{TRUE}, when the algorithm fails to obtain a solution, random values are used as candidate values.
+}
+  \item{return.all.sol}{
+  if \code{TRUE}, when the algorithm fails to obtain a solution, the values visited by the algorithm
+  with corresponding deviances are returned.
 }
 }
 \details{

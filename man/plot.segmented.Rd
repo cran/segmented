@@ -16,7 +16,8 @@
   \item{term}{ the segmented variable having the piece-wise relationship to be plotted.
       If there is a single segmented variable, \code{term} can be omitted.}
   \item{add}{ when \code{TRUE} the fitted lines are added to the current device.}
-  \item{res}{ when \code{TRUE} the fitted lines are plotted along with corresponding partial residuals.}
+  \item{res}{ when \code{TRUE} the fitted lines are plotted along with corresponding partial residuals.
+      See Details.}
   \item{se}{ when \code{TRUE} pointwise confidence intervals are drawn. Currently unimplemented. }
   \item{show.gap}{ when \code{FALSE} the (possible) gaps between the fitted lines at the estimated breakpoints
       are hidden.}
@@ -41,7 +42,7 @@
   \code{summary.segmented(..)$gap}.
   The partial residuals are computed as `fitted + residuals', where `fitted' are the fitted values of the
   segmented relationship. Notice that for GLMs the residuals are the response residuals if \code{linkinv=TRUE} and
-  the working residuals if \code{linkinv=FALSE}.
+  the working residuals weighted by the IWLS weights if \code{linkinv=FALSE}.
   }
 \value{
 None.

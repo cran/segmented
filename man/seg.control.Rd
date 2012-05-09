@@ -9,8 +9,8 @@
 \usage{
 seg.control(toll = 1e-04, it.max = 10, display = FALSE,
     stop.if.error = TRUE, K = 10, last = TRUE, maxit.glm = 25, h = 1, 
-    n.boot=10, size.boot=NULL, gap=FALSE, jt=FALSE, nonParam=TRUE,
-    random=TRUE)
+    n.boot=20, size.boot=NULL, gap=FALSE, jt=FALSE, nonParam=TRUE,
+    random=TRUE, powers=c(1,1), seed=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,15 +31,26 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
   \item{h}{ positive factor (from zero to one) modifying the increments in breakpoint updates during
     the estimation process (see details). }
   \item{n.boot}{ number of bootstrap samples used in the bootstrap restarting algorithm. If 0 the standard algorithm,
-    i.e. without bootstrap restart, is used. Default to 10.}
+    i.e. without bootstrap restart, is used. Default to 10 that appears to be sufficient in most of problems. However
+    when multiple breakpoints have to be estimated it is suggested to increase \code{n.boot}, e.g. \code{n.boot=50}.}
   \item{size.boot}{the size of the bootstrap samples. If \code{NULL}, it is taken equal to the actual sample size.}
   \item{gap}{logical, if \code{FALSE} the gap coefficients are \emph{always} constrained to zero at the convergence.}
   \item{jt}{logical. If \code{TRUE} the values of the segmented variable(s) are jittered before fitting the model to the
   bootstrap resamples.}
   \item{nonParam}{
-  if \code{TRUE} nonparametric bootstrap (i.e. case-resampling) is used, otherwise residual-based. }
+  if \code{TRUE} nonparametric bootstrap (i.e. case-resampling) is used, otherwise residual-based.
+  Currently working only for LM fits. It is not clear what residuals should be used for GLMs.}
   \item{random}{
-  if \code{TRUE}, when the algorithm fails to obtain a solution, random values are employed to obtain candidate values.}
+  if \code{TRUE}, when the algorithm fails to obtain a solution, random values are employed to obtain candidate values.
+  }
+  \item{powers}{
+  The powers of the pseudo covariates employed by the algorithm. These are possibly altered during the iterative 
+  process to stabilize the estimation procedure. Usually of no interest for the user.
+  }
+  \item{seed}{
+  The seed to be passed on \code{set.seed()} when \code{n.boot>0}. Setting the seed can be useful to replicate
+  the results when the bootstrap restart algorithm is employed.
+  }
   }
 
 \details{
