@@ -26,7 +26,6 @@ dpmax<-function(x,y,pow=1){
     rangeZ <- apply(Z, 2, range)
     #k<-ncol(Z)
     psi<-PSI[1,]
-#    H<-1
     it <- 1
     epsilon <- 10
     dev.values<-psi.values <- NULL
@@ -34,7 +33,6 @@ dpmax<-function(x,y,pow=1){
         k<-ncol(Z)
         U <- pmax((Z - PSI), 0)^pow[1]
         V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
-        #dev.old <- sum(obj$residuals^2)
         X <- cbind(XREG, U, V)
         rownames(X) <- NULL
         if (ncol(V) == 1)
@@ -47,7 +45,6 @@ dpmax<-function(x,y,pow=1){
             weights = w, family = fam, control = glm.control(maxit = maxit.glm),
             etastart = eta0))
         eta0 <- obj$linear.predictors
-        #---
         dev.old<-dev.new
         dev.new <- dev.new1<- obj$dev
         if(return.all.sol) dev.new1 <- glm.fit(x=cbind(XREG, U),y=y, family=fam, weights=w, offset=offs, etastart=eta0)$dev
@@ -58,11 +55,12 @@ dpmax<-function(x,y,pow=1){
                 cat(0, " ", formatC(dev.old, 3, format = "f"),
                   "", "(No breakpoint(s))", "\n")
             spp <- if (it < 10) "" else NULL
-            cat(it, spp, "", formatC(dev.new, 3, format = "f"), "",length(psi),"\n")
+            cat(it, spp, "", formatC(dev.new1, 3, format = "f"), "",length(psi),"\n")
             #cat(paste("iter = ", it, spp," dev = ",formatC(dev.new,digits=3,format="f"), " n.psi = ",formatC(length(psi),digits=0,format="f"), sep=""), "\n")
 
         }
         epsilon <- (dev.new - dev.old)/dev.old
+#        epsilon <- (dev.new1 - dev.old)/dev.old #se vuoi usare la *vera* (e non la working che tiene conto dei gap) deviance
         obj$epsilon <- epsilon
         it <- it + 1
         obj$it <- it

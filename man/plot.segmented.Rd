@@ -7,7 +7,7 @@
   the fitted broken-line for the selected segmented term.
 }
 \usage{
-\method{plot}{segmented}(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE, linkinv = FALSE,
+\method{plot}{segmented}(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE, link=TRUE,
       res.col=1,  rev.sgn=FALSE, const=0, ...)
       }
 %- maybe also 'usage' for other objects documented here.
@@ -21,8 +21,8 @@
   \item{se}{ when \code{TRUE} pointwise confidence intervals are drawn. Currently unimplemented. }
   \item{show.gap}{ when \code{FALSE} the (possible) gaps between the fitted lines at the estimated breakpoints
       are hidden.}
-  \item{linkinv}{ when \code{TRUE}, the fitted lines are tranformed on the inverse link (i.e. response) scale
-    before plotting.}
+  \item{link}{ when \code{TRUE} (default), the fitted lines are plotted on the link scale, otherwise they are
+    tranformed on the response scale before plotting. Ignored for linear segmented fits. }
   \item{res.col}{when \code{res=TRUE} it means the color of the points representing the partial residuals.}
   \item{rev.sgn}{ when \code{TRUE} it is assumed that current \code{term} is `minus' the actual segmented variable,
     therefore the sign is reversed before plotting. This is useful when a null-constraint has been set on the last slope.}
@@ -64,7 +64,7 @@ par(mfrow=c(1,2))
 plot(o.seg)
 plot(z,y)
 ## add the fitted lines using different colors and styles..
-plot(o.seg,add=TRUE,linkinv=TRUE,lwd=2,col=2:3, lty=c(1,3))
+plot(o.seg,add=TRUE,link=FALSE,lwd=2,col=2:3, lty=c(1,3))
 lines(o.seg,col=2,pch=19,bottom=FALSE,lwd=2)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

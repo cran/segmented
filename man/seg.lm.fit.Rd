@@ -10,18 +10,19 @@ Fitter Functions for Segmented Linear Models
 \description{
 \code{seg.lm.fit} is called by \code{segmented.lm} to fit segmented linear 
 (gaussian) models.  Likewise \code{seg.glm.fit} is called by \code{segmented.glm} to fit  
-generalized segmented linear models. These functions should usually not be used directly by the user.
+generalized segmented linear models. \code{seg.lm.fit.boot} and \code{seg.glm.fit.boot} are
+employed to perform bootstrap restart. These functions should usually not be used directly by the user.
 }
 \usage{
 seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)
 
-seg.lm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, 
-    jt=FALSE, nonParam=TRUE, random=FALSE)
+seg.lm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10,
+    size.boot=NULL, jt=FALSE, nonParam=TRUE, random=FALSE)
 
 seg.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)
 
-seg.glm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, 
-    jt=FALSE, nonParam=TRUE, random=FALSE)
+seg.glm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10,
+    size.boot=NULL, jt=FALSE, nonParam=TRUE, random=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

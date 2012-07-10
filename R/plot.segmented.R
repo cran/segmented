@@ -1,5 +1,5 @@
 plot.segmented<-function(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE,
-        linkinv=FALSE, res.col=1, rev.sgn=FALSE, const=0, ... ){
+        link=TRUE, res.col=1, rev.sgn=FALSE, const=0, ... ){
     if (missing(term)) {
         if (length(x$nameUV$Z) > 1) {
             stop("please, specify `term'")
@@ -9,6 +9,7 @@ plot.segmented<-function(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE,
     } else {
       if(!term%in%x$nameUV$Z) stop("invalid `term'")
       }
+    linkinv<-!link
     opz<-list(...)
     cols <- opz$col
     if(length(cols) <= 0) cols <- 1
@@ -34,10 +35,11 @@ plot.segmented<-function(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE,
     #a, b avrà K+1 elementi
     a.ok<-c(a[1],a)
     b.ok<-c(b[1],b)
-    y.val<-a.ok+b.ok*val + const
+    y.val<-a.ok+b.ok*val + const # a sx di psi
     a.ok1<-c(a,a[length(a)])
     b.ok1<-c(b,b[length(b)])
-    y.val1<-a.ok1+b.ok1*val + const
+    #dalla 0.2.9.2 y.val<-y.val1
+    y.val<-y.val1<-a.ok1+b.ok1*val + const
     #y.val e y.val1 hanno gli stessi estremi. Tuttavia ci sono difference per i valori in corrispondenza di psi:
     #Per ogni psi y.val sono i valori a sx di psi mentre y.val1 sono quelli a dx..
     s<-1:(length(val)-1)
@@ -50,7 +52,7 @@ plot.segmented<-function(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE,
 
     if (inherits(x, what = "glm", which = FALSE) && linkinv){
         fit<- if(res) broken.line(x,term,gap=show.gap,linkinv=linkinv)+resid(x,"response")+const else x$family$linkinv(c(y.val,y.val1))
-        xout<-sort(c(seq(val[1],val[length(val)],l=60),val[-c(1,length(val))]))
+        xout<-sort(c(seq(val[1],val[length(val)],l=120),val[-c(1,length(val))]))
         l<-approx(as.vector(m[,c(1,3)]), as.vector(m[,c(2,4)]), xout=xout)
         id.group<-cut(l$x, val,FALSE,TRUE)
         yhat<-l$y

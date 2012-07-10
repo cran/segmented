@@ -16,7 +16,7 @@ extract.psi<-function(lista){
     		nrow=length(dev.values), byrow=TRUE)
     	if(!is.matrix(psi.values)) psi.values<-matrix(psi.values)
     	psi.ok<-psi.values[id.dev.ok,]
-    	r<-list(SumSquares.no.gap=dev.ok, psi=psi.ok)
+    	r<-list(dev.no.gap=dev.ok, psi=psi.ok)
     	r
 	}
 #-------------
@@ -33,7 +33,7 @@ extract.psi<-function(lista){
       o0<-try(seg.glm.fit(y, XREG, Z, PSI, w, offs, opz), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre 
       if(!is.list(o0)) {
-          o0<- seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE)
+          o0<- seg.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE)
           o0<-extract.psi(o0)
           if(!nonParam) {warning("using nonparametric boot");nonParam<-TRUE}
           }
@@ -57,8 +57,6 @@ extract.psi<-function(lista){
       all.est.psi.boot<-all.selected.psi<-all.est.psi<-matrix(, nrow=n.boot, ncol=length(est.psi0))
       all.ss<-all.selected.ss<-rep(NA, n.boot)
       if(is.null(size.boot)) size.boot<-n
-
-#      na<- ,,apply(...,2,function(x)mean(is.na(x)))
 
       Z.orig<-Z
       if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")

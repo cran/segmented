@@ -98,7 +98,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     nome <- names(psi)[id.nomiZpsi]
     psi <- psi[nome]
     for(i in 1:length(psi)) {
-        if(any(is.na(psi[[i]]))) psi[[i]]<-quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
+        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
         }
 
     a <- sapply(psi, length)
@@ -117,9 +117,19 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     k <- ncol(Z)
     PSI <- matrix(rep(psi, rep(n, k)), ncol = k)
     #controllo se psi è ammissibile..
-    c1 <- apply((Z <= PSI), 2, all) #prima era solo <
-    c2 <- apply((Z >= PSI), 2, all) #prima era solo >
-    if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
+    c1 <- apply((Z <= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo <)
+    c2 <- apply((Z >= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo >)
+    if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2)) ) stop("starting psi out of the admissible range")
+    
+    #questo dovrebbe eliminare i psi non-ammissib. ma non sono sicuro cosa succede se ci sono più variabili
+#    if(sum(c1 + c2) != 0){
+#     id.val.psi<-!((c1+c1)>0) #individua i psi ammissibili (i.e. interni)
+#     psi<-psi[id.val.psi]
+#     Z<-Z[,id.val.psi]
+#     PSI<-PSI[,id.val.psi]
+#    } 
+#    if(is.na(sum(c1 + c2))) stop("psi out of the range")
+
     colnames(Z) <- nomiZ <- rep(nome, times = a)
     ripetizioni <- as.numeric(unlist(sapply(table(nomiZ)[order(unique(nomiZ))], function(xxx) {1:xxx})))
     nomiU <- paste("U", ripetizioni, sep = "")

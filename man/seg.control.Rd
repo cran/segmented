@@ -8,7 +8,7 @@
 }
 \usage{
 seg.control(toll = 1e-04, it.max = 10, display = FALSE,
-    stop.if.error = TRUE, K = 10, last = TRUE, maxit.glm = 25, h = 1, 
+    stop.if.error = TRUE, K = 10, quant = FALSE, last = TRUE, maxit.glm = 25, h = 1, 
     n.boot=20, size.boot=NULL, gap=FALSE, jt=FALSE, nonParam=TRUE,
     random=TRUE, powers=c(1,1), seed=NULL)
 }
@@ -16,16 +16,20 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
 \arguments{
   \item{toll}{ positive convergence tolerance. }
   \item{it.max}{ integer giving the maximal number of iterations. }
-  \item{display}{ logical indicating if output should be produced for each iteration. }
+  \item{display}{ logical indicating if the value of the \emph{working} objective function should be printed
+    at each iteration. The \emph{working} objective function is the objective function of the working model
+    including the gap coefficients.}
   \item{stop.if.error}{ logical indicating if non-admissible break-points should be removed 
     during the estimating algorithm. Set it to \code{FALSE} if you want to perform a sort of
     `automatic' breakpoint selection, provided that several starting values are provided for the breakpoints.
     See argument \code{psi} in \code{\link{segmented.lm}} or \code{\link{segmented.glm}}. 
     The idea of removing `non-admissible' break-points during the iterative process is discussed in 
     Muggeo and Adelfio (2011) and it is not compatible with the bootstrap restart algorithm.}
-  \item{K}{ the number of quantiles to supply as starting values for the breakpoints when \code{NA} is 
-    specified in the \code{psi} argument of \code{segmented}. \code{K} is ignored when \code{psi} is different
-    from \code{NA}.} 
+  \item{K}{ the number of quantiles (or equally-spaced values) to supply as starting values for the breakpoints 
+    when the \code{psi} argument of \code{segmented} is set to \code{NA}. 
+    \code{K} is ignored when \code{psi} is different from \code{NA}.}
+  \item{quant}{logical, indicating how the starting values should be selected. If \code{FALSE} equally-spaced 
+  values are used, otherwise the quantiles. Ignored when \code{psi} is different from \code{NA}.} 
   \item{last}{ logical indicating if output should include only the last fitted model.}
   \item{maxit.glm}{ integer giving the maximum number of inner IWLS iterations (see details). }
   \item{h}{ positive factor (from zero to one) modifying the increments in breakpoint updates during
@@ -59,18 +63,18 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
   each fixed value of psi is fixed via \code{maxit.glm}. Usually three-four inner iterations may be sufficient.
 
   When the starting value for the breakpoints is set to \code{NA} for any segmented variable specified
-  in \code{seg.Z}, \code{K} quantiles are selected as starting values for the breakpoints. In this case, it may 
-  be useful to set also \code{stop.if.error=FALSE} to automize the procedure, see Muggeo and Adelfio (2011).
+  in \code{seg.Z}, \code{K} values (quantiles or equally-spaced) are selected as starting values for the breakpoints. 
+  In this case, it may be useful to set also \code{stop.if.error=FALSE} to automate the procedure, see Muggeo and Adelfio (2011).
+  The maximum number of iterations (\code{it.max}) should be also increased when the `automatic' procedure is used.
 
   If \code{last=TRUE}, the object resulting from \code{segmented.lm} (or \code{segmented.glm}) is a
   list of fitted GLM; the i-th model is the segmented model with the values of the breakpoints at the i-th iteration. 
 
-  Sometimes to stabilize the procedure, it can be useful to set \code{h<1} to reduce the increments in the breakpoint estimation. At each
+  Sometimes to stabilize the procedure, it can be useful to set \code{h<1} to reduce the increments in the breakpoint
+  updates. At each
   iteration the updated estimate is usually given by \code{psi.new=psi.old+increm}. By setting \code{h<1}
-  (actually \code{min(abs(h),1)} is considered) causes the following alterations to the algorithm:
-  (i) the actual maximum number of iterations is increased up to \code{it.max+round(it.max/2)} and
-  (ii) the breakpoint update is computed via \code{psi.new=psi.old+h*increm}
-  after the \code{it.max}-th iteration.
+  (actually \code{min(abs(h),1)} is considered) causes the following updates of the breakpoint estimate:
+  \code{psi.new=psi.old+h*increm}.
 
   Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood (2011).
   The bootstrap restarting is expected to escape the local optima of the objective function when the

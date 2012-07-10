@@ -1,14 +1,23 @@
-*********************************
-*					  *
-*	Changes in segmented	  *
-*					  *
-*********************************
+*************************************
+*				  		*
+*	Changes in segmented	  	*
+*				  		*
+*************************************
+
+
+===============
+version 0.2-9.2
+===============
+* Some minor bugs fixed: some corrections in segmented.glm(); in plot.segmented() the argument 'linkinv' replaced by 'link'; segmented.lm() was not working if the starting model was lm(y~0) or lm(y~1); segmented.lm() is slightly more efficient when n.boot>0.
+* The breakpoint starting values when automatic selection is performed are specified as equally spaced values (optionally as quantiles). see argument 'quant' in seg.control() 
+* added 'Authors@R' entry in the DESCRIPTION file  
 
 
 ===============
 version 0.2-9.1
 ===============
-* Some bugs fixed: segmented.lm() and segmented.glm() did not finish correctly when no breakpoint was found; now segmented.lm() and segmented.glm() take care of flat relationships; plot.segmented() did not compute correctly the partial residuals for segmented glm fits. 
+* Some bugs fixed: segmented.lm() and segmented.glm() did not finish correctly when no breakpoint was found; now segmented.lm() and segmented.glm() take care of flat relationships; plot.segmented() did not compute correctly the partial residuals 
+for segmented glm fits. 
 
 
 ===============

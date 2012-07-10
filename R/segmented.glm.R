@@ -1,3 +1,8 @@
+#paste(as.character(Call$weights), collapse="")
+#oppure
+#as.character(Call$weights)[1]
+#comunque poi il problema è come aggiornare la componente weights della call objF$weights
+
 `segmented.glm` <-
 #objF$id.group???
 function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
@@ -62,7 +67,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     offs <- as.vector(model.offset(mf))
     
     if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
-      names(mf)[which(names(mf)=="(weights)")]<-as.character(Call$weights)
+      names(mf)[which(names(mf)=="(weights)")]<-as.character(Call$weights) #paste(as.character(Call$weights), collapse="")
       # mf["(weights)"]<-weights
       }
     

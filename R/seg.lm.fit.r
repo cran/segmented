@@ -10,6 +10,18 @@ dpmax<-function(x,y,pow=1){
          else -pow*pmax(x-y,0)^(pow-1)
          }
 #-----------
+mylm<-function(x,y,w,offs=rep(0,length(y))){
+		x1<-x*sqrt(w)
+    y<-y-offs
+    y1<-y*sqrt(w)
+		b<-drop(solve(crossprod(x1),crossprod(x1,y1)))
+		fit<-drop(tcrossprod(x,t(b)))
+		r<-y-fit
+		o<-list(coefficients=b,fitted.values=fit,residuals=r)
+		o
+		}
+#-----------
+
     c1 <- apply((Z <= PSI), 2, all)
     c2 <- apply((Z >= PSI), 2, all)
     if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
@@ -32,7 +44,7 @@ dpmax<-function(x,y,pow=1){
     dev.values<-psi.values <- NULL
     id.psi.ok<-rep(TRUE, length(psi))
     sel.col.XREG<-unique(sapply(colnames(XREG), function(x)match(x,colnames(XREG))))
-    XREG<-XREG[,sel.col.XREG]
+    if(is.numeric(sel.col.XREG))XREG<-XREG[,sel.col.XREG,drop=FALSE] #elimina le ripetizioni, ad es. le due intercette..
     while (abs(epsilon) > toll) {
         k<-ncol(Z)
         U <- pmax((Z - PSI), 0)^pow[1]#U <- pmax((Z - PSI), 0)
@@ -46,7 +58,7 @@ dpmax<-function(x,y,pow=1){
         obj <- lm.wfit(x = X, y = y, w = w, offset = offs)
         dev.old<-dev.new
         dev.new <- dev.new1 <-sum(obj$residuals^2)
-        if(return.all.sol) dev.new1 <- sum(lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)$residuals^2)
+        if(return.all.sol) dev.new1 <- sum(mylm(x = cbind(XREG, U), y = y, w = w, offs = offs)$residuals^2)
         dev.values[[length(dev.values) + 1]] <- dev.new1
         if (visual) {
             flush.console()
