@@ -6,18 +6,18 @@
   computes the fitted values for each `segmented' relationship.
 }
 \usage{
-broken.line(ogg, term = NULL, gap = FALSE, linkinv = FALSE, 
+broken.line(ogg, term = NULL, gap = FALSE, link = TRUE, 
     interc=TRUE)
 }
 \arguments{
   \item{ogg}{ A fitted object of class segmented (returned by any \code{segmented} method). }
   \item{term}{ A character meaning for which segmented variable prediction should be computed.}
   \item{gap}{ Should the `gaps' of the segmented relationships be plotted? Default to \code{FALSE}.}
-  \item{linkinv}{ Should the predictions be computed on the scale of the link function? Default to \code{FALSE}. }
+  \item{link}{ Should the predictions be computed on the scale of the link function? Default to \code{TRUE}. }
   \item{interc}{ Should the model intercept be added? (provided it exists).}
 }
 \details{
-  If \code{term=NULL} predictions for each segmented variable in the fitted model are computed. Argument \code{linkinv}
+  If \code{term=NULL} predictions for each segmented variable in the fitted model are computed. Argument \code{link}
   is ignored whether \code{ogg} does not inherit from the class "glm".
     }
 \value{
@@ -36,7 +36,7 @@ y<-rpois(100,exp(2+1.8*pmax(z-.6,0)))
 o<-glm(y~z,family=poisson)
 o.seg<-segmented(o,seg.Z=~z,psi=list(z=.5))
 \dontrun{plot(z,y)}
-\dontrun{points(z,broken.line(o.seg,linkinv=TRUE),col=2,pch=20)}
+\dontrun{points(z,broken.line(o.seg,link=FALSE),col=2,pch=20)}
     }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

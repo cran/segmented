@@ -39,7 +39,8 @@
 %
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
-\seealso{ \code{\link{segmented}} }
+\seealso{ \code{\link{segmented}} and \code{\link{lines.segmented}} to plot the estimated breakpoints with corresponding 
+confidence intervals. }
 \examples{
 set.seed(10)
 x<-1:100

@@ -20,15 +20,20 @@ dpmax<-function(x,y,pow=1){
     stop.if.error<-opz$stop.if.error
     dev.new<-opz$dev0
     visual<-opz$visual
+    id.psi.group<-opz$id.psi.group
     it.max<-old.it.max<-opz$it.max
     id.psi.group<-opz$id.psi.group
     gap<-opz$gap
     rangeZ <- apply(Z, 2, range)
     #k<-ncol(Z)
     psi<-PSI[1,]
+    names(psi)<-id.psi.group
     it <- 1
     epsilon <- 10
     dev.values<-psi.values <- NULL
+    id.psi.ok<-rep(TRUE, length(psi))
+    sel.col.XREG<-unique(sapply(colnames(XREG), function(x)match(x,colnames(XREG))))
+    if(is.numeric(sel.col.XREG))XREG<-XREG[,sel.col.XREG,drop=FALSE] #elimina le ripetizioni, ad es. le due intercette..
     while (abs(epsilon) > toll) {
         k<-ncol(Z)
         U <- pmax((Z - PSI), 0)^pow[1]
@@ -59,7 +64,7 @@ dpmax<-function(x,y,pow=1){
             #cat(paste("iter = ", it, spp," dev = ",formatC(dev.new,digits=3,format="f"), " n.psi = ",formatC(length(psi),digits=0,format="f"), sep=""), "\n")
 
         }
-        epsilon <- (dev.new - dev.old)/dev.old
+        epsilon <- (dev.new - dev.old)/(dev.old+.1)
 #        epsilon <- (dev.new1 - dev.old)/dev.old #se vuoi usare la *vera* (e non la working che tiene conto dei gap) deviance
         obj$epsilon <- epsilon
         it <- it + 1
@@ -78,13 +83,12 @@ dpmax<-function(x,y,pow=1){
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
         #if(it>=old.it.max && h<1) H<-h
         psi <- psi.old + h*gamma.c/beta.c
-        #psi<-unlist(tapply(psi,id.psi.group,sort))
         PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <
         b <- apply((Z >= PSI), 2, all) #prima era solo >
         if(stop.if.error) {
-            isErr <- sum(a + b) != 0 || is.na(sum(a + b))
+        isErr <- sum(a + b) != 0 || is.na(sum(a + b))
             if(isErr) {
                 if(return.all.sol) return(list(dev.values, psi.values)) else stop("(Some) estimated psi out of its range")
                 }
@@ -94,10 +98,16 @@ dpmax<-function(x,y,pow=1){
             psi <- psi[id.psi.ok]
             PSI <- PSI[,id.psi.ok,drop=FALSE]
             nomiOK<-nomiOK[id.psi.ok] #salva i nomi delle U per i psi ammissibili
+            id.psi.group<-id.psi.group[id.psi.ok]
+            names(psi)<-id.psi.group
             if(ncol(PSI)<=0) return(0)
             } #end else
-        obj$psi <- psi
+        #obj$psi <- psi
     } #end while
+    #queste due righe aggiunte nella versione 0.2.9-3 (adesso i breakpoints sono sempre ordinati)
+    psi<-unlist(tapply(psi, id.psi.group, sort))
+    names(psi)<-id.psi.group
+    PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
     #aggiunto da qua..
     U <- pmax((Z - PSI), 0)
     V <- ifelse((Z > PSI), -1, 0)
@@ -128,6 +138,6 @@ dpmax<-function(x,y,pow=1){
           }
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,
-        epsilon=epsilon,nomiOK=nomiOK, dev.no.gap=SS.new)
+        epsilon=epsilon,nomiOK=nomiOK, dev.no.gap=SS.new, id.psi.group=id.psi.group)
     return(obj)
     }

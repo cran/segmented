@@ -38,6 +38,7 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
     it.max<-old.it.max<-opz$it.max
     rangeZ <- apply(Z, 2, range)
     psi<-PSI[1,]
+    names(psi)<-id.psi.group
     #H<-1
     it <- 1
     epsilon <- 10
@@ -69,7 +70,7 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
             cat(it, spp, "", formatC(dev.new, 3, format = "f"), "",length(psi),"\n")
             #cat(paste("iter = ", it, spp," dev = ",formatC(dev.new,digits=3,format="f"), " n.psi = ",formatC(length(psi),digits=0,format="f"), sep=""), "\n")
         }
-        epsilon <- (dev.new - dev.old)/dev.old
+        epsilon <- (dev.new - dev.old)/(dev.old + .1)
         obj$epsilon <- epsilon
         it <- it + 1
         obj$it <- it
@@ -87,9 +88,6 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
  #       if(it>=old.it.max && h<1) H<-h
         psi <- psi.old + h*gamma.c/beta.c
-        #aggiorna id.psi.group.. ovvero id.psi.group[id.psi.ok]
-        #psi<-unlist(tapply(psi, id.psi.group, sort))
-        #PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
         PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <
@@ -105,10 +103,16 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
             psi <- psi[id.psi.ok]
             PSI <- PSI[,id.psi.ok,drop=FALSE]
             nomiOK<-nomiOK[id.psi.ok] #salva i nomi delle U per i psi ammissibili
+            id.psi.group<-id.psi.group[id.psi.ok]
+            names(psi)<-id.psi.group
             if(ncol(PSI)<=0) return(0)
             } #end else
-        obj$psi <- psi
+        #obj$psi <- psi
     } #end while
+    #queste due righe aggiunte nella versione 0.2.9-3 (adesso i breakpoints sono sempre ordinati)
+    psi<-unlist(tapply(psi, id.psi.group, sort))
+    names(psi)<-id.psi.group
+    PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
     #aggiunto da qua..
     U <- pmax((Z - PSI), 0)
     V <- ifelse((Z > PSI), -1, 0)
@@ -130,6 +134,6 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
           }
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,
-        epsilon=epsilon,nomiOK=nomiOK, SumSquares.no.gap=SS.new)
+        epsilon=epsilon,nomiOK=nomiOK, SumSquares.no.gap=SS.new, id.psi.group=id.psi.group)
     return(obj)
     }

@@ -13,15 +13,15 @@
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{ an object of class \code{segmented} }
-  \item{term}{ the segmented variable of the breakpoints being drawn. It may be unspecified when there is a single segmented variable}
-  \item{bottom}{ logical, indicating if the bars should be plotted at the bottom (TRUE) or at the top (FALSE)}
+  \item{term}{ the segmented variable of the breakpoints being drawn. It may be unspecified when there is a single segmented variable.}
+  \item{bottom}{ logical, indicating if the bars should be plotted at the bottom (\code{TRUE}) or at the top (\code{FALSE}).}
   \item{shift}{ logical, indicating if the bars should be `shifted' on the y-axis before plotting. Useful for multiple breakpoints
-        with overlapped confidence intervals}
-  \item{conf.level}{ the confidence level of the confidence intervals for the breakpoints }
-  \item{k}{ a positive integer regulating the vertical position of the drawn bars. See Details }
+        with overlapped confidence intervals.}
+  \item{conf.level}{ the confidence level of the confidence intervals for the breakpoints. }
+  \item{k}{ a positive integer regulating the vertical position of the drawn bars. See Details. }
   \item{pch}{ either an integer specifying a symbol or a single character to be used
-        in plotting the point estimates of the breakpoints. See \code{\link{points}} }
-  \item{rev.sgn}{ should the signs of the breakpoint estimates be changed before plotting? see Details }
+        in plotting the point estimates of the breakpoints. See \code{\link{points}}. }
+  \item{rev.sgn}{ should the signs of the breakpoint estimates be changed before plotting? see Details. }
   \item{\dots}{ further arguments passed to \code{\link{segments}}, for instance `col' that 
   can be a vector. }
 }
@@ -47,7 +47,7 @@
 %\note{ ~~further notes~~
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
-\seealso{ \code{\link{plot.segmented}} }
+\seealso{ \code{\link{plot.segmented}} to plot the fitted segmented lines. }
 \examples{
 ## See ?plot.segmented
 

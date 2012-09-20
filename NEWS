@@ -6,10 +6,20 @@
 
 
 ===============
+version 0.2-9.3
+===============
+* intercept() (and plot.segmented() that uses intercept()) was not working correctly when in the fitted segmented model the estimated breakpoints were not ordered. Now plot.segmented() displays the correct fitted lines in the last example of ?segmented.
+* segmented.lm() and segmented.glm() now always return ordered breakpoints.
+* segmented.lm() and segmented.glm() now return also the .Random.seed vector when bootstrap restarting is employed. Useful to replicate results.
+* draw.history() draws more meaninful convergence diagnostics when the mode has ben fitted via bootstrap restarting.
+* Some bugs fixed: segmented.lm() and segmented.glm() failed with zero residuals in the iterative procedure. Argument 'linkinv' in broken.line() modified in 'link' (with oppositive meaning).
+
+
+===============
 version 0.2-9.2
 ===============
 * Some minor bugs fixed: some corrections in segmented.glm(); in plot.segmented() the argument 'linkinv' replaced by 'link'; segmented.lm() was not working if the starting model was lm(y~0) or lm(y~1); segmented.lm() is slightly more efficient when n.boot>0.
-* The breakpoint starting values when automatic selection is performed are specified as equally spaced values (optionally as quantiles). see argument 'quant' in seg.control() 
+* The breakpoint starting values when automatic selection is performed are now specified as equally spaced values (optionally as quantiles). see argument 'quant' in seg.control() 
 * added 'Authors@R' entry in the DESCRIPTION file  
 
 
@@ -35,28 +45,28 @@ in seg.control().
 ===============
 version 0.2-8.4
 ===============
-* Some bugs fixed: segmented.glm fitted a lm (the error was introduced incidentally from 0.2-8.3, thanks to Véronique Storme for finding the error); broken.line() was not working for models without intercept and a null left slope; intercept() was not working correctly with multiple segmented variables.
+* Some bugs fixed: segmented.glm() fitted a simple "lm" (and not "glm") (the error was introduced incidentally from 0.2-8.3, thanks to Véronique Storme for finding the error); broken.line() was not working for models without intercept and a null left slope; intercept() was not working correctly with multiple segmented variables.
 
 
 ===============
 version 0.2-8.3
 ===============
-* Some minor bugs fixed: segmented.lm and segmented.glm did not find the offset variable in the dataframe where the initial (g)lm was called for;
-	segmented.lm and segmented.glm sometimes returned an error when the automated algorithm was used (thanks to Paul Cohen for finding the error).
+* Some minor bugs fixed: segmented.lm() and segmented.glm() did not find the offset variable in the dataframe where the initial (g)lm was called for;
+	segmented.lm() and segmented.glm() sometimes returned an error when the automated algorithm was used (thanks to Paul Cohen for finding the error).
 
 
 ===============
 version 0.2-8.2
 ===============
-* Some minor bugs fixed (segmented.lm and segmented.glm *alway* included the left slope in the estimation process, although the number of 
-	parameters was correct in the returned final fit. confint.segmented did not order the estimated changepoints for the variable having
-	rev.sgn=TRUE; intercept() miss the (currently meaningless) argument var.diff (thanks to Eric Fuchs for pointing out that). )
+* Some minor bugs fixed (segmented.lm() and segmented.glm() *alway* included the left slope in the estimation process, although the number of 
+	parameters was correct in the returned final fit. confint.segmented() did not order the estimated breakpoints for the variable having
+	rev.sgn=TRUE; intercept() missed the (currently meaningless) argument var.diff (thanks to Eric Fuchs for pointing out that). )
 
 
 ===============
 version 0.2-8.1
 ===============
-* Some minor bugs fixed (segmented.lm and segmented.glm were not working correctly with subsetted datasets or when the starting 
+* Some minor bugs fixed (segmented.lm() and segmented.glm() were not working correctly with dataframe subset or when the starting 
 	linear model included several intercepts (e.g., see the example about data("plant"); thanks to Nicola Ferrari for finding the error). 
 	davies.test() did not work when the variable name of its argument `seg.Z' included reserved words, e.g. `seg.Z~dist'; thanks to Thom 
 	White for finding the error). 
@@ -91,8 +101,7 @@ version 0.2-7.2
 ===============
 version 0.2-7.1
 ===============
-* segmented.lm and segmented.glm now accept objects without 'explicit' formulas, namely returned by lm(my_fo,..) (and glm(my_fo,..)) where
-	my_fo was defined earlier. Thanks to Y. Iwasaki for finding the error.
+* segmented.lm and segmented.glm now accept objects without 'explicit' formulas, namely returned by lm(my_fo,..) (and glm(my_fo,..)) where my_fo was defined earlier. Thanks to Y. Iwasaki for finding the error.
 
 
 ===============
@@ -100,8 +109,7 @@ version 0.2-7
 ===============
 * A sort of automatic procedure for breakpoint estimation is implemented. See argument
 	stop.if.error in seg.control().
-* davies.test() now accepts a one-sided formula (~x) rather than character ("x") to mean the
-	segmented variable to be tested. davies.test also gains the arguments `beta0' and `dispersion'.
+* davies.test() now accepts a one-sided formula (~x) rather than character ("x") to mean the segmented variable to be tested. davies.test also gains the arguments `beta0' and `dispersion'.
 * Some bugs fixed.
 
 
@@ -109,7 +117,7 @@ version 0.2-7
 version 0.2-6
 ===============
 * vcov.segmented() added.
-* option var.diff for robust covariance matrix has been added in summary.segmented, print.summary.segmented, slope, and confint.
+* option var.diff for robust covariance matrix has been added in summary.segmented(), print.summary.segmented(), slope(), and confint().
 * Some bugs fixed.
 
 

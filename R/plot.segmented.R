@@ -51,7 +51,7 @@ plot.segmented<-function(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE,
     m<-cbind(val[s],y.val1[s],val[s+1],y.val[s+1])  #NB ncol=4 e nrow=n.segmenti
 
     if (inherits(x, what = "glm", which = FALSE) && linkinv){
-        fit<- if(res) broken.line(x,term,gap=show.gap,linkinv=linkinv)+resid(x,"response")+const else x$family$linkinv(c(y.val,y.val1))
+        fit<- if(res) broken.line(x,term,gap=show.gap,link=link)+resid(x,"response")+const else x$family$linkinv(c(y.val,y.val1))
         xout<-sort(c(seq(val[1],val[length(val)],l=120),val[-c(1,length(val))]))
         l<-approx(as.vector(m[,c(1,3)]), as.vector(m[,c(2,4)]), xout=xout)
         id.group<-cut(l$x, val,FALSE,TRUE)
@@ -75,7 +75,7 @@ plot.segmented<-function(x, term, add=FALSE, res=FALSE, se=FALSE, show.gap=TRUE,
     fit<-c(y.val,y.val1)
     if(res) {
         ress<-if (inherits(x, what = "glm", which = FALSE)) residuals(x,"working")*sqrt(x$weights) else resid(x)
-        fit<-broken.line(x,term,gap=show.gap,linkinv=linkinv,interc=TRUE)+ress + const
+        fit<-broken.line(x,term,gap=show.gap,link=link,interc=TRUE)+ress + const
         }
     if(!add) plot(rr, type="n", xlab=xlabs, ylab=ylabs, main=opz$main, sub=opz$sub, ylim=range(fit))
     if(res) points(xvalues, fit,cex=cexs,pch=pchs,col=res.col)

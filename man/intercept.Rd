@@ -22,7 +22,7 @@ the segmented variable whose intercepts have to be computed. If missing all the 
   logical. should the intercepts account for the (possible) gaps? 
 }
  \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled otherwise.
-  when \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
+  When \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
     therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.
  }
   \item{var.diff}{Currently ignored as only point estimates are computed.

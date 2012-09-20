@@ -20,7 +20,12 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     pow<-control$pow
     visualBoot<-FALSE
     if(n.boot>0){
-        if(!is.null(control$seed)) set.seed(control$seed)
+        if(!is.null(control$seed)) {
+          set.seed(control$seed)
+            } else {
+              runif(1)
+              employed.Random.seed<-.Random.seed
+              }
         if(visual) {visual<-FALSE; visualBoot<-TRUE}# warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
         if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
      }
@@ -97,6 +102,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     #dd <- match(names(Z), names(psi))
     nome <- names(psi)[id.nomiZpsi]
     psi <- psi[nome]
+    initial.psi<-psi
     for(i in 1:length(psi)) {
         if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
         }
@@ -180,20 +186,28 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         warning("No breakpoint estimated", call. = FALSE)
         return(obj0)
         }
+    if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
+    id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK
     it<-obj$it
     psi<-obj$psi
     psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
     U<-obj$U
     V<-obj$V
-    if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
+    #if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
+    for(jj in colnames(V)) {
+        VV<-V[, which(colnames(V)==jj), drop=FALSE]
+        sumV<-abs(rowSums(VV))
+        if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
+            || any(table(sumV)<=1))) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+        }
     rangeZ<-obj$rangeZ
     obj<-obj$obj
     k<-length(psi)
     beta.c<-if(k == 1) coef(obj)["U"] else coef(obj)[paste("U", 1:ncol(U), sep = "")]
     psi.values[[length(psi.values) + 1]] <- psi
     id.warn <- FALSE
-    if (n.boot<=0 && it > it.max) {
+    if (n.boot<=0 && it > it.max) { #it >= (it.max+1)
         warning("max number of iterations attained", call. = FALSE)
         id.warn <- TRUE
     }
@@ -232,7 +246,9 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     Cov <- vcov(objF)
     id <- match(nomiVxb, names(coef(objF)))
     vv <- if (length(id) == 1) Cov[id, id] else diag(Cov[id, id])
-    if(length(initial)!=length(psi)) initial<-rep(NA,length(psi))
+    #if(length(initial)!=length(psi)) initial<-rep(NA,length(psi))
+    a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
+    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a))
     psi <- cbind(initial, psi, sqrt(vv))
     rownames(psi) <- colnames(Cov)[id]
     colnames(psi) <- c("Initial", "Est.", "St.Err")
@@ -244,9 +260,11 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     objF$call <- match.call()
     objF$nameUV <- list(U = nomiU, V = rownames(psi), Z = name.Z)
     objF$id.group <- if(length(name.Z)<=1) -rowSums(as.matrix(V))
+    objF$id.psi.group <- id.psi.group
     objF$id.warn <- id.warn
     objF$orig.call<-orig.call
     if (model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
+    if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"

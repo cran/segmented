@@ -36,8 +36,9 @@ segmented(obj, seg.Z, psi, control = seg.control(),
   \item{psi}{ named list of vectors. The names have to match the variables of the \code{seg.Z} argument.
       Each vector includes starting values for the break-point(s) for the corresponding
       variable in \code{seg.Z}. If \code{seg.Z} includes only a variable, \code{psi} may be a numeric vector. 
-      A \code{NA} value means that `\code{K}' quantiles are used as starting values, where \code{K} is fixed 
-      via the \code{\link{seg.control}} auxiliary function. }
+      A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
+      \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
+      
   \item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
   \item{model}{ logical value indicating if the model.frame should be returned.}
@@ -53,7 +54,7 @@ segmented(obj, seg.Z, psi, control = seg.control(),
   is estimated simultaneously yielding point estimates and relevant approximate
    standard errors of all the model parameters, including the break-points.
 
-  Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood.
+  Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood (2001).
   The bootstrap restarting is expected to escape the local optima of the objective function when the
   segmented relationship is flat and the log likelihood can have multiple local optima.
 
@@ -71,12 +72,13 @@ original object \code{obj} with additionally the followings:
   \item{it}{number of iterations employed}
   \item{epsilon}{difference in the objective function when the algorithm stops}
   \item{model}{the model frame}
-  \item{psi.history}{A list or a vector including the breakpoint estimates at each step}
-  \cr
-  \cr
-  Other components are not of direct interest of the user.
+  \item{psi.history}{a list or a vector including the breakpoint estimates at each step}
+  \item{employed.Random.seed}{the integer vector containing the random number
+     generator state just before the bootstrap resampling. 
+     Returned only if bootstrap restart is employed}
+  \item{..}{Other components are not of direct interest of the user}
   }
-
+  
 \references{ 
 Muggeo, V.M.R. (2003) Estimating regression models with unknown 
   break-points. \emph{Statistics in Medicine} \bold{22}, 3055--3071.
@@ -116,15 +118,12 @@ Others are inherited from the class \code{"lm"} or \code{"glm"} depending on the
 \section{ Warning }{It is well-known that the log-likelihood function for the 
 break-point may be not concave, especially 
 for poor clear-cut kink-relationships. In these circumstances the initial guess
- for the break-point, 
-i.e. the \code{psi} argument, must be provided with care. For instance visual 
-inspection of a, possibly smoothed, 
-scatter-plot is usually a good way to obtain some idea on breakpoint location. 
-Moreover it is also advisable to look at the coefficients of the `gap' variables. At the
-convergence they should be small or at least, non-significantly different from zero.
-\code{\link{summary.segmented}} and \code{\link{print.summary.segmented}} return
-information of the `gap' coefficients. The bootstrap restarting option is to deal with
-poor clear cut relationships.
+ for the break-point, i.e. the \code{psi} argument, must be provided with care. For instance visual 
+inspection of a, possibly smoothed, scatter-plot is usually a good way to obtain some idea on breakpoint location. 
+However bootstrap restarting, implemented since version 0.2-9.0, is relatively more robust to starting values specified 
+in  \code{psi}. Alternatively an automatic procedure may be implemented by specifying \code{psi=NA} and 
+\code{stop.if.error=FALSE} in \code{\link{seg.control}}. This automatic procedure, however, is expected to overestimate 
+the number of breakpoints. 
 }
 
 \seealso{ \code{\link{lm}}, \code{\link{glm}} }
@@ -149,6 +148,15 @@ o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
     control=seg.control(stop.if.error=FALSE,n.boot=0))
 
+#assess the progress of the breakpoint estimates throughout the iterations
+\dontrun{
+par(mfrow=c(2,1))
+draw.history(o, "x")
+draw.history(o, "z")
+}
+#try to increase the number of iterations and re-assess the 
+#convergence diagnostics 
+            
             }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the

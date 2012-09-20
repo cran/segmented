@@ -42,7 +42,7 @@ intercept<-function (ogg, parm, gap=TRUE, rev.sgn = FALSE, var.diff = FALSE){
             nomi, value = FALSE)
         psii <- ogg$psi[grep(paste("\\.", nomeZ[i], "$", sep = ""),
             rownames(ogg$psi), value = FALSE), 2]
-        Allpsi[[i]] <- psii
+        Allpsi[[i]] <- sort(psii, decreasing = FALSE) 
         id.cof.U <- id.cof.U[order(psii)]
         index[[i]] <- id.cof.U
         alpha0<-if("(Intercept)"%in%names(coef(ogg))) coef(ogg)["(Intercept)"] else 0

@@ -1,7 +1,8 @@
-broken.line<-function (ogg, term = NULL, gap = FALSE, linkinv = FALSE, interc = TRUE)
+broken.line<-function (ogg, term = NULL, gap = FALSE, link = TRUE, interc = TRUE)
 #NB Modifica anche il file di help
 #interc: Should the model intercept be added? (provided that it exists)
 {
+    linkinv <- !link
     if (!"segmented" %in% class(ogg))
         stop("A segmented model is requested")
     nomepsi <- rownames(ogg$psi)

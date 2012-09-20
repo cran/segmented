@@ -20,7 +20,8 @@
       See Details.}
   \item{se}{ when \code{TRUE} pointwise confidence intervals are drawn. Currently unimplemented. }
   \item{show.gap}{ when \code{FALSE} the (possible) gaps between the fitted lines at the estimated breakpoints
-      are hidden.}
+      are hidden. When bootstrap restarting has been employed (default in \code{segmented}), \code{show.gap} is meaningless 
+      as the gap coefficients are always set to zero in the fitted model.}
   \item{link}{ when \code{TRUE} (default), the fitted lines are plotted on the link scale, otherwise they are
     tranformed on the response scale before plotting. Ignored for linear segmented fits. }
   \item{res.col}{when \code{res=TRUE} it means the color of the points representing the partial residuals.}
@@ -37,12 +38,11 @@
   response and the selected \code{term}. If the fitted model includes just a single `segmented' variable,
   \code{term} may be omitted. Due to the parameterization of the segmented terms, sometimes
   the fitted lines may not appear to join at the estimated breakpoints. If this is the case, the apparent
-  `gap' would indicate some lack-of-fit. However such `gap' may be hidden by setting \code{show.gap=FALSE}:
-  \code{show.gap=TRUE} is suggested only when the gap coefficients are nonsignificant, see
-  \code{summary.segmented(..)$gap}.
+  `gap' would indicate some lack-of-fit. However, since version 0.2-9.0, the gap coefficients are set to zero by default 
+  (see argument \code{gap} in in \code{\link{seg.control}}). 
   The partial residuals are computed as `fitted + residuals', where `fitted' are the fitted values of the
-  segmented relationship. Notice that for GLMs the residuals are the response residuals if \code{linkinv=TRUE} and
-  the working residuals weighted by the IWLS weights if \code{linkinv=FALSE}.
+  segmented relationship. Notice that for GLMs the residuals are the response residuals if \code{link=FALSE} and
+  the working residuals weighted by the IWLS weights if \code{link=TRUE}.
   }
 \value{
 None.
@@ -53,7 +53,7 @@ None.
 %
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
-\seealso{ \code{\link{lines.segmented}} }
+\seealso{ \code{\link{lines.segmented}} to add the estimated breakpoints on the current plot.}
 \examples{
 set.seed(1234)
 z<-runif(100)

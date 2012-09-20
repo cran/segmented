@@ -24,10 +24,14 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
     `automatic' breakpoint selection, provided that several starting values are provided for the breakpoints.
     See argument \code{psi} in \code{\link{segmented.lm}} or \code{\link{segmented.glm}}. 
     The idea of removing `non-admissible' break-points during the iterative process is discussed in 
-    Muggeo and Adelfio (2011) and it is not compatible with the bootstrap restart algorithm.}
+    Muggeo and Adelfio (2011) and it is not compatible with the bootstrap restart algorithm.
+    This approach, indeed, should be considered as a preliminary and tentative approach to deal with an unknown number of 
+    breakpoints.
+    }
   \item{K}{ the number of quantiles (or equally-spaced values) to supply as starting values for the breakpoints 
     when the \code{psi} argument of \code{segmented} is set to \code{NA}. 
-    \code{K} is ignored when \code{psi} is different from \code{NA}.}
+    \code{K} is ignored when \code{psi} is different from \code{NA}.
+    }
   \item{quant}{logical, indicating how the starting values should be selected. If \code{FALSE} equally-spaced 
   values are used, otherwise the quantiles. Ignored when \code{psi} is different from \code{NA}.} 
   \item{last}{ logical indicating if output should include only the last fitted model.}
@@ -53,7 +57,9 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
   }
   \item{seed}{
   The seed to be passed on \code{set.seed()} when \code{n.boot>0}. Setting the seed can be useful to replicate
-  the results when the bootstrap restart algorithm is employed.
+  the results when the bootstrap restart algorithm is employed. In fact \code{employed.Random.seed} includes 
+  the integer vector saved just before the bootstrap resampling. Use it if you want to replicate the bootstrap
+  restarting algorithm with the \emph{same} samples.
   }
   }
 
