@@ -25,7 +25,13 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     pow<-control$pow
     visualBoot<-FALSE
     if(n.boot>0){
-        if(!is.null(control$seed)) {set.seed(control$seed)} else {runif(1);employed.Random.seed<-.Random.seed}
+        if(!is.null(control$seed)) {
+            set.seed(control$seed)
+            employed.Random.seed<-control$seed
+              } else {
+            employed.Random.seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+            set.seed(employed.Random.seed)
+              }
         if(visual) {visual<-FALSE; visualBoot<-TRUE}#warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
         if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
      }
@@ -51,15 +57,15 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     
     nomeRispo<-strsplit(paste(formula(obj))[2],"/")[[1]] #eventuali doppi nomi (tipo "y/n" per GLM binom)
     #la linea sotto aggiunge nel mf anche la variabile offs..
-    if(length(all.vars(formula(obj)))>1){
-      id.rispo<-1
-      if(length(nomeRispo)>=2) id.rispo<-1:2      
-      #questo serve quando formula(obj) ha solo l'intercept
-      agg<-if(length(all.vars(formula(obj))[-id.rispo])==0) "" else "+"
-      mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),agg,paste(all.vars(formula(obj))[-id.rispo],collapse="+")))
-    } else {
+#    if(length(all.vars(formula(obj)))>1){
+#      id.rispo<-1
+#      if(length(nomeRispo)>=2) id.rispo<-1:2      
+#      #questo serve quando formula(obj) ha solo l'intercept
+#      agg<-if(length(all.vars(formula(obj))[-id.rispo])==0) "" else "+"
+#      mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),agg,paste(all.vars(formula(obj))[-id.rispo],collapse="+")))
+#    } else {
       mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
-    }
+#    }
     mf <- eval(mf, parent.frame())
     #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene
     #       altrimenti nel model.frame non risulta l'offset
@@ -76,7 +82,8 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     y <- model.response(mf, "any")
     XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
     namesXREG0<-colnames(XREG)
-    nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
+    #nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
+    nameLeftSlopeZero<-setdiff(all.vars(seg.Z), names(coef(obj))) #in questo modo riconosce che sin(x*pi) NON è x, ad esempio.
     namesXREG0<-setdiff(namesXREG0, nameLeftSlopeZero)
     
     #nomeRispo<-strsplit(paste(formula(obj))[2],"/")[[1]] #portato sopra

@@ -73,8 +73,7 @@ original object \code{obj} with additionally the followings:
   \item{epsilon}{difference in the objective function when the algorithm stops}
   \item{model}{the model frame}
   \item{psi.history}{a list or a vector including the breakpoint estimates at each step}
-  \item{employed.Random.seed}{the integer vector containing the random number
-     generator state just before the bootstrap resampling. 
+  \item{seed}{the integer vector containing the seed just before the bootstrap resampling. 
      Returned only if bootstrap restart is employed}
   \item{..}{Other components are not of direct interest of the user}
   }

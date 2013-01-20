@@ -21,8 +21,10 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE){
         nomi<-nomi[-match(nomepsi,nomi)] #escludi i coef delle V
         index<-vector(mode = "list", length = length(nomeZ))
         for(i in 1:length(nomeZ)) {
-            id.cof.U<-grep(paste("\\.",nomeZ[i],"$",sep=""), nomi, value=FALSE)
-            psii<-ogg$psi[grep(paste("\\.",nomeZ[i],"$",sep=""), rownames(ogg$psi), value=FALSE),2]
+            #id.cof.U<-grep(paste("\\.",nomeZ[i],"$",sep=""), nomi, value=FALSE)
+            #psii<-ogg$psi[grep(paste("\\.",nomeZ[i],"$",sep=""), rownames(ogg$psi), value=FALSE),2]
+            id.cof.U<- match(grep(nomeZ[i],   ogg$nameUV$U, value=TRUE), nomi)
+            psii<-ogg$psi[grep(nomeZ[i],   ogg$nameUV$V, value=TRUE),2]
             id.cof.U <- id.cof.U[order(psii)]            
             index[[i]]<-c(match(nomeZ[i],nomi), id.cof.U)
             }

@@ -26,13 +26,13 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
 }
 \details{
   \code{davies.test} tests for a non zero difference-in-slope parameter of a segmented
-  relationship. Namely, the null hypothesis is \eqn{H_0:\beta=\beta_0}{H_0:beta=beta0}, where \eqn{\beta}{beta} is the difference-in-slope, 
+  relationship. Namely, the null hypothesis is \eqn{H_0:\beta=\beta_0}{H_0:beta=beta0}, where \eqn{\beta}{beta} is the difference-in-slopes, 
   i.e. the coefficient of the segmented function \eqn{\beta(x-\psi)_+}{beta*(x-psi)_+}, and \eqn{\beta_0}{beta0} is the `null' value 
   specified via the argument \code{beta0}. Roughtly speaking, the procedure computes \code{k} `naive' (i.e. assuming
   fixed and known the breakpoint) Wald statistics for the difference-in-slope,
   seeks the `best' value (according to the alternative hypothesis), and then corrects the selected
-  (minimum) p-value. The \code{k} evaluation points are \code{k} equally spaced values between the 0.05 and 0.95 
-  quantiles of the variable reported in \code{seg.Z}.
+  (minimum) p-value. The \code{k} evaluation points are \code{k} equally spaced values between the second and the second-last 
+  values of the variable reported in \code{seg.Z}.
 }
 \value{
   A list with class '\code{htest}' containing the following components:

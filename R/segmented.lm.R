@@ -21,10 +21,11 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     visualBoot<-FALSE
     if(n.boot>0){
         if(!is.null(control$seed)) {
-          set.seed(control$seed)
-            } else {
-              runif(1)
-              employed.Random.seed<-.Random.seed
+            set.seed(control$seed)
+            employed.Random.seed<-control$seed
+              } else {
+            employed.Random.seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+            set.seed(employed.Random.seed)
               }
         if(visual) {visual<-FALSE; visualBoot<-TRUE}# warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
         if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
@@ -41,18 +42,20 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    a <- model.matrix(seg.Z, data = eval(obj$call$data))
 #    a <- subset(a, select = colnames(a)[-1])
     orig.call<-Call<-mf<-obj$call
-    orig.call$formula<-mf$formula<-formula(obj) #per consentire lm(y~.)
+    orig.call$formula<- mf$formula<-formula(obj) #per consentire lm(y~.)
     m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
     #orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z)))
-    if(length(all.vars(formula(obj)))>1){
-    mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj))[-1],collapse="+")))
-    } else {
+#
+#genn 2013. dalla versione 0.2.9-4 ho tolto if(length(.. Tra l'altro non capisco perché lo avevo fatto
+#    if(length(all.vars(formula(obj)))>1){
+#    mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj))[-1],collapse="+")))
+#    } else {
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
-    }
+#    }
     mf <- eval(mf, parent.frame())
     #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene
     #       altrimenti nel model.frame non risulta l'offset
@@ -68,7 +71,8 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     y <- model.response(mf, "any")
     XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
     namesXREG0<-colnames(XREG)
-    nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
+    #nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
+    nameLeftSlopeZero<-setdiff(all.vars(seg.Z), names(coef(obj))) #in questo modo riconosce che sin(x*pi) NON è x, ad esempio.
     namesXREG0<-setdiff(namesXREG0, nameLeftSlopeZero)
     id.duplic<-match(all.vars(formula(obj)),all.vars(seg.Z),nomatch=0)>0
     if(any(id.duplic)) {
@@ -194,6 +198,8 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
     U<-obj$U
     V<-obj$V
+#    return(obj)
+    
     #if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
     for(jj in colnames(V)) {
         VV<-V[, which(colnames(V)==jj), drop=FALSE]

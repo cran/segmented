@@ -1,8 +1,15 @@
 *************************************
-*				  		*
-*	Changes in segmented	  	*
-*				  		*
+*				    *
+*	Changes in segmented	    *
+*				    *
 *************************************
+
+
+===============
+version 0.2-9.4
+===============
+* in davies.test() the evaluation points are now equally spaced values rather than quantiles (useful when the covariate has one or more mass points; thanks to Eric Goodwin for the suggestion)
+* Some minor bugs fixed: bootstrap restarting sometimes did not work when 'seed' was set. segmented.lm() and segmented.glm() did not work correctly when the input model, "lm" or "glm", included terms such such as sin(x*pi) (where x is also the segmented variable)
 
 
 ===============
@@ -11,7 +18,7 @@ version 0.2-9.3
 * intercept() (and plot.segmented() that uses intercept()) was not working correctly when in the fitted segmented model the estimated breakpoints were not ordered. Now plot.segmented() displays the correct fitted lines in the last example of ?segmented.
 * segmented.lm() and segmented.glm() now always return ordered breakpoints.
 * segmented.lm() and segmented.glm() now return also the .Random.seed vector when bootstrap restarting is employed. Useful to replicate results.
-* draw.history() draws more meaninful convergence diagnostics when the mode has ben fitted via bootstrap restarting.
+* draw.history() draws more meaningful convergence diagnostics when the mode has ben fitted via bootstrap restarting.
 * Some bugs fixed: segmented.lm() and segmented.glm() failed with zero residuals in the iterative procedure. Argument 'linkinv' in broken.line() modified in 'link' (with oppositive meaning).
 
 

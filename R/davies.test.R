@@ -106,10 +106,11 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     nomiOK<-nomiU
     opz<-list(toll=.1,h=1,stop.if.error=FALSE,dev0=dev0,visual=FALSE,it.max=0,nomiOK=nomiOK)
     Z<-matrix(unlist(Z),ncol=1)
-    qq <- quantile(Z, prob = c(0.05, 0.95), names = FALSE, na.rm = TRUE)
-    sx <- qq[1]
-    dx <- qq[2]
-    valori <- seq(sx, dx, length = k)
+    #qq <- quantile(Z, prob = c(0.05, 0.95), names = FALSE, na.rm = TRUE)
+    #sx <- qq[1]
+    #dx <- qq[2]
+    #valori <- seq(sx, dx, length = k)
+    valori <- seq(sort(Z)[2], sort(Z)[(n-1)], length = k)
     ris.valori <- NULL
     eta0<-obj$linear.predictors
     

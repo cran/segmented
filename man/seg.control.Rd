@@ -39,7 +39,7 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
   \item{h}{ positive factor (from zero to one) modifying the increments in breakpoint updates during
     the estimation process (see details). }
   \item{n.boot}{ number of bootstrap samples used in the bootstrap restarting algorithm. If 0 the standard algorithm,
-    i.e. without bootstrap restart, is used. Default to 10 that appears to be sufficient in most of problems. However
+    i.e. without bootstrap restart, is used. Default to 20 that appears to be sufficient in most of problems. However
     when multiple breakpoints have to be estimated it is suggested to increase \code{n.boot}, e.g. \code{n.boot=50}.}
   \item{size.boot}{the size of the bootstrap samples. If \code{NULL}, it is taken equal to the actual sample size.}
   \item{gap}{logical, if \code{FALSE} the gap coefficients are \emph{always} constrained to zero at the convergence.}
@@ -57,8 +57,8 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
   }
   \item{seed}{
   The seed to be passed on \code{set.seed()} when \code{n.boot>0}. Setting the seed can be useful to replicate
-  the results when the bootstrap restart algorithm is employed. In fact \code{employed.Random.seed} includes 
-  the integer vector saved just before the bootstrap resampling. Use it if you want to replicate the bootstrap
+  the results when the bootstrap restart algorithm is employed. In fact a segmented fit includes \code{seed} representing 
+  the integer vector saved just before the bootstrap resampling. Re-use it if you want to replicate the bootstrap
   restarting algorithm with the \emph{same} samples.
   }
   }
@@ -82,7 +82,7 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
   (actually \code{min(abs(h),1)} is considered) causes the following updates of the breakpoint estimate:
   \code{psi.new=psi.old+h*increm}.
 
-  Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood (2011).
+  Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood (2001).
   The bootstrap restarting is expected to escape the local optima of the objective function when the
   segmented relationship is flat. Notice bootstrap restart runs \code{n.boot} iterations regardless of 
   \code{toll} that only affects convergence within the inner loop.
