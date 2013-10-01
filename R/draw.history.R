@@ -28,7 +28,7 @@ draw.history<-function(obj,term,...){
     if(all(diff(sapply(obj$psi.history, length))==0)){ #non-boot, non-autom
       A<-t(matrix(unlist(obj$psi.history),nrow=nrow(obj$psi),byrow=FALSE))
       colnames(A)<-rownames(obj$psi)
-      matplot(1:nrow(A),A[,id.ok],type="b",pch=1:length(est.psi),col=1,
+      matplot(1:nrow(A),A[,id.ok],type="o",pch=1:length(est.psi),col=1,
         xlab="iterations", ylab=paste("breakpoint ","(",term,")",sep=""),
         ylim=range.ok, xaxt="n",...)
       axis(1,at=1:nrow(A),cex.axis=.7)

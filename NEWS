@@ -4,12 +4,21 @@
 *				    *
 *************************************
 
+===============
+version 0.2-9.5
+===============
+* Some bugs fixed: segmented did not work if the starting linear model including an offset term was called from a dataframe; thanks to Aritz Adin Urtasun (and the 
+the guy sent the email on 26th Sept 2013. I lost his email). 
+segmented did not work if the starting linear model included the "weights" argument expressed via a function (something like "weights= 1/myweights"); thanks to 
+Betty Fetscher. segmented did not work if the variable names in seg.Z included the capital "U"; thanks to Lutz Ph. Breitling.
+
 
 ===============
 version 0.2-9.4
 ===============
 * in davies.test() the evaluation points are now equally spaced values rather than quantiles (useful when the covariate has one or more mass points; thanks to Eric Goodwin for the suggestion)
-* Some minor bugs fixed: bootstrap restarting sometimes did not work when 'seed' was set. segmented.lm() and segmented.glm() did not work correctly when the input model, "lm" or "glm", included terms such such as sin(x*pi) (where x is also the segmented variable)
+* Some minor bugs fixed: bootstrap restarting sometimes did not work when 'seed' was set. segmented.lm() and segmented.glm() did not work correctly when the input
+	model, "lm" or "glm", included terms such such as sin(x*pi) (where x is also the segmented variable)
 
 
 ===============

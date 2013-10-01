@@ -40,7 +40,8 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     tvalue
     }#end extract.t.value.U.glm 
 
-    if(class(obj)[1]=="segmented") stop("A 'lm' or 'glm' object (non 'segmented') is requested")
+    #if(class(obj)[1]=="segmented") stop("A 'lm' or 'glm' object (non 'segmented') is requested")
+    if(!inherits(obj, "lm")) stop("A 'lm', 'glm', or 'segmented' model is requested")
     if(class(seg.Z)!="formula") stop("'seg.Z' should be an one-sided formula")
     alternative <- match.arg(alternative)
 #-------------------------------------------------------------------------------
@@ -61,11 +62,17 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+    formulaOrig<-formula(obj)
+    if(class(obj)[1]=="segmented"){
+    mf$formula<-update.formula(mf$formula,paste("~.-",paste(obj$nameUV$V, collapse="-")))
+    for(i in 1:length(obj$nameUV$U)) assign(obj$nameUV$U[i], obj$model[,obj$nameUV$U[i]], envir=parent.frame())
+    formulaOrig<-update.formula(formulaOrig, paste("~.-",paste(obj$nameUV$V, collapse="-")))
+    }
     mf <- eval(mf, parent.frame())
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
     if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
-      names(mf)[which(names(mf)=="(weights)")]<-as.character(Call$weights)
+      names(mf)[which(names(mf)=="(weights)")]<-all.vars(Call$weights) #as.character(Call$weights)
       #aggiungere???
       # mf["(weights)"]<-weights
       }
@@ -74,42 +81,49 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     y <- model.response(mf, "any")
     XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
     n <- nrow(XREG)
+    if(!is.null(offs)){
+      id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene altrimenti nel model.frame non risulta l'offset
+      names(mf)[id.offs]<- all.vars(formula(paste("~", names(mf)[id.offs])), functions=FALSE)
+      }
 #    weights <- as.vector(model.weights(mf))
 #    offs <- as.vector(model.offset(mf))
     if (is.null(weights)) weights <- rep(1, n)
     if (is.null(offs)) offs <- rep(0, n)
-
-    id.duplic<-match(all.vars(formula(obj)),all.vars(seg.Z),nomatch=0)>0
-    if(any(id.duplic)) {
-        #new.mf<-mf[,id.duplic,drop=FALSE]
-        new.mf<-mf[,all.vars(formula(obj))[id.duplic],drop=FALSE]
-#        new.XREGseg<-model.matrix(attr(new.mf, "terms"), new.mf, contrasts)
-        new.XREGseg<-data.matrix(new.mf)
-        XREG<-cbind(XREG,new.XREGseg)
-        }
-    n.Seg <- 1
-    #n.Seg <- if(is.list(psi)) length(psi) else 1
-    #n.psi<- length(unlist(psi))
-    n.psi<- 1
-    id.n.Seg<-(ncol(XREG)-n.Seg+1):ncol(XREG)
-    XREGseg<-XREG[,id.n.Seg,drop=FALSE]
-    XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
-    
-    
     n <- nrow(XREG)
-    Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
-    name.Z <- names(Z) <- colnames(XREGseg)
-#    if(length(Z)>1) stop("Only one single segmented variable is allowed")
+    name.Z <- all.vars(seg.Z)
+    Z<-XREG[,match(name.Z, colnames(XREG))]
+    if(!name.Z %in% names(coef(obj))) XREG<-XREG[,-match(name.Z, colnames(XREG))]
+
+#dalla 0.2.9-5 ho eliminato tutto il blocco seguente che mi sembrava inutile..    
+#    namesXREG0<-colnames(XREG)
+#    #nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
+#    nameLeftSlopeZero<-setdiff(all.vars(seg.Z), names(coef(obj))) #in questo modo riconosce che sin(x*pi) NON è x, ad esempio.
+#    namesXREG0<-setdiff(namesXREG0, nameLeftSlopeZero)
+#    id.duplic<-match(all.vars(formula(obj)),all.vars(seg.Z),nomatch=0)>0
+#    if(any(id.duplic)) {
+#        #new.mf<-mf[,id.duplic,drop=FALSE]
+#        new.mf<-mf[,all.vars(formula(obj))[id.duplic],drop=FALSE]
+##        new.XREGseg<-model.matrix(attr(new.mf, "terms"), new.mf, contrasts)
+#        new.XREGseg<-data.matrix(new.mf)
+#        XREG<-cbind(XREG,new.XREGseg)
+#        }
+#    n.Seg <- 1
+#    #n.Seg <- if(is.list(psi)) length(psi) else 1
+#    #n.psi<- length(unlist(psi))
+#    n.psi<- 1
+#    id.n.Seg<-(ncol(XREG)-n.Seg+1):ncol(XREG)
+#    XREGseg<-XREG[,id.n.Seg,drop=FALSE]
+#    XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
+#    Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
+#    name.Z <- names(Z) <- colnames(XREGseg)
+##    if(length(Z)>1) stop("Only one single segmented variable is allowed")
+#    Z<-matrix(unlist(Z),ncol=1)
+
 
     dev0<-if(isGLM) obj$dev else sum(obj$residuals^2)
     nomiU <- paste("U1", name.Z, sep = ".")
     nomiOK<-nomiU
     opz<-list(toll=.1,h=1,stop.if.error=FALSE,dev0=dev0,visual=FALSE,it.max=0,nomiOK=nomiOK)
-    Z<-matrix(unlist(Z),ncol=1)
-    #qq <- quantile(Z, prob = c(0.05, 0.95), names = FALSE, na.rm = TRUE)
-    #sx <- qq[1]
-    #dx <- qq[2]
-    #valori <- seq(sx, dx, length = k)
     valori <- seq(sort(Z)[2], sort(Z)[(n-1)], length = k)
     ris.valori <- NULL
     eta0<-obj$linear.predictors
@@ -161,7 +175,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
           }
     out <- list(method = "Davies' test for a change in the slope",
         data.name=paste("Model = ",famiglia,", link =", legame,
-        "\nformula =", as.expression(formula(obj)),
+        "\nformula =", as.expression(formulaOrig),
 #        data.name = paste(as.expression(ogg$call),
         "\nsegmented variable =", name.Z),
         statistic = c("`Best' at" = best),

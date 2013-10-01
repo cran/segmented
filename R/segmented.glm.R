@@ -7,6 +7,7 @@
 #objF$id.group???
 function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
     n.Seg<-1
+    if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
       if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
       if(any(is.na(match(all.vars(seg.Z),names(psi), nomatch = NA)))) stop("Variables in `seg.Z' and `psi' do not match")
@@ -73,7 +74,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     offs <- as.vector(model.offset(mf))
     
     if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
-      names(mf)[which(names(mf)=="(weights)")]<-as.character(Call$weights) #paste(as.character(Call$weights), collapse="")
+      names(mf)[which(names(mf)=="(weights)")]<-all.vars(Call$weights, functions=FALSE) #as.character(Call$weights) #paste(as.character(Call$weights), collapse="")
       # mf["(weights)"]<-weights
       }
     
@@ -81,6 +82,13 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     interc<-attr(mt,"intercept")
     y <- model.response(mf, "any")
     XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
+    
+    #il cambio in mf da "offset(_nomevar_)" al "_nomevar_" deve avvenire dopo "model.matrix(mt, mf, contrasts)" 
+    if(!is.null(offs)){
+      id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene altrimenti nel model.frame non risulta l'offset
+      names(mf)[id.offs]<- all.vars(formula(paste("~", names(mf)[id.offs])), functions=FALSE)
+      }
+    
     namesXREG0<-colnames(XREG)
     #nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
     nameLeftSlopeZero<-setdiff(all.vars(seg.Z), names(coef(obj))) #in questo modo riconosce che sin(x*pi) NON è x, ad esempio.
@@ -214,11 +222,14 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         id.warn <- TRUE
     }
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
-    colnames(U) <- colnames(Vxb) <-sapply(strsplit(nomiOK,"U"),function(x)x[2])
-    #colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
-    #colnames(Vxb) <- paste(ripetizioni, nomiZ, sep = ".")
-    nomiU <- paste("U", colnames(U), sep = "")
-    nomiVxb <- paste("psi", colnames(Vxb), sep = "")
+    
+    #se usi una procedura automatica devi cambiare ripetizioni, nomiU e nomiV, e quindi:
+    length.psi<-tapply(as.numeric(as.character(names(psi))), as.numeric(as.character(names(psi))), length)
+    forma.nomiU<-function(xx,yy)paste("U",1:xx, ".", yy, sep="")
+    forma.nomiVxb<-function(xx,yy)paste("psi",1:xx, ".", yy, sep="")
+    nomiU   <- unlist(mapply(forma.nomiU, length.psi, name.Z)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
+    nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, name.Z))
+
     for(i in 1:ncol(U)) {
         mf[nomiU[i]]<-U[,i]
         mf[nomiVxb[i]]<-Vxb[,i]
@@ -236,11 +247,16 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     objF <- update(obj0, formula = Fo, data = mf, evaluate=FALSE)
     if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<-eval(objF, envir=mf)
-#c'è un problema..controlla obj (ha due "(Intercepts)"
+
+    #c'è un problema..controlla obj (ha due "(Intercepts)"
     if(!gap){
         names.coef<-names(objF$coefficients)
-        objF$coefficients<- if(sum("(Intercept)"==names(obj$coef))==2) obj$coefficients[-2] else obj$coefficients
-        names(objF$coefficients)<-names.coef
+        if(k==1) {names(obj$coefficients)[match(c("U","V"), names(coef(obj)))]<- nnomi
+          } else {
+      names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi  
+          }
+        objF$coefficients[names.coef]<-obj$coefficients[names.coef]
+#        objF$coefficients<- if(sum("(Intercept)"==names(obj$coef))==2) obj$coefficients[-2] else obj$coefficients
         objF$fitted.values<-obj$fitted.values
         objF$linear.predictors<-obj$linear.predictors
         objF$residuals<-obj$residuals

@@ -18,7 +18,7 @@ draw.history(obj, term, ...)
   For a given \code{term} in a segmented fit, \code{draw.history()} displays the different breakpoint
   values obtained during the estimating process, since the starting values up to the final ones. When 
   bootstrap restarting is employed, \code{draw.history()} produces two plots, the values of objective function 
-  and the number of distinc solutions against the bootstrap replicates.
+  and the number of distinct solutions against the bootstrap replicates.
 }
 \value{ None. }
 %\references{  }
@@ -33,7 +33,7 @@ os<-segmented(lm(y~x,data=stagnant),seg.Z=~x,psi=-.8)
 draw.history(os) #diagnostics with boot restarting
 
 os<-segmented(lm(y~x,data=stagnant),seg.Z=~x,psi=-.8, control=seg.control(n.boot=0))
-draw.history(os) #diagnostics with boot restarting
+draw.history(os) #diagnostics without boot restarting
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

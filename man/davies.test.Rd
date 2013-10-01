@@ -17,7 +17,8 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
       warning is printed when \code{seg.Z} includes two or more terms. }
   \item{k}{ number of points where the test should be evaluated. See details. }
   \item{alternative}{ a character string specifying the alternative hypothesis. }
-  \item{beta0}{ the null value of the difference-in-slope; default to zero meaning no breakpoint, see details. }
+  \item{beta0}{ the null value of the difference-in-slope; default to zero meaning no breakpoint. 
+  Values different from zero are allowed, but see the Warning section. }
   \item{dispersion}{ the dispersion parameter for the family to be used to compute the Wald statistic.
       When \code{NULL} (the default), it is inferred from \code{obj}. Namely it is taken as \code{1} for the
      binomial and Poisson families, and otherwise estimated by the residual Chi-squared statistic (calculated from cases with
@@ -25,10 +26,11 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
        }
 }
 \details{
-  \code{davies.test} tests for a non zero difference-in-slope parameter of a segmented
+  \code{davies.test} tests for a non-zero difference-in-slope parameter of a segmented
   relationship. Namely, the null hypothesis is \eqn{H_0:\beta=\beta_0}{H_0:beta=beta0}, where \eqn{\beta}{beta} is the difference-in-slopes, 
   i.e. the coefficient of the segmented function \eqn{\beta(x-\psi)_+}{beta*(x-psi)_+}, and \eqn{\beta_0}{beta0} is the `null' value 
-  specified via the argument \code{beta0}. Roughtly speaking, the procedure computes \code{k} `naive' (i.e. assuming
+  specified via the argument \code{beta0}. Typically the hypothesis of interest assumes \eqn{\beta_0=0}{beta0=0} namely no breakpoint. 
+  Roughtly speaking, the procedure computes \code{k} `naive' (i.e. assuming
   fixed and known the breakpoint) Wald statistics for the difference-in-slope,
   seeks the `best' value (according to the alternative hypothesis), and then corrects the selected
   (minimum) p-value. The \code{k} evaluation points are \code{k} equally spaced values between the second and the second-last 
@@ -38,7 +40,8 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
   A list with class '\code{htest}' containing the following components:
   \item{method}{title (character)}
   \item{data.name}{the regression model and the segmented variable being tested}
-  \item{statistic }{the point at which the maximum (or the minimum if \code{alternative="less"}) occurs}
+  \item{statistic }{the point within the range of the covariate in \code{seg.Z} at which the maximum 
+  (or the minimum if \code{alternative="less"}) occurs}
   \item{parameter }{number of evaluation points}
   \item{p.value }{the adjusted p-value}
   \item{process}{a two-column matrix including the evaluation points and corresponding values of the statistic}
@@ -53,6 +56,14 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
   bound.
   }
 
+\section{Warning }{
+    The Davies test is not aimed at obtaining the estimate of the breakpoint.
+    The Davies test is based on \code{k} evaluation points, thus the value returned in the \code{statistic} component
+    (and printed as "`Best' at") is the best among the \code{k} points, and typically it will differ from the maximum likelihood estimate
+    returned by \code{segmented}. Use \code{\link{segmented}} if you are interested in the point estimate.
+    The Davies approach does not fit in contexts when \eqn{\beta_0\neq 0}, therefore results when \code{beta0} differs from zero
+    should be taken with caution.
+    }
 %%\section{Warning }{Currently \code{davies.test} does not work if the fitted model \code{ogg}
 %%  does not include the segmented variable \code{term} being tested.}
 
