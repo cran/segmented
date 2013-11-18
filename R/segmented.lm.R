@@ -55,9 +55,20 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    if(length(all.vars(formula(obj)))>1){
 #    mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj))[-1],collapse="+")))
 #    } else {
-    mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+#    mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
 #    }
-    mf <- eval(mf, parent.frame())
+#nov 2013 dalla versione 0.3-0.0 (che dovrebbe essere successiva alla 0.2-9.5) viene creato anche il modelframe esteso che comprende
+# termini "originali", prima che fossero trasformati (Ad es., x prima che ns(x) costruisca le basi). Questo permette di avere termini
+# ns(), poly(), bs() nel modello di partenza
+    mfExt<- mf
+    mfExt$formula<- update.formula(mfExt$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj)),collapse="+")))   
+    mfExt<-eval(mfExt, parent.frame())
+
+    mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+    mf <-  eval(mf, parent.frame())
+
+    #mantieni in mfExt solo le variabili che NON ci sono in mf (così la funzione occupa meno spazio..)
+    mfExt<-mfExt[,setdiff(names(mfExt), names(mf)),drop=FALSE]
     
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
@@ -161,6 +172,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    KK <- new.env()
 #    for (i in 1:ncol(objframe$model)) assign(names(objframe$model[i]), objframe$model[[i]], envir = KK)
     if (it.max == 0) {
+        mf<-cbind(mf, mfExt)
         U <- pmax((Z - PSI), 0)
         colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
         nomiU <- paste("U", colnames(U), sep = "")
@@ -246,6 +258,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #        assign(nomiVxb[i], Vxb[, i], envir = KK)
 #    }
 
+    mf<-cbind(mf, mfExt)
     for(i in 1:ncol(U)) {
         mf[nomiU[i]]<-U[,i]
         mf[nomiVxb[i]]<-Vxb[,i]

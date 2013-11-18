@@ -7,8 +7,8 @@
      only used when calling any 'segmented' method (\code{segmented.lm} or \code{segmented.glm}).
 }
 \usage{
-seg.control(toll = 1e-04, it.max = 10, display = FALSE,
-    stop.if.error = TRUE, K = 10, quant = FALSE, last = TRUE, maxit.glm = 25, h = 1, 
+seg.control(toll = 1e-04, it.max = 10, display = FALSE, stop.if.error = TRUE, 
+    K = 10, quant = FALSE, last = TRUE, maxit.glm = 25, h = 1, 
     n.boot=20, size.boot=NULL, gap=FALSE, jt=FALSE, nonParam=TRUE,
     random=TRUE, powers=c(1,1), seed=NULL)
 }
@@ -56,7 +56,7 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE,
   process to stabilize the estimation procedure. Usually of no interest for the user.
   }
   \item{seed}{
-  The seed to be passed on \code{set.seed()} when \code{n.boot>0}. Setting the seed can be useful to replicate
+  The seed to be passed on to \code{set.seed()} when \code{n.boot>0}. Setting the seed can be useful to replicate
   the results when the bootstrap restart algorithm is employed. In fact a segmented fit includes \code{seed} representing 
   the integer vector saved just before the bootstrap resampling. Re-use it if you want to replicate the bootstrap
   restarting algorithm with the \emph{same} samples.

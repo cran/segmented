@@ -25,10 +25,12 @@ broken.line(ogg, term = NULL, gap = FALSE, link = TRUE,
     }
 %\references{ ~put references to the literature/web site here ~ }
 %\author{ ~~who you are~~ }
-%\note{ ~~further notes~~
+\note{ 
+This function will be probably removed in the next versions. See \code{predict.segmented} instead.
+}
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
-\seealso{ \code{\link{segmented}}, \code{\link{predict.glm}}  }
+\seealso{ \code{\link{segmented}}, \code{\link{predict.segmented}}  }
 \examples{
 set.seed(1234)
 z<-runif(100)

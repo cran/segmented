@@ -4,12 +4,20 @@
 *				    *
 *************************************
 
+
+===============
+version 0.3-0.0
+===============
+* predict.segmented method added. This allows to obtain predictions from fitted segmented objects as in standard (generalized) linear models.
+* plot.segmented gains several arguments to plot pointwise confidence intervals around the fitted segmented line (e.g. 'conf.level').
+* The starting linear object to be passed on to segmented.lm and segmented.glm may include terms such as poly(), ns(), or bs(). 
+
+
 ===============
 version 0.2-9.5
 ===============
-* Some bugs fixed: segmented did not work if the starting linear model including an offset term was called from a dataframe; thanks to Aritz Adin Urtasun (and the 
-the guy sent the email on 26th Sept 2013. I lost his email). 
-segmented did not work if the starting linear model included the "weights" argument expressed via a function (something like "weights= 1/myweights"); thanks to 
+* Some bugs fixed: segmented did not work if the starting linear model including an offset term was called from a dataframe; thanks to Aritz Adin Urtasun (and also to the 
+the guy which sent the email on 26th Sept 2013. I do not remember his name, I lost his email). segmented did not work if the starting linear model included the "weights" argument expressed via a function (something like "weights= 1/myweights"); thanks to 
 Betty Fetscher. segmented did not work if the variable names in seg.Z included the capital "U"; thanks to Lutz Ph. Breitling.
 
 

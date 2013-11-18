@@ -65,11 +65,20 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #      agg<-if(length(all.vars(formula(obj))[-id.rispo])==0) "" else "+"
 #      mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),agg,paste(all.vars(formula(obj))[-id.rispo],collapse="+")))
 #    } else {
-      mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+    #  mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
 #    }
+    mfExt<- mf
+    mfExt$formula<- update.formula(mfExt$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj)),collapse="+")))   
+    mfExt<-eval(mfExt, parent.frame())
+
+    mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
     mf <- eval(mf, parent.frame())
     #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene
     #       altrimenti nel model.frame non risulta l'offset
+
+    #mantieni in mfExt solo le variabili che NON ci sono in mf (così la funzione occupa meno spazio..)
+    mfExt<-mfExt[,setdiff(names(mfExt), names(mf)),drop=FALSE]
+
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
     
@@ -156,6 +165,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    KK <- new.env()
 #    for (i in 1:ncol(objframe$model)) assign(names(objframe$model[i]), objframe$model[[i]], envir = KK)
     if (it.max == 0) {
+        mf<-cbind(mf, mfExt)
         U <- pmax((Z - PSI), 0)
         colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
         nomiU <- paste("U", colnames(U), sep = "")
@@ -164,6 +174,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         for(i in 1:ncol(U)) mf[nomiU[i]]<-U[,i]
         Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         #obj <- update(obj, formula = Fo, data = KK)
+        
         obj <- update(obj, formula = Fo, data = mf, evaluate=FALSE)
         if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
         obj<-eval(obj, envir=mf)
@@ -230,6 +241,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     nomiU   <- unlist(mapply(forma.nomiU, length.psi, name.Z)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
     nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, name.Z))
 
+    mf<-cbind(mf, mfExt)
     for(i in 1:ncol(U)) {
         mf[nomiU[i]]<-U[,i]
         mf[nomiVxb[i]]<-Vxb[,i]

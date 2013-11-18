@@ -6,16 +6,16 @@
   Computes the slopes of each `segmented' relationship in the fitted model.
 }
 \usage{
-slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, var.diff=FALSE, 
-  APC=FALSE)
+slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, 
+    var.diff=FALSE, APC=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{ogg}{ an object of class "segmented", returned by any \code{segmented} method. }
   \item{parm}{ the segmented variable whose slopes have to be computed. If missing all the segmented variables are considered. }
   \item{conf.level}{ the confidence level required. }
-  \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled otherwise.
-  when \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
+  \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled 
+  otherwise. When \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
     therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.}
   \item{var.diff}{logical. If \code{var.diff=TRUE} and there is a single segmented variable, the computed standard errors 
     are based on a sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.} 

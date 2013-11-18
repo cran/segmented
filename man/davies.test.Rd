@@ -15,7 +15,7 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1}, indicating the 
       (continuous) segmented variable being tested. Only a single variable may be tested and a
       warning is printed when \code{seg.Z} includes two or more terms. }
-  \item{k}{ number of points where the test should be evaluated. See details. }
+  \item{k}{ number of points where the test should be evaluated. See Details. }
   \item{alternative}{ a character string specifying the alternative hypothesis. }
   \item{beta0}{ the null value of the difference-in-slope; default to zero meaning no breakpoint. 
   Values different from zero are allowed, but see the Warning section. }
@@ -61,8 +61,8 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided",
     The Davies test is based on \code{k} evaluation points, thus the value returned in the \code{statistic} component
     (and printed as "`Best' at") is the best among the \code{k} points, and typically it will differ from the maximum likelihood estimate
     returned by \code{segmented}. Use \code{\link{segmented}} if you are interested in the point estimate.
-    The Davies approach does not fit in contexts when \eqn{\beta_0\neq 0}, therefore results when \code{beta0} differs from zero
-    should be taken with caution.
+    Technically the Davies approach does not fit in contexts when \eqn{\beta_0\neq 0}, namely to test for a known difference-in-slope value.
+    Therefore results when \code{beta0} differs from zero should be taken with caution.
     }
 %%\section{Warning }{Currently \code{davies.test} does not work if the fitted model \code{ogg}
 %%  does not include the segmented variable \code{term} being tested.}

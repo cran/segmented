@@ -95,8 +95,8 @@ Muggeo, V.M.R. (2008) Segmented: an R package to fit regression
   is greater than zero. If \code{it.max=0} \code{segmented} will estimate a new linear model with
  break-point(s) fixed at the values reported in \code{psi}.
  
-\item In the returned object, the name of the difference-in-slopes parameter is 
-labelled with `U.nameOfVariable'.
+\item In the returned fit object, `U.' is put before the name of the segmented 
+variable to mean the difference-in-slopes coefficient.
 
 \item Methods specific to the class \code{"segmented"} are
     \itemize{
@@ -107,6 +107,7 @@ labelled with `U.nameOfVariable'.
   \item \code{lines.segmented}
   \item \code{confint.segmented}
   \item \code{vcov.segmented}
+  \item \code{predict.segmented}
             }
 
 Others are inherited from the class \code{"lm"} or \code{"glm"} depending on the
