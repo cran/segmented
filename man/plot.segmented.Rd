@@ -7,8 +7,8 @@
   the fitted broken-line for the selected segmented term.
 }
 \usage{
-\method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, link=TRUE, res.col=1, 
-    rev.sgn=FALSE, const=0, shade=FALSE, rug=TRUE, show.gap=FALSE, ...)
+\method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, link=TRUE, 
+    res.col=1, rev.sgn=FALSE, const=0, shade=FALSE, rug=TRUE, show.gap=FALSE, ...)
       }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,6 +20,7 @@
       See Details.}
   \item{conf.level}{ If greater than zero, it means the confidence level at which the pointwise confidence itervals have to 
   be plotted.}
+  \item{interc}{ If \code{TRUE} the computed segmented components include the model intercept (if it exists).}
   \item{link}{ when \code{TRUE} (default), the fitted lines are plotted on the link scale, otherwise they are
     tranformed on the response scale before plotting. Ignored for linear segmented fits. }
   \item{res.col}{when \code{res=TRUE} it means the color of the points representing the partial residuals.}
@@ -34,8 +35,8 @@
       are hidden. When bootstrap restarting has been employed (default in \code{segmented}), \code{show.gap} is meaningless 
       as the gap coefficients are always set to zero in the fitted model.}
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
-  can be vectors, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub' when a new plot
-  is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}).
+  can be vectors, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `xlim' and 
+  `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}).
   }
 }
 \details{
@@ -54,7 +55,8 @@ None.
 }
 %\references{ }
 \author{ Vito M. R. Muggeo }
-%\note{ ~~further notes~~
+\note{ For models with offset, partial residuals on the response scale are not defined. Thus \code{plot.segmented} does not work 
+when \code{link=FALSE}, \code{res=TRUE}, and the fitted model includes an offset.}
 %
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}

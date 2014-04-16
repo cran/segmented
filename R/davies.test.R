@@ -57,7 +57,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     isGLM<-"glm"%in%class(obj)
     Call<-mf<-obj$call
     mf$formula<-formula(obj)
-    m <- match(c("formula", "data", "subset", "weights", "na.action"), names(mf), 0L)
+    m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
@@ -71,6 +71,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     mf <- eval(mf, parent.frame())
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
+#    0.3.0-1 credo che la linea di sotto non serva..
     if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
       names(mf)[which(names(mf)=="(weights)")]<-all.vars(Call$weights) #as.character(Call$weights)
       #aggiungere???
@@ -81,10 +82,11 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
     y <- model.response(mf, "any")
     XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
     n <- nrow(XREG)
-    if(!is.null(offs)){
-      id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene altrimenti nel model.frame non risulta l'offset
-      names(mf)[id.offs]<- all.vars(formula(paste("~", names(mf)[id.offs])), functions=FALSE)
-      }
+
+#    if(!is.null(offs)){
+#      id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene altrimenti nel model.frame non risulta l'offset
+#      names(mf)[id.offs]<- all.vars(formula(paste("~", names(mf)[id.offs])), functions=FALSE)
+#      }
 #    weights <- as.vector(model.weights(mf))
 #    offs <- as.vector(model.offset(mf))
     if (is.null(weights)) weights <- rep(1, n)
@@ -137,7 +139,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
               else glm.fit(x = XX, y = y, weights = weights, offset = offs, 
                   family=family(obj), etastart=eta0)        
         eta0<-ob$linear.predictors
-        ris.valori[(length(ris.valori)) + 1] <- if (is.list(ob)) {
+        ris.valori[(length(ris.valori)) + 1] <- if (is.list(ob) && ncol(XX)==ob$rank) {
             #summary(o)$coef[length(coef(ogg)) + 1, 3]
         #extract.t.value.U(ob)
         extract.t.value.U.glm(ob,dispersion,isGLM,beta0)
@@ -178,7 +180,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), b
         "\nformula =", as.expression(formulaOrig),
 #        data.name = paste(as.expression(ogg$call),
         "\nsegmented variable =", name.Z),
-        statistic = c("`Best' at" = best),
+        statistic = c("'Best' at" = best),
         parameter = c(n.points = length(valori)), p.value = min(p.adj,1),
         alternative = alternative, process=cbind(psi.values=valori, stat.values=ris.valori))
     class(out) <- "htest"

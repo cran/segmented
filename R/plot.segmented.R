@@ -1,10 +1,14 @@
-plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
+plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, interc=TRUE,
     link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, shade=FALSE, rug=TRUE,
     show.gap=FALSE, ...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
 #Eliminato l'uso di broken.line()
 #Basata sulla funzione predict.segmented()
 #Ultimo aggiornamento: 5/11/2013
+#
+#
+    linkinv <- !link
+    if (inherits(x, what = "glm", which = FALSE) && linkinv && !is.null(x$offset) && res) stop("residuals with offset on the response scale?")
     if(conf.level< 0 || conf.level>.9999) stop("meaningless 'conf.level'")
     show.gap<-FALSE
     if (missing(term)) {
@@ -19,7 +23,6 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if (!term %in% x$nameUV$Z)
             stop("invalid `term'")
     }
-    linkinv <- !link
     opz <- list(...)
     cols <- opz$col
     if (length(cols) <= 0)
@@ -44,19 +47,23 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         ylabs <- paste("Effect  of ", term, sep = " ")
     a <- intercept(x, term, gap = show.gap)[[1]][, "Est."]
     b <- slope(x, term)[[1]][, "Est."]
-    id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi),
-        value = FALSE)
+    id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE)
     est.psi <- x$psi[id, "Est."]
     K <- length(est.psi)
     val <- sort(c(est.psi, x$rangeZ[, term]))
     #---------aggiunta per gli IC
     rangeCI<-NULL
-    tipo<-"response"
-    if(inherits(x, what = "glm", which = FALSE) && link) tipo<-"link"
+    n<-length(x$fitted.values)
+    tipo<- if(inherits(x, what = "glm", which = FALSE) && link) "link" else "response"
+    
+    vall<-sort(c(seq(min(val), max(val), l=120), est.psi))
+    #ciValues<-predict.segmented(x, newdata=vall, se.fit=TRUE, type=tipo, level=conf.level)
+    vall.list<-list(vall)
+    names(vall.list)<-term
+    ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE)
+    
     if(conf.level>0) {
-        vall<-sort(c(seq(min(val), max(val), l=120), est.psi))
-        ciValues<-predict.segmented(x, newdata=vall, se.fit=TRUE, type=tipo, level=conf.level)
-        k.alpha<-if(inherits(x, what = "glm", which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2,ciValues$df))
+        k.alpha<-if(inherits(x, what = "glm", which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
         ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit)
         rangeCI<-range(ciValues)
         #ciValues  è una matrice di length(val)x3. Le 3 colonne: stime, inf, sup
@@ -77,11 +84,19 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         xvalues <- -xvalues
     }
     m <- cbind(val[s], y.val1[s], val[s + 1], y.val[s + 1])
-    if (inherits(x, what = "glm", which = FALSE) && linkinv) {
+    #values where to compute predictions (useful only if res=TRUE)
+    if(res){
+        new.d<-data.frame(ifelse(rep(rev.sgn, length(xvalues)),-xvalues, xvalues))
+        names(new.d)<-term
+        fit0 <- broken.line(x, new.d, link = link, interc=interc, se.fit=FALSE)$fit
+        }
+#-------------------------------------------------------------------------------
+    if (inherits(x, what = "glm", which = FALSE) && linkinv) { #se GLM con linkinv
         fit <- if (res)
-            predict.segmented(x, ifelse(rep(rev.sgn, length(xvalues)),-xvalues,xvalues), type=tipo) + resid(x, "response") + const
+            #predict.segmented(x, ifelse(rep(rev.sgn, length(xvalues)),-xvalues,xvalues), type=tipo) + resid(x, "response") + const
             #broken.line(x, term, gap = show.gap, link = link) + resid(x, "response") + const
-        else x$family$linkinv(c(y.val, y.val1))
+              fit0 + resid(x, "response") + const        
+                else x$family$linkinv(c(y.val, y.val1))
         xout <- sort(c(seq(val[1], val[length(val)], l = 120), val[-c(1, length(val))]))
         l <- approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout)
         id.group <- cut(l$x, val, FALSE, TRUE)
@@ -91,7 +106,9 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if (!add) {
             plot(as.vector(m[, c(1, 3)]), as.vector(m[, c(2,
                 4)]), type = "n", xlab = xlabs, ylab = ylabs,
-                main = opz$main, sub = opz$sub, ylim = range(fit, rangeCI))
+                main = opz$main, sub = opz$sub, 
+                xlim = opz$xlim,
+                ylim = if(is.null(opz$ylim)) range(fit, rangeCI) else opz$ylim )
         if(rug) {segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
             rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/40)}
             }
@@ -112,7 +129,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
             lines(xhat[id.group == i], yhat[id.group == i], col = cols[i],
                 lwd = lwds[i], lty = ltys[i])
         }
-    } else {
+#-------------------------------------------------------------------------------
+    } else { #se LM o "GLM con link=TRUE (ovvero linkinv=FALSE)"
         r <- cbind(val, y.val)
         r1 <- cbind(val, y.val1)
         rr <- rbind(r, r1)
@@ -121,12 +139,16 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
             ress <- if (inherits(x, what = "glm", which = FALSE))
                 residuals(x, "working") * sqrt(x$weights)
             else resid(x)
+            #if(!is.null(x$offset)) ress<- ress - x$offset
             #fit <- broken.line(x, term, gap = show.gap, link = link, interc = TRUE) + ress + const
-            fit <- predict.segmented(x, ifelse(rep(rev.sgn, length(xvalues)),-xvalues,xvalues), type=tipo) + ress + const
+            #fit <- predict.segmented(x, ifelse(rep(rev.sgn, length(xvalues)),-xvalues,xvalues), type=tipo) + ress + const
+            fit <- fit0 + ress + const
         }
         if (!add)
             plot(rr, type = "n", xlab = xlabs, ylab = ylabs,
-                main = opz$main, sub = opz$sub, ylim = range(fit, rangeCI))
+                main = opz$main, sub = opz$sub, 
+                xlim = opz$xlim,
+                ylim = if(is.null(opz$ylim)) range(fit, rangeCI) else opz$ylim)
         if(rug) {segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
             rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/40)}
         if(conf.level>0) {

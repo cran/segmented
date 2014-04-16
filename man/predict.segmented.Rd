@@ -16,9 +16,7 @@ Returns predictions and optionally associated quantities (standard errors or con
 a fitted segmented model coming from \code{segmented.lm} or \code{segmented.glm}.
 }
   \item{newdata}{
-different choices: i) an optional data frame in which to look for variables with which to predict; 
-ii) a data frame including values only for any segmented covariate in the model; iii) a (unnamed) numeric vector meaning 
-the values of the single segmented covariate in the model; iv) if omitted, the fitted values are returned.
+An optional data frame in which to look for variables with which to predict. If omitted, the fitted values are used.
 }
   \item{\dots}{
 further arguments passed to \code{predict.lm} or \code{predict.glm}. Usually these 
@@ -42,13 +40,13 @@ Vito Muggeo
 \note{
 If \code{type="terms"}, \code{predict.segmented} returns predictions for each component of the segmented term. 
 Namely if `my.x' is the segmented variable, predictions for `my.x', `U1.my.x' and `psi1.my.x' are returned. These are
-meaningless of course.
+meaningless individually, however their sum provides the predictions for the segmented term.
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{predict.lm}}, \code{\link{predict.glm}}, \code{\link{plot.segmented}}
+\code{\link{plot.segmented}}, \code{\link{broken.line}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}
 }
 \examples{
 n=10
@@ -58,7 +56,7 @@ y <- (x<0)*x/2 + 1 + rnorm(x,sd=0.15)
 segm <- segmented(lm(y ~ x), ~ x, psi=0.5)
 predict(segm,se.fit = TRUE)$se.fit
 
-#wrong (lower) st.errors (assuming known the breakpoint)
+#wrong (smaller) st.errors (assuming known the breakpoint)
 olm<-lm(y~x+pmax(x-segm$psi[,2],0))
 predict(olm,se.fit = TRUE)$se.fit
 }

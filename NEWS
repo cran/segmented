@@ -6,6 +6,17 @@
 
 
 ===============
+version 0.3-1.0
+===============
+* broken.line() now accepts arbitrary values to compute predictions for segmented relationships in the model; it also returns relevant standard errors (new argument se.fit).
+* plot.segmented() now accepts also 'ylim' and 'xlim' to set limits on the new produced plot (thanks to Samantha Tyner for suggesting that).
+* the 'aic' component in the objected returned by segmented.glm() was not based on the correct number of degrees of freedom (it missed "2 times n.breaks"; this error was incidentally introduced in version 0.2-9.1) Thanks to Roland Fuﬂ for reporting.
+* segmented.lm(), segmented.glm(), and davies.test() were not working for starting linear models having 'offset' as an argument (and not in the formula).
+* A bug fixed in davies.test() (relevant only for covariates with some inflation at the boundaries)
+* The (possible) "weights" argument in the starting model was not correctly handled (thanks to Brian Jessop for reporting)
+
+
+===============
 version 0.3-0.0
 ===============
 * predict.segmented method added. This allows to obtain predictions from fitted segmented objects as in standard (generalized) linear models.
@@ -17,7 +28,7 @@ version 0.3-0.0
 version 0.2-9.5
 ===============
 * Some bugs fixed: segmented did not work if the starting linear model including an offset term was called from a dataframe; thanks to Aritz Adin Urtasun (and also to the 
-the guy which sent the email on 26th Sept 2013. I do not remember his name, I lost his email). segmented did not work if the starting linear model included the "weights" argument expressed via a function (something like "weights= 1/myweights"); thanks to 
+the guy which sent me the email on 26th Sept 2013. I lost his email and I do not remember his name). segmented did not work if the starting linear model included the "weights" argument expressed via a function (something like "weights= 1/myweights"); thanks to 
 Betty Fetscher. segmented did not work if the variable names in seg.Z included the capital "U"; thanks to Lutz Ph. Breitling.
 
 
@@ -50,8 +61,7 @@ version 0.2-9.2
 ===============
 version 0.2-9.1
 ===============
-* Some bugs fixed: segmented.lm() and segmented.glm() did not finish correctly when no breakpoint was found; now segmented.lm() and segmented.glm() take care of flat relationships; plot.segmented() did not compute correctly the partial residuals 
-for segmented glm fits. 
+* Some bugs fixed: segmented.lm() and segmented.glm() did not finish correctly when no breakpoint was found; now segmented.lm() and segmented.glm() take care of flat relationships; plot.segmented() did not compute correctly the partial residuals for segmented glm fits. 
 
 
 ===============

@@ -134,7 +134,7 @@ dpmax<-function(x,y,pow=1){
           obj$linear.predictors<-obj.new$linear.predictors
           obj$deviance<-obj.new$deviance
           obj$weights<-obj.new$weights
-          obj$aic<-obj.new$aic
+          obj$aic<-obj.new$aic #+ 2*ncol(V) #ho fatto la modifica in segmented.glm(): "objF$aic<-obj$aic + 2*k"
           }
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,

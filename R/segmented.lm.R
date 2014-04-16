@@ -1,7 +1,5 @@
 `segmented.lm` <-
 function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
-#preliminary version that should account the bootstrap restart
-#o<-segmented.lm1(lm(y~x),seg.Z=~x,psi=.2,control=seg.control(display=FALSE,n.boot=20,it.max=5))
     n.Seg<-1
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
@@ -61,22 +59,41 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 # termini "originali", prima che fossero trasformati (Ad es., x prima che ns(x) costruisca le basi). Questo permette di avere termini
 # ns(), poly(), bs() nel modello di partenza
     mfExt<- mf
-    mfExt$formula<- update.formula(mfExt$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj)),collapse="+")))   
-    mfExt<-eval(mfExt, parent.frame())
-
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
-    mf <-  eval(mf, parent.frame())
+    #mfExt$formula<- update.formula(mfExt$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj)),collapse="+")))   
+#    mfExt$formula<- if(!is.null(obj$call$data)) 
+#        update.formula(mf$formula,paste(".~",paste(all.vars(obj$call), collapse="+"),"-",obj$call$data,sep=""))
+#            else update.formula(mf$formula,paste(".~",paste(all.vars(obj$call), collapse="+"),sep=""))
+#-----------
+   if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
+          mfExt$formula<-update.formula(mf$formula,paste(".~.+", c(all.vars(obj$call$offset),  
+          all.vars(obj$call$weights), all.vars(obj$call$subset)) , collapse="+"),sep="")
+          }
 
+    mf <-  eval(mf, parent.frame())
+    #questo serve per inserire in mfExt le eventuali variabili contenute nella formula con offset(..)
+    nomiOff<-setdiff(all.vars(formula(obj)), names(mf))
+    if(length(nomiOff)>=1) mfExt$formula<-update.formula(mfExt$formula,paste(".~.+", paste( nomiOff, collapse="+"), sep=""))
+    mfExt<-eval(mfExt, parent.frame())
+    
     #mantieni in mfExt solo le variabili che NON ci sono in mf (così la funzione occupa meno spazio..)
-    mfExt<-mfExt[,setdiff(names(mfExt), names(mf)),drop=FALSE]
+    #mfExt<-mfExt[,setdiff(names(mfExt), names(mf)),drop=FALSE]
     
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
 
-    if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
-      names(mf)[which(names(mf)=="(weights)")]<- all.vars(Call$weights, functions=FALSE)#prima di 0.2.9-4 era as.character(Call$weights)
-      # mf["(weights)"]<-weights
-      }
+#    if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
+#      mfExt[all.vars(Call$weights, functions=FALSE)]<- eval(parse(text=all.vars(Call$weights)))
+#      #names(mfExt)[which(names(mf)=="(weights)")]<- all.vars(Call$weights, functions=FALSE)#prima di 0.2.9-4 era as.character(Call$weights)
+#      # mf["(weights)"]<-weights
+#      }
+#
+#    if(!is.null(Call$offset)){ 
+#     mfExt[all.vars(Call$offset, functions=FALSE)]<- eval(parse(text=all.vars(Call$offset)))
+##     mfExt["(offset)"]<-eval(parse(text=all.vars(Call$offset)))
+#      names(mf)[which(names(mf)=="(offset)")]<-all.vars(Call$offset, functions=FALSE) 
+#     }
+
     mt <- attr(mf, "terms")
     interc<-attr(mt,"intercept")
     y <- model.response(mf, "any")
@@ -84,10 +101,11 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
 
     #il cambio in mf da "offset(_nomevar_)" al "_nomevar_" deve avvenire dopo "model.matrix(mt, mf, contrasts)" 
-    if(!is.null(offs)){
-      id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene altrimenti nel model.frame non risulta l'offset
-      names(mf)[id.offs]<- all.vars(formula(paste("~", names(mf)[id.offs])), functions=FALSE)
-      }
+#    if(!is.null(offs)){
+#      #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene altrimenti nel model.frame non risulta l'offset
+#      id.offs<- which(grepl("(offset)", names(mf))) #per consentire anche offset come argomento di glm()
+#      names(mf)[id.offs]<- all.vars(formula(paste("~", names(mf)[id.offs])), functions=FALSE)
+#      }
 
     namesXREG0<-colnames(XREG)
     #nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
@@ -109,7 +127,8 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     #XREG<-XREG[,colnames(model.matrix(obj)),drop=FALSE]
     #XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
     XREG <- XREG[, match(c("(Intercept)", namesXREG0),colnames(XREG), nomatch = 0), drop = FALSE]
-
+    XREG<-XREG[,unique(colnames(XREG)), drop=FALSE]
+    
     n <- nrow(XREG)
     #Z <- list(); for (i in colnames(XREGseg)) Z[[length(Z) + 1]] <- XREGseg[, i]
     Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
@@ -172,7 +191,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #    KK <- new.env()
 #    for (i in 1:ncol(objframe$model)) assign(names(objframe$model[i]), objframe$model[[i]], envir = KK)
     if (it.max == 0) {
-        mf<-cbind(mf, mfExt)
+        #mf<-cbind(mf, mfExt)
         U <- pmax((Z - PSI), 0)
         colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
         nomiU <- paste("U", colnames(U), sep = "")
@@ -180,9 +199,9 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         #è necessario il for? puoi usare colnames(U)<-nomiU;mf[nomiU]<-U
         for(i in 1:ncol(U)) mf[nomiU[i]]<-U[,i]
         Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
-        obj <- update(obj, formula = Fo, data = mf, evaluate=FALSE)
-        if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
-        obj<-eval(obj, envir=mf)
+        obj <- update(obj, formula = Fo, evaluate=FALSE) #data = mf, 
+        #if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
+        obj<-eval(obj, envir=mfExt)
         if (model) obj$model <-mf  #obj$model <- data.frame(as.list(KK))
         names(psi)<-paste(paste("psi", ripetizioni, sep = ""), nomiZ, sep=".")
         obj$psi <- psi
@@ -258,18 +277,23 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #        assign(nomiVxb[i], Vxb[, i], envir = KK)
 #    }
 
-    mf<-cbind(mf, mfExt)
+    #mf<-cbind(mf, mfExt) #questo creava ripetizioni..
     for(i in 1:ncol(U)) {
-        mf[nomiU[i]]<-U[,i]
-        mf[nomiVxb[i]]<-Vxb[,i]
+        mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
+        mfExt[nomiVxb[i]]<-mf[nomiVxb[i]]<-Vxb[,i]
         }
     nnomi <- c(nomiU, nomiVxb)
-    Fo <- update.formula(formula(obj0), as.formula(paste(".~.+",
-        paste(nnomi, collapse = "+"))))
+    Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
     #objF <- update(obj0, formula = Fo, data = KK)
-    objF <- update(obj0, formula = Fo, data = mf, evaluate=FALSE)
-    if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
-    objF<-eval(objF, envir=mf)
+    objF <- update(obj0, formula = Fo,  evaluate=FALSE, data = mfExt)
+    #if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
+    objF<-eval(objF, envir=mfExt)
+    #Può capitare che psi sia ai margini e ci sono 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 
+    #sono di più ma hanno gli stessi valori di x
+    if(any(is.na(objF$coefficients))){
+     stop("at least one coef estimate is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", call. = FALSE)
+    }
+    objF$offset<- obj0$offset
     if(!gap){
       names.coef<-names(objF$coefficients)
       #questi codici funzionano e si basano sull'assunzioni che le U e le V siano ordinate..

@@ -109,7 +109,7 @@ extract.psi<-function(lista){
 
       if(is.null(o0$obj)){
           PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-          o0<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
+          o0<-try(seg.glm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
       }
       if(!is.list(o0)) return(0)
       o0$boot.restart<-ris
