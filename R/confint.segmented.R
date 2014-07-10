@@ -1,6 +1,21 @@
 `confint.segmented` <-
 function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, getOption("digits") - 3), ...){
-#restituisce CI per i psi
+#--
+        f.U<-function(nomiU, term=NULL){
+        #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
+        #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
+            k<-length(nomiU)
+            nomiUsenzaU<-strsplit(nomiU, "\\.")
+            nomiU.ok<-vector(length=k)
+            for(i in 1:k){
+                nomi.i<-nomiUsenzaU[[i]][-1]
+                if(length(nomi.i)>1) nomi.i<-paste(nomi.i,collapse=".")
+                nomiU.ok[i]<-nomi.i
+                }
+          if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
+          return(nomiU.ok)
+        }
+#--        
         if(!"segmented"%in%class(object)) stop("A segmented model is needed")
         if(var.diff && length(object$nameUV$Z)>1) {
             var.diff<-FALSE
@@ -19,8 +34,10 @@ function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, 
         rr<-list()
         z<-if("lm"%in%class(object)) abs(qt((1-level)/2,df=object$df.residual)) else abs(qnorm((1-level)/2))
         for(i in 1:length(nomeZ)){ #per ogni variabile segmented `parm' (tutte o selezionata)..
-            nomi.U<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$U,value=TRUE)
-            nomi.V<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$V,value=TRUE)
+            #nomi.U<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$U,value=TRUE)
+            #nomi.V<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$V,value=TRUE)
+            nomi.U<- object$nameUV$U[f.U(object$nameUV$U, nomeZ[i])]
+            nomi.V<- object$nameUV$V[f.U(object$nameUV$V, nomeZ[i])]
             m<-matrix(,length(nomi.U),3)
             rownames(m)<-nomi.V
             colnames(m)<-c("Est.",paste("CI","(",level*100,"%",")",c(".l",".u"),sep=""))

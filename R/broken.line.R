@@ -6,12 +6,29 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE){
     #given the segmented fit 'obj.seg' and a segmented variable x.name with corresponding values x.values,
     #this function simply returns a matrix with columns (x, (x-psi)_+, -b*I(x>psi))
     #or  ((x-psi)_+, -b*I(x>psi)) if obj.seg does not include the coef for the linear "x"
+        f.U<-function(nomiU, term=NULL){
+        #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
+        #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
+            k<-length(nomiU)
+            nomiUsenzaU<-strsplit(nomiU, "\\.")
+            nomiU.ok<-vector(length=k)
+            for(i in 1:k){
+                nomi.i<-nomiUsenzaU[[i]][-1]
+                if(length(nomi.i)>1) nomi.i<-paste(nomi.i,collapse=".")
+                nomiU.ok[i]<-nomi.i
+                }
+          if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
+          return(nomiU.ok)
+        }
         n<-length(x.values)
-        nameU<- grep(x.name, obj.seg$nameUV$U, value = TRUE)
-        nameV<- grep(x.name, obj.seg$nameUV$V, value = TRUE)
+        #le seguenti righe selezionavano (ERRONEAMENTE) sia "U1.x" sia "U1.neg.x" (se "x" e "neg.x" erano segmented covariates)
+        #nameU<- grep(paste("\\.",x.name,"$", sep=""), obj.seg$nameUV$U, value = TRUE)
+        #nameV<- grep(paste("\\.",x.name,"$", sep=""), obj.seg$nameUV$V, value = TRUE)
+        nameU<-obj.seg$nameUV$U[f.U(obj.seg$nameUV$U,x.name)]
+        nameV<-obj.seg$nameUV$V[f.U(obj.seg$nameUV$V,x.name)]
 
         diffSlope<-coef(obj.seg)[nameU]
-        est.psi<-obj.seg$psi[nameV,2]
+        est.psi<-obj.seg$psi[nameV, "Est."]
 
         k<-length(est.psi)
 
@@ -29,27 +46,32 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE){
           newd<-cbind(x.values,dummy1)
           colnames(newd)<-c(x.name,nameU)
           }
-        if(!x.name%in%names(coef(obj.seg))) newd<-newd[,-1]
+        if(!x.name%in%names(coef(obj.seg))) newd<-newd[,-1,drop=FALSE]
         return(newd)
-  #  nullLeftSlope<-FALSE
-  #  if(!nameZ%in%all.vars(object$orig.call)) nullLeftSlope<-TRUE
-  #  if(ncol(newdata)>=2){
-  #      newd.ok<-cbind(newd, newdata[,-match(nameZ,names(newdata)),drop=FALSE])
-  #      names(newd.ok)<- c(nameZ,nameU, nameV,names(newdata)[-match(nameZ,names(newdata))])
-  #      } else {
-  #      newd.ok<-newd
-  #      names(newd.ok)<-c(nameZ,nameU, nameV)
-  #      }
-  #  if(nullLeftSlope) newd.ok<-newd.ok[,-1]
     }
 #--------------
+        f.U<-function(nomiU, term=NULL){
+        #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
+        #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
+            k<-length(nomiU)
+            nomiUsenzaU<-strsplit(nomiU, "\\.")
+            nomiU.ok<-vector(length=k)
+            for(i in 1:k){
+                nomi.i<-nomiUsenzaU[[i]][-1]
+                if(length(nomi.i)>1) nomi.i<-paste(nomi.i,collapse=".")
+                nomiU.ok[i]<-nomi.i
+                }
+          if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
+          return(nomiU.ok)
+        }
+#-------------
     xvalues<-term
     nomeV <- ogg$nameUV$V
     nomeU <- ogg$nameUV$U
     nomeZ <- ogg$nameUV$Z
     n.seg<-length(nomeZ)
     if(is.null(xvalues)){
-      if(n.seg>1) stop("there are multiple segmented covariates. Please specify which one.")
+      if(n.seg>1) stop("there are multiple segmented covariates. Please specify one.")
       xvalues<-ogg$model[nomeZ]
       }
     if(is.character(xvalues)){
@@ -57,6 +79,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE){
           xvalues<-ogg$model[xvalues]
       }
     nomeOK<-names(xvalues)
+    if(length(nomeOK)>1) stop("Please specify one variable")
     if(!nomeOK %in% nomeZ) stop("'names(xvalues)' is not a segmented covariate")
 
     #if(n.seg>1 && !is.list(x.values)) stop("with multiple segmented covariates, please specify a named dataframe")
@@ -71,13 +94,15 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE){
     index <- vector(mode = "list", length = length(nomeZ))
     for (i in 1:n.seg) {
         index[[i]] <- c(match(nomeZ[i], nomi),
-            grep(paste("\\.", nomeZ[i], "$", sep = ""), nomiSenzaV, value = FALSE),
-            grep(paste("\\.", nomeZ[i], "$", sep = ""), nomiSenzaU, value = FALSE))
+            f.U(ogg$nameUV$U, nomeZ[i]) + (match(ogg$nameUV$U[1], nomi)-1),
+            f.U(ogg$nameUV$V, nomeZ[i]) + (match(ogg$nameUV$V[1], nomi)-1))
+            #grep(paste("\\.", nomeZ[i], "$", sep = ""), nomiSenzaV, value = FALSE),
+            #grep(paste("\\.", nomeZ[i], "$", sep = ""), nomiSenzaU, value = FALSE))
             }
     ste.fit<-fit <- vector(mode = "list", length = length(nomeZ))
     for (i in 1:n.seg) {
         x.name <- nomeZ[i]
-        X<-dummy.matrix(unlist(xvalues), x.name, ogg)
+        X<-dummy.matrix(unlist(xvalues), x.name, ogg)#<--NB: xvalues non varia con i!!! perché farlo calcolare comunque? 
         ind <- as.numeric(na.omit(unlist(index[[i]])))
         if(interc && "(Intercept)"%in%nomi) {
           ind<- c(match("(Intercept)",nomi),ind)

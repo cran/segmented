@@ -70,7 +70,7 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
             cat(it, spp, "", formatC(dev.new, 3, format = "f"), "",length(psi),"\n")
             #cat(paste("iter = ", it, spp," dev = ",formatC(dev.new,digits=3,format="f"), " n.psi = ",formatC(length(psi),digits=0,format="f"), sep=""), "\n")
         }
-        epsilon <- (dev.new - dev.old)/(dev.old + .1)
+        epsilon <- (dev.new - dev.old)/(dev.old + .001)
         obj$epsilon <- epsilon
         it <- it + 1
         obj$it <- it

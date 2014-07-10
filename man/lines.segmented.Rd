@@ -12,7 +12,7 @@
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{ an object of class \code{segmented} }
+  \item{x}{ an object of class \code{segmented}. }
   \item{term}{ the segmented variable of the breakpoints being drawn. It may be unspecified when there is a single segmented variable.}
   \item{bottom}{ logical, indicating if the bars should be plotted at the bottom (\code{TRUE}) or at the top (\code{FALSE}).}
   \item{shift}{ logical, indicating if the bars should be `shifted' on the y-axis before plotting. Useful for multiple breakpoints
@@ -47,7 +47,8 @@
 %\note{ ~~further notes~~
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
-\seealso{ \code{\link{plot.segmented}} to plot the fitted segmented lines. }
+\seealso{ \code{\link{plot.segmented}} to plot the fitted segmented lines, and  
+\code{\link{points.segmented}} to add the fitted joinpoints. }
 \examples{
 ## See ?plot.segmented
 

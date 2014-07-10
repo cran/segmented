@@ -7,7 +7,7 @@
 }
 \usage{
 slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, 
-    var.diff=FALSE, APC=FALSE)
+    var.diff=FALSE, APC=FALSE, digits = max(3, getOption("digits") - 3))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,6 +22,7 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   \item{APC}{logical. If \code{APC=TRUE} the `annual percent changes', i.e. \eqn{100\times(\exp(\beta)-1)}{100*(exp(b)-1)}, 
   are computed for each interval (\eqn{\beta}{b} is the slope). Only point estimates and confidence intervals are returned.
   } 
+\item{digits}{controls number of digits printed in output.}
 }
 \details{
   To fit broken-line relationships, \code{segmented} uses a parameterization whose coefficients are not 
@@ -44,7 +45,7 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
     approximations. Anyway, the t values may be not assumed for testing purposes 
     and they should be used just as guidelines to assess the estimate uncertainty.
     }
-\seealso{See also \code{\link{davies.test}} to test for a nonzero differece-in-slope parameter.
+\seealso{See also \code{\link{davies.test}} to test for a nonzero difference-in-slope parameter.
 }
 \examples{
 set.seed(16)

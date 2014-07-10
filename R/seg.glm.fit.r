@@ -64,7 +64,7 @@ dpmax<-function(x,y,pow=1){
             #cat(paste("iter = ", it, spp," dev = ",formatC(dev.new,digits=3,format="f"), " n.psi = ",formatC(length(psi),digits=0,format="f"), sep=""), "\n")
 
         }
-        epsilon <- (dev.new - dev.old)/(dev.old+.1)
+        epsilon <- (dev.new - dev.old)/(dev.old+.001)
 #        epsilon <- (dev.new1 - dev.old)/dev.old #se vuoi usare la *vera* (e non la working che tiene conto dei gap) deviance
         obj$epsilon <- epsilon
         it <- it + 1

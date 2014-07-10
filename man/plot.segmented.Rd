@@ -61,6 +61,7 @@ when \code{link=FALSE}, \code{res=TRUE}, and the fitted model includes an offset
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
 \seealso{ \code{\link{lines.segmented}} to add the estimated breakpoints on the current plot. 
+\code{\link{points.segmented}} to add the joinpoints of the segmented relationship.
 \code{\link{predict.segmented}} to compute standard errors and confidence intervals for predictions from a 
 "segmented" fit. }
 \examples{

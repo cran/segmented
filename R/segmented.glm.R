@@ -193,7 +193,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         nomiU <- paste("U", colnames(U), sep = "")
         #for (i in 1:ncol(U)) assign(nomiU[i], U[, i], envir = KK)
         #è necessario il for? puoi usare colnames(U)<-nomiU;mf[nomiU]<-U
-        for(i in 1:ncol(U)) mf[nomiU[i]]<-U[,i]
+        for(i in 1:ncol(U)) mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
         Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         #obj <- update(obj, formula = Fo, data = KK)
         

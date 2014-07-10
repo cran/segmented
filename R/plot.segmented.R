@@ -2,11 +2,21 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, int
     link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, shade=FALSE, rug=TRUE,
     show.gap=FALSE, ...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
-#Eliminato l'uso di broken.line()
-#Basata sulla funzione predict.segmented()
-#Ultimo aggiornamento: 5/11/2013
-#
-#
+        f.U<-function(nomiU, term=NULL){
+        #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
+        #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
+            k<-length(nomiU)
+            nomiUsenzaU<-strsplit(nomiU, "\\.")
+            nomiU.ok<-vector(length=k)
+            for(i in 1:k){
+                nomi.i<-nomiUsenzaU[[i]][-1]
+                if(length(nomi.i)>1) nomi.i<-paste(nomi.i,collapse=".")
+                nomiU.ok[i]<-nomi.i
+                }
+          if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
+          return(nomiU.ok)
+        }
+#-------------- 
     linkinv <- !link
     if (inherits(x, what = "glm", which = FALSE) && linkinv && !is.null(x$offset) && res) stop("residuals with offset on the response scale?")
     if(conf.level< 0 || conf.level>.9999) stop("meaningless 'conf.level'")
@@ -46,8 +56,13 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, int
     if (length(ylabs) <= 0)
         ylabs <- paste("Effect  of ", term, sep = " ")
     a <- intercept(x, term, gap = show.gap)[[1]][, "Est."]
+    #Poiché intercept() restituisce quantità che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
+    if(!interc && ("(Intercept)" %in% names(coef(x)))) a<- a-coef(x)["(Intercept)"]
     b <- slope(x, term)[[1]][, "Est."]
-    id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE)
+    
+    #id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE) #confondeva "psi1.x","psi1.neg.x"
+    id <- f.U(rownames(x$psi), term)
+    
     est.psi <- x$psi[id, "Est."]
     K <- length(est.psi)
     val <- sort(c(est.psi, x$rangeZ[, term]))

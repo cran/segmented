@@ -197,7 +197,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         nomiU <- paste("U", colnames(U), sep = "")
         #for (i in 1:ncol(U)) assign(nomiU[i], U[, i], envir = KK)
         #è necessario il for? puoi usare colnames(U)<-nomiU;mf[nomiU]<-U
-        for(i in 1:ncol(U)) mf[nomiU[i]]<-U[,i]
+        for(i in 1:ncol(U)) mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
         Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         obj <- update(obj, formula = Fo, evaluate=FALSE) #data = mf, 
         #if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
@@ -244,7 +244,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         VV<-V[, which(colnames(V)==jj), drop=FALSE]
         sumV<-abs(rowSums(VV))
         if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
-            || any(table(sumV)<=1))) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+            || any(table(sumV)<=1)) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
         }
     rangeZ<-obj$rangeZ
     obj<-obj$obj
@@ -290,7 +290,9 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     objF<-eval(objF, envir=mfExt)
     #Può capitare che psi sia ai margini e ci sono 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 
     #sono di più ma hanno gli stessi valori di x
-    if(any(is.na(objF$coefficients))){
+    #objF$coef può avere mancanti.. names(which(is.na(coef(objF))))
+    
+    if(any(is.na(objF$coefficients)) && stop.if.error){
      stop("at least one coef estimate is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", call. = FALSE)
     }
     objF$offset<- obj0$offset
@@ -307,7 +309,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
       objF$fitted.values<-obj$fitted.values
       objF$residuals<-obj$residuals
       }
-    if(any(is.na(objF$coefficients))){
+    if(any(is.na(objF$coefficients))){ #Se gap==FALSE qui non ci possono essere NA (sono sostituiti dagli 0)
     stop("some estimate is NA: premature stopping with a large number of breakpoints?",
       call. = FALSE)
       }

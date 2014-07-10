@@ -6,6 +6,23 @@
 
 
 ===============
+version 0.4-0.0 
+===============
+* points.segmented added. This function allows to add the joinpoints of the segmented lines on the current plot.
+* davies.test() now also implements the Davies test (2002) accounting for the variance estimate in linear (Gaussian) models; this results in more reliable p-values in linear
+models with small samples. For GLMs, argument 'type' in davies.test() allows to specify
+whether the Wald or the LRT (default) statistic should be used in the Davies approach.
+
+
+===============
+version 0.3-1.1 (not on CRAN)
+===============
+* predict.segmented() did not work in some particular conditions (for instance when there were exactly 2 terms in the model formula; thanks to Saeed Ahmadi for reporting).
+* slope() and confint() did not work appropriately when the model included segmented covariates with "overlapped" names (e.g., "x" and "xx" or ".x").
+* plot.segmented() did not account for the option 'interc=FALSE'.
+
+
+===============
 version 0.3-1.0
 ===============
 * broken.line() now accepts arbitrary values to compute predictions for segmented relationships in the model; it also returns relevant standard errors (new argument se.fit).
@@ -43,10 +60,10 @@ version 0.2-9.4
 ===============
 version 0.2-9.3
 ===============
-* intercept() (and plot.segmented() that uses intercept()) was not working correctly when in the fitted segmented model the estimated breakpoints were not ordered. Now plot.segmented() displays the correct fitted lines in the last example of ?segmented.
+* intercept() (and plot.segmented() that uses intercept()) was not working correctly when  the returned breakpoints were not ordered in the fitted segmented model. Now plot.segmented() displays the correct fitted lines in the last example of ?segmented.
 * segmented.lm() and segmented.glm() now always return ordered breakpoints.
 * segmented.lm() and segmented.glm() now return also the .Random.seed vector when bootstrap restarting is employed. Useful to replicate results.
-* draw.history() draws more meaningful convergence diagnostics when the mode has ben fitted via bootstrap restarting.
+* draw.history() draws more meaningful convergence diagnostics when the model has ben fitted via bootstrap restarting.
 * Some bugs fixed: segmented.lm() and segmented.glm() failed with zero residuals in the iterative procedure. Argument 'linkinv' in broken.line() modified in 'link' (with oppositive meaning).
 
 

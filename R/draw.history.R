@@ -1,11 +1,28 @@
 draw.history<-function(obj,term,...){
 #show.history() se c'è stato boot restart potrebbe produrre un grafico 2x1 di "dev vs it" and "no.of distinct vs it"
+#--
+        f.U<-function(nomiU, term=NULL){
+        #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
+        #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
+            k<-length(nomiU)
+            nomiUsenzaU<-strsplit(nomiU, "\\.")
+            nomiU.ok<-vector(length=k)
+            for(i in 1:k){
+                nomi.i<-nomiUsenzaU[[i]][-1]
+                if(length(nomi.i)>1) nomi.i<-paste(nomi.i,collapse=".")
+                nomiU.ok[i]<-nomi.i
+                }
+          if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
+          return(nomiU.ok)
+        }
+#--        
       if(missing(term)){
           if(length(obj$nameUV$Z)>1 ) {stop("please, specify `term'")}
                else {term<-obj$nameUV$Z}
                }
       range.ok<-obj$rangeZ[,term]
-      id.ok<-grep(paste("\\.",term,"$",sep=""),  rownames(obj$psi),value=FALSE)
+      #id.ok<-grep(paste("\\.",term,"$",sep=""),  rownames(obj$psi),value=FALSE)
+      id.ok<- f.U(rownames(obj$psi), term)
       est.psi<-obj$psi[id.ok,2]
   if(length(obj$psi.history)==5) { #boot (non-autom)
         par(mfrow=c(1,2))

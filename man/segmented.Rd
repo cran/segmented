@@ -108,6 +108,7 @@ variable to mean the difference-in-slopes coefficient.
   \item \code{confint.segmented}
   \item \code{vcov.segmented}
   \item \code{predict.segmented}
+  \item \code{points.segmented}
             }
 
 Others are inherited from the class \code{"lm"} or \code{"glm"} depending on the
