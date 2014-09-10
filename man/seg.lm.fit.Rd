@@ -1,17 +1,21 @@
 \name{seg.lm.fit}
 \alias{seg.lm.fit}
 \alias{seg.glm.fit}
+\alias{seg.def.fit}
 \alias{seg.lm.fit.boot}
 \alias{seg.glm.fit.boot}
+\alias{seg.def.fit.boot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Fitter Functions for Segmented Linear Models
 }
 \description{
 \code{seg.lm.fit} is called by \code{segmented.lm} to fit segmented linear 
-(gaussian) models.  Likewise \code{seg.glm.fit} is called by \code{segmented.glm} to fit  
-generalized segmented linear models. \code{seg.lm.fit.boot} and \code{seg.glm.fit.boot} are
-employed to perform bootstrap restart. These functions should usually not be used directly by the user.
+(gaussian) models.  Likewise, \code{seg.glm.fit} is called by \code{segmented.glm} to fit  
+generalized segmented linear models, and \code{seg.def.fit} is called by \code{segmented.default} to fit  
+segmented relationships in general regression models (e.g., quantile regression and Cox regression). \code{seg.lm.fit.boot}, 
+\code{seg.glm.fit.boot}, and \code{seg.def.fit.boot} are employed to perform bootstrap restart. 
+These functions should usually not be used directly by the user.
 }
 \usage{
 seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)
@@ -23,6 +27,12 @@ seg.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)
 
 seg.glm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10,
     size.boot=NULL, jt=FALSE, nonParam=TRUE, random=FALSE)
+
+seg.def.fit(obj, Z, PSI, mfExt, opz, return.all.sol=FALSE)
+
+seg.def.fit.boot(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, 
+    jt=FALSE, nonParam=TRUE, random=FALSE)
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -69,10 +79,17 @@ appropriate matrix including the segmented variables whose breakpoints have to b
   if \code{TRUE}, when the algorithm fails to obtain a solution, the values visited by the algorithm
   with corresponding deviances are returned.
 }
+  \item{obj}{
+  the starting regression model where the segmented relationships have to be added.
+}
+  \item{mfExt}{
+  the model frame.
+}
+
 }
 \details{
 The functions call iteratively \code{lm.wfit} (or \code{glm.fit}) with proper design matrix depending on 
-\code{XREG}, \code{Z} and \code{PSI}. \code{seg.lm.fit.boot} implements the bootstrap restarting idea discussed in
+\code{XREG}, \code{Z} and \code{PSI}. \code{seg.lm.fit.boot} (and \code{seg.glm.fit.boot}) implements the bootstrap restarting idea discussed in
 Wood (2001).
 }
 \value{

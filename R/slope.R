@@ -17,7 +17,7 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
           return(nomiU.ok)
         }
 #--        
-        if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
+#        if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
         if(var.diff && length(ogg$nameUV$Z)>1) {
             var.diff<-FALSE
             warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)
@@ -66,21 +66,29 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
             M<-matrix(1,length(ind),length(ind))
             M[row(M)<col(M)]<-0
             cof<-coef(ogg)[ind]
-            covv<-vcov(ogg,var.diff=var.diff)[ind,ind]
             cof.out<-M%*%cof 
-            cov.out<-M%*%covv%*%t(M)
-            se.out<-sqrt(diag(cov.out))
-            k<-if("lm"%in%class(ogg)) abs(qt((1-conf.level)/2,df=ogg$df.residual)) else abs(qnorm((1-conf.level)/2))
-            k<-k*se.out
-            ris<-cbind(cof.out,se.out,(cof.out/se.out),(cof.out-k),(cof.out+k))
-            cin<-paste("CI","(",conf.level*100,"%",")",c(".l",".u"),sep="")
+
+            covv<-try(vcov(ogg,var.diff=var.diff), silent=TRUE)
+            if(class(covv)!="try-error"){
+                covv<-covv[ind,ind]
+                cov.out<-M%*%covv%*%t(M)
+                se.out<-sqrt(diag(cov.out))
+                k<-if("lm"%in%class(ogg)) abs(qt((1-conf.level)/2,df=ogg$df.residual)) else abs(qnorm((1-conf.level)/2))
+                k<-k*se.out
+                ris<-cbind(cof.out,se.out,(cof.out/se.out),(cof.out-k),(cof.out+k))
+                } else {
+                ris<-cbind(cof.out, NA, NA, NA,NA)                
+                }
+                cin<-paste("CI","(",conf.level*100,"%",")",c(".l",".u"),sep="")
             #se la left slope è nulla....
             #if(identical(length(ind),length(grep(paste("\\.",nomeZ[i],"$",sep=""), nomeU)))){
             if(!nomeZ[i]%in%nomi){            
-                    ris<-rbind(c(0,rep(NA,(ncol(ris)-1))),ris)}
+                    ris<-rbind(c(0,rep(NA,(ncol(ris)-1))),ris)
+                    }
             if(rev.sgn[i]){
                 ris<-cbind(-ris[nrow(ris):1,1],ris[nrow(ris):1,2],-ris[nrow(ris):1,3],
-                      -ris[nrow(ris):1,5],-ris[nrow(ris):1,4])}
+                      -ris[nrow(ris):1,5],-ris[nrow(ris):1,4])
+                      }
             nomeT<-if("lm"%in%class(ogg)) "t value" else "z value"
             dimnames(ris)<-list(paste("slope", 1:nrow(ris), sep=""),c("Est.","St.Err.",nomeT,cin[1],cin[2]))
             if(APC) ris<-100*(exp(ris[,c(1,4,5)])-1)

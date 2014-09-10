@@ -1,6 +1,6 @@
 intercept<-function (ogg, parm, gap=TRUE, rev.sgn = FALSE, var.diff = FALSE, 
     digits = max(3, getOption("digits") - 3)){
-#corregge in caso di no model intercept -- CHE VOLEVO DIRE??
+#corregge in caso di no model intercept -- CHE VOLEVO DIRE?? #forse che adesso funziona se nel modello non c'è l'interc.
 #--
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -17,8 +17,7 @@ intercept<-function (ogg, parm, gap=TRUE, rev.sgn = FALSE, var.diff = FALSE,
           return(nomiU.ok)
         }
 #--        
-    if (!"segmented" %in% class(ogg))
-        stop("A segmented model is needed")
+    #if (!"segmented" %in% class(ogg)) stop("A segmented model is needed")
     if (var.diff && length(ogg$nameUV$Z) > 1) {
         var.diff <- FALSE
         warning("var.diff set to FALSE with multiple segmented variables",

@@ -2,15 +2,15 @@ Package: segmented
 Type: Package
 Title: Segmented relationships in regression models with
         breakpoints/changepoints estimation
-Version: 0.4-0.0
-Date: 2014-07-10
+Version: 0.5-0.0
+Date: 2014-09-10
 Maintainer: Vito M. R. Muggeo <vito.muggeo@unipa.it>
 Authors@R: c(person(given = c("Vito","M.","R."), family = "Muggeo", role =
         c("aut", "cre"), email = "vito.muggeo@unipa.it"))
-Description: Given a (generalized) linear model, segmented `updates' the model by adding one or more segmented relationships. Several variables with multiple breakpoints are allowed.
+Description: Given a regression model, segmented `updates' the model by adding one or more segmented relationships. Several variables with multiple breakpoints are allowed.
 License: GPL
-Packaged: 2014-07-10 14:31:52 UTC; user
+Packaged: 2014-09-10 13:28:40 UTC; user
 Author: Vito M. R. Muggeo [aut, cre]
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2014-07-11 16:46:56
+Date/Publication: 2014-09-10 17:15:03

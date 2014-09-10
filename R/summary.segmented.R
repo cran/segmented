@@ -17,6 +17,24 @@ function(object, short=FALSE, var.diff=FALSE, ...){
     idU<-match(nomiU,names(coef(object)[!is.na(coef(object))]))
     idV<-match(nomiV,names(coef(object)[!is.na(coef(object))]))
     beta.c<- coef(object)[nomiU]
+    #per metodo default..
+    if( !inherits(object, "segmented")){
+      summ <- c(summary(object, ...), object["psi"])
+      summ[c("it","epsilon")]<-object[c("it","epsilon")]
+      coeff<-coef(object)
+      v<-try(vcov(object), silent=TRUE)
+      if(class(v)!="try-error"){
+          v<-sqrt(diag(v))
+          summ$gap<-cbind(coeff[idV]*beta.c,abs(v[idV]*beta.c),coeff[idV]/v[idV])
+          colnames(summ$gap)<-c("Est.","SE","t value")
+          rownames(summ$gap)<-nomiU
+      } else {
+          summ$gap<-cbind(coeff[idV]*beta.c,NA,NA)
+          colnames(summ$gap)<-c("Est.","SE","t value")
+          rownames(summ$gap)<-nomiU
+      }
+    return(summ)
+      }
     if("lm"%in%class(object) && !"glm"%in%class(object)){
     #if(!inherits(object, "glm")){
         summ <- c(summary.lm(object, ...), object["psi"])

@@ -16,7 +16,7 @@ function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, 
           return(nomiU.ok)
         }
 #--        
-        if(!"segmented"%in%class(object)) stop("A segmented model is needed")
+#        if(!"segmented"%in%class(object)) stop("A segmented model is needed")
         if(var.diff && length(object$nameUV$Z)>1) {
             var.diff<-FALSE
             warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)

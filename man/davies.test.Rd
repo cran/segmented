@@ -11,7 +11,8 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{ a fitted model returned by \code{glm} or \code{lm}.  }
+  \item{obj}{ a fitted model typically returned by \code{glm} or \code{lm}. Even an object returned 
+  by \code{segmented} can be set (e.g. if interest lies in testing for an additional breakpoint).}
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1}, indicating the 
       (continuous) segmented variable being tested. Only a single variable may be tested and a
       warning is printed when \code{seg.Z} includes two or more terms. }
@@ -64,35 +65,41 @@ Davies, R.B. (2002) Hypothesis testing when a nuisance parameter is present only
   the Davies test is not confined to the segmented regression; the procedure can be applied when a nuisance parameter
   vanishes under the null hypothesis. The test is slightly conservative, as the computed p-value is actually an upper
   bound.
-#  results should change slightly with respect to previous versions  where the evaluation points were computed 
-#  as \code{seq(sort(Z)[2], sort(Z)[(n - 1)], length = k)}.
-  
+
+  Results should change slightly with respect to previous versions  where the evaluation points were computed 
+  as \code{k} equally spaced values between the second and the second last observed values of the segmented 
+  variable. 
   }
 
 \section{Warning }{
-    The Davies test is not aimed at obtaining the estimate of the breakpoint.
+    The Davies test is \emph{not} aimed at obtaining the estimate of the breakpoint.
     The Davies test is based on \code{k} evaluation points, thus the value returned in the \code{statistic} component
     (and printed as "'best' at") is the best among the \code{k} points, and typically it will differ from the maximum likelihood estimate
-    returned by \code{segmented}. Use \code{\link{segmented}} if you are interested in the point estimate.
-  If \code{obj} is \code{"glm"} object with gaussian family, \code{davies.test()} uses an approximate
-  test resulting in a typically smaller p-values in small samples.   Therefore to test for a breakpoint in linear 
-  models with small samples, it is suggested to use \code{davies.test()} with objects of class "lm".
-  However if the sample size is large (n>300), the exact Davies (2002) upper bound cannot be computed (as it relies on \code{gamma()} function
-  ) and the \emph{approximate} upper bound of Davies (1987) is returned.
+    returned by \code{segmented}. Use \code{\link{segmented}} if you are interested in the point estimate. 
+    
+  To test for a breakpoint in linear models with small samples, it is suggested to use \code{davies.test()} with 
+  objects of class "lm". If \code{obj} is a \code{"glm"} object with gaussian family, \code{davies.test()} will use 
+  an approximate test resulting in smaller p-values when the sample is small. 
+  However if the sample size is large (n>300), the exact Davies (2002) upper bound cannot be computed (as it relies on 
+  \code{gamma()} function) and the \emph{approximate} upper bound of Davies (1987) is returned.
     }
 %%\section{Warning }{Currently \code{davies.test} does not work if the fitted model \code{ogg}
 %%  does not include the segmented variable \code{term} being tested.}
 
 
 \examples{
-\dontrun{set.seed(20)
+\dontrun{
+set.seed(20)
 z<-runif(100)
 x<-rnorm(100,2)
-y<-2+10*pmax(z-.5,0)+rnorm(100,0,2)
-o<-lm(y~z+x)
+y<-2+10*pmax(z-.5,0)+rnorm(100,0,3)
 
+o<-lm(y~z+x)
 davies.test(o,~z)
 davies.test(o,~x)
+
+o<-glm(y~z+x)
+davies.test(o,~z) #it works but the p-value is too small..
   }
 }
 \keyword{ htest }

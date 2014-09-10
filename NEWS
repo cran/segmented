@@ -5,6 +5,19 @@
 *************************************
 
 
+
+===============
+version 0.5-0.0 
+===============
+* segmented.default() introduced. Now it is possible to estimate segmented relationships in arbitrary regression models (besides lm and glm) where specific methods do not exist (e.g. cox or quantile regression models).
+
+
+===============
+version 0.4-0.1 (not on CRAN)
+===============
+* segmented.lm() and segmented.glm() did not work if the starting model included additional "variables", such as 'threshold' in 'subset=age<threshold' (thanks to Mark Strong for reporting).
+
+
 ===============
 version 0.4-0.0 
 ===============

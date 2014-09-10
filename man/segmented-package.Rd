@@ -6,18 +6,18 @@
 Segmented relationships in regression models with breakpoints/changepoints estimation
 }
 \description{
-Estimation of Generalized Linear Models with piecewise linear relationships having a
+Estimation of Regression Models with piecewise linear relationships having a
 fixed number of break-points.
 }
 \details{
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.4-0.0\cr
-Date: \tab 2014-07-08\cr
+Version: \tab 0.5-0.0\cr
+Date: \tab 2014-09-10\cr
 License: \tab GPL\cr
 }
- Package \code{segmented} is aimed to estimate linear and generalized linear models
+ Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)
  having one or more segmented relationships in the linear predictor. Estimates of the slopes and
  of the possibly multiple breakpoints are provided. The package includes testing/estimating
  functions and methods to print, summarize and plot the results. \cr
@@ -26,6 +26,10 @@ License: \tab GPL\cr
  that needs starting values \emph{only} for the breakpoint parameters and therefore it is quite efficient even
  with several breakpoints to be estimated. Moreover since version 0.2-9.0, \code{segmented} implements 
  the bootstrap restarting (Wood, 2001) to make the algorithm less sensitive to starting values. \cr
+
+ Since version 0.5-0.0 a default method \code{segmented.dafault} has been added. It may be employed to include segmented relationships
+ in \emph{general} regression models where specific methods do not exist. Examples include quantile and Cox regressions. See 
+ examples in \code{\link{segmented.default}}.\cr
  
  A tentative approach to deal with unknown number of breakpoints
  is also provided, see option \code{stop.if.error} in \code{\link{seg.control}}.

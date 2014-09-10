@@ -65,15 +65,36 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #        update.formula(mf$formula,paste(".~",paste(all.vars(obj$call), collapse="+"),"-",obj$call$data,sep=""))
 #            else update.formula(mf$formula,paste(".~",paste(all.vars(obj$call), collapse="+"),sep=""))
 #-----------
+#   browser()
    if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
-          mfExt$formula<-update.formula(mf$formula,paste(".~.+", c(all.vars(obj$call$offset),  
-          all.vars(obj$call$weights), all.vars(obj$call$subset)) , collapse="+"),sep="")
+          mfExt$formula<-
+            update.formula(mf$formula,paste(".~.+",
+                paste(
+                  paste(all.vars(obj$call$offset), collapse="+"),
+                  paste(all.vars(obj$call$weights), collapse="+"),
+                  paste(all.vars(obj$call$subset), collapse="+"), sep="+" )
+                ,sep=""))
           }
 
     mf <-  eval(mf, parent.frame())
+    n<-nrow(mf)
     #questo serve per inserire in mfExt le eventuali variabili contenute nella formula con offset(..)
     nomiOff<-setdiff(all.vars(formula(obj)), names(mf))
     if(length(nomiOff)>=1) mfExt$formula<-update.formula(mfExt$formula,paste(".~.+", paste( nomiOff, collapse="+"), sep=""))
+#----------------------------------------------------
+#    browser()
+
+#ago 2014 c'è la questione di variabili aggiuntive...
+nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshold) "variabili"
+nomiNO<-NULL #dovrebbe contenere
+for(i in nomiTUTTI){
+    r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
+    if(class(r)!="try-error" && length(r)==1) nomiNO[[length(nomiNO)+1]]<-i
+    }
+#nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
+if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))
+
+#----------------------------------------------------   
     mfExt<-eval(mfExt, parent.frame())
     
     #mantieni in mfExt solo le variabili che NON ci sono in mf (così la funzione occupa meno spazio..)
@@ -283,6 +304,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         mfExt[nomiVxb[i]]<-mf[nomiVxb[i]]<-Vxb[,i]
         }
     nnomi <- c(nomiU, nomiVxb)
+#    browser()
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
     #objF <- update(obj0, formula = Fo, data = KK)
     objF <- update(obj0, formula = Fo,  evaluate=FALSE, data = mfExt)

@@ -72,15 +72,32 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #            else update.formula(mf$formula,paste(".~",paste(all.vars(obj$call), collapse="+"),sep=""))
 #-----------
    if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
-          mfExt$formula<-update.formula(mf$formula,paste(".~.+", c(all.vars(obj$call$offset),  
-          all.vars(obj$call$weights), all.vars(obj$call$subset)) , collapse="+"),sep="")
+          mfExt$formula<-
+            update.formula(mf$formula,paste(".~.+",
+                paste(
+                  paste(all.vars(obj$call$offset), collapse="+"),
+                  paste(all.vars(obj$call$weights), collapse="+"),
+                  paste(all.vars(obj$call$subset), collapse="+"), sep="+" )
+                ,sep=""))
           }
 
     mf <-  eval(mf, parent.frame())
+    n<-nrow(mf)
     #La linea sotto serve per inserire in mfExt le eventuali variabili contenute nella formula con offset(..)
     #   o anche variabili che rientrano in espressioni (ad es., y/n o I(y*n))
     nomiOff<-setdiff(all.vars(formula(obj)), names(mf))
     if(length(nomiOff)>=1) mfExt$formula<-update.formula(mfExt$formula,paste(".~.+", paste( nomiOff, collapse="+"), sep=""))
+    
+    #ago 2014 c'è la questione di variabili aggiuntive...
+    nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshold) "variabili"
+    nomiNO<-NULL #dovrebbe contenere
+    for(i in nomiTUTTI){
+      r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
+      if(class(r)!="try-error" && length(r)==1) nomiNO[[length(nomiNO)+1]]<-i
+    }
+    #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
+    if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))
+
     mfExt<-eval(mfExt, parent.frame())
 
     #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene

@@ -10,7 +10,7 @@
 seg.control(toll = 1e-04, it.max = 10, display = FALSE, stop.if.error = TRUE, 
     K = 10, quant = FALSE, last = TRUE, maxit.glm = 25, h = 1, 
     n.boot=20, size.boot=NULL, gap=FALSE, jt=FALSE, nonParam=TRUE,
-    random=TRUE, powers=c(1,1), seed=NULL)
+    random=TRUE, powers=c(1,1), seed=NULL, fn.obj=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,7 +18,9 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE, stop.if.error = TRUE,
   \item{it.max}{ integer giving the maximal number of iterations. }
   \item{display}{ logical indicating if the value of the \emph{working} objective function should be printed
     at each iteration. The \emph{working} objective function is the objective function of the working model
-    including the gap coefficients.}
+    including the gap coefficients (and therefore it should not be compared with the value at convergence). 
+    If bootstrap restarting is employed, the value of the \emph{real} objective function (without gap coefficients) after every 
+    bootstrap iteration is printed. This value should decrease throughout the iterations.}
   \item{stop.if.error}{ logical indicating if non-admissible break-points should be removed 
     during the estimating algorithm. Set it to \code{FALSE} if you want to perform a sort of
     `automatic' breakpoint selection, provided that several starting values are provided for the breakpoints.
@@ -61,6 +63,12 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE, stop.if.error = TRUE,
   the integer vector saved just before the bootstrap resampling. Re-use it if you want to replicate the bootstrap
   restarting algorithm with the \emph{same} samples.
   }
+  \item{fn.obj}{
+  A character string to be used (optionally) only when \code{segmented.default} is used. It represents the function (with argument \code{'x'}) to be applied to the fit object 
+  to extract the objective function to be \emph{minimized}. Thus for \code{"lm"} fits (although unnecessary) it should be \code{fn.obj="sum(x$residuals^2)"}, for
+  \code{"coxph"} fits it should be \code{fn.obj="-x$loglik[2]"}. If \code{NULL} the `minus log likelihood' extracted from the object, namely 
+  \code{"-logLik(x)"}, is used. See \code{\link{segmented.default}}.
+    }
   }
 
 \details{

@@ -2,7 +2,7 @@
 \alias{segmented}
 \alias{segmented.lm}
 \alias{segmented.glm}
-%\alias{segmented.default}
+\alias{segmented.default}
 %\alias{print.segmented}
 %\alias{summary.segmented}
 %\alias{print.summary.segmented}
@@ -18,6 +18,9 @@ Segmented relationships in regression models
 segmented(obj, seg.Z, psi, control = seg.control(), 
     model = TRUE, ...)
 
+\method{segmented}{default}(obj, seg.Z, psi, control = seg.control(),
+    model = TRUE, ...)
+
 \method{segmented}{lm}(obj, seg.Z, psi, control = seg.control(),
     model = TRUE, ...)
 
@@ -27,7 +30,7 @@ segmented(obj, seg.Z, psi, control = seg.control(),
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{ standard `linear' model of class "lm" or "glm". }
+  \item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression fit may be supplied.}
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1+x2}, indicating the 
       (continuous) explanatory variables having segmented relationships with the response. 
       Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or \code{seg.Z=~sqrt(x1)}, 
@@ -45,8 +48,8 @@ segmented(obj, seg.Z, psi, control = seg.control(),
   \item{\dots}{ optional arguments. }
 }
 \details{
-  Given a linear regression model (of class "lm" or "glm"), segmented tries to estimate
-  a new model having broken-line relationships with the variables specified in seg.Z.
+  Given a linear regression model (usually of class "lm" or "glm"), segmented tries to estimate
+  a new model having broken-line relationships with the variables specified in \code{seg.Z}.
   A segmented (or broken-line) relationship is defined by the slope
   parameters and the break-points where the linear relation changes. The number of breakpoints
   of each segmented relationship is fixed via the \code{psi} argument, where initial
@@ -58,6 +61,15 @@ segmented(obj, seg.Z, psi, control = seg.control(),
   The bootstrap restarting is expected to escape the local optima of the objective function when the
   segmented relationship is flat and the log likelihood can have multiple local optima.
 
+  Since version 0.5-0.0 the default method \code{segmented.default} has been added to estimate segmented relationships in 
+  general (besides "lm" and "glm" fits) regression models, such as Cox regression or quantile regression (for a single percentile). 
+  The objective function to be minimized is the (minus) value extracted by the \code{logLik} function or it may be passed on via 
+  the \code{fn.obj} argument in \code{seg.control}. See example below. While the default method is expected to work with any regression 
+  fit (where the usual \code{coef()}, \code{update()}, and \code{logLik()} returns appropriate results), it is not recommended for 
+  "lm" or "glm" fits (as \code{segmented.default} is slower than the specific methods \code{segmented.lm} and \code{segmented.glm}), although 
+  final results are the same. However the object returned by \code{segmented.default} is \emph{not} of class "segmented" as currently
+  the segmented methods are not guaranteed to work for `generic' (i.e., besides "lm" and "glm") regression fits. The user 
+  could try each "segmented" method on the returned object by calling it explicitly (e.g. via \code{confint.segmented()}). 
 }
 \value{
   The returned object depends on the \code{last} component returned by \code{seg.control}.
@@ -144,6 +156,12 @@ slope(o)
 out.lm<-lm(y~z,data=dati)
 o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 
+#the default method leads to the same results (but it is slower)
+#o1<-segmented.default(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
+#o1<-segmented.default(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3), 
+#    control=seg.control(fn.obj="sum(x$residuals^2)"))
+
+
 #automatic procedure to estimate breakpoints in the covariate x
 # Notice: bootstrap restart is not allowed!
 o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
@@ -157,8 +175,22 @@ draw.history(o, "z")
 }
 #try to increase the number of iterations and re-assess the 
 #convergence diagnostics 
+
+
+#An example using the default method:
+# Cox regression with a segmented relationship  
+\dontrun{
+library(survival)
+data(stanford2)
+
+o<-coxph(Surv(time, status)~age, data=stanford2)
+os<-segmented(o, ~age, psi=40) #estimate the breakpoint in the age effect
+summary(os) #actually it means summary.coxph(os)
+plot(os) #it does not work
+plot.segmented(os) #call explicitly plot.segmented() to plot the fitted piecewise lines
+}
             
-            }
+}
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
