@@ -67,15 +67,15 @@ dpmax<-function(x,y,pow=1){
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
     mfExt<- mf
     if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
-          mfExt$formula<-
-            update.formula(mf$formula,paste(".~.+",
-                paste(
-                  paste(all.vars(obj$call$offset), collapse="+"),
-                  paste(all.vars(obj$call$weights), collapse="+"),
-                  paste(all.vars(obj$call$subset), collapse="+"), sep="+" )
-                ,sep=""))
+      mfExt$formula <- 
+          update.formula(mf$formula, 
+          paste(".~.+", paste(
+          c(all.vars(obj$call$offset), 
+            all.vars(obj$call$weights),
+            all.vars(obj$call$subset)), 
+            collapse = "+")
+            ))
           }
-
     mf <-  eval(mf, parent.frame())
     n<-nrow(mf)
     #questo serve per inserire in mfExt le eventuali variabili contenute nella formula con offset(..)
@@ -85,8 +85,8 @@ dpmax<-function(x,y,pow=1){
     nomiNO<-NULL #dovrebbe contenere
     for(i in nomiTUTTI){
       r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
-      if(class(r)!="try-error" && length(r)==1) nomiNO[[length(nomiNO)+1]]<-i
-    }
+      if(class(r)!="try-error" && length(r)==1 && !is.function(r)) nomiNO[[length(nomiNO)+1]]<-i
+      }
     if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))
     mfExt<-eval(mfExt, parent.frame())
     
@@ -141,10 +141,6 @@ dpmax<-function(x,y,pow=1){
     c2 <- apply((Z >= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo >)
     if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2)) ) stop("starting psi out of the admissible range")
 
-    U <- pmax((Z - PSI), 0)^pow[1]#U <- pmax((Z - PSI), 0)
-    #V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
-    V<-ifelse((Z > PSI), -1, 0)
-
     #ripetizioni <- as.numeric(unlist(sapply(table(nomiZ)[order(unique(nomiZ))], function(xxx) {1:xxx})))
     ripetizioni <- as.vector(unlist(tapply(id.psi.group, id.psi.group, function(x) 1:length(x) )))
     nomiU <- paste("U", ripetizioni, sep = "")
@@ -153,6 +149,13 @@ dpmax<-function(x,y,pow=1){
     nomiV <- paste(nomiV, nomiZ.vett, sep = ".")
     nnomi <- c(nomiU, nomiV)
 
+#CONTROLLARE se è necessario aggiungere a mfExt le nuove variabili U e V. Non dovrebbe perché
+#   update(, evaluate=FALSE) non "le vuole" e poi comunque vengono calcolate in seg.def.fit()
+#   Servono solo se it.max=0..
+#----------------------------------------------------------
+    U <- pmax((Z - PSI), 0)^pow[1]#U <- pmax((Z - PSI), 0)
+    #V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
+    V<-ifelse((Z > PSI), -1, 0)
     for(i in 1:k) {
         mfExt[nomiU[i]] <- U[,i]
         mfExt[nomiV[i]] <- V[,i]
@@ -165,6 +168,7 @@ dpmax<-function(x,y,pow=1){
     call.noV <- update(obj, formula = Fo.noV,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
 
     if (it.max == 0) {
+      if(!is.null(call.noV[["subset"]])) call.noV[["subset"]]<-NULL
       obj1 <- eval(call.noV, envir=mfExt)
       return(obj1)
     }
@@ -216,8 +220,9 @@ dpmax<-function(x,y,pow=1){
     for(jj in colnames(V)) {
         VV<-V[, which(colnames(V)==jj), drop=FALSE]
         sumV<-abs(rowSums(VV))
-        if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
-            || any(table(sumV)<=1)) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+#        if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
+#            || any(table(sumV)<=1)) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+        if(any(table(sumV)<=1) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
         }
     rangeZ<-obj$rangeZ
     obj<-obj$obj
@@ -247,7 +252,7 @@ dpmax<-function(x,y,pow=1){
 #    browser()
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
     objF <- update(obj0, formula = Fo,  evaluate=FALSE, data = mfExt)
-    #if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
+    if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<- eval(objF, envir=mfExt)
     #Può capitare che psi sia ai margini e ci sono 1 o 2 osservazioni in qualche intervallo. Oppure ce ne
     #sono di più ma hanno gli stessi valori di x
@@ -312,7 +317,6 @@ dpmax<-function(x,y,pow=1){
 #    class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"
-    if (last)
-        list.obj <- list.obj[[length(list.obj)]]
+    if (last) list.obj <- list.obj[[length(list.obj)]]
     return(list.obj)
     } #end function

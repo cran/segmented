@@ -72,15 +72,15 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #            else update.formula(mf$formula,paste(".~",paste(all.vars(obj$call), collapse="+"),sep=""))
 #-----------
    if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
-          mfExt$formula<-
-            update.formula(mf$formula,paste(".~.+",
-                paste(
-                  paste(all.vars(obj$call$offset), collapse="+"),
-                  paste(all.vars(obj$call$weights), collapse="+"),
-                  paste(all.vars(obj$call$subset), collapse="+"), sep="+" )
-                ,sep=""))
+      mfExt$formula <- 
+          update.formula(mf$formula, 
+          paste(".~.+", paste(
+          c(all.vars(obj$call$offset), 
+            all.vars(obj$call$weights),
+            all.vars(obj$call$subset)), 
+            collapse = "+")
+            ))
           }
-
     mf <-  eval(mf, parent.frame())
     n<-nrow(mf)
     #La linea sotto serve per inserire in mfExt le eventuali variabili contenute nella formula con offset(..)
@@ -93,8 +93,8 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     nomiNO<-NULL #dovrebbe contenere
     for(i in nomiTUTTI){
       r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
-      if(class(r)!="try-error" && length(r)==1) nomiNO[[length(nomiNO)+1]]<-i
-    }
+      if(class(r)!="try-error" && length(r)==1 && !is.function(r)) nomiNO[[length(nomiNO)+1]]<-i
+      }
     #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
     if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))
 
@@ -215,7 +215,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         #obj <- update(obj, formula = Fo, data = KK)
         
         obj <- update(obj, formula = Fo, data = mfExt, evaluate=FALSE)
-        #if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
+        if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
         obj<-eval(obj, envir=mfExt)
         if (model) obj$model <-mf  #obj$model <- data.frame(as.list(KK))
         names(psi)<-paste(paste("psi", ripetizioni, sep = ""), nomiZ, sep=".")
@@ -259,8 +259,10 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     for(jj in colnames(V)) {
         VV<-V[, which(colnames(V)==jj),drop=FALSE]
         sumV<-abs(rowSums(VV))
-        if( (any(diff(sumV)>=2) #se ci sono due breakpoints equivalenti
-            || any(table(sumV)<=1))) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+#        if( (any(diff(sumV)>=2) #se ci sono due breakpoints equivalenti
+#            || any(table(sumV)<=1))) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+       if(any(table(sumV)<=1) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+
         }
     rangeZ<-obj$rangeZ 
     obj<-obj$obj
@@ -297,7 +299,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
               mfExt<-cbind(mfExt[[1]], mfExt[,-1])
     }
     objF <- update(obj0, formula = Fo, data = mfExt, evaluate=FALSE)
-#    if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
+    if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<-eval(objF, envir=mfExt)
     #C'è un problema..controlla obj (ha due "(Intercepts)" - bhu.. al 27/03/14 non mi sembra!
     #Può capitare che psi sia ai margini e ci sono 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 

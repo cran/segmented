@@ -192,6 +192,7 @@ daviesGLM<-function(y, z, xreg, weights, offs, values=NULL, k, list.glm, alterna
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
     formulaOrig<-formula(obj)
     if(class(obj)[1]=="segmented"){
+        if(!is.null(eval(obj$call$obj)$call$data)) mf$data <- eval(obj$call$obj)$call$data
         mf$formula<-update.formula(mf$formula,paste("~.-",paste(obj$nameUV$V, collapse="-")))
         for(i in 1:length(obj$nameUV$U)) assign(obj$nameUV$U[i], obj$model[,obj$nameUV$U[i]], envir=parent.frame())
         formulaOrig<-update.formula(formulaOrig, paste("~.-",paste(obj$nameUV$V, collapse="-")))

@@ -1,5 +1,6 @@
-plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, interc=TRUE,
-    link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, shade=FALSE, rug=TRUE,
+plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, 
+    interc=TRUE, link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, 
+    shade=FALSE, rug=TRUE, dens.rug=FALSE, col.dens = grey(0.8),
     show.gap=FALSE, ...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
         f.U<-function(nomiU, term=NULL){
@@ -17,6 +18,13 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, int
           return(nomiU.ok)
         }
 #-------------- 
+        enl.range<-function(..., enlarge=TRUE){
+        #modifica il min dei valori in ...
+          r<-range(...)
+          if(enlarge) r[1]<-if(sign(r[1])>0) r[1]*.9 else r[1]*1.1
+          r
+        }
+#--------------
     linkinv <- !link
     if (inherits(x, what = "glm", which = FALSE) && linkinv && !is.null(x$offset) && res) stop("residuals with offset on the response scale?")
     if(conf.level< 0 || conf.level>.9999) stop("meaningless 'conf.level'")
@@ -68,7 +76,6 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, int
     val <- sort(c(est.psi, x$rangeZ[, term]))
     #---------aggiunta per gli IC
     rangeCI<-NULL
-    fit0<-NULL
     n<-length(x$fitted.values)
     tipo<- if(inherits(x, what = "glm", which = FALSE) && link) "link" else "response"
     
@@ -76,12 +83,10 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, int
     #ciValues<-predict.segmented(x, newdata=vall, se.fit=TRUE, type=tipo, level=conf.level)
     vall.list<-list(vall)
     names(vall.list)<-term
-    ciValues<-try(broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE), silent=TRUE)
-    if(class(ciValues)=="try-error") ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=FALSE)
+    ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE)
+    
     if(conf.level>0) {
-        k.alpha<- abs(qnorm((1-conf.level)/2))
-        if(identical(class(x),c("segmented","lm")))  k.alpha<-abs(qt((1-conf.level)/2, x$df.residual))
-#        k.alpha<-if(inherits(x, what = "glm", which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
+        k.alpha<-if(inherits(x, what = "glm", which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
         ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit)
         rangeCI<-range(ciValues)
         #ciValues  è una matrice di length(val)x3. Le 3 colonne: stime, inf, sup
@@ -126,10 +131,29 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, int
                 4)]), type = "n", xlab = xlabs, ylab = ylabs,
                 main = opz$main, sub = opz$sub, 
                 xlim = opz$xlim,
-                ylim = if(is.null(opz$ylim)) range(fit, fit0, rangeCI) else opz$ylim )
-        if(rug) {segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
-            rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/40)}
+                ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim )
+        if(dens.rug){
+          density <- density( xvalues )
+          # the height of the densityity curve
+          max.density <- max(density$y)
+          # Get the boundaries of the plot to
+          # put the density polygon at the x-line
+          plot_coordinates <- par("usr")
+          # get the "length" and range of the y-axis
+          y.scale <- plot_coordinates[4] - plot_coordinates[3]
+          # transform the y-coordinates of the density
+          # to the lower 10% of the plotting panel
+          density$y <- (0.1 * y.scale / max.density) * density$y + plot_coordinates[3]
+          ## plot the polygon
+          polygon( density$x , density$y , border = F , col = col.dens) 
+          box()
+          }
+          
+        if(rug) {
+            segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
+              rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/40)}
             }
+       
         if(conf.level>0){
           if(rev.sgn) vall<- -vall
           if(shade) polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),
@@ -166,9 +190,27 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, int
             plot(rr, type = "n", xlab = xlabs, ylab = ylabs,
                 main = opz$main, sub = opz$sub, 
                 xlim = opz$xlim,
-                ylim = if(is.null(opz$ylim)) range(fit, fit0, rangeCI) else opz$ylim)
+                ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim)
+        if(dens.rug){
+          density <- density( xvalues )
+          # the height of the densityity curve
+          max.density <- max(density$y)
+          # Get the boundaries of the plot to
+          # put the density polygon at the x-line
+          plot_coordinates <- par("usr")
+          # get the "length" and range of the y-axis
+          y.scale <- plot_coordinates[4] - plot_coordinates[3]
+          # transform the y-coordinates of the density
+          # to the lower 10% of the plotting panel
+          density$y <- (0.1 * y.scale / max.density) * density$y + plot_coordinates[3]
+          ## plot the polygon
+          polygon( density$x , density$y , border = F , col = col.dens) 
+          box()
+          }
         if(rug) {segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
             rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/40)}
+
+
         if(conf.level>0) {
           if(rev.sgn) vall<- -vall
           if(shade) polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),

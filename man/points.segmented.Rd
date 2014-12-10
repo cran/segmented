@@ -9,7 +9,7 @@ Points method for segmented objects
   on the current plot the joinpoints of the fitted broken-line relationships.
 }
 \usage{
-  \method{points}{segmented}(x, term, interc = TRUE, link = TRUE, ...)
+  \method{points}{segmented}(x, term, interc = TRUE, link = TRUE, rev.sgn=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,6 +24,11 @@ If \code{TRUE} the computed joinpoints include the model intercept (if it exists
 }
   \item{link}{
 when \code{TRUE} (default), the fitted joinpoints are plotted on the link scale
+}
+  \item{rev.sgn}{
+when \code{TRUE}, the fitted joinpoints are plotted on the `minus' scale
+of the current \code{term} variable. This is useful when a null-constraint 
+has been set on the last slope.
 }
   \item{\dots}{
 other graphics parameters to pass on to \code{points()} function.

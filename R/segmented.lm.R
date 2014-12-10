@@ -67,15 +67,15 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 #-----------
 #   browser()
    if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
-          mfExt$formula<-
-            update.formula(mf$formula,paste(".~.+",
-                paste(
-                  paste(all.vars(obj$call$offset), collapse="+"),
-                  paste(all.vars(obj$call$weights), collapse="+"),
-                  paste(all.vars(obj$call$subset), collapse="+"), sep="+" )
-                ,sep=""))
+      mfExt$formula <- 
+          update.formula(mf$formula, 
+          paste(".~.+", paste(
+          c(all.vars(obj$call$offset), 
+            all.vars(obj$call$weights),
+            all.vars(obj$call$subset)), 
+            collapse = "+")
+            ))
           }
-
     mf <-  eval(mf, parent.frame())
     n<-nrow(mf)
     #questo serve per inserire in mfExt le eventuali variabili contenute nella formula con offset(..)
@@ -86,14 +86,16 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
 
 #ago 2014 c'è la questione di variabili aggiuntive...
 nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshold) "variabili"
-nomiNO<-NULL #dovrebbe contenere
+nomiNO<-NULL 
 for(i in nomiTUTTI){
     r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
-    if(class(r)!="try-error" && length(r)==1) nomiNO[[length(nomiNO)+1]]<-i
+    if(class(r)!="try-error" && length(r)==1 && !is.function(r)) nomiNO[[length(nomiNO)+1]]<-i
     }
 #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
 if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))
-
+#funziona ma se c'è qualche variabile con il nome di una funzione (ad es., "filter")
+# anche questa variabile va a finire in nomiNO e quindi poi viene eliminata
+# problema risolto con "r<-try(evalq(.."? (prima era "r<-try(eval(..")
 #----------------------------------------------------   
     mfExt<-eval(mfExt, parent.frame())
     
@@ -220,11 +222,17 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         #è necessario il for? puoi usare colnames(U)<-nomiU;mf[nomiU]<-U
         for(i in 1:ncol(U)) mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
         Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
-        obj <- update(obj, formula = Fo, evaluate=FALSE) #data = mf, 
-        #if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
+        obj <- update(obj, formula = Fo, evaluate=FALSE, data=mfExt) #data = mf, 
+        if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
         obj<-eval(obj, envir=mfExt)
         if (model) obj$model <-mf  #obj$model <- data.frame(as.list(KK))
-        names(psi)<-paste(paste("psi", ripetizioni, sep = ""), nomiZ, sep=".")
+
+        psi <- cbind(psi, psi, 0)
+        rownames(psi) <- paste(paste("psi", ripetizioni, sep = ""), nomiZ, sep=".")
+        colnames(psi) <- c("Initial", "Est.", "St.Err")
+
+
+        #names(psi)<-paste(paste("psi", ripetizioni, sep = ""), nomiZ, sep=".")
         obj$psi <- psi
         return(obj)
     }
@@ -264,8 +272,12 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     for(jj in colnames(V)) {
         VV<-V[, which(colnames(V)==jj), drop=FALSE]
         sumV<-abs(rowSums(VV))
-        if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
-            || any(table(sumV)<=1)) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+#        if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
+#            || any(table(sumV)<=1)) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+# Tolto perché se la variabile segmented non è ordinata non ha senso..
+#magari potresti fare un abs(diff(psi))<=.0001? ma clusterizzato..
+        if(any(table(sumV)<=1) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+
         }
     rangeZ<-obj$rangeZ
     obj<-obj$obj
@@ -308,7 +320,8 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
     #objF <- update(obj0, formula = Fo, data = KK)
     objF <- update(obj0, formula = Fo,  evaluate=FALSE, data = mfExt)
-    #if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
+    #eliminiamo subset, perché se è del tipo subset=x>min(x) allora continuerebbe a togliere 1 osservazione 
+    if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<-eval(objF, envir=mfExt)
     #Può capitare che psi sia ai margini e ci sono 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 
     #sono di più ma hanno gli stessi valori di x
