@@ -39,8 +39,9 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   If \code{obj} is a LM, the Davies (2002) test is implemented. This approach works even for small samples. 
   If \code{obj} represents a GLM fit, relevant methods are described in Davies (1987), and the Wald or the Likelihood ratio 
   test statistics can be used, see argument \code{type}. This is an asymptotic test.
-#  The \code{k} evaluation points are \code{k} equally spaced values between the minimum and the maximum (excluded) values of the variable reported in \code{seg.Z}.
-  The \code{k} evaluation points are \code{k} equally spaced values between the second and the second-last values of the variable reported in \code{seg.Z}.
+  The \code{k} evaluation points are \code{k} equally spaced values between the second and the second-last 
+  values of the variable reported in \code{seg.Z}. \code{k} should not be small; I find no important difference for \code{k} larger than 10, so default 
+  is \code{k=10}. 
 }
 \value{
   A list with class '\code{htest}' containing the following components:
@@ -77,7 +78,7 @@ Davies, R.B. (2002) Hypothesis testing when a nuisance parameter is present only
     (and printed as "'best' at") is the best among the \code{k} points, and typically it will differ from the maximum likelihood estimate
     returned by \code{segmented}. Use \code{\link{segmented}} if you are interested in the point estimate. 
     
-  To test for a breakpoint in linear models with small samples, it is suggested to use \code{davies.test()} with 
+  To test for a breakpoint in \emph{linear} models with small samples, it is suggested to use \code{davies.test()} with 
   objects of class "lm". If \code{obj} is a \code{"glm"} object with gaussian family, \code{davies.test()} will use 
   an approximate test resulting in smaller p-values when the sample is small. 
   However if the sample size is large (n>300), the exact Davies (2002) upper bound cannot be computed (as it relies on 

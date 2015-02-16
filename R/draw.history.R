@@ -1,5 +1,5 @@
 draw.history<-function(obj,term,...){
-#show.history() se c'è stato boot restart potrebbe produrre un grafico 2x1 di "dev vs it" and "no.of distinct vs it"
+#show.history() se c'e' stato boot restart potrebbe produrre un grafico 2x1 di "dev vs it" and "no.of distinct vs it"
 #--
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -29,7 +29,7 @@ draw.history<-function(obj,term,...){
         plot(obj$psi.history$all.selected.ss, type="b", xlab="bootstrap replicates", 
             ylab="RSS  (selected values)", xaxt="n", pch=20)
         axis(1,at=1:length(obj$psi.history$all.selected.ss),cex.axis=.7)        
-        #unicità delle soluzioni
+        #unicita' delle soluzioni
         if(is.vector(obj$psi.history$all.selected.psi)){
             psi.matr<-m<-matrix(obj$psi.history$all.selected.psi, ncol=1)
             } else {

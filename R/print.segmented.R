@@ -11,22 +11,30 @@ iV<- -match(x$nameUV[[2]],names(coef(x)))#iV<- -grep("psi.",names(coef(x)))#indi
 #print(x$coef[iV])
 print.default(format(x$coef[iV], digits = digits), print.gap = 2, quote = FALSE)
 cat("\n")
-cat("Estimated Break-Point(s)",dimnames(x$psi)[[1]],":",
-    format(signif(x$psi[,2],digits)),"\n")
-if("glm"%in%class(x)){    cat("\nDegrees of Freedom:", x$df.null, "Total (i.e. Null); ", 
+cat("Estimated Break-Point(s):\n")
+a<-as.vector(x$psi[,"Est."])
+names(a)<-rownames(x$psi)
+print.default(a, digits, print.gap=2)
+#print(x$psi[,"Est."], digits)
+#ng<-max(x$id.psi.group)
+#for(i in 1:ng){
+#  nomi<-x$nameUV$V[x$id.psi.group==i]
+#  cat("\t",nomi,":", format(signif(x$psi[nomi,"Est."],digits)),"\n")
+#  }
+if("glm"%in%class(x)){    cat("\nDegrees of Freedom:", x$df.null, "Total (i.e. Null); ",
         x$df.residual, "Residual\n")
-    cat("Null Deviance:    ", format(signif(x$null.deviance, 
-        digits)), "\nResidual Deviance:", format(signif(x$deviance, 
+    cat("Null Deviance:    ", format(signif(x$null.deviance,
+        digits)), "\nResidual Deviance:", format(signif(x$deviance,
         digits)), "     AIC:", format(signif(x$aic, digits)), "\n")
     }
 if("Arima"%in%class(x)){
     cm <- x$call$method
-    if (is.null(cm) || cm != "CSS") 
-        cat("\nsigma^2 estimated as ", format(x$sigma2, digits = digits), 
-            ":  log likelihood = ", format(round(x$loglik, 2)), 
+    if (is.null(cm) || cm != "CSS")
+        cat("\nsigma^2 estimated as ", format(x$sigma2, digits = digits),
+            ":  log likelihood = ", format(round(x$loglik, 2)),
             ",  aic = ", format(round(x$aic, 2)), "\n", sep = "")
-    else cat("\nsigma^2 estimated as ", format(x$sigma2, digits = digits), 
-        ":  part log likelihood = ", format(round(x$loglik, 2)), 
+    else cat("\nsigma^2 estimated as ", format(x$sigma2, digits = digits),
+        ":  part log likelihood = ", format(round(x$loglik, 2)),
         "\n", sep = "")
     }
     invisible(x)

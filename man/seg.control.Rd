@@ -64,10 +64,11 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE, stop.if.error = TRUE,
   restarting algorithm with the \emph{same} samples.
   }
   \item{fn.obj}{
-  A character string to be used (optionally) only when \code{segmented.default} is used. It represents the function (with argument \code{'x'}) to be applied to the fit object 
-  to extract the objective function to be \emph{minimized}. Thus for \code{"lm"} fits (although unnecessary) it should be \code{fn.obj="sum(x$residuals^2)"}, for
-  \code{"coxph"} fits it should be \code{fn.obj="-x$loglik[2]"}. If \code{NULL} the `minus log likelihood' extracted from the object, namely 
-  \code{"-logLik(x)"}, is used. See \code{\link{segmented.default}}.
+  A \emph{character string} to be used (optionally) only when \code{segmented.default} is used. It represents the function 
+  (with argument \code{'x'}) to be applied to the fit object to extract the objective function to be \emph{minimized}. 
+  Thus for \code{"lm"} fits (although unnecessary) it should be \code{fn.obj="sum(x$residuals^2)"}, for
+  \code{"coxph"} fits it should be \code{fn.obj="-x$loglik[2]"}. If \code{NULL} the `minus log likelihood' extracted from 
+  the object, namely \code{"-logLik(x)"}, is used. See \code{\link{segmented.default}}.
     }
   }
 

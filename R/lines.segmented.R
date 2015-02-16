@@ -11,7 +11,7 @@ lines.segmented<-function(x, term, bottom=TRUE, shift=TRUE, conf.level=0.95, k=5
   y<- if(bottom) usr[3]+h else usr[4]-h
   r<- confint.segmented(object=x,parm=term,level=conf.level,rev.sgn=rev.sgn,digits=15)
   m<-r[[term]]
-  #FORSE non è necessaria
+  #FORSE non e' necessaria
   #if(rev.sgn) m<- -m
   #ma invece serve il seguente (se length(psi)=1 e rev.sgn=T):
   m<-matrix(m,ncol=3)

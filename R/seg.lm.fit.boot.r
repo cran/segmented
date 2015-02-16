@@ -1,6 +1,6 @@
 seg.lm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, jt=FALSE,
     nonParam=TRUE, random=FALSE){
-#random se TRUE prende valori random quando è errore: comunque devi modificare qualcosa (magari con it.max)
+#random se TRUE prende valori random quando e' errore: comunque devi modificare qualcosa (magari con it.max)
 #     per fare restituire la dev in corrispondenza del punto psi-random
 #nonParm. se TRUE implemneta il case resampling. Quello semiparam dipende dal non-errore di
 #----------------------------------

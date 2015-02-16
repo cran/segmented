@@ -1,7 +1,7 @@
 broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE){
 #ogg: l'oggetto segmented
 #term: una lista *nominata* con i valori rispetto a cui calcolare i fitted
-#   OPPURE una stringa per indicare la variabile segmented OPPURE NULL (se c'è solo una variabile)
+#   OPPURE una stringa per indicare la variabile segmented OPPURE NULL (se c'e' solo una variabile)
   dummy.matrix<-function(x.values, x.name, obj.seg, psi.est=TRUE){
     #given the segmented fit 'obj.seg' and a segmented variable x.name with corresponding values x.values,
     #this function simply returns a matrix with columns (x, (x-psi)_+, -b*I(x>psi))
@@ -102,7 +102,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE){
     ste.fit<-fit <- vector(mode = "list", length = length(nomeZ))
     for (i in 1:n.seg) {
         x.name <- nomeZ[i]
-        X<-dummy.matrix(unlist(xvalues), x.name, ogg)#<--NB: xvalues non varia con i!!! perché farlo calcolare comunque? 
+        X<-dummy.matrix(unlist(xvalues), x.name, ogg)#<--NB: xvalues non varia con i!!! perche' farlo calcolare comunque? 
         ind <- as.numeric(na.omit(unlist(index[[i]])))
         if(interc && "(Intercept)"%in%nomi) {
           ind<- c(match("(Intercept)",nomi),ind)

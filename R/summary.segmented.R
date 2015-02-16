@@ -96,13 +96,13 @@ function(object, short=FALSE, var.diff=FALSE, ...){
         Ttable<-cbind(coeff[-idV],v[-idV],coeff[-idV]/v[-idV])
         object$gap<-cbind(coeff[idV]*beta.c,v[idV]*beta.c,coeff[idV]/v[idV])
         #dimnames(object$gap)<-list(rep("",nrow(object$psi)),c("Est.","SE","t value"))
-        colnames(summ$gap)<-c("Est.","SE","t value")
-        rownames(summ$gap)<-nomiU
+        colnames(object$gap)<-c("Est.","SE","t value")
+        rownames(object$gap)<-nomiU
         colnames(Ttable)<-c("Estimate","Std. Error","t value")
         object$Ttable<-Ttable
         object$short<-short
         summ<-object 
-        class(summ) <- "summary.segmented"
+        class(summ) <- c("summary.segmented", "summary.Arima")
         return(summ)}
 }
 

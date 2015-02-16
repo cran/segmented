@@ -6,13 +6,22 @@
 
 
 ===============
+version 0.5-1.1 
+===============
+* segmented.default now accepts 'gee' fits (Thanks to John Boulanger for his input)
+* Minor change: argument 'col.dens' changed to 'dens.col' in plot.segmented() ('col.dens' made ineffective 'col')
+* Minor change: error/warning messages introduced in davies.test() if k<10; print.segmented slightly changed in displaying the estimated breakpoints.
+* Bug fixed: segmented did not terminate appropriately the algorithm with automatic selection of breakpoints concerning more than one variable (thanks to Ali Hashemi for reporting).
+
+
+===============
 version 0.5-1.0 
 ===============
-* plot.segmented() on segmented objects with it.max=0???
-* segmented.Arima() introduced. Now it is possible to estimate segmented relationships in "Arima" fits.
+* segmented.Arima() introduced. Now it is possible to estimate segmented relationships in "Arima" fits (although the summarizing and plotting methods do not work..)
 * plot.segmented() gains arguments 'dens.rug' and 'col.dens' to display in the plot (on the x axis) also the smoothed density of the segmented covariate.
 * Bug fixed: segmented.lm did not work if it.max=0 (but segmented.glm did), thanks to Eric Nussbaumer for reporting. segmented.lm and segmented.glm did work if the starting linear model included weights (this bug was introduced incidentally since version 0.4-0.1; thanks to Michael Rutter for reporting). segmented.lm and segmented.glm did not check appropriately inadmissible breakpoints (thanks to Erica Tennenhouse for reporting). 
 segmented.lm and segmented.glm did not handle correctly variable names equal to function names. davies.test() did not work with 'segmented' objects (to test for and additional breakpoint). points.segmented() missed the argument 'rev.sgn'. 
+
 
 ===============
 version 0.5-0.0 

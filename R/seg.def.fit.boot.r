@@ -1,6 +1,6 @@
 seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, jt=FALSE,
     nonParam=TRUE, random=FALSE){
-#random se TRUE prende valori random quando è errore: comunque devi modificare qualcosa (magari con it.max)
+#random se TRUE prende valori random quando e' errore: comunque devi modificare qualcosa (magari con it.max)
 #     per fare restituire la dev in corrispondenza del punto psi-random
 #nonParm. se TRUE implemneta il case resampling. Quello semiparam dipende dal non-errore di
 extract.psi<-function(lista){
@@ -66,7 +66,7 @@ extract.psi<-function(lista){
           } else {
               yy<-fitted.ok+sample(residuals(o0),size=n, replace=TRUE)
 ##---->              o.boot<-try(seg.lm.fit(yy, XREG, Z.orig, PSI, weights, offs, opz.boot), silent=TRUE)
-                    #in realtà la risposta dovrebbe essere "yy" da cambiare in mfExt
+                    #in realta' la risposta dovrebbe essere "yy" da cambiare in mfExt
                     o.boot<- try(seg.def.fit(obj, Z.orig, PSI, mfExt, opz.boot), silent=TRUE)
           }
           if(is.list(o.boot)){

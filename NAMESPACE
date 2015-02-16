@@ -1,13 +1,14 @@
-export(segmented, segmented.default, segmented.lm, segmented.glm, 
+export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,
 	broken.line ,confint.segmented,davies.test,draw.history,
 	intercept,lines.segmented,plot.segmented,print.segmented,
 	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
-	seg.def.fit,seg.def.fit.boot,
+	seg.def.fit,seg.def.fit.boot, seg.Ar.fit,seg.Ar.fit.boot,
 	slope, summary.segmented,print.summary.segmented,vcov.segmented, predict.segmented, points.segmented)
 
 S3method(segmented,default)
 S3method(segmented,lm)
 S3method(segmented,glm)
+S3method(segmented,Arima)
 
 S3method(plot,segmented)
 S3method(print,segmented)

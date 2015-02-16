@@ -3,6 +3,7 @@
 \alias{segmented.lm}
 \alias{segmented.glm}
 \alias{segmented.default}
+\alias{segmented.Arima}
 %\alias{print.segmented}
 %\alias{summary.segmented}
 %\alias{print.summary.segmented}
@@ -27,10 +28,13 @@ segmented(obj, seg.Z, psi, control = seg.control(),
 \method{segmented}{glm}(obj, seg.Z, psi, control = seg.control(),
     model = TRUE, ...)
 
+\method{segmented}{Arima}(obj, seg.Z, psi, control = seg.control(),
+    model = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression fit may be supplied.}
+  \item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression 
+  fit may be supplied (see 'Details').}
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1+x2}, indicating the 
       (continuous) explanatory variables having segmented relationships with the response. 
       Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or \code{seg.Z=~sqrt(x1)}, 
@@ -67,9 +71,9 @@ segmented(obj, seg.Z, psi, control = seg.control(),
   the \code{fn.obj} argument in \code{seg.control}. See example below. While the default method is expected to work with any regression 
   fit (where the usual \code{coef()}, \code{update()}, and \code{logLik()} returns appropriate results), it is not recommended for 
   "lm" or "glm" fits (as \code{segmented.default} is slower than the specific methods \code{segmented.lm} and \code{segmented.glm}), although 
-  final results are the same. However the object returned by \code{segmented.default} is \emph{not} of class "segmented" as currently
+  final results are the same. However the object returned by \code{segmented.default} is \emph{not} of class "segmented", as currently
   the segmented methods are not guaranteed to work for `generic' (i.e., besides "lm" and "glm") regression fits. The user 
-  could try each "segmented" method on the returned object by calling it explicitly (e.g. via \code{confint.segmented()}). 
+  could try each "segmented" method on the returned object by calling it explicitly (e.g. via \code{plot.segmented()} or \code{confint.segmented()}). 
 }
 \value{
   The returned object depends on the \code{last} component returned by \code{seg.control}.
@@ -135,7 +139,8 @@ for poor clear-cut kink-relationships. In these circumstances the initial guess
 inspection of a, possibly smoothed, scatter-plot is usually a good way to obtain some idea on breakpoint location. 
 However bootstrap restarting, implemented since version 0.2-9.0, is relatively more robust to starting values specified 
 in  \code{psi}. Alternatively an automatic procedure may be implemented by specifying \code{psi=NA} and 
-\code{stop.if.error=FALSE} in \code{\link{seg.control}}. This automatic procedure, however, is expected to overestimate 
+\code{stop.if.error=FALSE} in \code{\link{seg.control}}: experience suggests to increase the number of iterations 
+via \code{it.max} in \code{seg.control()}. This automatic procedure, however, is expected to overestimate 
 the number of breakpoints. 
 }
 
@@ -165,7 +170,7 @@ o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 #automatic procedure to estimate breakpoints in the covariate x
 # Notice: bootstrap restart is not allowed!
 o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
-    control=seg.control(stop.if.error=FALSE,n.boot=0))
+    control=seg.control(stop.if.error=FALSE,n.boot=0, it.max=20))
 
 #assess the progress of the breakpoint estimates throughout the iterations
 \dontrun{

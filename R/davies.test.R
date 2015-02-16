@@ -6,7 +6,7 @@ function (obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
     type=c("lrt","wald"), values=NULL, dispersion=NULL) {
 #    extract.t.value.U<-function(x){
 #        #estrae il t-value dell'ultimo coeff in un oggetto restituito da lm.fit
-#        #non serve... in realtà viene usata extract.t.value.U.glm()
+#        #non serve... in realta' viene usata extract.t.value.U.glm()
 #            #x<-x$obj
 #            R<-qr.R(x$qr)
 #            p<-ncol(R)
@@ -147,7 +147,7 @@ daviesGLM<-function(y, z, xreg, weights, offs, values=NULL, k, list.glm, alterna
       valori<-values[!is.na(RIS)]
       ris.valori<-RIS[!is.na(RIS)]
       V<-sum(abs(diff(ris.valori)))
-      #-----Questo è se il test di riferimento è una \chi^2_r. (Dovresti considerare il LRT non segnato)
+      #-----Questo e' se il test di riferimento e' una \chi^2_r. (Dovresti considerare il LRT non segnato)
       #V<-sum(abs(diff(sqrt(RIS))))#nota sqrt
       #M<- max(RIS)
       #approxx<-(V*(M^((r-1)/2))*exp(-M/2)*2^(-r/2))/gamma(r/2)
@@ -179,6 +179,8 @@ daviesGLM<-function(y, z, xreg, weights, offs, values=NULL, k, list.glm, alterna
 #-------------------------------------------------------------------------------
     if(!inherits(obj, "lm")) stop("A 'lm', 'glm', or 'segmented' model is requested")
     if(class(seg.Z)!="formula") stop("'seg.Z' should be an one-sided formula")
+    if(k<=1) stop("k>1 requested! k>=10 is recommended")
+    if(k<10) warnings("k>=10 is recommended")
     alternative <- match.arg(alternative)
     type        <- match.arg(type)
     if(length(all.vars(seg.Z))>1) warning("multiple segmented variables ignored in 'seg.Z'",call.=FALSE)

@@ -42,10 +42,10 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
             #psii<-ogg$psi[grep(paste("\\.",nomeZ[i],"$",sep=""), rownames(ogg$psi), value=FALSE),2]
             #id.cof.U<- match(grep(nomeZ[i],   ogg$nameUV$U, value=TRUE), nomi)
             #psii<-ogg$psi[grep(nomeZ[i],   ogg$nameUV$V, value=TRUE),2]
-            #il paste con "$" (paste("\\.",nomeZ[i],"$",sep="")) è utile perché serve a distinguere variabili con nomi simili (ad es., "x" e "xx")
+            #il paste con "$" (paste("\\.",nomeZ[i],"$",sep="")) e' utile perche' serve a distinguere variabili con nomi simili (ad es., "x" e "xx")
             #Comunque nella versione dopo la 0.3-1.0 ho (FINALMENTE) risolto mettendo f.U
             id.cof.U<- f.U(ogg$nameUV$U, nomeZ[i])
-            #id.cof.U è la posizione nel vettore ogg$nameUV$U; la seguente corregge per eventuali variabili che ci sono prima (ad es., interc)
+            #id.cof.U e' la posizione nel vettore ogg$nameUV$U; la seguente corregge per eventuali variabili che ci sono prima (ad es., interc)
             id.cof.U<- id.cof.U + (match(ogg$nameUV$U[1], nomi)-1)            
             psii<- ogg$psi[f.U(ogg$nameUV$V, nomeZ[i]) , "Est."]
             id.cof.U <- id.cof.U[order(psii)]            
@@ -80,7 +80,7 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
                 ris<-cbind(cof.out, NA, NA, NA,NA)                
                 }
                 cin<-paste("CI","(",conf.level*100,"%",")",c(".l",".u"),sep="")
-            #se la left slope è nulla....
+            #se la left slope e' nulla....
             #if(identical(length(ind),length(grep(paste("\\.",nomeZ[i],"$",sep=""), nomeU)))){
             if(!nomeZ[i]%in%nomi){            
                     ris<-rbind(c(0,rep(NA,(ncol(ris)-1))),ris)

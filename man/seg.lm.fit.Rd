@@ -2,9 +2,12 @@
 \alias{seg.lm.fit}
 \alias{seg.glm.fit}
 \alias{seg.def.fit}
+\alias{seg.Ar.fit}
 \alias{seg.lm.fit.boot}
 \alias{seg.glm.fit.boot}
 \alias{seg.def.fit.boot}
+\alias{seg.Ar.fit.boot}
+
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Fitter Functions for Segmented Linear Models
@@ -32,6 +35,11 @@ seg.def.fit(obj, Z, PSI, mfExt, opz, return.all.sol=FALSE)
 
 seg.def.fit.boot(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, 
     jt=FALSE, nonParam=TRUE, random=FALSE)
+
+seg.Ar.fit(obj, XREG, Z, PSI, opz, return.all.sol=FALSE)
+
+seg.Ar.fit.boot(obj, XREG, Z, PSI, opz, n.boot=10, size.boot=NULL, jt=FALSE,
+    nonParam=TRUE, random=FALSE)
 
 }
 %- maybe also 'usage' for other objects documented here.

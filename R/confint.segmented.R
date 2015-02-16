@@ -43,7 +43,7 @@ function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, 
             colnames(m)<-c("Est.",paste("CI","(",level*100,"%",")",c(".l",".u"),sep=""))
             for(j in 1:length(nomi.U)){ #per ogni psi della stessa variabile segmented..
                     sel<-c(nomi.V[j],nomi.U[j])
-                    V<-vcov(object,var.diff=var.diff)[sel,sel] #questa è vcov di (psi,U)
+                    V<-vcov(object,var.diff=var.diff)[sel,sel] #questa e' vcov di (psi,U)
                     b<-coef(object)[sel[2]] #diff-Slope
                     th<-c(b,1)
                     orig.coef<-drop(diag(th)%*%coef(object)[sel]) #sono i (gamma,beta) th*coef(ogg)[sel]
@@ -55,7 +55,7 @@ function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, 
                     if(rev.sgn[i]) r<-c(-r[1],rev(-r[2:3]))
                     m[j,]<-r
                     } #end loop j (ogni psi della stessa variabile segmented)
-            #CONTROLLA QUESTO:..sarebbe più bello
+            #CONTROLLA QUESTO:..sarebbe piu' bello
             if(nrow(m)==1) rownames(m)<-"" else m<-m[order(m[,1]),]
             if(rev.sgn[i]) {
                 #m<-m[nrow(m):1,]

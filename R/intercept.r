@@ -1,6 +1,6 @@
 intercept<-function (ogg, parm, gap=TRUE, rev.sgn = FALSE, var.diff = FALSE, 
     digits = max(3, getOption("digits") - 3)){
-#corregge in caso di no model intercept -- CHE VOLEVO DIRE?? #forse che adesso funziona se nel modello non c'è l'interc.
+#corregge in caso di no model intercept -- CHE VOLEVO DIRE?? #forse che adesso funziona se nel modello non c'e' l'interc.
 #--
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti

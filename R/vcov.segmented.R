@@ -1,4 +1,8 @@
 vcov.segmented<-function (object, var.diff=FALSE, ...){
+    if(inherits(object, "Arima")){
+    v<-object$var.coef
+    return(v)
+    }
     if(inherits(object, "glm")){
         if(var.diff) warning("option var.diff=TRUE ignored with `glm' objects", call.=FALSE)
         so <- summary.glm(object, correlation = FALSE, ...)

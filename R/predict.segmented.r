@@ -1,8 +1,7 @@
-
 predict.segmented<-function(object, newdata, ...){
 #rev: 30/10/2013: it seems to work correctly, even with the minus variable (null right slope..)
 #rev: 14/4/2014 now it works like predict.lm/glm
-#BUT problems if type="terms" (in realtà funziona, il problema è che
+#BUT problems if type="terms" (in realta' funziona, il problema e' che
 #     restituisce una colonna per "x", "U.x", "psi.x".. (Eventualmente si dovrebbero sommare..)
 #if(!is.null(object$orig.call$offset)) stop("predict.segmented can not handle argument 'offset'. Include it in formula!")
 

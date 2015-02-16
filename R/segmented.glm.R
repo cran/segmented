@@ -1,5 +1,4 @@
 `segmented.glm` <-
-#objF$id.group???
 function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
     n.Seg<-1
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
@@ -88,7 +87,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     nomiOff<-setdiff(all.vars(formula(obj)), names(mf))
     if(length(nomiOff)>=1) mfExt$formula<-update.formula(mfExt$formula,paste(".~.+", paste( nomiOff, collapse="+"), sep=""))
     
-    #ago 2014 c'è la questione di variabili aggiuntive...
+    #ago 2014 c'e' la questione di variabili aggiuntive...
     nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshold) "variabili"
     nomiNO<-NULL #dovrebbe contenere
     for(i in nomiTUTTI){
@@ -103,7 +102,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene
     #       altrimenti nel model.frame non risulta l'offset
 
-    #mantieni in mfExt solo le variabili che NON ci sono in mf (così la funzione occupa meno spazio..)
+    #mantieni in mfExt solo le variabili che NON ci sono in mf (cosi la funzione occupa meno spazio..)
     #mfExt<-mfExt[,setdiff(names(mfExt), names(mf)),drop=FALSE]
 
     weights <- as.vector(model.weights(mf))
@@ -135,7 +134,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     
     namesXREG0<-colnames(XREG)
     #nameLeftSlopeZero<-setdiff(all.vars(seg.Z), all.vars(formula(obj)))
-    nameLeftSlopeZero<-setdiff(all.vars(seg.Z), names(coef(obj))) #in questo modo riconosce che sin(x*pi) NON è x, ad esempio.
+    nameLeftSlopeZero<-setdiff(all.vars(seg.Z), names(coef(obj))) #in questo modo riconosce che sin(x*pi) NON e' x, ad esempio.
     namesXREG0<-setdiff(namesXREG0, nameLeftSlopeZero)
     
     #dalla 0.3.0-1 eliminati i seguenti (tanto il modello viene stimato su mfExt)
@@ -154,7 +153,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     id.n.Seg<-(ncol(XREG)-n.Seg+1):ncol(XREG)
     XREGseg<-XREG[,id.n.Seg,drop=FALSE]
     #XREG<-XREG[,-id.n.Seg,drop=FALSE]
-    #XREG<-model.matrix(obj0) non va bene perché non elimina gli eventuali mancanti in seg.Z..
+    #XREG<-model.matrix(obj0) non va bene perche' non elimina gli eventuali mancanti in seg.Z..
     #Due soluzioni
     #XREG<-XREG[,colnames(model.matrix(obj)),drop=FALSE]
     #XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
@@ -209,7 +208,7 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
         nomiU <- paste("U", colnames(U), sep = "")
         #for (i in 1:ncol(U)) assign(nomiU[i], U[, i], envir = KK)
-        #è necessario il for? puoi usare colnames(U)<-nomiU;mf[nomiU]<-U
+        #e' necessario il for? puoi usare colnames(U)<-nomiU;mf[nomiU]<-U
         for(i in 1:ncol(U)) mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
         Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         #obj <- update(obj, formula = Fo, data = KK)
@@ -249,6 +248,10 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         }
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK
+    nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
+    #se e' stata usata una proc automatica "nomiFINALI" sara' differente da "name.Z"
+    nomiSenzaPSI<-setdiff(name.Z,nomiFINALI)
+    if(length(nomiSenzaPSI)>=1) warning(paste("no breakpoints found for",nomiSenzaPSI), call.=FALSE)
     it<-obj$it
     psi<-obj$psi
     k<-length(psi)
@@ -279,8 +282,8 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     length.psi<-tapply(as.numeric(as.character(names(psi))), as.numeric(as.character(names(psi))), length)
     forma.nomiU<-function(xx,yy)paste("U",1:xx, ".", yy, sep="")
     forma.nomiVxb<-function(xx,yy)paste("psi",1:xx, ".", yy, sep="")
-    nomiU   <- unlist(mapply(forma.nomiU, length.psi, name.Z)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
-    nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, name.Z))
+    nomiU   <- unlist(mapply(forma.nomiU, length.psi, nomiFINALI)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
+    nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, nomiFINALI))
 
     #mf<-cbind(mf, mfExt)
     for(i in 1:ncol(U)) {
@@ -294,24 +297,36 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     nnomi <- c(nomiU, nomiVxb)
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", 
         paste(nnomi, collapse = "+"))))
-    #la seguente linea si potrebbe rimuovere perché in mfExt c'è già tutto..
+    #la seguente linea si potrebbe rimuovere perche' in mfExt c'e' gia' tutto..
     if(is.matrix(y)&& (fam$family=="binomial" || fam$family=="quasibinomial")){
               mfExt<-cbind(mfExt[[1]], mfExt[,-1])
     }
     objF <- update(obj0, formula = Fo, data = mfExt, evaluate=FALSE)
     if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<-eval(objF, envir=mfExt)
-    #C'è un problema..controlla obj (ha due "(Intercepts)" - bhu.. al 27/03/14 non mi sembra!
-    #Può capitare che psi sia ai margini e ci sono 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 
-    #   sono di più ma hanno gli stessi valori di x
-    if(any(is.na(objF$coefficients))){
-     stop("at least one coef estimate is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", call. = FALSE)
+    #C'e' un problema..controlla obj (ha due "(Intercepts)" - bhu.. al 27/03/14 non mi sembra!
+    #Puo' capitare che psi sia ai margini e ci sono 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 
+    #   sono di piu' ma hanno gli stessi valori di x
+    objF$offset<- obj0$offset
+    isNAcoef<-any(is.na(objF$coefficients))
+
+
+    if(isNAcoef){
+      if(stop.if.error) {stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
+        call. = FALSE)} else {
+        warning("some estimate is NA: too many breakpoints? 'var(hat.psi)' cannot be computed \n ..returning a 'lm' model", call. = FALSE)
+        Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
+        objF <- update(obj0, formula = Fo,  evaluate=TRUE, data = mfExt)
+        names(psi)<-nomiVxb
+        objF$psi<-psi
+        return(objF)      
+        }
     }
+
 #aggiornare qui i weights???? (piuttosto che sotto)
 #------>>>
 #------>>>
 #------>>>
-    objF$offset<- obj0$offset
     if(!gap){
         names.coef<-names(objF$coefficients)
         if(k==1) {names(obj$coefficients)[match(c("U","V"), names(coef(obj)))]<- nnomi
@@ -327,10 +342,6 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         objF$aic<-obj$aic + 2*k
         objF$weights<-obj$weights
         }
-    if(any(is.na(objF$coefficients))){
-     stop("some estimate is NA: premature stopping with a large number of breakpoints?",
-      call. = FALSE)
-    }
     Cov <- vcov(objF)
     id <- match(nomiVxb, names(coef(objF)))
     #cat(id,"\n")
@@ -338,17 +349,32 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     vv <- if (length(id) == 1) Cov[id, id] else diag(Cov[id, id])
     #if(length(initial)!=length(psi)) initial<-rep(NA,length(psi))
     a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
-    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a))
-    psi <- cbind(initial, psi, sqrt(vv))
-    rownames(psi) <- colnames(Cov)[id]
-    colnames(psi) <- c("Initial", "Est.", "St.Err")
+    ris.psi<-matrix(,length(psi),3)
+    colnames(ris.psi) <- c("Initial", "Est.", "St.Err")
+    rownames(ris.psi) <- nomiVxb
+    ris.psi[,2]<-psi
+    ris.psi[,3]<-sqrt(vv)
+#NB "a" deve essere un vettore che si appatta con "initial.psi" per ottnetere "initial" sotto... Se una variabile alla fine risulta
+# senza breakpoint questo non avviene e ci sono problemi nella formazione di "initial". Allora costruisco a.ok
+    a.ok<-NULL
+    for(j in name.Z){
+        if(j %in% nomiFINALI) {
+          a.ok[length(a.ok)+1]<-a[1]
+          a<-a[-1]
+          } else {
+          a.ok[length(a.ok)+1]<-0
+          } #ifelse(name.Z %in% nomiFINALI,1,0)
+        }
+#    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a.ok, SIMPLIFY = TRUE))
+    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi[nomiFINALI], a.ok[a.ok!=0], SIMPLIFY = TRUE))
+    ris.psi[,1]<-initial
     objF$rangeZ <- rangeZ
     objF$psi.history <- psi.values
-    objF$psi <- psi
+    objF$psi <- ris.psi
     objF$it <- (it - 1)
     objF$epsilon <- obj$epsilon
     objF$call <- match.call()
-    objF$nameUV <- list(U = nomiU, V = rownames(psi), Z = name.Z)
+    objF$nameUV <- list(U = drop(nomiU), V = rownames(ris.psi), Z = nomiFINALI) #Z = name.Z
     objF$id.group <- if(length(name.Z)<=1) -rowSums(as.matrix(V))
     objF$id.psi.group <- id.psi.group
     objF$id.warn <- id.warn

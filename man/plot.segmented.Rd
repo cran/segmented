@@ -9,7 +9,7 @@
 \usage{
 \method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, 
     link=TRUE, res.col=1, rev.sgn=FALSE, const=0, shade=FALSE, rug=TRUE, 
-    dens.rug=FALSE, col.dens = grey(0.8), show.gap=FALSE,  ...)
+    dens.rug=FALSE, dens.col = grey(0.8), show.gap=FALSE,  ...)
       }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -33,7 +33,7 @@
   \item{rug}{when \code{TRUE} (default) then the covariate values are displayed as a rug plot
  at the foot of the plot.}
   \item{dens.rug}{when \code{TRUE} then smooth covariate distribution is plotted on the x-axis.}
-  \item{col.dens}{if \code{dens.rug=TRUE}, it means the colour to be used to plot the density.}
+  \item{dens.col}{if \code{dens.rug=TRUE}, it means the colour to be used to plot the density.}
   \item{show.gap}{ when \code{FALSE} the (possible) gaps between the fitted lines at the estimated breakpoints
       are hidden. When bootstrap restarting has been employed (default in \code{segmented}), \code{show.gap} is meaningless 
       as the gap coefficients are always set to zero in the fitted model.}

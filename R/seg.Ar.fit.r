@@ -1,4 +1,4 @@
-seg.def.fit<-function(obj, Z, PSI, mfExt, opz, return.all.sol=FALSE){
+seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
 #-----------------
 dpmax<-function(x,y,pow=1){
 #deriv pmax
@@ -33,24 +33,30 @@ dpmax<-function(x,y,pow=1){
     nomiV<- opz$nomiV
     call.ok <- opz$call.ok
     call.noV <- opz$call.noV
-    fn.obj<-opz$fn.obj
     toll<-opz$toll
     k<-ncol(Z)
+    mio.init<-NULL
+    mio.init.noV<-NULL
     while (abs(epsilon) > toll) {
-        #k<-ncol(Z)
         U <- pmax((Z - PSI), 0)^pow[1]#U <- pmax((Z - PSI), 0)
+        colnames(U)<-nomiU
         V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
-        for(i in 1:k) {
-          mfExt[nomiU[i]] <- U[,i]
-          mfExt[nomiV[i]] <- V[,i]
-        }
-        obj <- suppressWarnings(eval(call.ok, envir=mfExt))
+        colnames(V)<-nomiV
+#        for(i in 1:k) {
+#          mfExt[nomiU[i]] <- U[,i]
+#          mfExt[nomiV[i]] <- V[,i]
+#        }
+#        obj <- suppressWarnings(eval(call.ok, envir=mfExt))
+        obj <- suppressWarnings(eval(call.ok))
+        #mio.init<- c(0,obj$coef[-1])
         dev.old<-dev.new
-        dev.new <- dev.new1 <- eval(parse(text=fn.obj), list(x=obj)) #control$f.obj should be something like "sum(x$residuals^2)" or "x$dev"   
-        if(length(dev.new)<=0) stop("error in the objective to be minimized, see 'fn.obj'")
+        dev.new <- dev.new1 <- -obj$loglik #control$f.obj should be something like "sum(x$residuals^2)" or "x$dev"   
+
         if(return.all.sol) {
-            obj.noV <- suppressWarnings(eval(call.noV, envir=mfExt))
-            dev.new1 <- eval(parse(text=fn.obj), list(x=obj.noV))
+            obj.noV <- suppressWarnings(eval(call.noV)) #, envir=mfExt
+            #mio.init.noV<-obj.noV$coef
+            #mio.init.noV<- c(0,obj.noV$coef[-1])
+            dev.new1 <- -obj.noV$loglik 
             #dev.new1 <- sum(mylm(x = cbind(XREG, U), y = y, w = w, offs = offs)$residuals^2)
             }
         dev.values[[length(dev.values) + 1]] <- dev.new1
@@ -67,6 +73,7 @@ dpmax<-function(x,y,pow=1){
         obj$epsilon <- epsilon
         it <- it + 1
         obj$it <- it
+
         beta.c<-coef(obj)[nomiU]
         gamma.c<-coef(obj)[nomiV]
         
@@ -79,42 +86,25 @@ dpmax<-function(x,y,pow=1){
         a <- apply((Z <= PSI), 2, all) #prima era solo <
         b <- apply((Z >= PSI), 2, all) #prima era solo >
         if(stop.if.error) {
-          isErr<- (sum(a + b) != 0 || is.na(sum(a + b)))
+        isErr<- (sum(a + b) != 0 || is.na(sum(a + b)))
             if(isErr) {
               if(return.all.sol) return(list(dev.values, psi.values)) else stop("(Some) estimated psi out of its range")
               }
             } else {
-          id.psi.ok<-!is.na((a+b)<=0)&(a+b)<=0
-          Z <- Z[,id.psi.ok,drop=FALSE]
-          psi <- psi[id.psi.ok]
-          PSI <- PSI[,id.psi.ok,drop=FALSE]
-          
-          ToDeletenomiU<-nomiU[!id.psi.ok] #salva i nomi delle U per i psi ammissibili
-          ToDeletenomiV<-nomiV[!id.psi.ok] #salva i nomi delle V per i psi ammissibili
-          if(length(ToDeletenomiU)>0 || length(ToDeletenomiV)>0) {for(nn in c(ToDeletenomiU, ToDeletenomiV)) {mfExt[[nn]]<-NULL}}
-
-          nomiOK<-nomiOK[id.psi.ok] #salva i nomi delle U per i psi ammissibili
-          nomiU<-nomiU[id.psi.ok] #salva i nomi delle U per i psi ammissibili
-          nomiV<-nomiV[id.psi.ok] #salva i nomi delle V per i psi ammissibili
-          
-          
-          id.psi.group<-id.psi.group[id.psi.ok]
-          names(psi)<-id.psi.group
-          if(ncol(PSI)<=0) return(0)
-          k<-ncol(Z)
-          #aggiorna la call, altrimenti il modello avra' sempre lo stesso numero di termini anche se alcuni psi vengono rimossi!!!
-          Fo <- update.formula(opz$formula.orig, as.formula(paste(".~.+", paste(c(nomiU, nomiV), collapse = "+"))))
-          Fo.noV <- update.formula(opz$formula.orig, as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
-    
-          call.ok <- update(obj, formula = Fo,  evaluate=FALSE, data = mfExt) 
-          call.noV <- update(obj, formula = Fo.noV,  evaluate=FALSE, data = mfExt) 
-
-        
-        } #end else
+            id.psi.ok<-!is.na((a+b)<=0)&(a+b)<=0
+            Z <- Z[,id.psi.ok,drop=FALSE]
+            psi <- psi[id.psi.ok]
+            PSI <- PSI[,id.psi.ok,drop=FALSE]
+            nomiOK<-nomiOK[id.psi.ok] #salva i nomi delle U per i psi ammissibili
+            id.psi.group<-id.psi.group[id.psi.ok]
+            names(psi)<-id.psi.group
+            if(ncol(PSI)<=0) return(0)
+            k<-ncol(Z)
+            } #end else
         #obj$psi <- psi
     } #end while
 
-#browser()
+
     psi<-unlist(tapply(psi, id.psi.group, sort))
     names(psi)<-id.psi.group
     PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
@@ -122,17 +112,19 @@ dpmax<-function(x,y,pow=1){
     
 
     U <- pmax((Z - PSI), 0)
+    colnames(U)<-nomiU
     V <- ifelse((Z > PSI), -1, 0)
-    for(i in 1:k) {
-          mfExt[nomiU[i]] <- U[,i]
-          mfExt[nomiV[i]] <- V[,i]
-          }
+    colnames(V)<-nomiV
+#    for(i in 1:k) {
+#          mfExt[nomiU[i]] <- U[,i]
+#          mfExt[nomiV[i]] <- V[,i]
+#          }
 
 ##LA DOMANDA E': PERCHE' QUI STIMA UN MODELLO SENZA V SE POI VIENE RISTIMATO in segmented.default (o segmented.lm o segmented.glm?)
 ##RE: il valore di SS.new serve per il boot restart.
 #Invece la domanda e': non si puo' restituire direttamente obj.new senza bisogno di sostituire i valori in obj ?
-    obj.new <- suppressWarnings(eval(call.noV, envir=mfExt))
-    SS.new <- eval(parse(text=fn.obj), list(x=obj.new)) #sum(obj.new$residuals^2)
+    obj.new <- suppressWarnings(eval(call.noV)) #, envir=mfExt))
+    SS.new <- -obj.new$loglik #sum(obj.new$residuals^2)
     if(!gap){
           obj<-obj.new
           #names.coef<-names(obj$coefficients)
@@ -145,13 +137,13 @@ dpmax<-function(x,y,pow=1){
           #obj$weights<-obj.new$weights
           #obj$aic<-obj.new$aic #+ 2*ncol(V) #ho fatto la modifica in segmented.glm(): "objF$aic<-obj$aic + 2*k"
           } else {
-          obj <- suppressWarnings(eval(call.ok, envir=mfExt))
+          obj <- suppressWarnings(eval(call.ok)) #, envir=mfExt))
           }
     obj$epsilon <- epsilon
     obj$it <- it
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,
-        epsilon=epsilon,nomiOK=nomiOK, SumSquares.no.gap=SS.new, id.psi.group=id.psi.group, nomiV=nomiV, nomiU=nomiU,mfExt=mfExt) #inserire id.psi.ok?
+        epsilon=epsilon,nomiOK=nomiOK, SumSquares.no.gap=SS.new, id.psi.group=id.psi.group) #inserire id.psi.ok?
     return(obj)
     }
 

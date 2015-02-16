@@ -52,10 +52,10 @@ if("summary.glm"%in%class(x)){ #for glm
             1, paste, collapse = " "), "AIC: ", format(x$aic, 
             digits = max(4, digits + 1)), "\n", sep = "")
         }
-if(!"summary.lm"%in%class(x) && !"summary.glm"%in%class(x)){#for Arima 
+if("summary.Arima"%in%class(x)){#for Arima 
     cm <- x$call$method
     if (is.null(cm) || cm != "CSS") 
-        cat("sigma^2 estimated as ", format(x$sigma2, digits = digits), 
+        cat("\nsigma^2 estimated as ", format(x$sigma2, digits = digits), 
             ",  log likelihood = ", format(round(x$loglik, 2)), 
             ",  aic = ", format(round(x$aic, 2)), "\n", sep = "")
     else cat("\nsigma^2 estimated as ", format(x$sigma2, digits = digits), 
