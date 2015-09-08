@@ -6,7 +6,7 @@
 #o2<-ss(o, seg.Z=~age, psi=41, control=seg.control(display=FALSE, n.boot=0))
 
 segmented.default<-
-function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
+function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
 #Richiede control$f.obj that should be a string like "sum(x$residuals^2)" or "x$dev"
 #-----------------
 dpmax<-function(x,y,pow=1){
@@ -24,6 +24,7 @@ dpmax<-function(x,y,pow=1){
 
 #-----------
     n.Seg<-1
+    if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
       if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
@@ -104,6 +105,12 @@ dpmax<-function(x,y,pow=1){
     name.Z<-names(mfExt)[id.seg]
     Z<-mfExt[,id.seg,drop=FALSE]
 #    name.Z <- names(Z)
+    
+    n.psi<-length(unlist(psi))
+    #################
+    if(ncol(Z)==1 && length(psi)==1 && n.psi==1) { if(psi==Inf) psi<-median(Z)}
+    #################
+
     
     if(ncol(Z)==1 && is.vector(psi) && (is.numeric(psi)||is.na(psi))){
         psi <- list(as.numeric(psi))
@@ -214,10 +221,11 @@ dpmax<-function(x,y,pow=1){
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK #sarebbe nomiU
     nomiVxb<-paste("psi",sapply(strsplit(nomiOK,"U"), function(x){x[2]}), sep="")
-    nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
+    #nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
+    nomiFINALI<-unique(sub("U[1-9]*[0-9].", "", nomiOK))
     #se e' stata usata una proc automatica "nomiFINALI" sara differente da "name.Z"
     nomiSenzaPSI<-setdiff(name.Z,nomiFINALI)
-    if(length(nomiSenzaPSI)>=1) warning(paste("no breakpoints found for",nomiSenzaPSI), call.=FALSE)
+    if(length(nomiSenzaPSI)>=1) warning("no breakpoints found for: ", paste(nomiSenzaPSI," "), call. = FALSE)
     
     it<-obj$it
     psi<-obj$psi

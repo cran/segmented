@@ -40,9 +40,10 @@ segmented(obj, seg.Z, psi, control = seg.control(),
       Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or \code{seg.Z=~sqrt(x1)}, 
       or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed.
                }
-  \item{psi}{ named list of vectors. The names have to match the variables of the \code{seg.Z} argument.
+  \item{psi}{ named list of vectors. The names have to match the variables in the \code{seg.Z} argument.
       Each vector includes starting values for the break-point(s) for the corresponding
-      variable in \code{seg.Z}. If \code{seg.Z} includes only a variable, \code{psi} may be a numeric vector. 
+      variable in \code{seg.Z}. If \code{seg.Z} includes only a variable, \code{psi} may be a numeric vector or 
+      even missing (and the median of the segmented variable is used as a starting value). 
       A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
       \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
       
@@ -162,8 +163,8 @@ out.lm<-lm(y~z,data=dati)
 o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 
 #the default method leads to the same results (but it is slower)
-#o1<-segmented.default(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
-#o1<-segmented.default(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3), 
+#o1<-segmented.default(out.lm,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
+#o1<-segmented.default(out.lm,seg.Z=~x+z,psi=list(x=c(30,60),z=.3), 
 #    control=seg.control(fn.obj="sum(x$residuals^2)"))
 
 

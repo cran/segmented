@@ -1,6 +1,7 @@
 `segmented.lm` <-
-function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
+function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     n.Seg<-1
+    if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
       if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
@@ -151,7 +152,9 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     #XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
     XREG <- XREG[, match(c("(Intercept)", namesXREG0),colnames(XREG), nomatch = 0), drop = FALSE]
     XREG<-XREG[,unique(colnames(XREG)), drop=FALSE]
-    
+    #################
+    if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1) { if(psi==Inf) psi<-median(XREGseg)}
+    #################
     n <- nrow(XREG)
     #Z <- list(); for (i in colnames(XREGseg)) Z[[length(Z) + 1]] <- XREGseg[, i]
     Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
@@ -261,10 +264,12 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK
-    nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
+    #nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
+    #nomiFINALI<-sub("U[1-9].", "", nomiOK) #nomi originali delle variabili con breakpoint stimati!
+    nomiFINALI<- unique(sub("U[1-9]*[0-9].", "", nomiOK))
     #se e' stata usata una proc automatica "nomiFINALI" sara' differente da "name.Z"
     nomiSenzaPSI<-setdiff(name.Z,nomiFINALI)
-    if(length(nomiSenzaPSI)>=1) warning(paste("no breakpoints found for",nomiSenzaPSI), call.=FALSE)
+    if(length(nomiSenzaPSI)>=1) warning("no breakpoints found for: ", paste(nomiSenzaPSI," "), call. = FALSE)
     it<-obj$it
     psi<-obj$psi
     psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
@@ -370,6 +375,8 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     #if(length(initial)!=length(psi)) initial<-rep(NA,length(psi))
 #browser()
     a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
+    
+    
     ris.psi<-matrix(,length(psi),3)
     colnames(ris.psi) <- c("Initial", "Est.", "St.Err")
     rownames(ris.psi) <- nomiVxb

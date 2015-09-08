@@ -5,6 +5,14 @@
 *************************************
 
 
+
+===============
+version 0.5-1.2 
+===============
+* For 1 breakpoint models, 'psi' argument can be missing (default) when calling the segmented methods.
+* Bug fixed: lines.segmented() did not plot the dots when the fit object included multiple breakpoints and the argument 'shift' was set to FALSE (thanks to Jan Bull for reporting). There were some troubles with variable names including dots (thanks to Melanie Zoelck which first reported this bug)
+
+
 ===============
 version 0.5-1.1 
 ===============

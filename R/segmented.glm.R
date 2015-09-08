@@ -1,6 +1,7 @@
 `segmented.glm` <-
-function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = TRUE, ...) {
+function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     n.Seg<-1
+    if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
       if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
@@ -160,6 +161,10 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
     XREG <- XREG[, match(c("(Intercept)", namesXREG0),colnames(XREG), nomatch = 0), drop = FALSE]
     XREG<-XREG[,unique(colnames(XREG)), drop=FALSE]
     
+    #################
+    if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1) { if(psi==Inf) psi<-median(XREGseg)}
+    #################
+
     n <- nrow(XREG)
     #Z <- list(); for (i in colnames(XREGseg)) Z[[length(Z) + 1]] <- XREGseg[, i]
     Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
@@ -248,10 +253,11 @@ function(obj, seg.Z, psi=stop("provide psi"), control = seg.control(), model = T
         }
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK
-    nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
+    #nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
+    nomiFINALI<-unique(sub("U[1-9]*[0-9].", "", nomiOK)) #nomi originali delle variabili con breakpoint stimati!
     #se e' stata usata una proc automatica "nomiFINALI" sara' differente da "name.Z"
     nomiSenzaPSI<-setdiff(name.Z,nomiFINALI)
-    if(length(nomiSenzaPSI)>=1) warning(paste("no breakpoints found for",nomiSenzaPSI), call.=FALSE)
+    if(length(nomiSenzaPSI)>=1) warning("no breakpoints found for: ", paste(nomiSenzaPSI," "), call. = FALSE)
     it<-obj$it
     psi<-obj$psi
     k<-length(psi)

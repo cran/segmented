@@ -17,7 +17,7 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
           return(nomiU.ok)
         }
 #--        
-#        if(!"segmented"%in%class(ogg)) stop("A segmented model is needed")
+#        if(!"segmented"%in%class(ogg)) stop("A 'segmented' model is needed")
         if(var.diff && length(ogg$nameUV$Z)>1) {
             var.diff<-FALSE
             warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)
