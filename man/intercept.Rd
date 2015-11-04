@@ -24,7 +24,7 @@ the segmented variable whose intercepts have to be computed. If missing all the 
 }
  \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled otherwise.
   When \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
-    therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.
+    therefore the order is reversed before printing. This is useful when a null-constraint has been set on the last slope.
  }
   \item{var.diff}{Currently ignored as only point estimates are computed.
   %logical. If \code{var.diff=TRUE} and there is a single segmented variable, the computed standard errors 

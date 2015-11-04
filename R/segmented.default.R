@@ -108,7 +108,7 @@ dpmax<-function(x,y,pow=1){
     
     n.psi<-length(unlist(psi))
     #################
-    if(ncol(Z)==1 && length(psi)==1 && n.psi==1) { if(psi==Inf) psi<-median(Z)}
+    if(ncol(Z)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(Z[,1])} #devi selezionare la colonna perche' Z e' un dataframe!
     #################
 
     

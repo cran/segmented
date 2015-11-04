@@ -56,10 +56,11 @@ dpmax<-function(x,y,pow=1){
     if(length(name.Z)!=ncol(Z)) stop("errore strano 2")
     n<-nrow(Z)
     n.psi<- length(unlist(psi))
+
     #################
-    if(ncol(Z)==1 && length(psi)==1 && n.psi==1) { if(psi==Inf) psi<-median(Z)}
+    if(ncol(Z)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(Z)}
     #################
-    
+
     if(ncol(Z)==1 && is.vector(psi) && (is.numeric(psi)||is.na(psi))){
         psi <- list(as.numeric(psi))
         names(psi)<-name.Z
@@ -298,6 +299,7 @@ dpmax<-function(x,y,pow=1){
 #        rownames(psi) <- nomiVxb
 #        colnames(psi) <- c("Initial", "Est.")
 #        }
+    objF$Z <- Z
     objF$rangeZ <- rangeZ
     objF$psi.history <- psi.values
     objF$psi <- ris.psi

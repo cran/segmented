@@ -162,7 +162,7 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     XREG<-XREG[,unique(colnames(XREG)), drop=FALSE]
     
     #################
-    if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1) { if(psi==Inf) psi<-median(XREGseg)}
+    if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(XREGseg)}
     #################
 
     n <- nrow(XREG)

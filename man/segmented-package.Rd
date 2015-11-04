@@ -13,8 +13,8 @@ fixed number of break-points.
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.5-1.2\cr
-Date: \tab 2015-09-07\cr
+Version: \tab 0.5-1.4\cr
+Date: \tab 2015-11-04\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)

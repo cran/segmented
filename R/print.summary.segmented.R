@@ -5,9 +5,9 @@ function(x, short = x$short, var.diff = x$var.diff,
     cat( "Call: \n" )
     print( x$call )
     cat("\nEstimated Break-Point(s):\n ")
-    print(signif(x$psi[,-1],4))
-    cat("\nt value for the gap-variable(s) V: ",x$gap[,3],"\n")
-if(any(abs(x$gap[,3])>1.96)) cat("    Warning:", sum(abs(x$gap[,3])>1.96),"gap coefficient(s) significant at 0.05 level\n")
+    print(round(x$psi[,-1],3)) #era "signif(,4)"
+#    cat("\nt value for the gap-variable(s) V: ",x$gap[,3],"\n")
+#if(any(abs(x$gap[,3])>1.96)) cat("    Warning:", sum(abs(x$gap[,3])>1.96),"gap coefficient(s) significant at 0.05 level\n")
     if(short){ 
     cat("\nDifference-in-slopes parameter(s):\n")
     #print(x$Ttable[(nrow(x$Ttable)-nrow(x$psi)+1):nrow(x$Ttable),])}

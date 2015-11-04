@@ -9,7 +9,7 @@
 \usage{
 \method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, 
     link=TRUE, res.col=1, rev.sgn=FALSE, const=0, shade=FALSE, rug=TRUE, 
-    dens.rug=FALSE, dens.col = grey(0.8), show.gap=FALSE,  ...)
+    dens.rug=FALSE, dens.col = grey(0.8), show.gap=FALSE, transf=I, ...)
       }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -37,6 +37,8 @@
   \item{show.gap}{ when \code{FALSE} the (possible) gaps between the fitted lines at the estimated breakpoints
       are hidden. When bootstrap restarting has been employed (default in \code{segmented}), \code{show.gap} is meaningless 
       as the gap coefficients are always set to zero in the fitted model.}
+  \item{transf}{ A possible function to convert the fitted values before plotting. It is only effective 
+    if the fitted values refer to a linear or a generalized linear model (on the link scale) \emph{and} \code{res=FALSE}.}
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
   can be vectors, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `xlim' and 
   `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}).

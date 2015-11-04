@@ -10,14 +10,14 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
             nomiU.ok<-vector(length=k)
             for(i in 1:k){
                 nomi.i<-nomiUsenzaU[[i]][-1]
-                if(length(nomi.i)>1) nomi.i<-paste(nomi.i,collapse=".")
+                if(length(nomi.i)>1) nomi.i<-paste(nomi.i,collapse=".") #riscostruisce il nome con il "." (che era stato scomposto da strsplit())
                 nomiU.ok[i]<-nomi.i
                 }
           if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
           return(nomiU.ok)
         }
 #--        
-#        if(!"segmented"%in%class(ogg)) stop("A 'segmented' model is needed")
+        if(!"segmented"%in%class(ogg)) stop("A 'segmented' model is requested")
         if(var.diff && length(ogg$nameUV$Z)>1) {
             var.diff<-FALSE
             warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)

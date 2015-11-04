@@ -1,7 +1,7 @@
 plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, 
     interc=TRUE, link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, 
     shade=FALSE, rug=TRUE, dens.rug=FALSE, dens.col = grey(0.8),
-    show.gap=FALSE, ...){
+    show.gap=FALSE, transf=I, ...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -25,9 +25,15 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
           r
         }
 #--------------
+  #se l'oggetto e' segmented.Arima il nome dell'eventuale interc va sostituito..
+  if((all(class(x)==c("segmented", "Arima")))) names(x$coef)<-gsub("intercept", "(Intercept)", names(coef(x)))
+#--------------
     linkinv <- !link
     if (inherits(x, what = "glm", which = FALSE) && linkinv && !is.null(x$offset) && res) stop("residuals with offset on the response scale?")
     if(conf.level< 0 || conf.level>.9999) stop("meaningless 'conf.level'")
+    if ((inherits(x, what = "glm", which = FALSE) && linkinv) || res) {
+        if(!(identical(transf, I) || identical(transf, "I"))) {transf<-I; warning("'transf' set to I..")}
+        }
     show.gap<-FALSE
     if (missing(term)) {
         if (length(x$nameUV$Z) > 1) {
@@ -86,8 +92,10 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE)
     
     if(conf.level>0) {
-        k.alpha<-if(inherits(x, what = "glm", which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
+        k.alpha<-if(inherits(x, what = c("glm","Arima"), which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
         ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit)
+        #---> transf...
+        ciValues<-apply(ciValues, 2, transf)
         rangeCI<-range(ciValues)
         #ciValues  e' una matrice di length(val)x3. Le 3 colonne: stime, inf, sup
         #polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])), col = "gray", border=NA)
@@ -101,7 +109,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     b.ok1 <- c(b, b[length(b)])
     y.val <- y.val1 <- a.ok1 + b.ok1 * val + const
     s <- 1:(length(val) - 1)
-    xvalues <- x$model[, term]
+    xvalues <- if(all(class(x)==c("segmented", "Arima"))) x$Z[,1] else  x$model[, term]
     if (rev.sgn) {
         val <- -val
         xvalues <- -xvalues
@@ -173,6 +181,9 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         }
 #-------------------------------------------------------------------------------
     } else { #se LM o "GLM con link=TRUE (ovvero linkinv=FALSE)"
+        ##---> transf!!!
+        y.val<- do.call(transf, list(y.val)) 
+        y.val1<-do.call(transf, list(y.val1))
         r <- cbind(val, y.val)
         r1 <- cbind(val, y.val1)
         rr <- rbind(r, r1)
@@ -190,7 +201,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
             plot(rr, type = "n", xlab = xlabs, ylab = ylabs,
                 main = opz$main, sub = opz$sub, 
                 xlim = opz$xlim,
-                ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim)
+                #ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim)
+                ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, do.call(transf, list(m[, c(2,4)])), enlarge=dens.rug) else opz$ylim)
         if(dens.rug){
           density <- density( xvalues )
           # the height of the densityity curve
@@ -218,7 +230,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
             }
         if (res)
             points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)
-            segments(m[, 1], m[, 2], m[, 3], m[, 4], col = cols, lwd = lwds, lty = ltys)
+            segments(m[, 1], do.call(transf, list(m[, 2])), m[, 3], do.call(transf, list(m[, 4])), 
+                col = cols, lwd = lwds, lty = ltys)
         }
     invisible(NULL)
 }

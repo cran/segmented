@@ -153,7 +153,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     XREG <- XREG[, match(c("(Intercept)", namesXREG0),colnames(XREG), nomatch = 0), drop = FALSE]
     XREG<-XREG[,unique(colnames(XREG)), drop=FALSE]
     #################
-    if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1) { if(psi==Inf) psi<-median(XREGseg)}
+    if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(XREGseg)}
     #################
     n <- nrow(XREG)
     #Z <- list(); for (i in colnames(XREGseg)) Z[[length(Z) + 1]] <- XREGseg[, i]

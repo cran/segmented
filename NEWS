@@ -7,10 +7,27 @@
 
 
 ===============
+version 0.5-1.4 
+===============
+* segmented.Arima() should be slightly faster as starting values are passed in arima() (via 'init') throughout the iterative process.
+* plot.segmented() is expected to work for objects returned by segmented.Arima.
+* print.summary.segmented() does not print anymore the t-values for the gap coefficients (this information is meaningless as the gap coeffs are always set to zero in the returned model)
+* Bug fixed: intercept() ignored argument 'rev.sgn'; points.segmented() missed argument 'transf'.
+
+
+===============
+version 0.5-1.3 (not on CRAN)
+===============
+* plot.segmented() gains argument 'transf' to plot 'transf(values)' rather 'values' on the current plot.
+* print.summary.segmented() now uses round() rather than signif() when displaying the breakpoint estimate.
+* Bug fixed: psi=NA was not working in the segmented.* methods; this bug was incidentally introduced in the last version (thanks to Bertrand Sudre for reporting).
+
+
+===============
 version 0.5-1.2 
 ===============
 * For 1 breakpoint models, 'psi' argument can be missing (default) when calling the segmented methods.
-* Bug fixed: lines.segmented() did not plot the dots when the fit object included multiple breakpoints and the argument 'shift' was set to FALSE (thanks to Jan Bull for reporting). There were some troubles with variable names including dots (thanks to Melanie Zoelck which first reported this bug)
+* Bug fixed: lines.segmented() did not plot the dots when the fit object included multiple breakpoints and the argument 'shift' was set to FALSE (thanks to Jan Bull for reporting). There were some troubles with variable names including dots (thanks to Melanie Zoelck which first reported this bug).
 
 
 ===============

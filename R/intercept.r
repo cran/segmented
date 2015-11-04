@@ -72,6 +72,7 @@ intercept<-function (ogg, parm, gap=TRUE, rev.sgn = FALSE, var.diff = FALSE,
         }
         #if(gap) alpha<-alpha -gapCoef[grep(paste("\\.",nomeZ[i],"$",sep=""), rownames(gapCoef), value = FALSE),"Est."]
         cof.out <- c(alpha00, alpha)
+        if(rev.sgn[i]) cof.out <- cof.out[length(cof.out):1]
         ris <- matrix(cof.out)
         dimnames(ris) <- list(paste("intercept", 1:nrow(ris), sep = ""), "Est.")
         Ris[[nomeZ[i]]] <- signif(ris, digits)

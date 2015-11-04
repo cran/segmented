@@ -48,6 +48,7 @@ dpmax<-function(x,y,pow=1){
 #        }
 #        obj <- suppressWarnings(eval(call.ok, envir=mfExt))
         obj <- suppressWarnings(eval(call.ok))
+        call.ok$init=quote(coef(obj))
         #mio.init<- c(0,obj$coef[-1])
         dev.old<-dev.new
         dev.new <- dev.new1 <- -obj$loglik #control$f.obj should be something like "sum(x$residuals^2)" or "x$dev"   

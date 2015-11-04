@@ -1,4 +1,5 @@
-points.segmented<-function(x, term, interc=TRUE, link=TRUE, rev.sgn=FALSE, ...){
+points.segmented<-function(x, term, interc=TRUE, link=TRUE, 
+    rev.sgn=FALSE, transf=I, ...){
 #--------------
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -29,6 +30,7 @@ points.segmented<-function(x, term, interc=TRUE, link=TRUE, rev.sgn=FALSE, ...){
       opz$x<- psii 
       if(is.null(opz$cex)) opz$cex<-1.5
       if(is.null(opz$lwd)) opz$lwd<-2
+      opz$y<-do.call(transf, list(opz$y))
       do.call(points, opz)
       invisible(NULL)
       }

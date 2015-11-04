@@ -155,12 +155,20 @@ zz<-runif(100)
 yy<-2+1.5*pmax(xx-35,0)-1.5*pmax(xx-70,0)+15*pmax(zz-.5,0)+rnorm(100,0,2)
 dati<-data.frame(x=xx,y=yy,z=zz)
 out.lm<-lm(y~x,data=dati)
-o<-segmented(out.lm,seg.Z=~x,psi=list(x=c(30,60)),
+
+#simple example: 1 segmented variable, 1 breakpoint: you do not need to specify 
+# the starting value for psi
+o<-segmented(out.lm,seg.Z=~z)
+
+#1 segmented variable, 2 breakpoints: you have to specify starting values (vector) for psi:
+o<-segmented(out.lm,seg.Z=~x,psi=c(30,60),
     control=seg.control(display=FALSE))
 slope(o)
 
+#2 segmented variables: starting values requested via a named list
 out.lm<-lm(y~z,data=dati)
 o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
+
 
 #the default method leads to the same results (but it is slower)
 #o1<-segmented.default(out.lm,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
