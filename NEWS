@@ -5,13 +5,27 @@
 *************************************
 
 
+===============
+version 0.5-2.0
+===============
+* pscore.test() introduced. The function tests for a breakpoint using a (pseudo) score statistic which is more powerful than davies.test(), especially when the breakpoint is expected to be in the middle of the covariate range and the signal-to-noise ratio is high.
+* argument 'digits' added in seg.control() to fix the number of digits of the breakpoint estimate during the iterative estimation algorithm.
+* bug fixed: conf.level>0 in plot.segmented() did not work for objects returned by segmented.default().
+
+
+===============
+version 0.5-1.5 (not on CRAN)
+===============
+* arguments 'gap' and 'show.gap' removed in intercept() and in plot.segmented(). (they are meaningless, as segmented() always returns joined piecewise lines, i.e. with no gaps).
+* slope() and broken.line() (and then plot.segmented() which uses them) did not work for objects returned by segmented.default() (Thanks to Marcos Krull for reporting). 
+
 
 ===============
 version 0.5-1.4 
 ===============
-* segmented.Arima() should be slightly faster as starting values are passed in arima() (via 'init') throughout the iterative process.
+* segmented.Arima() should be slightly faster, as starting values are passed in arima() (via 'init') throughout the iterative process.
 * plot.segmented() is expected to work for objects returned by segmented.Arima.
-* print.summary.segmented() does not print anymore the t-values for the gap coefficients (this information is meaningless as the gap coeffs are always set to zero in the returned model)
+* print.summary.segmented() does not print anymore the t-values for the gap coefficients (this information is meaningless as the gap coeffs are always set to zero in the returned model).
 * Bug fixed: intercept() ignored argument 'rev.sgn'; points.segmented() missed argument 'transf'.
 
 
@@ -20,7 +34,7 @@ version 0.5-1.3 (not on CRAN)
 ===============
 * plot.segmented() gains argument 'transf' to plot 'transf(values)' rather 'values' on the current plot.
 * print.summary.segmented() now uses round() rather than signif() when displaying the breakpoint estimate.
-* Bug fixed: psi=NA was not working in the segmented.* methods; this bug was incidentally introduced in the last version (thanks to Bertrand Sudre for reporting).
+* Bug fixed: psi=NA was not working in the segmented.* methods; this bug was incidentally introduced in the last version (thanks to Bertrand Sudre for first reporting that).
 
 
 ===============

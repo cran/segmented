@@ -1,6 +1,7 @@
 `segmented.lm` <-
 function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     n.Seg<-1
+    if(missing(seg.Z) && all.vars(formula(obj))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
     if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
@@ -10,6 +11,7 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
       }
     if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
     it.max <- old.it.max<- control$it.max
+    digits<-control$digits
     toll <- control$toll
     visual <- control$visual
     stop.if.error<-control$stop.if.error
@@ -28,7 +30,7 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
             set.seed(employed.Random.seed)
               }
         if(visual) {visual<-FALSE; visualBoot<-TRUE}# warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
-        if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
+#        if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
      }
     last <- control$last
     K<-control$K
@@ -251,7 +253,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
 #    psi.values <- NULL
     nomiOK<-nomiU
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
-        nomiOK=nomiOK,id.psi.group=id.psi.group,gap=gap,visualBoot=visualBoot,pow=pow)
+        nomiOK=nomiOK,id.psi.group=id.psi.group,gap=gap,visualBoot=visualBoot,pow=pow,digits=digits)
     if(n.boot<=0){
     obj<-seg.lm.fit(y,XREG,Z,PSI,weights,offs,opz)
     } else {
@@ -275,19 +277,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
     U<-obj$U
     V<-obj$V
-#browser()
-    
-    #if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
-    for(jj in colnames(V)) {
-        VV<-V[, which(colnames(V)==jj), drop=FALSE]
-        sumV<-abs(rowSums(VV))
-#        if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
-#            || any(table(sumV)<=1)) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
-# Tolto perche' se la variabile segmented non e' ordinata non ha senso..
-#magari potresti fare un abs(diff(psi))<=.0001? ma clusterizzato..
-        if(any(table(sumV)<=1) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
 
-        }
     rangeZ<-obj$rangeZ
     obj<-obj$obj
     k<-length(psi)
@@ -336,16 +326,31 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     #eliminiamo subset, perche' se e' del tipo subset=x>min(x) allora continuerebbe a togliere 1 osservazione 
     if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<-eval(objF, envir=mfExt)
+ 
+
+# #11/10/16 il controllo e' stato commentato in modo tale da restituire anche un oggetto lm in cui psi viene considerato fisso..    
+#    for(jj in colnames(V)) {
+#        VV<-V[, which(colnames(V)==jj), drop=FALSE]
+#        sumV<-abs(rowSums(VV))
+##        if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
+##            || any(table(sumV)<=1)) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+## Tolto perche' se la variabile segmented non e' ordinata non ha senso..
+##magari potresti fare un abs(diff(psi))<=.0001? ma clusterizzato..
+#        if(any(table(sumV)<=1) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
+#        }
+
+    
     #Puo' capitare che psi sia ai margini o molto vicini (e ci sono solo 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 
     #sono di piu' ma hanno gli stessi valori di x. In questo caso objF$coef puo' avere mancanti.. names(which(is.na(coef(objF))))
-    
+
     objF$offset<- obj0$offset
     
     isNAcoef<-any(is.na(objF$coefficients))
     
     if(isNAcoef){
       if(stop.if.error) {stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
-        call. = FALSE)} else {
+        call. = FALSE)
+          } else {
         warning("some estimate is NA: too many breakpoints? 'var(hat.psi)' cannot be computed \n ..returning a 'lm' model", call. = FALSE)
         Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         objF <- update(obj0, formula = Fo,  evaluate=TRUE, data = mfExt)

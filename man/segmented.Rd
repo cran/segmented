@@ -37,8 +37,9 @@ segmented(obj, seg.Z, psi, control = seg.control(),
   fit may be supplied (see 'Details').}
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1+x2}, indicating the 
       (continuous) explanatory variables having segmented relationships with the response. 
-      Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or \code{seg.Z=~sqrt(x1)}, 
-      or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed.
+      Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or even \code{seg.Z=~sqrt(x1)}, 
+      or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. 
+      It can be missing when \code{obj} ("lm" or "glm" fit) includes only one covariate which is taken as segmented variable.
                }
   \item{psi}{ named list of vectors. The names have to match the variables in the \code{seg.Z} argument.
       Each vector includes starting values for the break-point(s) for the corresponding

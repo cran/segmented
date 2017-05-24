@@ -183,7 +183,8 @@ daviesGLM<-function(y, z, xreg, weights, offs, values=NULL, k, list.glm, alterna
     if(k<10) warnings("k>=10 is recommended")
     alternative <- match.arg(alternative)
     type        <- match.arg(type)
-    if(length(all.vars(seg.Z))>1) warning("multiple segmented variables ignored in 'seg.Z'",call.=FALSE)
+    #if(length(all.vars(seg.Z))>1) warning("multiple segmented variables ignored in 'seg.Z'",call.=FALSE)
+    if(length(all.vars(seg.Z))>1)  stop("Only a single segmented variable can be specified in 'seg.Z' ")
     isGLM<-"glm"%in%class(obj)
     Call<-mf<-obj$call
     mf$formula<-formula(obj)

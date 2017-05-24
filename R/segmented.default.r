@@ -33,6 +33,7 @@ dpmax<-function(x,y,pow=1){
       }
     if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
     it.max <- old.it.max<- control$it.max
+    digits<-control$digits
     toll <- control$toll
     visual <- control$visual
     stop.if.error<-control$stop.if.error
@@ -171,8 +172,9 @@ dpmax<-function(x,y,pow=1){
     Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
     Fo.noV <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
     
-    call.ok <- update(obj, formula = Fo,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
-    call.noV <- update(obj, formula = Fo.noV,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
+    #ho tolto "formula = Fo"
+    call.ok <- update(obj,  Fo,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
+    call.noV <- update(obj, Fo.noV,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
 
     if (it.max == 0) {
       if(!is.null(call.noV[["subset"]])) call.noV[["subset"]]<-NULL
@@ -195,7 +197,7 @@ dpmax<-function(x,y,pow=1){
     nomiOK<-nomiU
 
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
-        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow)
+        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits)
 
     opz$call.ok<-call.ok
     opz$call.noV<-call.noV
@@ -203,6 +205,10 @@ dpmax<-function(x,y,pow=1){
     opz$nomiU<-nomiU
     opz$nomiV<-nomiV
     opz$fn.obj <- fn.obj    
+
+    opz<-c(opz,...) #8/10/16...
+
+#browser()
 
     if(n.boot<=0){
       obj<-seg.def.fit(obj, Z, PSI, mfExt, opz)
@@ -234,6 +240,8 @@ dpmax<-function(x,y,pow=1){
     V<-obj$V
 #    return(obj)
 
+#browser()
+
     #if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
     for(jj in colnames(V)) {
         VV<-V[, which(colnames(V)==jj), drop=FALSE]
@@ -245,10 +253,13 @@ dpmax<-function(x,y,pow=1){
     rangeZ<-obj$rangeZ
     mfExt<-obj$mfExt
     names(mfExt)[match(obj$nomiV, names(mfExt))]<-nomiVxb
+    R<-obj$R
+    R.noV<-obj$R.noV
+    r<-obj$r
     obj<-obj$obj
     k<-length(psi)
 #    beta.c<-if(k == 1) coef(obj)["U"] else coef(obj)[paste("U", 1:ncol(U), sep = "")]
-#browser()
+
     beta.c<- coef(obj)[nomiOK] #nomiOK e' stato estratto da obj e contiene tutti i nomi delle variabili U inserite nel modello
     psi.values[[length(psi.values) + 1]] <- psi
     id.warn <- FALSE
@@ -258,7 +269,8 @@ dpmax<-function(x,y,pow=1){
     }
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
 
-    #se usi una procedura automatica devi cambiare ripetizioni, nomiU e nomiV, e quindi:
+
+#    #se usi una procedura automatica devi cambiare ripetizioni, nomiU e nomiV, e quindi:
 #    length.psi<-tapply(as.numeric(as.character(names(psi))), as.numeric(as.character(names(psi))), length)
 #    forma.nomiU<-function(xx,yy)paste("U",1:xx, ".", yy, sep="")
 #    forma.nomiVxb<-function(xx,yy)paste("psi",1:xx, ".", yy, sep="")
@@ -278,11 +290,23 @@ dpmax<-function(x,y,pow=1){
 #        mfExt[nomiOK[i]]<-mf[nomiOK[i]]<-U[,i]
 #        mfExt[nomiVxb[i]]<-mf[nomiVxb[i]]<-Vxb[,i]
 #        }
+#ottobre 2016: ci vuole altrimenti Vxb non viene inserita nel dataframe
+    for(i in 1:ncol(U)) {
+        mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
+        mfExt[nomiVxb[i]]<-mf[nomiVxb[i]]<-Vxb[,i]
+        }
 
     nnomi <- c(nomiOK, nomiVxb)
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
-    objF <- update(obj0, formula = Fo,  evaluate=FALSE, data = mfExt)
+    objF <- update(obj0,  Fo,  evaluate=FALSE, data = mfExt) #tolto "formula =Fo"
     if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
+
+    if(is.null(opz$constr)) opz$constr<-0
+    if((opz$constr %in% 1:2) && class(obj0)=="rq"){
+      objF$method<-"fnc"
+      objF$R<-quote(R)
+      objF$r<-quote(r)
+      }
     objF<- eval(objF, envir=mfExt)
     #Puo' capitare che psi sia ai margini e ci sono 1 o 2 osservazioni in qualche intervallo. Oppure ce ne
     #sono di piu' ma hanno gli stessi valori di x
@@ -294,7 +318,10 @@ dpmax<-function(x,y,pow=1){
         call. = FALSE)} else {
         warning("some estimate is NA: too many breakpoints? 'var(hat.psi)' cannot be computed \n ..returning a 'lm' model", call. = FALSE)
         Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
-        objF <- update(obj0, formula = Fo,  evaluate=TRUE, data = mfExt)
+        objF <- if((opz$constr %in% 1:2) && class(obj0)=="rq") {update(obj0, formula = Fo,  R=R.noV, r=r, method="fnc", evaluate=TRUE, data = mfExt) 
+        } else  {
+          update(obj0, Fo,  evaluate=TRUE, data = mfExt) #ho tolto "formula = Fo" per farlo funzionare con gls()
+          }
         names(psi)<-nomiVxb
         objF$psi<-psi
         return(objF)      

@@ -1,15 +1,38 @@
 seg.def.fit<-function(obj, Z, PSI, mfExt, opz, return.all.sol=FALSE){
 #-----------------
+fn.costr<-function(n.psi,isLeft=1,isInterc=1){
+#build the constraint matrix
+#isLeft: TRUE (or 1) if there is the left slope
+#isInterc: TRUE (or 1) if there is the intercept..
+IU<- -diag(n.psi)
+sumU<- diag(n.psi) #n. of diff slopes
+sumU[row(sumU)>col(sumU)]<-1
+if(isLeft) {
+    sumU<-cbind(1, sumU)
+    IU<-diag(c(1, -rep(1, n.psi)))
+    }
+    A<-rbind(IU,sumU)
+    if(isInterc) {
+      A<-rbind(0,A)
+      A<-cbind(c(1, rep(0,nrow(A)-1)), A)
+      } 
+    #add zeros for the V coeffs
+    A<-cbind(A, matrix(0,nrow(A), n.psi))
+    A
+    }
+#-----------------
 dpmax<-function(x,y,pow=1){
 #deriv pmax
         if(pow==1) ifelse(x>y, -1, 0)
          else -pow*pmax(x-y,0)^(pow-1)
          }
 #-----------
+    vincoli<- FALSE
     c1 <- apply((Z <= PSI), 2, all)
     c2 <- apply((Z >= PSI), 2, all)
     if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
     #
+    digits<-opz$digits
     pow<-opz$pow
     nomiOK<-opz$nomiOK
     toll<-opz$toll
@@ -28,11 +51,25 @@ dpmax<-function(x,y,pow=1){
     epsilon <- 10
     dev.values<-psi.values <- NULL
     id.psi.ok<-rep(TRUE, length(psi))
-
+    
     nomiU<- opz$nomiU
     nomiV<- opz$nomiV
     call.ok <- opz$call.ok
     call.noV <- opz$call.noV
+
+#browser()
+    if(is.null(opz$constr)) opz$constr<-0
+    if((opz$constr %in% 1:2) && class(obj)=="rq"){
+      vincoli<-TRUE
+      call.ok$method<-"fnc"
+      call.ok$R<-quote(R)
+      call.ok$r<-quote(r)
+
+      call.noV$method<-"fnc"
+      call.noV$R<-quote(R.noV)
+      call.noV$r<-quote(r)
+      }
+    
     fn.obj<-opz$fn.obj
     toll<-opz$toll
     k<-ncol(Z)
@@ -44,6 +81,9 @@ dpmax<-function(x,y,pow=1){
           mfExt[nomiU[i]] <- U[,i]
           mfExt[nomiV[i]] <- V[,i]
         }
+        R<- fn.costr(ncol(U),1,1)
+        R.noV<-R[,-((ncol(R)-1)+seq_len(ncol(U))),drop=FALSE]
+        r<- rep(0, nrow(R))
         obj <- suppressWarnings(eval(call.ok, envir=mfExt))
         dev.old<-dev.new
         dev.new <- dev.new1 <- eval(parse(text=fn.obj), list(x=obj)) #control$f.obj should be something like "sum(x$residuals^2)" or "x$dev"   
@@ -74,6 +114,8 @@ dpmax<-function(x,y,pow=1){
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
  #       if(it>=old.it.max && h<1) H<-h
         psi <- psi.old + h*gamma.c/beta.c
+        if(!is.null(digits)) 
+        psi<-round(psi, digits)
         PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <
@@ -96,8 +138,7 @@ dpmax<-function(x,y,pow=1){
           nomiOK<-nomiOK[id.psi.ok] #salva i nomi delle U per i psi ammissibili
           nomiU<-nomiU[id.psi.ok] #salva i nomi delle U per i psi ammissibili
           nomiV<-nomiV[id.psi.ok] #salva i nomi delle V per i psi ammissibili
-          
-          
+                    
           id.psi.group<-id.psi.group[id.psi.ok]
           names(psi)<-id.psi.group
           if(ncol(PSI)<=0) return(0)
@@ -105,7 +146,8 @@ dpmax<-function(x,y,pow=1){
           #aggiorna la call, altrimenti il modello avra' sempre lo stesso numero di termini anche se alcuni psi vengono rimossi!!!
           Fo <- update.formula(opz$formula.orig, as.formula(paste(".~.+", paste(c(nomiU, nomiV), collapse = "+"))))
           Fo.noV <- update.formula(opz$formula.orig, as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
-    
+   
+          
           call.ok <- update(obj, formula = Fo,  evaluate=FALSE, data = mfExt) 
           call.noV <- update(obj, formula = Fo.noV,  evaluate=FALSE, data = mfExt) 
 
@@ -114,7 +156,6 @@ dpmax<-function(x,y,pow=1){
         #obj$psi <- psi
     } #end while
 
-#browser()
     psi<-unlist(tapply(psi, id.psi.group, sort))
     names(psi)<-id.psi.group
     PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
@@ -151,7 +192,14 @@ dpmax<-function(x,y,pow=1){
     obj$it <- it
     #fino a qua..
     obj<-list(obj=obj,it=it,psi=psi,psi.values=psi.values,U=U,V=V,rangeZ=rangeZ,
-        epsilon=epsilon,nomiOK=nomiOK, SumSquares.no.gap=SS.new, id.psi.group=id.psi.group, nomiV=nomiV, nomiU=nomiU,mfExt=mfExt) #inserire id.psi.ok?
-    return(obj)
+        epsilon=epsilon,nomiOK=nomiOK, SumSquares.no.gap=SS.new, id.psi.group=id.psi.group, 
+        nomiV=nomiV, nomiU=nomiU, mfExt=mfExt) #inserire id.psi.ok?
+    #browser()
+    if(vincoli) {
+        obj$R<-R
+        obj$R.noV<-R.noV
+        obj$r<-r
+        } 
+     return(obj)
     }
 

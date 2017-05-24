@@ -3,23 +3,23 @@
 %\alias{segmented}
 \docType{package}
 \title{
-Segmented relationships in regression models with breakpoints/changepoints estimation
+Segmented relationships in regression models with breakpoints / changepoints estimation
 }
 \description{
-Estimation of Regression Models with piecewise linear relationships having a
+Estimation and Inference of Regression Models with piecewise linear relationships having a
 fixed number of break-points.
 }
 \details{
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.5-1.4\cr
-Date: \tab 2015-11-04\cr
+Version: \tab 0.5-2.0\cr
+Date: \tab 2017-05-23\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)
  having one or more segmented relationships in the linear predictor. Estimates of the slopes and
- of the possibly multiple breakpoints are provided. The package includes testing/estimating
+ breakpoints are provided along with standard errors. The package includes testing/estimating
  functions and methods to print, summarize and plot the results. \cr
  
  The algorithm used by \code{segmented} is \emph{not} grid-search. It is an iterative procedure (Muggeo, 2003) 
@@ -38,6 +38,8 @@ License: \tab GPL\cr
 Vito M.R. Muggeo <vito.muggeo@unipa.it>
   }
 \references{
+
+Muggeo, V.M.R. (2016) Testing with a nuisance parameter present only under the alternative: a score-based approach with application to segmented modelling. \emph{J of Statistical Computation and Simulation} \bold{86}, 3059--3067.
 
 Davies, R.B. (1987) Hypothesis testing when a nuisance parameter is present only under the alternative.
     \emph{Biometrika} \bold{74}, 33--43.

@@ -66,8 +66,7 @@ joinpoints on the current plot. This could be useful to emphasize the changes of
 
 \examples{
 \dontrun{
-#continues from ?plot.segmented
-points(o.seg,col=2)
+#see examples in ?plot.segmented
 }
 }
 \keyword{ nonlinear }

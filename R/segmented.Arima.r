@@ -25,6 +25,7 @@ dpmax<-function(x,y,pow=1){
       }
     if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
     it.max <- old.it.max<- control$it.max
+    digits<-control$digits
     toll <- control$toll
     visual <- control$visual
     stop.if.error<-control$stop.if.error
@@ -141,7 +142,7 @@ dpmax<-function(x,y,pow=1){
     nomiOK<-nomiU
 
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
-        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow)
+        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits)
 
     opz$call.ok<-call.ok
     opz$call.noV<-call.noV

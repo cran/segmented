@@ -26,6 +26,7 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
     c2 <- apply((Z >= PSI), 2, all)
     if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
     #
+    digits<-opz$digits
     pow<-opz$pow
     nomiOK<-opz$nomiOK
     toll<-opz$toll
@@ -88,6 +89,7 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
  #       if(it>=old.it.max && h<1) H<-h
         psi <- psi.old + h*gamma.c/beta.c
+        if(!is.null(digits)) psi<-round(psi, digits)
         PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <

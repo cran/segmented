@@ -1,6 +1,7 @@
 `segmented.glm` <-
 function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     n.Seg<-1
+    if(missing(seg.Z) && all.vars(formula(obj))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
     if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
@@ -11,6 +12,7 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
     maxit.glm <- control$maxit.glm
     it.max <- old.it.max<- control$it.max
+    digits<-control$digits
     toll <- control$toll
     visual <- control$visual
     stop.if.error<-control$stop.if.error
@@ -240,7 +242,7 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     nomiOK<-nomiU
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
         fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
-        pow=pow, visualBoot=visualBoot)   
+        pow=pow, visualBoot=visualBoot, digits=digits)   
 
     if(n.boot<=0){
       obj<-seg.glm.fit(y,XREG,Z,PSI,weights,offs,opz)

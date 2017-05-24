@@ -10,9 +10,10 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "residuals", "runif", "summary.glm", "summary.lm", "update",
              "update.formula", "vcov", "weights")
 importFrom("utils", "flush.console")
+importFrom("stats", "complete.cases")
 
 export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,
-	broken.line ,confint.segmented,davies.test,draw.history,
+	broken.line ,confint.segmented,davies.test,pscore.test,draw.history,
 	intercept,lines.segmented,plot.segmented,print.segmented,
 	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
 	seg.def.fit,seg.def.fit.boot, seg.Ar.fit,seg.Ar.fit.boot,

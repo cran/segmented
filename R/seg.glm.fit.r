@@ -9,6 +9,7 @@ dpmax<-function(x,y,pow=1){
     c1 <- apply((Z <= PSI), 2, all) #prima era solo <
     c2 <- apply((Z >= PSI), 2, all) #prima era solo >
     if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) stop("psi out of the range")
+    digits<-opz$digits
     pow<-opz$pow
     eta0<-opz$eta0
     fam<-opz$fam
@@ -83,6 +84,7 @@ dpmax<-function(x,y,pow=1){
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
         #if(it>=old.it.max && h<1) H<-h
         psi <- psi.old + h*gamma.c/beta.c
+        if(!is.null(digits)) psi<-round(psi, digits)
         PSI <- matrix(rep(psi, rep(nrow(Z), ncol(Z))), ncol = ncol(Z))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <

@@ -21,10 +21,10 @@ citEntry(entry="Article",
 	       volume       = "8",
 	       number       = "1",
 	       pages        = "20--25",
-         url          = "http://cran.r-project.org/doc/Rnews/",
+         url          = "https://cran.r-project.org/doc/Rnews/",
          textVersion = 
          paste("Vito M. R. Muggeo (2008).", 
                "segmented: an R Package to Fit Regression Models with Broken-Line Relationships.",
                "R News, 8/1, 20-25.",
-	       "URL http://cran.r-project.org/doc/Rnews/.")
+	       "URL https://cran.r-project.org/doc/Rnews/.")
 )

@@ -14,8 +14,8 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   \item{obj}{ a fitted model typically returned by \code{glm} or \code{lm}. Even an object returned 
   by \code{segmented} can be set (e.g. if interest lies in testing for an additional breakpoint).}
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1}, indicating the 
-      (continuous) segmented variable being tested. Only a single variable may be tested and a
-      warning is printed when \code{seg.Z} includes two or more terms. }
+      (continuous) segmented variable being tested. Only a single variable may be tested and an
+      error is printed when \code{seg.Z} includes two or more terms. }
   \item{k}{ number of points where the test should be evaluated. See Details. }
   \item{alternative}{ a character string specifying the alternative hypothesis. }
   \item{type}{ the test statistic to be used (only for GLM, default to lrt. 
@@ -87,6 +87,7 @@ Davies, R.B. (2002) Hypothesis testing when a nuisance parameter is present only
 %%\section{Warning }{Currently \code{davies.test} does not work if the fitted model \code{ogg}
 %%  does not include the segmented variable \code{term} being tested.}
 
+\seealso{See also \code{\link{pscore.test}} which is more power, especially when  the signal-to-noise ratio is low. }
 
 \examples{
 \dontrun{

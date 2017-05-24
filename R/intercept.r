@@ -1,4 +1,4 @@
-intercept<-function (ogg, parm, gap=TRUE, rev.sgn = FALSE, var.diff = FALSE, 
+intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, 
     digits = max(3, getOption("digits") - 3)){
 #corregge in caso di no model intercept -- CHE VOLEVO DIRE?? #forse che adesso funziona se nel modello non c'e' l'interc.
 #--
@@ -44,7 +44,7 @@ intercept<-function (ogg, parm, gap=TRUE, rev.sgn = FALSE, var.diff = FALSE,
     nomi <- names(coef(ogg))
     nomi <- nomi[-match(nomepsi, nomi)]
     Allpsi <- index <- vector(mode = "list", length = length(nomeZ))
-    gapCoef<-summary.segmented(ogg)$gap
+#    gapCoef<-summary.segmented(ogg)$gap   ##eliminato 10/11/15
     Ris <- list()
     rev.sgn <- rep(rev.sgn, length.out = length(nomeZ))
     if("(Intercept)"%in%names(coef(ogg))){
@@ -63,10 +63,10 @@ intercept<-function (ogg, parm, gap=TRUE, rev.sgn = FALSE, var.diff = FALSE,
         cof <- coef(ogg)[ind]
         alpha <- vector(length = length(ind))
         #gapCoef.i<-gapCoef[grep(paste("\\.",nomeZ[i],"$",sep=""), rownames(gapCoef), value = FALSE),"Est."]
-        gapCoef.i<-gapCoef[f.U(rownames(gapCoef), nomeZ[i]) ,"Est."]
+#        gapCoef.i<-gapCoef[f.U(rownames(gapCoef), nomeZ[i]) ,"Est."]    ###eliminato 10/11/15
         for (j in 1:length(cof)) {
             alpha[j] <- alpha0 - Allpsi[[i]][j] * cof[j]
-            if(gap) alpha[j] <- alpha[j] - gapCoef.i[j]
+#       if(gap) alpha[j] <- alpha[j] - gapCoef.i[j] ###eliminato 10/11/15
             alpha0 <- alpha[j]
 
         }

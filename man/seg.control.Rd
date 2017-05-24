@@ -10,7 +10,7 @@
 seg.control(toll = 1e-04, it.max = 10, display = FALSE, stop.if.error = TRUE, 
     K = 10, quant = FALSE, last = TRUE, maxit.glm = 25, h = 1, 
     n.boot=20, size.boot=NULL, gap=FALSE, jt=FALSE, nonParam=TRUE,
-    random=TRUE, powers=c(1,1), seed=NULL, fn.obj=NULL)
+    random=TRUE, powers=c(1,1), seed=NULL, fn.obj=NULL, digits=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -70,6 +70,7 @@ seg.control(toll = 1e-04, it.max = 10, display = FALSE, stop.if.error = TRUE,
   \code{"coxph"} fits it should be \code{fn.obj="-x$loglik[2]"}. If \code{NULL} the `minus log likelihood' extracted from 
   the object, namely \code{"-logLik(x)"}, is used. See \code{\link{segmented.default}}.
     }
+  \item{digits}{optional. If specified it means the desidered number of decimal points of the breakpoint to be used during the iterative algorithm.}
   }
 
 \details{

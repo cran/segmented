@@ -8,7 +8,7 @@
 Computes the intercepts of each `segmented' relationship in the fitted model.
 }
 \usage{
-intercept(ogg, parm, gap = TRUE, rev.sgn = FALSE, var.diff=FALSE,
+intercept(ogg, parm, rev.sgn = FALSE, var.diff=FALSE,
     digits = max(3, getOption("digits") - 3))
 }
 %- maybe also 'usage' for other objects documented here.
@@ -19,9 +19,9 @@ intercept(ogg, parm, gap = TRUE, rev.sgn = FALSE, var.diff=FALSE,
   \item{parm}{
 the segmented variable whose intercepts have to be computed. If missing all the segmented variables in the model are considered. 
 }
-  \item{gap}{
-  logical. should the intercepts account for the (possible) gaps? 
-}
+%  \item{gap}{
+%  logical. should the intercepts account for the (possible) gaps? 
+%}
  \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled otherwise.
   When \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
     therefore the order is reversed before printing. This is useful when a null-constraint has been set on the last slope.

@@ -45,7 +45,7 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
     approximations. Anyway, the t values may be not assumed for testing purposes 
     and they should be used just as guidelines to assess the estimate uncertainty.
     }
-\seealso{See also \code{\link{davies.test}} to test for a nonzero difference-in-slope parameter.
+\seealso{See also \code{\link{davies.test}} and \code{\link{pscore.test}} to test for a nonzero difference-in-slope parameter.
 }
 \examples{
 set.seed(16)
