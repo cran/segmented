@@ -221,7 +221,7 @@ dpmax<-function(x,y,pow=1){
         warning("No breakpoint estimated", call. = FALSE)
         return(obj0)
         }
-    if(!is.null(obj$obj$df.residual)){
+    if(!is.null(obj$obj$df.residual) && !is.na(obj$obj$df.residual)){
       if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
       }
     id.psi.group<-obj$id.psi.group

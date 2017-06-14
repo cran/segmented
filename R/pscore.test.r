@@ -119,7 +119,7 @@ scGLM<-function(y, z, xreg, family, values = NULL, size=1, weights.var,
 #----------------------------------------------------
 
     fn="pmax(x-p,0)"
-    if(inherits(obj, "glm")) stop("Currently only 'lm', or 'segmented-lm' models are allowed")
+#    if(inherits(obj, "glm")) stop("Currently only 'lm', or 'segmented-lm' models are allowed")
     if(!inherits(obj, "lm")) stop("A 'lm', or 'segmented-lm' model is requested")
     if(inherits(obj, "segmented") && length(obj$nameUV$Z)==1) seg.Z<- as.formula(paste("~", obj$nameUV$Z ))
     if(!inherits(obj, "segmented") && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
@@ -133,11 +133,68 @@ scGLM<-function(y, z, xreg, family, values = NULL, size=1, weights.var,
     #if(length(all.vars(seg.Z))>1) warning("multiple segmented variables ignored in 'seg.Z'",call.=FALSE)
     isGLM<-"glm"%in%class(obj)
     
+    if(isGLM){
+    if(is.null(dispersion)) dispersion<- summary.glm(obj)$dispersion
     if(inherits(obj, "segmented")){
-        if(is.null(dispersion)) {
-        dispersion<- if(inherits(obj, "glm")) summary(obj)$dispersion else summary(obj)$sigma^2   
-        }
-        df.ok<- if(!is.null(df.t)) df.t else obj$df.residual
+        mf<-model.frame(obj)
+        X0<-model.matrix(obj)
+        Z<-X0[,name.Z]
+        n<-length(Z)
+        if(is.null(values)) values<-seq(min(Z), max(Z), length=k) #values<-seq(sort(Z)[2], sort(Z)[(n - 1)], length = k)
+        n1<-length(values)
+        #escludi *tutte* le variabili psi (sia da X0 che dalla formula)
+        #X0<-X0[, -match(obj$nameUV$V, colnames(X0))]
+        #formulaNull <-update.formula(formula(obj),paste("~.-",paste(obj$nameUV$V, collapse="-"))) #togli tutti i termini "V"
+        X1<-matrix(Z, nrow=n, ncol=n1, byrow=FALSE) #matrice della variabile Z
+        fn="pmax(x-p,0)"
+        PSI<-matrix(values, nrow=n, ncol=n1, byrow=TRUE)
+        X<-eval(parse(text=fn), list(x=X1, p=PSI))    #   fn t.c.  length(fn)<=1
+        mf$pmaxMedio<-rowMeans(X)
+        nc<-obj$orig.call #se c'e' un break e vuoi saggiare uno in piu' devi aggiustare la call
+        if(more.break){
+                       nc$formula<-update.formula(nc$formula, paste("~.+",paste(obj$nameUV$U, collapse="+"))) 
+                       }
+        formulaNull<-nc$formula
+        nc$data=quote(mf)
+        a<-eval(nc)
+        #assign("mf", mf, envir=sys.frame()) #funziona ma R CMD check da problemi..
+        #ne <- new.env(parent = baseenv())
+        pos<-1
+        assign("mf", mf, envir=as.environment(pos))        
+        #r<-as.numeric(add1(a, ~.+pmaxMedio,  scale=dispersion, test="Rao")[c("scaled Rao sc.", "Pr(>Chi)")][2,])
+        r<- as.numeric(add1(a, ~.+pmaxMedio,  scale=dispersion, test="Rao")[2,4:5])
+    } else {
+        Call<-mf<-obj$call
+        mf$formula<-formula(obj)
+        m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
+        mf <- mf[c(1, m)]
+        mf$drop.unused.levels <- TRUE
+        mf[[1L]] <- as.name("model.frame")
+        mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+        formulaNull <- formula(obj)
+        mf <- eval(mf, parent.frame())
+        mt <- attr(mf, "terms")
+       XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
+       n <- nrow(XREG)
+       Z<- XREG[,match(name.Z, colnames(XREG))]
+       if(!name.Z %in% names(coef(obj))) XREG<-XREG[,-match(name.Z, colnames(XREG)),drop=FALSE]
+       if(is.null(values)) values<-seq(min(Z), max(Z), length=k) #values<-seq(sort(Z)[2], sort(Z)[(n - 1)], length = k)
+       n1<-length(values)
+       PSI<-matrix(values, nrow=n, ncol=n1, byrow=TRUE) #(era X2) matrice di valori di psi
+       X1<-matrix(Z, nrow=n, ncol=n1, byrow=FALSE) #matrice della variabile Z
+       fn="pmax(x-p,0)"
+       X<-eval(parse(text=fn), list(x=X1, p=PSI))    #   fn t.c.  length(fn)<=1
+       pmaxMedio<-rowMeans(X)
+       #r<-as.numeric(add1(update(obj, data=mf), ~.+pmaxMedio,  scale=dispersion, test="Rao")[c("scaled Rao sc.", "Pr(>Chi)")][2,])
+       r<-as.numeric(add1(update(obj, data=mf), ~.+pmaxMedio,  scale=dispersion, test="Rao")[2,4:5])
+       }
+       } else {
+    #SE E' un LM
+    if(is.null(dispersion)) dispersion<- summary(obj)$sigma^2
+    if(is.null(df.t)) df.t <- obj$df.residual
+    #df.ok<- if(!is.null(df.t)) df.t else obj$df.residual
+    #   se e' LM-segmented
+    if(inherits(obj, "segmented")){
         if(!is.null(eval(obj$call$obj)$call$data)) mf$data <- eval(obj$call$obj)$call$data
         y<- obj$res+obj$fitted        
         if(!is.null(obj$offset)) y<- y-obj$offset
@@ -159,7 +216,7 @@ scGLM<-function(y, z, xreg, family, values = NULL, size=1, weights.var,
 #        update.formula(formulaOrig, paste("~.-",paste(obj$nameUV$U[idU], collapse="-")))
 #        #for(i in 1:length(obj$nameUV$U)) assign(obj$nameUV$U[i], obj$model[,obj$nameUV$U[i]], envir=parent.frame())
 #        formulaOrig<-update.formula(formulaOrig, paste("~.-",paste(obj$nameUV$U, collapse="-")))
-         r<-test.Sc2(y=y, z=Z, xreg=X0, sigma=sqrt(dispersion), values=values, fn=fn, df.t=df.ok, alternative=alternative, w=weights)
+         r<-test.Sc2(y=y, z=Z, xreg=X0, sigma=sqrt(dispersion), values=values, fn=fn, df.t=df.t, alternative=alternative, w=weights)
         } else {
         #SE l'oggetto obj NON e' "segmented"..
         # ci possono essere mancanti nella variabile seg.Z, quindi devi costruire un nuovo dataframe....    
@@ -186,32 +243,9 @@ scGLM<-function(y, z, xreg, family, values = NULL, size=1, weights.var,
        Z<- XREG[,match(name.Z, colnames(XREG))]
        if(!name.Z %in% names(coef(obj))) XREG<-XREG[,-match(name.Z, colnames(XREG)),drop=FALSE]
        if(is.null(values)) values<-seq(min(Z), max(Z), length=k) #values<-seq(sort(Z)[2], sort(Z)[(n - 1)], length = k)
-       if(is.null(dispersion)) {
-         dispersion<- if(class(obj)[1]=="glm") sqrt(summary.glm(obj)$dispersion) else summary(obj)$sigma^2
-         df.ok<- if(!is.null(df.t)) df.t else obj$df.residual
-       }
-
-       
-
-       ##---------se obj e' modello nullo (non contiene la variabile segmented):
-#questo dovrebbe funzionare per anche GLM/LM (attenzione che il p-valore e' calcolato da add1() con la z e non t )
-#    n1<-length(values)
-#    PSI<-matrix(values, nrow=n, ncol=n1, byrow=TRUE) #(era X2) matrice di valori di psi
-#    X1<-matrix(Z, nrow=n, ncol=n1, byrow=FALSE) #matrice della variabile Z
-#    X<-eval(parse(text=fn), list(x=X1, p=PSI)) #      fn t.c.  length(fn)<=1
-#    pmaxMedio<-rowMeans(X)
-#    #mf<-model.frame(obj)
-#    mf$pmaxMedio <- pmaxMedio
-#    if(!is.null(weights)){ #"(weights)"%in%names(mf)
-#            names(mf)[which(names(mf)=="(weights)")]<-all.vars(Call$weights) #as.character(Call$weights)
-#            mf["(weights)"]<-weights
-#        }
-#    r<-as.numeric(add1(update(obj, data=mf), ~.+pmaxMedio,  scale=sigma^2, test="Rao")[c("scaled Rao sc.", "Pr(>Chi)")][2,])
-#     r[2]<-1-pf(r[1],df1=1, df2=df.ok)
-
-    r<-test.Sc2(y=y, z=Z, xreg=XREG, sigma=sqrt(dispersion), values=values, fn=fn, df.t=df.ok, alternative=alternative, w=weights)
+       r<-test.Sc2(y=y, z=Z, xreg=XREG, sigma=sqrt(dispersion), values=values, fn=fn, df.t=df.t, alternative=alternative, w=weights)
     }
-    
+  }    
         if(is.null(obj$family$family)) {
           famiglia<-"gaussian"
           legame<-"identity"

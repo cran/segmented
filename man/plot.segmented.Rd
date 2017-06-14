@@ -47,13 +47,15 @@
 \details{
   Produces (or adds to the current device) the fitted segmented relationship between the
   response and the selected \code{term}. If the fitted model includes just a single `segmented' variable,
-  \code{term} may be omitted. Due to the parameterization of the segmented terms, sometimes
-  the fitted lines may not appear to join at the estimated breakpoints. If this is the case, the apparent
-  `gap' would indicate some lack-of-fit. However, since version 0.2-9.0, the gap coefficients are set to zero by default 
-  (see argument \code{gap} in in \code{\link{seg.control}}). 
+  \code{term} may be omitted. 
+  %Due to the parameterization of the segmented terms, sometimes
+  %the fitted lines may not appear to join at the estimated breakpoints. If this is the case, the apparent
+  %`gap' would indicate some lack-of-fit. However, since version 0.2-9.0, the gap coefficients are set to zero by default 
+  %(see argument \code{gap} in in \code{\link{seg.control}}). 
   The partial residuals are computed as `fitted + residuals', where `fitted' are the fitted values of the
-  segmented relationship. Notice that for GLMs the residuals are the response residuals if \code{link=FALSE} and
-  the working residuals weighted by the IWLS weights if \code{link=TRUE}.
+  segmented relationship relevant to the covariate specified in \code{term}. 
+  Notice that for GLMs the residuals are the response residuals if \code{link=FALSE} and
+  the working residuals if \code{link=TRUE}. %weighted by the IWLS weights  [fino alla versione 0.5-2.0 i workRes were weighted by the IWLS weights]
   }
 \value{
 None.
@@ -74,7 +76,7 @@ set.seed(1234)
 z<-runif(100)
 y<-rpois(100,exp(2+1.8*pmax(z-.6,0)))
 o<-glm(y~z,family=poisson)
-o.seg<-segmented(o,seg.Z=~z,psi=list(z=.5))
+o.seg<-segmented(o, ~z) #single segmented covariate and one breakpoint:'psi' can be omitted
 par(mfrow=c(2,1))
 plot(o.seg, conf.level=0.95, shade=TRUE)
 points(o.seg, link=FALSE, col=2)

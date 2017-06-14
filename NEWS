@@ -6,6 +6,14 @@
 
 
 ===============
+version 0.5-2.1
+===============
+* pscore.test() now works also for "glm" fits
+* plot.segmented() now plots the partial residuals as "component + working residuals" (rather than Pearson residuals, relevant only for glm fits).
+* segmented.default() now works for fits obtained by MASS::rlm().
+
+
+===============
 version 0.5-2.0
 ===============
 * pscore.test() introduced. The function tests for a breakpoint using a (pseudo) score statistic which is more powerful than davies.test(), especially when the breakpoint is expected to be in the middle of the covariate range and the signal-to-noise ratio is high.

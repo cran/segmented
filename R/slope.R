@@ -2,6 +2,7 @@
 function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
       digits = max(3, getOption("digits") - 3)){
 #--
+
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
         #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
@@ -22,6 +23,18 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
             var.diff<-FALSE
             warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)
             }
+    #se e' un "newsegmented"
+
+#    if(!is.null(ogg$R.slope)) {
+#             covv<-old.coef.var(ogg)
+#             ogg$coefficients<- covv$b
+#             covv<-  covv$cov
+#             ogg$psi<-old.psi(ogg)
+#             ogg$nameUV<-old.nomi(ogg)
+#             } else {
+             covv<-try(vcov(ogg,var.diff=var.diff), silent=TRUE)
+#             }
+        
         nomepsi<-rownames(ogg$psi) #OK
         nomeU<-ogg$nameUV$U
         nomeZ<-ogg$nameUV$Z
@@ -38,18 +51,29 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
         nomi<-nomi[-match(nomepsi,nomi)] #escludi i coef delle V
         index<-vector(mode = "list", length = length(nomeZ))
         for(i in 1:length(nomeZ)) {
-            #id.cof.U<-grep(paste("\\.",nomeZ[i],"$",sep=""), nomi, value=FALSE)
-            #psii<-ogg$psi[grep(paste("\\.",nomeZ[i],"$",sep=""), rownames(ogg$psi), value=FALSE),2]
-            #id.cof.U<- match(grep(nomeZ[i],   ogg$nameUV$U, value=TRUE), nomi)
-            #psii<-ogg$psi[grep(nomeZ[i],   ogg$nameUV$V, value=TRUE),2]
-            #il paste con "$" (paste("\\.",nomeZ[i],"$",sep="")) e' utile perche' serve a distinguere variabili con nomi simili (ad es., "x" e "xx")
-            #Comunque nella versione dopo la 0.3-1.0 ho (FINALMENTE) risolto mettendo f.U
-            id.cof.U<- f.U(ogg$nameUV$U, nomeZ[i])
-            #id.cof.U e' la posizione nel vettore ogg$nameUV$U; la seguente corregge per eventuali variabili che ci sono prima (ad es., interc)
-            id.cof.U<- id.cof.U + (match(ogg$nameUV$U[1], nomi)-1)            
-            psii<- ogg$psi[f.U(ogg$nameUV$V, nomeZ[i]) , "Est."]
-            id.cof.U <- id.cof.U[order(psii)]            
+#--->             DA RIMUOVERE E SOSTITUIRE CON QUELLI DI SUBITO DOPO?
+#            #id.cof.U<-grep(paste("\\.",nomeZ[i],"$",sep=""), nomi, value=FALSE)
+#            #psii<-ogg$psi[grep(paste("\\.",nomeZ[i],"$",sep=""), rownames(ogg$psi), value=FALSE),2]
+#            #id.cof.U<- match(grep(nomeZ[i],   ogg$nameUV$U, value=TRUE), nomi)
+#            #psii<-ogg$psi[grep(nomeZ[i],   ogg$nameUV$V, value=TRUE),2]
+#            #il paste con "$" (paste("\\.",nomeZ[i],"$",sep="")) e' utile perche' serve a distinguere variabili con nomi simili (ad es., "x" e "xx")
+#            #Comunque nella versione dopo la 0.3-1.0 ho (FINALMENTE) risolto mettendo f.U
+#            id.cof.U<- f.U(ogg$nameUV$U, nomeZ[i])
+#            #id.cof.U e' la posizione nel vettore ogg$nameUV$U; la seguente corregge per eventuali variabili che ci sono prima (ad es., interc)
+#            id.cof.U<- id.cof.U + (match(ogg$nameUV$U[1], nomi)-1)            
+#            psii<- ogg$psi[f.U(ogg$nameUV$V, nomeZ[i]) , "Est."]
+#            id.cof.U <- id.cof.U[order(psii)]            
+#--->            
+            
+            #questi funzionano anche con oggetti da segreg
+            nomiPsi<-grep(paste(".", nomeZ[i], sep="") , ogg$nameUV$V, value=TRUE)
+            psii<- ogg$psi[nomiPsi , "Est."] 
+            nomiU<-grep(paste(".", nomeZ[i], sep="") , ogg$nameUV$U, value=TRUE)
+            #cof<-coef(ogg)[nomiU]
+            id.cof.U<- match(nomiU, names(ogg$coefficients))
             index[[i]]<-c(match(nomeZ[i],nomi), id.cof.U)
+            
+            
             }
         Ris<-list()   
         digits <- max(3, getOption("digits") - 3)
@@ -60,6 +84,7 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
 #        if(transf=="APC") transf<-c("100*(exp(x)-1)", "100*exp(x)")
 #        my.f<-function(x)eval(parse(text=transf[1]))
 #        my.f.deriv<-function(x)eval(parse(text=transf[2]))
+       
           
         for(i in 1:length(index)){
             ind<-as.numeric(na.omit(unlist(index[[i]])))
@@ -68,10 +93,10 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
             cof<-coef(ogg)[ind]
             cof.out<-M%*%cof 
 
-            covv<-try(vcov(ogg,var.diff=var.diff), silent=TRUE)
+            
             if(class(covv)!="try-error"){
-                covv<-covv[ind,ind]
-                cov.out<-M%*%covv%*%t(M)
+                cov.ok<-covv[ind,ind]
+                cov.out<-M%*%cov.ok%*%t(M)
                 se.out<-sqrt(diag(cov.out))
                 k<-if("lm"%in%class(ogg)) abs(qt((1-conf.level)/2,df=ogg$df.residual)) else abs(qnorm((1-conf.level)/2))
                 k<-k*se.out

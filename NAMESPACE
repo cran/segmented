@@ -11,6 +11,7 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "update.formula", "vcov", "weights")
 importFrom("utils", "flush.console")
 importFrom("stats", "complete.cases")
+importFrom("stats", "add1")
 
 export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,
 	broken.line ,confint.segmented,davies.test,pscore.test,draw.history,

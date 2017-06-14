@@ -199,7 +199,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         fit <- c(y.val, y.val1)
         if (res) {
             ress <- if (inherits(x, what = "glm", which = FALSE))
-                residuals(x, "working") * sqrt(x$weights)
+                residuals(x, "working") #* sqrt(x$weights) mgcv::gam() usa " ..*sqrt(x$weights)/mean(sqrt(x$weights))"
             else resid(x)
             #if(!is.null(x$offset)) ress<- ress - x$offset
             #fit <- broken.line(x, term, gap = show.gap, link = link, interc = TRUE) + ress + const

@@ -1,8 +1,8 @@
 Package: segmented
 Type: Package
 Title: Regression Models with Break-Points / Change-Points Estimation
-Version: 0.5-2.0
-Date: 2017-05-23
+Version: 0.5-2.1
+Date: 2017-06-13
 Authors@R: c(person(given = c("Vito","M.","R."), family = "Muggeo", role =
         c("aut", "cre"), email = "vito.muggeo@unipa.it"))
 Author: Vito M. R. Muggeo [aut, cre]
@@ -10,6 +10,6 @@ Maintainer: Vito M. R. Muggeo <vito.muggeo@unipa.it>
 Description: Given a regression model, segmented `updates' the model by adding one or more segmented (i.e., piece-wise linear) relationships. Several variables with multiple breakpoints are allowed.
 License: GPL
 NeedsCompilation: no
-Packaged: 2017-05-24 11:45:45 UTC; enea
+Packaged: 2017-06-13 12:13:18 UTC; enea
 Repository: CRAN
-Date/Publication: 2017-05-25 00:29:16 UTC
+Date/Publication: 2017-06-14 22:42:56 UTC
