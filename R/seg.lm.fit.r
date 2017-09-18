@@ -60,7 +60,7 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
         obj <- lm.wfit(x = X, y = y, w = w, offset = offs)
         dev.old<-dev.new
         dev.new <- dev.new1 <-sum(obj$residuals^2)
-        if(return.all.sol) dev.new1 <- sum(mylm(x = cbind(XREG, U), y = y, w = w, offs = offs)$residuals^2)
+        if(return.all.sol) dev.new1 <- sum(mylm(x = cbind(XREG, U), y = y, w = w, offs = offs)$residuals^2*w/sum(w))
         dev.values[[length(dev.values) + 1]] <- dev.new1
         if (visual) {
             flush.console()
@@ -126,7 +126,7 @@ mylm<-function(x,y,w,offs=rep(0,length(y))){
     obj$epsilon <- epsilon
     obj$it <- it
     obj.new <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
-    SS.new<-sum(obj.new$residuals^2)
+    SS.new<-sum(obj.new$residuals^2*w/sum(w))
     if(!gap){
           names.coef<-names(obj$coefficients)
           obj$coefficients<-c(obj.new$coefficients, rep(0,ncol(V)))

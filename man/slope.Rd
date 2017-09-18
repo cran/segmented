@@ -33,11 +33,14 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   \code{slope} returns a list of matrices. Each matrix represents a segmented relationship and its number of rows equal 
   to the number of segments, while five columns summarize the results.
 }
-\references{Muggeo, V.M.R. (2003) Estimating regression models with unknown break-points. 
+\references{
+    Muggeo, V.M.R. (2003) Estimating regression models with unknown break-points. 
     \emph{Statistics in Medicine} \bold{22}, 3055--3071.
+    
+    Muggeo, V.M.R. (2010) Comment on `Estimating average annual per cent change in trend analysis' by Clegg et al., 
+    Statistics in Medicine; 28, 3670-3682. \emph{Statistics in Medicine}, \bold{29}, 1958--1960.
     }
-\author{Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} 
-}
+\author{Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
 \note{The returned summary is based on limiting Gaussian distribution for the model parameters involved 
     in the computations. Sometimes, even with large sample sizes such approximations are questionable 
     (e.g., with small difference-in-slope parameters) and the results returned by \code{slope} 

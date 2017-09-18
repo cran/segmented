@@ -1,7 +1,7 @@
 `segmented.glm` <-
 function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     n.Seg<-1
-    if(missing(seg.Z) && all.vars(formula(obj))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
+    if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
     if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){

@@ -6,6 +6,15 @@
 
 
 ===============
+version 0.5-2.2
+===============
+
+* When there is a single covariate in the starting (g)lm, seg.Z can be missing when calling the segmented methods.
+* bug fixed: plot.segmented(.., link=FALSE) did not work correctly (sometimes it returned an error) for glm fits with multiple breakpoints.
+Weights were not handled appropriately by segmented.lm.
+
+
+===============
 version 0.5-2.1
 ===============
 * pscore.test() now works also for "glm" fits
@@ -18,7 +27,7 @@ version 0.5-2.0
 ===============
 * pscore.test() introduced. The function tests for a breakpoint using a (pseudo) score statistic which is more powerful than davies.test(), especially when the breakpoint is expected to be in the middle of the covariate range and the signal-to-noise ratio is high.
 * argument 'digits' added in seg.control() to fix the number of digits of the breakpoint estimate during the iterative estimation algorithm.
-* bug fixed: conf.level>0 in plot.segmented() did not work for objects returned by segmented.default().
+* bug fixed: conf.level>0 in plot.segmented() did not work for objects returned by segmented.default(). 
 
 
 ===============

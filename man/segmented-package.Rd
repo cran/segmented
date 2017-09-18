@@ -13,8 +13,8 @@ fixed number of break-points.
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.5-2.0\cr
-Date: \tab 2017-05-23\cr
+Version: \tab 0.5-2.2\cr
+Date: \tab 2017-09-18\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)
@@ -61,6 +61,8 @@ Muggeo, V.M.R., Adelfio, G. (2011) Efficient change point detection in genomic s
 Wood, S. N. (2001) Minimizing model fitting objectives that contain spurious local minima
     by bootstrap restarting. \emph{Biometrics} \bold{57}, 240--244. 
 
+Muggeo, V.M.R. (2010) Comment on `Estimating average annual per cent change in trend analysis' by Clegg et al., Statistics in Medicine; 28, 3670-3682. 
+\emph{Statistics in Medicine}, \bold{29}, 1958--1960.
     }
 
 \keyword{ regression }

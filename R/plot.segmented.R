@@ -139,6 +139,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
 #        xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))]))
         xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))],val[-c(1, length(val))]*1.005))
         l <- approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout)
+        val[length(val)]<-max(l$x) #aggiunto 11/09/17
         id.group <- cut(l$x, val, FALSE, TRUE)
         yhat <- l$y
         xhat <- l$x

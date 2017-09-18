@@ -1,7 +1,7 @@
 `segmented.lm` <-
 function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
     n.Seg<-1
-    if(missing(seg.Z) && all.vars(formula(obj))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
+    if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
     if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
@@ -416,6 +416,13 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     objF$id.warn <- id.warn
     objF$orig.call<-orig.call
     if (model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
+    
+#    PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
+#    SE.PSI <- matrix(rep(sqrt(vv), rep(nrow(Z), length(psi))), ncol = length(psi))
+#    X.is<-model.matrix(Fo, data=objF$model)
+#    X.is[,nomiVxb]<-pnorm((Z-PSI)/SE.PSI)%*% diag(-beta.c, ncol = length(beta.c))
+#    objF$cov.unscaled.is<-crossprod(X.is)
+#browser()    
     if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF

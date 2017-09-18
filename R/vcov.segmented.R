@@ -16,7 +16,7 @@ vcov.segmented<-function (object, var.diff=FALSE, ...){
         v<-summary.segmented(object, var.diff=TRUE, correlation = FALSE, ...)$cov.var.diff
         } else {
           so<-summary.segmented(object, var.diff=FALSE, correlation = FALSE, ...)
-          v<-so$sigma^2 * so$cov.unscaled
+          v<-so$sigma^2 * so$cov.unscaled #object$cov.unscaled.is
           }
         }
       return(v)
