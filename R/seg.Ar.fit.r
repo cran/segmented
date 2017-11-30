@@ -48,7 +48,12 @@ dpmax<-function(x,y,pow=1){
 #          mfExt[nomiV[i]] <- V[,i]
 #        }
 #        obj <- suppressWarnings(eval(call.ok, envir=mfExt))
-        obj <- suppressWarnings(eval(call.ok))
+        obj <- suppressWarnings(try(eval(call.ok), silent=TRUE))
+        #a volte con i valori iniziali arima() )non converge!! Quindi provo senza init
+        if(class(obj)=="try-error")  {
+             call.ok$init=NULL
+             obj <- suppressWarnings(eval(call.ok))
+        }
         call.ok$init=quote(coef(obj))
         #mio.init<- c(0,obj$coef[-1])
         dev.old<-dev.new
@@ -83,8 +88,7 @@ dpmax<-function(x,y,pow=1){
         psi.values[[length(psi.values) + 1]] <- psi.old <- psi
  #       if(it>=old.it.max && h<1) H<-h
         psi <- psi.old + h*gamma.c/beta.c
-        if(!is.null(digits)) 
-        psi<-round(psi, digits)
+        if(!is.null(digits)) psi<-round(psi, digits)
         PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
         #check if psi is admissible..
         a <- apply((Z <= PSI), 2, all) #prima era solo <

@@ -116,9 +116,13 @@ dpmax<-function(x,y,pow=1){
 #    call.ok <- update(obj, formula = Fo,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
 #    call.noV <- update(obj, formula = Fo.noV,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
     XREG<-eval(obj$call$xreg)
-    nomiXREG<-setdiff(names(obj$coef),c("intercept", paste("ar",1:100,sep=""), paste("ma",1:100,sep="")))
-    XREG<-matrix(XREG, ncol=length(nomiXREG))
-    colnames(XREG)<-nomiXREG
+    if(!is.null(XREG)){
+        nomiXREG<-setdiff(names(obj$coef),c("intercept", paste("ar",1:100,sep=""), paste("ma",1:100,sep=""), 
+                    paste("sma",1:100,sep=""), paste("sar",1:100,sep="")))
+        if(length(nomiXREG) != ncol(XREG)) stop("ncol(XREG) does not match names of regression coefficients")
+        XREG<-matrix(XREG, ncol=length(nomiXREG))
+        colnames(XREG)<-nomiXREG
+    }
     mio.init<-mio.init.noV<-NULL
     call.ok <- update(obj,  xreg = cbind(XREG,U,V), init=mio.init, evaluate=FALSE) #, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
     call.noV <- update(obj, xreg = cbind(XREG,U), init=mio.init.noV,  evaluate=FALSE) #, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)

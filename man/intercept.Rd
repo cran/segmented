@@ -9,7 +9,7 @@ Computes the intercepts of each `segmented' relationship in the fitted model.
 }
 \usage{
 intercept(ogg, parm, rev.sgn = FALSE, var.diff=FALSE,
-    digits = max(3, getOption("digits") - 3))
+    digits = max(4, getOption("digits") - 2))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,7 +30,7 @@ the segmented variable whose intercepts have to be computed. If missing all the 
   %logical. If \code{var.diff=TRUE} and there is a single segmented variable, the computed standard errors 
   %  are based on a sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.
     } 
- \item{digits}{controls number of digits in output.}
+ \item{digits}{controls number of digits in the returned output.}
  }
 
 \details{

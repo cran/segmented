@@ -6,9 +6,16 @@
 
 
 ===============
+version 0.5-3.0
+===============
+* aapc() introduced. The function computes the 'average annual percent change' to summarize piecewise linear trends (thanks to Yuchen Qin for his input).
+* plot.segmented() now accepts arguments 'cex.axis' and 'cex.lab' (thanks to Matthew Birk for his input).
+* bug fixed: segmented.Arima didn't work for arima fits including a seasonal component (thanks to Claudio Agostinelli for reportig the bug).
+
+
+===============
 version 0.5-2.2
 ===============
-
 * When there is a single covariate in the starting (g)lm, seg.Z can be missing when calling the segmented methods.
 * bug fixed: plot.segmented(.., link=FALSE) did not work correctly (sometimes it returned an error) for glm fits with multiple breakpoints.
 Weights were not handled appropriately by segmented.lm.
@@ -19,7 +26,7 @@ version 0.5-2.1
 ===============
 * pscore.test() now works also for "glm" fits
 * plot.segmented() now plots the partial residuals as "component + working residuals" (rather than Pearson residuals, relevant only for glm fits).
-* segmented.default() now works for fits obtained by MASS::rlm().
+* segmented.default() now is expected to work for fits obtained by MASS::rlm().
 
 
 ===============

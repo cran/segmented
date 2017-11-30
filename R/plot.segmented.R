@@ -71,11 +71,13 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     ylabs <- opz$ylab
     if (length(ylabs) <= 0)
         ylabs <- paste("Effect  of ", term, sep = " ")
+    
+    
     #a <- intercept(x, term, gap = show.gap)[[1]][, "Est."]
-    a <- intercept(x, term)[[1]][, "Est."]
+    a <- intercept(x, term, digits=20)[[1]][, "Est."]
     #Poiche' intercept() restituisce quantita' che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
     if(!interc && ("(Intercept)" %in% names(coef(x)))) a<- a-coef(x)["(Intercept)"]
-    b <- slope(x, term)[[1]][, "Est."]
+    b <- slope(x, term, digits=20)[[1]][, "Est."]
     
     #id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE) #confondeva "psi1.x","psi1.neg.x"
     id <- f.U(rownames(x$psi), term)
@@ -148,6 +150,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
             plot(as.vector(m[, c(1, 3)]), as.vector(m[, c(2,
                 4)]), type = "n", xlab = xlabs, ylab = ylabs,
                 main = opz$main, sub = opz$sub, 
+                cex.axis = opz$cex.axis,
+                cex.lab = opz$cex.lab,
                 xlim = opz$xlim,
                 ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim )
         if(dens.rug){

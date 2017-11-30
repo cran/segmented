@@ -35,16 +35,11 @@ segmented(obj, seg.Z, psi, control = seg.control(),
 \arguments{
   \item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression 
   fit may be supplied (see 'Details').}
-  \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1+x2}, indicating the 
-      (continuous) explanatory variables having segmented relationships with the response. 
-      Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or even \code{seg.Z=~sqrt(x1)}, 
+  \item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} (a "lm" or "glm" fit) includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or even \code{seg.Z=~sqrt(x1)}, 
       or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. 
-      It can be missing when \code{obj} ("lm" or "glm" fit) includes only one covariate which is taken as segmented variable.
+      
                }
-  \item{psi}{ named list of vectors. The names have to match the variables in the \code{seg.Z} argument.
-      Each vector includes starting values for the break-point(s) for the corresponding
-      variable in \code{seg.Z}. If \code{seg.Z} includes only a variable, \code{psi} may be a numeric vector or 
-      even missing (and the median of the segmented variable is used as a starting value). 
+  \item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. 
       A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
       \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
       

@@ -7,7 +7,7 @@
 }
 \usage{
 slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, 
-    var.diff=FALSE, APC=FALSE, digits = max(3, getOption("digits") - 3))
+    var.diff=FALSE, APC=FALSE, digits = max(4, getOption("digits") - 2))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,7 +22,7 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   \item{APC}{logical. If \code{APC=TRUE} the `annual percent changes', i.e. \eqn{100\times(\exp(\beta)-1)}{100*(exp(b)-1)}, 
   are computed for each interval (\eqn{\beta}{b} is the slope). Only point estimates and confidence intervals are returned.
   } 
-\item{digits}{controls number of digits printed in output.}
+\item{digits}{controls number of digits in the returned output.}
 }
 \details{
   To fit broken-line relationships, \code{segmented} uses a parameterization whose coefficients are not 
@@ -36,9 +36,6 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
 \references{
     Muggeo, V.M.R. (2003) Estimating regression models with unknown break-points. 
     \emph{Statistics in Medicine} \bold{22}, 3055--3071.
-    
-    Muggeo, V.M.R. (2010) Comment on `Estimating average annual per cent change in trend analysis' by Clegg et al., 
-    Statistics in Medicine; 28, 3670-3682. \emph{Statistics in Medicine}, \bold{29}, 1958--1960.
     }
 \author{Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
 \note{The returned summary is based on limiting Gaussian distribution for the model parameters involved 

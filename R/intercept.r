@@ -1,5 +1,5 @@
 intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, 
-    digits = max(3, getOption("digits") - 3)){
+    digits = max(4, getOption("digits") - 2)){
 #corregge in caso di no model intercept -- CHE VOLEVO DIRE?? #forse che adesso funziona se nel modello non c'e' l'interc.
 #--
         f.U<-function(nomiU, term=NULL){

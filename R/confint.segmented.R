@@ -1,5 +1,5 @@
 `confint.segmented` <-
-function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, getOption("digits") - 3), ...){
+function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(4, getOption("digits") - 1), ...){
 #--
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -61,7 +61,7 @@ function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, digits=max(3, 
                 #m<-m[nrow(m):1,]
                 rownames(m)<-rev(rownames(m))
                 }
-            rr[[length(rr)+1]]<-signif(m,digits)
+            rr[[length(rr)+1]]<- signif(m,digits)
             } #end loop i (ogni variabile segmented)
         names(rr)<-nomeZ
         return(rr)

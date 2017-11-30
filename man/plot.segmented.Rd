@@ -40,7 +40,7 @@
   \item{transf}{ A possible function to convert the fitted values before plotting. It is only effective 
     if the fitted values refer to a linear or a generalized linear model (on the link scale) \emph{and} \code{res=FALSE}.}
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
-  can be vectors, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `xlim' and 
+  can be vectors, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and 
   `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}).
   }
 }

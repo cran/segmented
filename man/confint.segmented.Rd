@@ -7,7 +7,7 @@
 }
 \usage{
 \method{confint}{segmented}(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE,
-        digits=max(3, getOption("digits") - 3), ...)
+        digits=max(4, getOption("digits") - 1), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,7 +19,7 @@
     therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.}
   \item{var.diff}{logical. If \code{var.diff=TRUE} and there is a single segmented variable, the standard error is 
     based on sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.}
-  \item{digits}{controls the number of digits to print when printing the output. }
+  \item{digits}{controls the number of digits to print when returning the output. }
   \item{\dots}{additional parameters }
 }
 \details{

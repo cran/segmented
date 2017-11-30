@@ -1,6 +1,6 @@
 `slope` <-
 function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
-      digits = max(3, getOption("digits") - 3)){
+      digits = max(4, getOption("digits") - 2)){
 #--
 
         f.U<-function(nomiU, term=NULL){
@@ -70,13 +70,13 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
             psii<- ogg$psi[nomiPsi , "Est."] 
             nomiU<-grep(paste(".", nomeZ[i], sep="") , ogg$nameUV$U, value=TRUE)
             #cof<-coef(ogg)[nomiU]
-            id.cof.U<- match(nomiU, names(ogg$coefficients))
+            id.cof.U<- match(nomiU, names(ogg$coef)) #prima era names(ogg$coefficients)
             index[[i]]<-c(match(nomeZ[i],nomi), id.cof.U)
             
             
             }
         Ris<-list()   
-        digits <- max(3, getOption("digits") - 3)
+        #digits <- max(3, getOption("digits") - 3)
         rev.sgn<-rep(rev.sgn, length.out=length(nomeZ))
         
 #         transf=c("x","1")
@@ -117,7 +117,7 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
             nomeT<-if("lm"%in%class(ogg)) "t value" else "z value"
             dimnames(ris)<-list(paste("slope", 1:nrow(ris), sep=""),c("Est.","St.Err.",nomeT,cin[1],cin[2]))
             if(APC) ris<-100*(exp(ris[,c(1,4,5)])-1)
-            Ris[[nomeZ[i]]]<-signif(ris,digits)
+            Ris[[nomeZ[i]]]<- signif(ris,digits)
             
                 } #end loop i
             #if(!missing(parm)){
