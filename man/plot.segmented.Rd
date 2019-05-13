@@ -8,7 +8,7 @@
 }
 \usage{
 \method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, 
-    link=TRUE, res.col=1, rev.sgn=FALSE, const=0, shade=FALSE, rug=TRUE, 
+    link=TRUE, res.col=1, rev.sgn=FALSE, const=0, shade=FALSE, rug=!add, 
     dens.rug=FALSE, dens.col = grey(0.8), transf=I, ...)
       }
 %- maybe also 'usage' for other objects documented here.
@@ -30,8 +30,8 @@
   \item{const}{ constant to add to each fitted segmented relationship (on the scale of the linear predictor) before plotting.}
   \item{shade}{if \code{TRUE} and \code{conf.level>0} it produces shaded regions (in grey color) for the pointwise confidence 
   intervals embracing the fitted segmented line. }
-  \item{rug}{when \code{TRUE} (default) then the covariate values are displayed as a rug plot
- at the foot of the plot.}
+  \item{rug}{when \code{TRUE} the covariate values are displayed as a rug plot
+ at the foot of the plot. Default is to \code{!add}.}
   \item{dens.rug}{when \code{TRUE} then smooth covariate distribution is plotted on the x-axis.}
   \item{dens.col}{if \code{dens.rug=TRUE}, it means the colour to be used to plot the density.}
 %  \item{show.gap}{ when \code{FALSE} the (possible) gaps between the fitted lines at the estimated breakpoints

@@ -1,8 +1,20 @@
 *************************************
-*				    *
-*	Changes in segmented	    *
-*				    *
+*				                            *
+*	Changes in segmented	            *
+*				                            *
 *************************************
+
+
+
+===============
+version 0.5-4.0
+===============
+* confint.segmented() now computes breakpoint confidence intervals via the (smoothed) Score or Gradient statistic, see new argument 'method' in confint.segmented().
+* if segmented does not converge (since the estimated psi leaves only 1 datum on its left/right) the last psi estimate is printed as a message. 
+* argument keep.class added in segmented.default() 
+* argument 'rug' defaults to '!add' in plot.segmented()
+* confint.segmented now returns a matrix (rather than a list)
+* bug fixed: plot.segmented() did not handle appropriatly arguments cex.lab and cex.axis. segmented methods did not terminate appropriately when automatic selection of number of breakpoints was performed (i.e. 'stop.if.error=FALSE'). davies.test() and segmented.glm() required 'seg.Z' even if there was just one covariate in the starting model and it could be missing (thanks to Lein E. Pardo for reporting that). Some minor bug fixes (related to argument 'data' and one-sided alternative) in pscore.test (thanks to Karista Hudelson for reporting). 
 
 
 ===============
@@ -16,7 +28,7 @@ version 0.5-3.0
 ===============
 version 0.5-2.2
 ===============
-* When there is a single covariate in the starting (g)lm, seg.Z can be missing when calling the segmented methods.
+* when there is a single covariate in the starting (g)lm, seg.Z can be missing when calling the segmented methods.
 * bug fixed: plot.segmented(.., link=FALSE) did not work correctly (sometimes it returned an error) for glm fits with multiple breakpoints.
 Weights were not handled appropriately by segmented.lm.
 
@@ -120,7 +132,7 @@ version 0.3-1.0
 ===============
 * broken.line() now accepts arbitrary values to compute predictions for segmented relationships in the model; it also returns relevant standard errors (new argument se.fit).
 * plot.segmented() now accepts also 'ylim' and 'xlim' to set limits on the new produced plot (thanks to Samantha Tyner for suggesting that).
-* the 'aic' component in the objected returned by segmented.glm() was not based on the correct number of degrees of freedom (it missed "2 times n.breaks"; this error was incidentally introduced in version 0.2-9.1) Thanks to Roland Fuﬂ for reporting.
+* the 'aic' component in the objected returned by segmented.glm() was not based on the correct number of degrees of freedom (it missed "2 times n.breaks"; this error was incidentally introduced in version 0.2-9.1) Thanks to Roland Fu? for reporting.
 * segmented.lm(), segmented.glm(), and davies.test() were not working for starting linear models having 'offset' as an argument (and not in the formula).
 * A bug fixed in davies.test() (relevant only for covariates with some inflation at the boundaries)
 * The (possible) "weights" argument in the starting model was not correctly handled (thanks to Brian Jessop for reporting)
@@ -189,7 +201,7 @@ in seg.control().
 ===============
 version 0.2-8.4
 ===============
-* Some bugs fixed: segmented.glm() fitted a simple "lm" (and not "glm") (the error was introduced incidentally from 0.2-8.3, thanks to VÈronique Storme for finding the error); broken.line() was not working for models without intercept and a null left slope; intercept() was not working correctly with multiple segmented variables.
+* Some bugs fixed: segmented.glm() fitted a simple "lm" (and not "glm") (the error was introduced incidentally from 0.2-8.3, thanks to Veronique Storme for finding the error); broken.line() was not working for models without intercept and a null left slope; intercept() was not working correctly with multiple segmented variables.
 
 
 ===============

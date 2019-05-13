@@ -178,13 +178,24 @@ daviesGLM<-function(y, z, xreg, weights, offs, values=NULL, k, list.glm, alterna
     }
 #-------------------------------------------------------------------------------
     if(!inherits(obj, "lm")) stop("A 'lm', 'glm', or 'segmented' model is requested")
-    if(class(seg.Z)!="formula") stop("'seg.Z' should be an one-sided formula")
+
+    if(missing(seg.Z)){
+        if(inherits(obj, "segmented") && length(obj$nameUV$Z)==1) seg.Z<- as.formula(paste("~", obj$nameUV$Z ))
+        if(!inherits(obj, "segmented") && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
+        } else {
+        if(class(seg.Z)!="formula") stop("'seg.Z' should be an one-sided formula")
+        }
+
     if(k<=1) stop("k>1 requested! k>=10 is recommended")
     if(k<10) warnings("k>=10 is recommended")
     alternative <- match.arg(alternative)
     type        <- match.arg(type)
     #if(length(all.vars(seg.Z))>1) warning("multiple segmented variables ignored in 'seg.Z'",call.=FALSE)
-    if(length(all.vars(seg.Z))>1)  stop("Only a single segmented variable can be specified in 'seg.Z' ")
+
+    
+    name.Z <- all.vars(seg.Z)
+    if(length(name.Z)>1) stop("Only a single segmented variable can be specified in 'seg.Z' ")
+
     isGLM<-"glm"%in%class(obj)
     Call<-mf<-obj$call
     mf$formula<-formula(obj)

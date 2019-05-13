@@ -20,16 +20,16 @@ segmented(obj, seg.Z, psi, control = seg.control(),
     model = TRUE, ...)
 
 \method{segmented}{default}(obj, seg.Z, psi, control = seg.control(),
-    model = TRUE, ...)
+    model = TRUE, keep.class=FALSE, ...)
 
 \method{segmented}{lm}(obj, seg.Z, psi, control = seg.control(),
-    model = TRUE, ...)
+    model = TRUE, keep.class=FALSE, ...)
 
 \method{segmented}{glm}(obj, seg.Z, psi, control = seg.control(),
-    model = TRUE, ...)
+    model = TRUE, keep.class=FALSE, ...)
 
 \method{segmented}{Arima}(obj, seg.Z, psi, control = seg.control(),
-    model = TRUE, ...)
+    model = TRUE, keep.class=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -43,10 +43,11 @@ segmented(obj, seg.Z, psi, control = seg.control(),
       A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
       \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
       
-  \item{control}{ a list of parameters for controlling the fitting process.
+\item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
-  \item{model}{ logical value indicating if the model.frame should be returned.}
-  \item{\dots}{ optional arguments. }
+\item{model}{logical value indicating if the model.frame should be returned.}
+\item{keep.class}{logical value indicating if the final fit returned by \code{segmented.default} should keep the class '\code{segmented}' (along with the class of the original fit \code{obj}). Ignored by the segmented methods. }
+\item{\dots}{ optional arguments. }
 }
 \details{
   Given a linear regression model (usually of class "lm" or "glm"), segmented tries to estimate

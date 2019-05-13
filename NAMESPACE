@@ -1,3 +1,4 @@
+import(splines)
 importFrom("grDevices", "grey")
 importFrom("graphics", "abline", "axis", "box", "lines", "matlines",
              "matplot", "par", "plot", "points", "polygon", "segments")
@@ -8,7 +9,7 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "model.weights", "na.omit", "pnorm", "predict",
              "printCoefmat", "pt", "qnorm", "qt", "quantile", "resid",
              "residuals", "runif", "summary.glm", "summary.lm", "update",
-             "update.formula", "vcov", "weights")
+             "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun")
 importFrom("utils", "flush.console")
 importFrom("stats", "complete.cases")
 importFrom("stats", "add1")

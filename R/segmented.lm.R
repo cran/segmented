@@ -1,5 +1,5 @@
 `segmented.lm` <-
-function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
+function(obj, seg.Z, psi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
     n.Seg<-1
     if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
     if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
@@ -348,8 +348,10 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     isNAcoef<-any(is.na(objF$coefficients))
     
     if(isNAcoef){
-      if(stop.if.error) {stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
-        call. = FALSE)
+      if(stop.if.error) {
+       cat("breakpoint estimate(s):", as.vector(psi),"\n")
+       stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
+         call. = FALSE)
           } else {
         warning("some estimate is NA: too many breakpoints? 'var(hat.psi)' cannot be computed \n ..returning a 'lm' model", call. = FALSE)
         Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
@@ -400,7 +402,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         }
     #initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a.ok, SIMPLIFY = TRUE))
     initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi[nomiFINALI], a.ok[a.ok!=0], SIMPLIFY = TRUE))
-    ris.psi[,1]<-initial
+    if(opz$stop.if.error)  ris.psi[,1]<-initial 
     #psi <- cbind(initial, psi, sqrt(vv))
     #rownames(psi) <- colnames(Cov)[id]
     

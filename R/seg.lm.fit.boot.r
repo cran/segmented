@@ -98,6 +98,7 @@ extract.psi<-function(lista){
                 o<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
                 count.random<-count.random+1
               }
+            #se il modello e' stato stimato controlla se la soluzione e' migliore..
             if(is.list(o)){
               if(!"coefficients"%in%names(o$obj)) o<-extract.psi(o)
               all.est.psi[k,]<-o$psi
@@ -107,14 +108,29 @@ extract.psi<-function(lista){
               all.selected.psi[k,] <- est.psi0
               all.selected.ss[k]<-o0$SumSquares.no.gap #min(c(o$SumSquares.no.gap, o0$SumSquares.no.gap))
               }
+            #la stima selezionata e' est.psi0
             if(visualBoot) {
               flush.console()
               spp <- if (k < 10) "" else NULL
               cat(k, spp, "", formatC(o0$SumSquares.no.gap, 3, format = "f"), "\n")
               }
             } #end n.boot
+#browser()      
+      
+      
       all.selected.psi<-rbind(est.psi00,all.selected.psi)
       all.selected.ss<-c(ss00, all.selected.ss)
+
+      SS.ok<-min(all.selected.ss)
+      id.accept<- ((abs(all.ss-SS.ok)/SS.ok )<= 0.05)
+      psi.mean<-apply(all.est.psi[id.accept,,drop=FALSE], 2, mean)
+      
+#      est.psi0<-psi.mean
+#      #devi ristimare il modello con psi.mean
+#      PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+#      o0<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
+
+      
 
       ris<-list(all.selected.psi=drop(all.selected.psi),all.selected.ss=all.selected.ss, all.psi=all.est.psi, all.ss=all.ss)
 

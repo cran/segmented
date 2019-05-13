@@ -44,7 +44,7 @@ y<-rpois(100,exp(2+1.8*pmax(z-.6,0)))
 o<-glm(y~z,family=poisson)
 o.seg<-segmented(o,seg.Z=~z,psi=.5)
 \dontrun{plot(z,y)}
-\dontrun{points(z,broken.line(o.seg,link=FALSE)$fit,col=2)} #just to illustrate, use plot.segmented
+\dontrun{points(z,broken.line(o.seg,link=FALSE)$fit,col=2)} #ok, but use plot.segmented()!
     }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

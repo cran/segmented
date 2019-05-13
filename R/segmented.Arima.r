@@ -6,7 +6,7 @@
 #o2<-ss(o, seg.Z=~age, psi=41, control=seg.control(display=FALSE, n.boot=0))
 
 segmented.Arima<-
-function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
+function(obj, seg.Z, psi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
 #Richiede control$f.obj that should be a string like "sum(x$residuals^2)" or "x$dev"
 #-----------------
 dpmax<-function(x,y,pow=1){
@@ -117,6 +117,7 @@ dpmax<-function(x,y,pow=1){
 #    call.noV <- update(obj, formula = Fo.noV,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
     XREG<-eval(obj$call$xreg)
     if(!is.null(XREG)){
+        if((""%in%colnames(XREG)) || (" "%in%colnames(XREG))) stop("all columns in the matrix 'xreg' of 'obj' should be named.. ")
         nomiXREG<-setdiff(names(obj$coef),c("intercept", paste("ar",1:100,sep=""), paste("ma",1:100,sep=""), 
                     paste("sma",1:100,sep=""), paste("sar",1:100,sep="")))
         if(length(nomiXREG) != ncol(XREG)) stop("ncol(XREG) does not match names of regression coefficients")
@@ -287,7 +288,7 @@ dpmax<-function(x,y,pow=1){
         }
 #    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a.ok, SIMPLIFY = TRUE))
     initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi[nomiFINALI], a.ok[a.ok!=0], SIMPLIFY = TRUE))
-    ris.psi[,1]<-initial
+    if(opz$stop.if.error)  ris.psi[,1]<-initial
 
 #    a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
 #    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a))

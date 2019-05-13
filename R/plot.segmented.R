@@ -1,6 +1,6 @@
 plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, 
     interc=TRUE, link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, 
-    shade=FALSE, rug=TRUE, dens.rug=FALSE, dens.col = grey(0.8),
+    shade=FALSE, rug=!add, dens.rug=FALSE, dens.col = grey(0.8),
     transf=I, ...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
         f.U<-function(nomiU, term=NULL){
@@ -50,30 +50,38 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if (! isTRUE(term %in% x$nameUV$Z)) stop("invalid `term'")
     }
     opz <- list(...)
-    cols <- opz$col
-    if (length(cols) <= 0)
-        cols <- 1
-    lwds <- opz$lwd
-    if (length(lwds) <= 0)
-        lwds <- 1
-    ltys <- opz$lty
-    if (length(ltys) <= 0)
-        ltys <- 1
-    cexs <- opz$cex
-    if (length(cexs) <= 0)
-        cexs <- 1
-    pchs <- opz$pch
-    if (length(pchs) <= 0)
-        pchs <- 1
-    xlabs <- opz$xlab
-    if (length(xlabs) <= 0)
-        xlabs <- term
-    ylabs <- opz$ylab
-    if (length(ylabs) <= 0)
-        ylabs <- paste("Effect  of ", term, sep = " ")
-    
-    
-    #a <- intercept(x, term, gap = show.gap)[[1]][, "Est."]
+    cols<- if("col"%in% names(opz)) opz$col else 1
+    lwds<- if("lwd"%in% names(opz)) opz$lwd else 1
+    ltys<- if("lty"%in% names(opz)) opz$lty else 1
+    cexs<- if("cex"%in% names(opz)) opz$cex else 1
+    pchs<- if("pch"%in% names(opz)) opz$pch else 1
+    ylabs<- if("ylab"%in% names(opz)) opz$ylab else paste("Effect  of ", term, sep = " ")
+    xlabs<- if("xlab"%in% names(opz)) opz$xlab else term
+
+#    cols <- opz$col
+#    if (length(cols) <= 0) cols <- 1
+#    lwds <- opz$lwd
+#    if (length(lwds) <= 0)
+#        lwds <- 1
+#    ltys <- opz$lty
+#    if (length(ltys) <= 0)
+#        ltys <- 1
+#    
+#    cexs <- opz$cex
+#    if (length(cexs) <= 0)
+#        cexs <- 1
+#    pchs <- opz$pch
+#    if (length(pchs) <= 0)
+#        pchs <- 1
+#    xlabs <- opz$xlab
+#    if (length(xlabs) <= 0)
+#        xlabs <- term
+#    ylabs <- opz$ylab
+#    if (length(ylabs) <= 0)
+#        ylabs <- paste("Effect  of ", term, sep = " ")
+#    
+#    
+#    #a <- intercept(x, term, gap = show.gap)[[1]][, "Est."]
     a <- intercept(x, term, digits=20)[[1]][, "Est."]
     #Poiche' intercept() restituisce quantita' che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
     if(!interc && ("(Intercept)" %in% names(coef(x)))) a<- a-coef(x)["(Intercept)"]
@@ -215,6 +223,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
             plot(rr, type = "n", xlab = xlabs, ylab = ylabs,
                 main = opz$main, sub = opz$sub, 
                 xlim = opz$xlim,
+                cex.axis = opz$cex.axis,
+                cex.lab = opz$cex.lab,
                 #ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim)
                 ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, do.call(transf, list(m[, c(2,4)])), enlarge=dens.rug) else opz$ylim)
         if(dens.rug){

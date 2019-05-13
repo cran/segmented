@@ -15,10 +15,10 @@ davies.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   by \code{segmented} can be set (e.g. if interest lies in testing for an additional breakpoint).}
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1}, indicating the 
       (continuous) segmented variable being tested. Only a single variable may be tested and an
-      error is printed when \code{seg.Z} includes two or more terms. }
+      error is printed when \code{seg.Z} includes two or more terms. \code{seg.Z} can be omitted if i)\code{obj} is a segmented fit with a single segmented covariate (and that variable is taken), or ii)if it is a "lm" or "glm" fit with a single covariate (and that variable is taken)}
   \item{k}{ number of points where the test should be evaluated. See Details. }
   \item{alternative}{ a character string specifying the alternative hypothesis. }
-  \item{type}{ the test statistic to be used (only for GLM, default to lrt. 
+  \item{type}{ the test statistic to be used (only for GLM, default to lrt). 
   Ignored if \code{obj} is a simple linear model.}
   \item{values}{ optional. The evaluation points where the Davies approximation is computed. See Details for default values.}
   \item{dispersion}{ the dispersion parameter for the family to be used to compute the test statistic.
@@ -87,7 +87,7 @@ Davies, R.B. (2002) Hypothesis testing when a nuisance parameter is present only
 %%\section{Warning }{Currently \code{davies.test} does not work if the fitted model \code{ogg}
 %%  does not include the segmented variable \code{term} being tested.}
 
-\seealso{See also \code{\link{pscore.test}} which is more power, especially when  the signal-to-noise ratio is low. }
+\seealso{See also \code{\link{pscore.test}} which is more powerful, especially when the signal-to-noise ratio is low. }
 
 \examples{
 \dontrun{

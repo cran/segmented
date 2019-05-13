@@ -6,7 +6,7 @@
 #o2<-ss(o, seg.Z=~age, psi=41, control=seg.control(display=FALSE, n.boot=0))
 
 segmented.default<-
-function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
+function(obj, seg.Z, psi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
 #Richiede control$f.obj that should be a string like "sum(x$residuals^2)" or "x$dev"
 #-----------------
 dpmax<-function(x,y,pow=1){
@@ -24,6 +24,7 @@ dpmax<-function(x,y,pow=1){
 
 #-----------
     n.Seg<-1
+    if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
     if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
     if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
     if(is.list(psi)){
@@ -314,8 +315,10 @@ dpmax<-function(x,y,pow=1){
     objF$offset<- obj0$offset
     isNAcoef<-any(is.na(objF$coefficients))
     if(isNAcoef){
-      if(stop.if.error) {stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
-        call. = FALSE)} else {
+      if(stop.if.error) {
+        cat("breakpoint estimate(s):", as.vector(psi),"\n")
+        stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
+          call. = FALSE)} else {
         warning("some estimate is NA: too many breakpoints? 'var(hat.psi)' cannot be computed \n ..returning a 'lm' model", call. = FALSE)
         Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         objF <- if((opz$constr %in% 1:2) && class(obj0)=="rq") {update(obj0, formula = Fo,  R=R.noV, r=r, method="fnc", evaluate=TRUE, data = mfExt) 
@@ -385,7 +388,7 @@ dpmax<-function(x,y,pow=1){
         }
 #    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a.ok, SIMPLIFY = TRUE))
     initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi[nomiFINALI], a.ok[a.ok!=0], SIMPLIFY = TRUE))
-    ris.psi[,1]<-initial
+    if(opz$stop.if.error)  ris.psi[,1]<-initial
     objF$rangeZ <- rangeZ
     objF$psi.history <- psi.values
     objF$psi <- ris.psi
@@ -399,6 +402,7 @@ dpmax<-function(x,y,pow=1){
     objF$orig.call<-orig.call
     if (model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
     if(n.boot>0) objF$seed<-employed.Random.seed
+    if(keep.class) class(objF) <- c("segmented", class(obj0))
 #    class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"

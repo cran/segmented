@@ -1,5 +1,5 @@
 `segmented.glm` <-
-function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
+function(obj, seg.Z, psi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
     n.Seg<-1
     if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
     if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
@@ -320,8 +320,10 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
 
 
     if(isNAcoef){
-      if(stop.if.error) {stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
-        call. = FALSE)} else {
+      if(stop.if.error) {
+        cat("breakpoint estimate(s):", as.vector(psi),"\n")
+        stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
+          call. = FALSE)} else {
         warning("some estimate is NA: too many breakpoints? 'var(hat.psi)' cannot be computed \n ..returning a 'lm' model", call. = FALSE)
         Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         objF <- update(obj0, formula = Fo,  evaluate=TRUE, data = mfExt)
@@ -375,7 +377,7 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, ...) {
         }
 #    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a.ok, SIMPLIFY = TRUE))
     initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi[nomiFINALI], a.ok[a.ok!=0], SIMPLIFY = TRUE))
-    ris.psi[,1]<-initial
+    if(opz$stop.if.error)  ris.psi[,1]<-initial
     objF$rangeZ <- rangeZ
     objF$psi.history <- psi.values
     objF$psi <- ris.psi

@@ -7,14 +7,14 @@ Segmented relationships in regression models with breakpoints / changepoints est
 }
 \description{
 Estimation and Inference of Regression Models with piecewise linear relationships having a
-fixed number of break-points.
+fixed number of break-points. The estimation method is described in Muggeo (2003) <doi: 10.1002/sim.1545>.
 }
 \details{
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.5-3.0\cr
-Date: \tab 2017-11-22\cr
+Version: \tab 0.5-4.0\cr
+Date: \tab 2019-05-10\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)
@@ -31,6 +31,8 @@ License: \tab GPL\cr
  in \emph{general} regression models where specific methods do not exist. Examples include quantile and Cox regressions. See 
  examples in \code{\link{segmented.default}}.\cr
  
+ Hypothesis testing (about the existence of the breakpoint) and confidence intervals are performed via appropriate methods and functions.
+ 
  A tentative approach to deal with unknown number of breakpoints
  is also provided, see option \code{stop.if.error} in \code{\link{seg.control}}.
 }
@@ -38,6 +40,9 @@ License: \tab GPL\cr
 Vito M.R. Muggeo <vito.muggeo@unipa.it>
   }
 \references{
+
+Muggeo, V.M.R. (2017) Interval estimation for the breakpoint in segmented regression: a smoothed score-based approach. 
+\emph{Australian & New Zealand Journal of Statistics} \bold{59}, 311--322.
 
 Muggeo, V.M.R. (2016) Testing with a nuisance parameter present only under the alternative: a score-based approach with application to segmented modelling. \emph{J of Statistical Computation and Simulation} \bold{86}, 3059--3067.
 
