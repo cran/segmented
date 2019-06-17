@@ -7,7 +7,7 @@
 }
 \usage{
 slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, 
-    var.diff=FALSE, APC=FALSE, digits = max(4, getOption("digits") - 2))
+    APC=FALSE, .vcov=NULL, ..., digits = max(4, getOption("digits") - 2))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,11 +17,10 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled 
   otherwise. When \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
     therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.}
-  \item{var.diff}{logical. If \code{var.diff=TRUE} and there is a single segmented variable, the computed standard errors 
-    are based on a sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.} 
   \item{APC}{logical. If \code{APC=TRUE} the `annual percent changes', i.e. \eqn{100\times(\exp(\beta)-1)}{100*(exp(b)-1)}, 
-  are computed for each interval (\eqn{\beta}{b} is the slope). Only point estimates and confidence intervals are returned.
-  } 
+  are computed for each interval (\eqn{\beta}{b} is the slope). Only point estimates and confidence intervals are returned.}
+  \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov(ogg)}.}
+  \item{...}{ Further arguments to be passed on to \code{vcov.segmented}, such as \code{var.diff} and \code{is}. See Details in \code{\link{vcov.segmented}} and \code{\link{summary.segmented}}.}
 \item{digits}{controls number of digits in the returned output.}
 }
 \details{

@@ -9,7 +9,8 @@
 \usage{
 \method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, 
     link=TRUE, res.col=1, rev.sgn=FALSE, const=0, shade=FALSE, rug=!add, 
-    dens.rug=FALSE, dens.col = grey(0.8), transf=I, ...)
+    dens.rug=FALSE, dens.col = grey(0.8), transf=I, isV=FALSE, is=FALSE, 
+    var.diff=FALSE, p.df="p", .vcov=NULL, ...)
       }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -39,9 +40,14 @@
 %      as the gap coefficients are always set to zero in the fitted model.}
   \item{transf}{ A possible function to convert the fitted values before plotting. It is only effective 
     if the fitted values refer to a linear or a generalized linear model (on the link scale) \emph{and} \code{res=FALSE}.}
+  \item{isV}{logical value (to be passed to \code{\link{broken.line}}). Ignored if \code{conf.level=0}}
+  \item{is}{logical value (to be passed to \code{\link{broken.line}}) indicating if the covariance matrix based on the induced smoothing should be used. Ignored if \code{conf.level=0}}
+  \item{var.diff}{logical value to be passed to \code{\link{summary.segmented}} to compute dthe standard errors of fitted values (if \code{conf.level>0}).}
+  \item{p.df}{ degrees of freedom when \code{var.diff=TRUE}, see \code{\link{summary.segmented}}}
+  \item{.vcov}{ The \emph{full} covariance matrix of estimates to be used when \code{conf.level>0}. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov.segmented}.}
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
   can be vectors, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and 
-  `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}).
+  `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}); \code{col.shade} for the shaded regions (provided that \code{shade=TRUE} and \code{conf.level>0}).
   }
 }
 \details{
@@ -67,7 +73,7 @@ when \code{link=FALSE}, \code{res=TRUE}, and the fitted model includes an offset
 %
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}
-\seealso{ \code{\link{lines.segmented}} to add the estimated breakpoints on the current plot. 
+\seealso{ \code{\link{segmented}} to fit the model, \code{\link{lines.segmented}} to add the estimated breakpoints on the current plot. 
 \code{\link{points.segmented}} to add the joinpoints of the segmented relationship.
 \code{\link{predict.segmented}} to compute standard errors and confidence intervals for predictions from a 
 "segmented" fit. }
@@ -79,13 +85,17 @@ o<-glm(y~z,family=poisson)
 o.seg<-segmented(o, ~z) #single segmented covariate and one breakpoint:'psi' can be omitted
 par(mfrow=c(2,1))
 plot(o.seg, conf.level=0.95, shade=TRUE)
-points(o.seg, link=FALSE, col=2)
+points(o.seg, link=TRUE, col=2)
 ## new plot
 plot(z,y)
 ## add the fitted lines using different colors and styles..
 plot(o.seg,add=TRUE,link=FALSE,lwd=2,col=2:3, lty=c(1,3))
-lines(o.seg,col=2,pch=19,bottom=FALSE,lwd=2)
+lines(o.seg,col=2,pch=19,bottom=FALSE,lwd=2) #for the CI for the breakpoint
 points(o.seg,col=4, link=FALSE)
+## using the options 'is', 'isV', 'shade' and 'col.shade'.
+par(mfrow=c(1,2))
+plot(o.seg, conf.level=.9, is=TRUE, isV=TRUE, col=1, shade = TRUE, col.shade=2)
+plot(o.seg, conf.level=.9, is=TRUE, isV=FALSE, col=2, shade = TRUE)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

@@ -1,5 +1,5 @@
 import(splines)
-importFrom("grDevices", "grey")
+importFrom("grDevices", "grey","adjustcolor")
 importFrom("graphics", "abline", "axis", "box", "lines", "matlines",
              "matplot", "par", "plot", "points", "polygon", "segments")
 importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
@@ -9,10 +9,9 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "model.weights", "na.omit", "pnorm", "predict",
              "printCoefmat", "pt", "qnorm", "qt", "quantile", "resid",
              "residuals", "runif", "summary.glm", "summary.lm", "update",
-             "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun")
+             "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun",
+             "complete.cases","sd","qchisq","pchisq")
 importFrom("utils", "flush.console")
-importFrom("stats", "complete.cases")
-importFrom("stats", "add1")
 
 export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,
 	broken.line ,confint.segmented,davies.test,pscore.test,draw.history,aapc,

@@ -1,25 +1,59 @@
 `segmented.lm` <-
-function(obj, seg.Z, psi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
-    n.Seg<-1
-    if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
-    if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
-    if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
-    if(is.list(psi)){
-      if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
-      if(any(is.na(match(all.vars(seg.Z),names(psi), nomatch = NA)))) stop("Variables in `seg.Z' and `psi' do not match")
-      n.Seg <- length(psi)
-      }
-    if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
+function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
+    
+  if(missing(seg.Z)) {
+      if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
+  }
+  n.Seg<-length(all.vars(seg.Z))
+  id.npsi<-FALSE
+#browser()
+    if(missing(psi)) { 
+     if(n.Seg==1){
+       if(missing(npsi)) npsi<-1
+       npsi<-lapply(npsi, function(.x).x)
+       if(length(npsi)!=length(all.vars(seg.Z))) stop("seg.Z and npsi do not match") 
+       names(npsi)<-all.vars(seg.Z)
+     } else {#se n.Seg>1
+       if(missing(npsi)) stop(" with multiple segmented variables in seg.Z, 'psi' or 'npsi' should be supplied", call.=FALSE) 
+       if(length(npsi)!=n.Seg) stop(" 'npsi' and seg.Z should have the same length")
+       if(!all(names(npsi) %in% all.vars(seg.Z))) stop(" names in 'npsi' and 'seg.Z' do not match")    
+       }
+     psi<-lapply(npsi, function(.x) rep(NA,.x))
+     id.npsi<-TRUE ##id.npsi<-FALSE #e' stato fornito npsi?
+    } else {
+     if(n.Seg==1){
+        if(!is.list(psi)) {psi<-list(psi);names(psi)<-all.vars(seg.Z)}
+        } else {#se n.Seg>1
+        if(!is.list(psi)) stop("with multiple terms in `seg.Z', `psi' should be a named list")
+        if(n.Seg!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
+        if(!all(names(psi)%in%all.vars(seg.Z))) stop("Names in `seg.Z' and `psi' do not match")
+        }
+    }
+
+
+           
+    min.step<-control$min.step
+    alpha<-control$alpha
     it.max <- old.it.max<- control$it.max
     digits<-control$digits
     toll <- control$toll
+    if(toll<0) stop("Negative tolerance ('tol' in seg.control()) is meaningless", call. = FALSE)
     visual <- control$visual
+    
     stop.if.error<-control$stop.if.error
+    fix.npsi<-fix.npsi<-control$fix.npsi
+    if(!is.null(stop.if.error)) {#if the old "stop.if.error" has been used..
+      warning(" Argument 'stop.if.error' is working, but will be removed in the next releases. Please use 'fix.npsi' for the future..")
+    } else {
+      stop.if.error<-fix.npsi
+    }
+    
     n.boot<-control$n.boot
     size.boot<-control$size.boot
     gap<-control$gap
     random<-control$random
     pow<-control$pow
+    conv.psi<-control$conv.psi
     visualBoot<-FALSE
     if(n.boot>0){
         if(!is.null(control$seed)) {
@@ -34,15 +68,8 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, keep.class=FALS
      }
     last <- control$last
     K<-control$K
-    h<-min(abs(control$h),1)
-    if(h<1) it.max<-it.max+round(it.max/2)
-#    if(!stop.if.error) objInitial<-obj
+    h<-control$h
     #-------------------------------
-#    #una migliore soluzione.........
-#    objframe <- update(obj, model = TRUE, x = TRUE, y = TRUE)
-#    y <- objframe$y
-#    a <- model.matrix(seg.Z, data = eval(obj$call$data))
-#    a <- subset(a, select = colnames(a)[-1])
     orig.call<-Call<-mf<-obj$call
     orig.call$formula<- mf$formula<-formula(obj) #per consentire lm(y~.)
     m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
@@ -85,8 +112,6 @@ function(obj, seg.Z, psi, control = seg.control(), model = TRUE, keep.class=FALS
     nomiOff<-setdiff(all.vars(formula(obj)), names(mf))
     if(length(nomiOff)>=1) mfExt$formula<-update.formula(mfExt$formula,paste(".~.+", paste( nomiOff, collapse="+"), sep=""))
 #----------------------------------------------------
-#    browser()
-
 #ago 2014 c'e' la questione di variabili aggiuntive...
 nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshold) "variabili"
 nomiNO<-NULL 
@@ -107,24 +132,10 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
-
-#    if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
-#      mfExt[all.vars(Call$weights, functions=FALSE)]<- eval(parse(text=all.vars(Call$weights)))
-#      #names(mfExt)[which(names(mf)=="(weights)")]<- all.vars(Call$weights, functions=FALSE)#prima di 0.2.9-4 era as.character(Call$weights)
-#      # mf["(weights)"]<-weights
-#      }
-#
-#    if(!is.null(Call$offset)){ 
-#     mfExt[all.vars(Call$offset, functions=FALSE)]<- eval(parse(text=all.vars(Call$offset)))
-##     mfExt["(offset)"]<-eval(parse(text=all.vars(Call$offset)))
-#      names(mf)[which(names(mf)=="(offset)")]<-all.vars(Call$offset, functions=FALSE) 
-#     }
-
     mt <- attr(mf, "terms")
     interc<-attr(mt,"intercept")
     y <- model.response(mf, "any")
-
-    XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
+    XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, obj$contrasts)
 
     #il cambio in mf da "offset(_nomevar_)" al "_nomevar_" deve avvenire dopo "model.matrix(mt, mf, contrasts)" 
 #    if(!is.null(offs)){
@@ -155,10 +166,9 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     XREG <- XREG[, match(c("(Intercept)", namesXREG0),colnames(XREG), nomatch = 0), drop = FALSE]
     XREG<-XREG[,unique(colnames(XREG)), drop=FALSE]
     #################
-    if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(XREGseg)}
+    #if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(XREGseg)}
     #################
     n <- nrow(XREG)
-    #Z <- list(); for (i in colnames(XREGseg)) Z[[length(Z) + 1]] <- XREGseg[, i]
     Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
     name.Z <- names(Z) <- colnames(XREGseg)
     if(length(Z)==1 && is.vector(psi) && (is.numeric(psi)||is.na(psi))){
@@ -167,18 +177,24 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         }
     if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) || is.null(names(psi))) stop("Z and psi have to be *named* list")
     id.nomiZpsi <- match(names(Z), names(psi))
-    if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi)))
-        stop("Length or names of Z and psi do not match")
-    #dd <- match(names(Z), names(psi))
+    if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi))) stop("Length or names of Z and psi do not match")
     nome <- names(psi)[id.nomiZpsi]
     psi <- psi[nome]
-    initial.psi<-psi
+    if(id.npsi){
+      for(i in 1:length(psi)) {
+        K<-length(psi[[i]])
+        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
+      }
+    } else {
     for(i in 1:length(psi)) {
         if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
         }
-
+    }
+    initial.psi<-psi
+    
+#    browser()    
+    
     a <- sapply(psi, length)
-
     #per evitare che durante il processo iterativo i psi non siano ordinati
     id.psi.group <- rep(1:length(a), times = a) #identificativo di apparteneza alla variabile
     #
@@ -197,17 +213,8 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     c2 <- apply((Z >= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo >)
     if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2)) ) stop("starting psi out of the admissible range")
     
-    #questo dovrebbe eliminare i psi non-ammissib. ma non sono sicuro cosa succede se ci sono piu' variabili
-#    if(sum(c1 + c2) != 0){
-#     id.val.psi<-!((c1+c1)>0) #individua i psi ammissibili (i.e. interni)
-#     psi<-psi[id.val.psi]
-#     Z<-Z[,id.val.psi]
-#     PSI<-PSI[,id.val.psi]
-#    } 
-#    if(is.na(sum(c1 + c2))) stop("psi out of the range")
-
     colnames(Z) <- nomiZ <- rep(nome, times = a)
-    ripetizioni <- as.numeric(unlist(sapply(table(nomiZ)[order(unique(nomiZ))], function(xxx) {1:xxx})))
+    ripetizioni <- as.numeric(unlist(sapply(table(nomiZ)[order(unique(nomiZ))], function(.x) {1:.x})))
     nomiU <- paste("U", ripetizioni, sep = "")
     nomiU <- paste(nomiU, nomiZ, sep = ".")
     nomiV <- paste("V", ripetizioni, sep = "")
@@ -220,7 +227,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
 #    for (i in 1:ncol(objframe$model)) assign(names(objframe$model[i]), objframe$model[[i]], envir = KK)
     if (it.max == 0) {
         #mf<-cbind(mf, mfExt)
-        U <- pmax((Z - PSI), 0)
+        U <- (Z>PSI)*(Z-PSI) #pmax((Z - PSI), 0)
         colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
         nomiU <- paste("U", colnames(U), sep = "")
         #for (i in 1:ncol(U)) assign(nomiU[i], U[, i], envir = KK)
@@ -235,7 +242,6 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         psi <- cbind(psi, psi, 0)
         rownames(psi) <- paste(paste("psi", ripetizioni, sep = ""), nomiZ, sep=".")
         colnames(psi) <- c("Initial", "Est.", "St.Err")
-
 
         #names(psi)<-paste(paste("psi", ripetizioni, sep = ""), nomiZ, sep=".")
         obj$psi <- psi
@@ -252,8 +258,11 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     list.obj <- list(obj)
 #    psi.values <- NULL
     nomiOK<-nomiU
-    opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
-        nomiOK=nomiOK,id.psi.group=id.psi.group,gap=gap,visualBoot=visualBoot,pow=pow,digits=digits)
+    invXtX<-chol2inv(qr.R(obj$qr)) #(XtX)^{-1}
+    Xty<-crossprod(XREG,y)
+    opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
+        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
+        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step)
     if(n.boot<=0){
     obj<-seg.lm.fit(y,XREG,Z,PSI,weights,offs,opz)
     } else {
@@ -277,17 +286,12 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
     U<-obj$U
     V<-obj$V
-
+    id.warn<-obj$id.warn
     rangeZ<-obj$rangeZ
     obj<-obj$obj
     k<-length(psi)
-    beta.c<-if(k == 1) coef(obj)["U"] else coef(obj)[paste("U", 1:ncol(U), sep = "")]
-    psi.values[[length(psi.values) + 1]] <- psi
-    id.warn <- FALSE
-    if (n.boot<=0 && it > it.max) { #it >= (it.max+1)
-        warning("max number of iterations attained", call. = FALSE)
-        id.warn <- TRUE
-    }
+    beta.c<-coef(obj)[paste("U", 1:ncol(U), sep = "")]
+    #psi.values[[length(psi.values) + 1]] <- psi #non c'e' bisogno!
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
 
     #se usi una procedura automatica devi cambiare ripetizioni, nomiU e nomiV, e quindi:
@@ -299,19 +303,6 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     #nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, name.Z))
     nomiU   <- unlist(mapply(forma.nomiU, length.psi, nomiFINALI)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
     nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, nomiFINALI))
-
-    
-#    nomiVxb <-paste("psi",ripetizioni, ".",nomiZ ,sep="")
-#Dalla 0.2.9-5 eliminati i seguenti. La linea sopra sembra sufficiente
-#    colnames(U) <- colnames(Vxb) <-sapply(strsplit(nomiOK,"U"),function(x)x[2])
-#    #colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
-#    #colnames(Vxb) <- paste(ripetizioni, nomiZ, sep = ".")
-#    nomiU <- paste("U", colnames(U), sep = "")
-#    nomiVxb <- paste("psi", colnames(Vxb), sep = "")
-#    for (i in 1:ncol(U)) {
-#        assign(nomiU[i], U[, i], envir = KK)
-#        assign(nomiVxb[i], Vxb[, i], envir = KK)
-#    }
 
     #mf<-cbind(mf, mfExt) #questo creava ripetizioni..
     for(i in 1:ncol(U)) {
@@ -338,15 +329,12 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
 ##magari potresti fare un abs(diff(psi))<=.0001? ma clusterizzato..
 #        if(any(table(sumV)<=1) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
 #        }
-
-    
     #Puo' capitare che psi sia ai margini o molto vicini (e ci sono solo 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 
     #sono di piu' ma hanno gli stessi valori di x. In questo caso objF$coef puo' avere mancanti.. names(which(is.na(coef(objF))))
 
     objF$offset<- obj0$offset
     
     isNAcoef<-any(is.na(objF$coefficients))
-    
     if(isNAcoef){
       if(stop.if.error) {
        cat("breakpoint estimate(s):", as.vector(psi),"\n")
@@ -361,20 +349,16 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         return(objF)      
         }
     }
-    
     if(!gap){
       names.coef<-names(objF$coefficients)
       #questi codici funzionano e si basano sull'assunzioni che le U e le V siano ordinate..
-      if(k==1){
-        names(obj$coefficients)[match(c("U","V"), names(coef(obj)))]<- nnomi
-          } else {
-        names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi  
-          }
+      names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi  
       objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce gli 0 
       #objF$coefficients<-obj$coefficients
       #names(objF$coefficients)<-names.coef
       objF$fitted.values<-obj$fitted.values
       objF$residuals<-obj$residuals
+      #objF$qr<-obj$qr #NON credo..
     }
     Cov <- vcov(objF) 
     id <- match(nomiVxb, names(coef(objF)))
@@ -383,8 +367,8 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
 #browser()
     a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
     
-    
-    ris.psi<-matrix(,length(psi),3)
+    #browser()
+    ris.psi<-matrix(NA,length(psi),3)
     colnames(ris.psi) <- c("Initial", "Est.", "St.Err")
     rownames(ris.psi) <- nomiVxb
     ris.psi[,2]<-psi
@@ -402,14 +386,14 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         }
     #initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a.ok, SIMPLIFY = TRUE))
     initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi[nomiFINALI], a.ok[a.ok!=0], SIMPLIFY = TRUE))
-    if(opz$stop.if.error)  ris.psi[,1]<-initial 
+    if(stop.if.error)  ris.psi[,1]<-initial 
     #psi <- cbind(initial, psi, sqrt(vv))
     #rownames(psi) <- colnames(Cov)[id]
     
     objF$rangeZ <- rangeZ
     objF$psi.history <- psi.values
     objF$psi <- ris.psi
-    objF$it <- (it - 1)
+    objF$it <- it 
     objF$epsilon <- obj$epsilon
     objF$call <- match.call()
     objF$nameUV <- list(U = drop(nomiU), V = rownames(ris.psi), Z = nomiFINALI) #Z = name.Z
@@ -417,7 +401,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     objF$id.psi.group <- id.psi.group
     objF$id.warn <- id.warn
     objF$orig.call<-orig.call
-    if (model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
+    if(model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
     
 #    PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
 #    SE.PSI <- matrix(rep(sqrt(vv), rep(nrow(Z), length(psi))), ncol = length(psi))

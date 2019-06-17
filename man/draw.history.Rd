@@ -15,8 +15,8 @@ draw.history(obj, term, ...)
   \item{\dots}{ graphic parameters to be passed to \code{matplot()}. }
 }
 \details{
-  For a given \code{term} in a segmented fit, \code{draw.history()} displays the different breakpoint
-  values obtained during the estimating process, since the starting values up to the final ones. When 
+  For a given \code{term} in a segmented fit, \code{draw.history()} produces two plots. On the left panel it displays the different breakpoint
+  values obtained during the estimating process, since the starting values up to the final ones, while on the right panel the objective values at different iterations.  When 
   bootstrap restarting is employed, \code{draw.history()} produces two plots, the values of objective function 
   and the number of distinct solutions against the bootstrap replicates.
 }

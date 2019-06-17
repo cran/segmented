@@ -46,7 +46,7 @@ meaningless individually, however their sum provides the predictions for the seg
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{plot.segmented}}, \code{\link{broken.line}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}
+\code{\link{segmented}}, \code{\link{plot.segmented}}, \code{\link{broken.line}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}
 }
 \examples{
 n=10

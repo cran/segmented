@@ -5,7 +5,9 @@ function(x, short = x$short, var.diff = x$var.diff,
     cat( "Call: \n" )
     print( x$call )
     cat("\nEstimated Break-Point(s):\n ")
-    print(round(x$psi[,-1],3)) #era "signif(,4)"
+    est.psi<-x$psi[,-1,drop=FALSE]
+    rownames(est.psi)<-rownames(x$psi)
+    print(round(est.psi,3)) #era "signif(,4)"
 #    cat("\nt value for the gap-variable(s) V: ",x$gap[,3],"\n")
 #if(any(abs(x$gap[,3])>1.96)) cat("    Warning:", sum(abs(x$gap[,3])>1.96),"gap coefficient(s) significant at 0.05 level\n")
     if(short){ 
@@ -63,6 +65,6 @@ if("summary.Arima"%in%class(x)){#for Arima
         "\n", sep = "")
     }
 invisible(x) 
-cat("\nConvergence attained in",x$it,"iterations with relative change",x$epsilon,"\n")
+cat("\nConvergence",if(x$conv.warn) "*not*" else NULL , "attained in",x$it,"iter. (rel. change",paste(signif(x$epsilon,5),")\n",sep=""))
 }
 

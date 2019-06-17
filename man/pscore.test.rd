@@ -6,7 +6,7 @@
 }
 \usage{
 pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), 
-    values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE)
+    values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,8 +21,9 @@ pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
      Binomial and Poisson families, and otherwise estimated by the residual Chi-squared statistic in the model \code{obj} (calculated from cases with
      non-zero weights divided by the residual degrees of freedom).}
   \item{df.t}{ optional. The degress-of-freedom used to compute the p-value. When \code{NULL}, the df extracted from \code{obj} are used.}
-  \item{more.break}{ optional logical. If \code{obj} is a 'segmented' fit, \code{more.break=FALSE} tests for the actual breakpoint for the variable 'seg.Z', 
+  \item{more.break}{ optional, logical. If \code{obj} is a 'segmented' fit, \code{more.break=FALSE} tests for the actual breakpoint for the variable 'seg.Z', 
   while \code{more.break=TRUE} tests for an \emph{additional} breakpoint(s) for the variable 'seg.Z'. Ignored when \code{obj} is not a segmented fit.}
+  \item{n.break}{optional. Number of breakpoints postuled under the alternative hypothesis.}
 
 }
 \details{

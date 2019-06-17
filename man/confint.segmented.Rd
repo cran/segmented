@@ -7,7 +7,7 @@
 }
 \usage{
 \method{confint}{segmented}(object, parm, level=0.95, method=c("delta", "score", "gradient"), 
-    rev.sgn=FALSE, var.diff=FALSE, digits=max(4, getOption("digits") - 1), ...)
+    rev.sgn=FALSE, var.diff=FALSE, is=FALSE, digits=max(4, getOption("digits") - 1), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,8 +18,9 @@
   \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}; recycled otherwise.
    when \code{TRUE} it is assumed that the current \code{parm} is `minus' the actual segmented variable,
     therefore the sign is reversed before printing. This is useful when a null-constraint has been set on the last slope.}
-  \item{var.diff}{logical. If \code{var.diff=TRUE} and there is a single segmented variable, the standard error is 
-    based on sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.}
+  \item{var.diff}{logical. If \code{method="delta"},  and there is a single segmented variable, \code{var.diff=TRUE} leads     to standard errors based on sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.}
+  \item{is}{logical. If \code{method="delta"}, \code{is=TRUE} means that the full covariance matrix is computed via 
+  \code{vcov(.., is=TRUE)}}
   \item{digits}{controls the number of digits to print when returning the output. }
   \item{\dots}{additional parameters referring to Score-based confidence intervals, such as \code{"h"}, \code{"d.h"}, \code{"bw"}, \code{"msgWarn"}, and \code{"n.values"} 
   specifying the number of points used to profile the Score (or Gradient) statistic.}
@@ -30,7 +31,8 @@
   method for the ratio of two random variables. This value is an approximation (slightly) better than the 
   one reported in the `psi' component of the list returned by any \code{segmented} method. The resulting
   confidence intervals are based on the asymptotic Normal distribution of the breakpoint
-  estimator which is reliable just for clear-cut kink relationships. See Details in \code{\link{segmented}}. \code{method="score"} or \code{method="gradient"} compute the 
+  estimator which is reliable just for clear-cut kink relationships. See Details in \code{\link{segmented}}. \cr
+  \code{method="score"} or \code{method="gradient"} compute the 
   confidence interval via profiling the Score or the Gradient statistics smoothed out by the induced smoothing paradigm, as discussed in the reference below. 
   }
 \value{
@@ -40,12 +42,11 @@
 \references{ 
 Muggeo, V.M.R. (2017) Interval estimation for the breakpoint in segmented regression: a smoothed score-based approach. 
 \emph{Australian & New Zealand Journal of Statistics} \bold{59}, 311--322.
-
 }
 \author{ Vito M.R. Muggeo }
 \note{ 
 Currently \code{method="score"} or \code{method="gradient"} only works for segmented \emph{linear} model. For segmented \emph{generalized linear} model, 
-  currently only\code{method="delta"} is available. 
+  currently only \code{method="delta"} is available. 
 }
 %
 % ~Make other sections like Warning with \section{Warning }{....} ~

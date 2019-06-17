@@ -1,20 +1,13 @@
-#`segmented.default` <-
-#o1<-segmented(out.lm, seg.Z=~x +z,psi=list(x=c(30,60),z=.3), control=seg.control(display=FALSE, n.boot=20, seed=1515))
-#o2<-ss(out.lm, seg.Z=~x +z,psi=list(x=c(30,60),z=.3), control=seg.control(display=FALSE, n.boot=20, seed=1515))
-
-#o2<-ss(out.lm, seg.Z=~x +z,psi=list(x=c(30,60),z=.3), control=seg.control(display=FALSE, n.boot=0))
-#o2<-ss(o, seg.Z=~age, psi=41, control=seg.control(display=FALSE, n.boot=0))
-
 segmented.default<-
-function(obj, seg.Z, psi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
+function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
 #Richiede control$f.obj that should be a string like "sum(x$residuals^2)" or "x$dev"
 #-----------------
-dpmax<-function(x,y,pow=1){
-#deriv pmax
-        if(pow==1) ifelse(x>y, -1, 0)
-         else -pow*pmax(x-y,0)^(pow-1)
-         }
-#-----------
+  dpmax<-function(x,y,pow=1){
+    #deriv pmax
+    if(pow==1) -(x>y) #ifelse(x>y, -1, 0)
+    else -pow*((x-y)*(x>y))^(pow-1)#-pow*pmax(x-y,0)^(pow-1)
+  }
+  #-----------
 #    control$fn.obj<-"sum(x$residuals^2)"
 #    control$fn.obj<-"x$dev"
 #    control$fn.obj<-"-x$loglik[2]"
@@ -23,27 +16,66 @@ dpmax<-function(x,y,pow=1){
     if(is.null(control$fn.obj)) fn.obj<-"-as.numeric(logLik(x))" else fn.obj<-control$fn.obj
 
 #-----------
-    n.Seg<-1
-    if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
-    if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
-    if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
-    if(is.list(psi)){
-      if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
-      if(any(is.na(match(all.vars(seg.Z),names(psi), nomatch = NA)))) stop("Variables in `seg.Z' and `psi' do not match")
-      n.Seg <- length(psi)
+    # n.Seg<-1
+    # if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
+    # if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
+    # if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
+    # if(is.list(psi)){
+    #   if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
+    #   if(any(is.na(match(all.vars(seg.Z),names(psi), nomatch = NA)))) stop("Variables in `seg.Z' and `psi' do not match")
+    #   n.Seg <- length(psi)
+    #   }
+    # if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
+    
+    if(missing(seg.Z)) {
+      if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
+    }
+    n.Seg<-length(all.vars(seg.Z))
+    id.npsi<-FALSE
+    if(missing(psi)) { 
+      if(n.Seg==1){
+        if(missing(npsi)) npsi<-1
+        npsi<-lapply(npsi, function(.x).x)
+        if(length(npsi)!=length(all.vars(seg.Z))) stop("seg.Z and npsi do not match") 
+        names(npsi)<-all.vars(seg.Z)
+      } else {#se n.Seg>1
+        if(missing(npsi)) stop(" with multiple segmented variables in seg.Z, 'psi' or 'npsi' should be supplied", call.=FALSE) 
+        if(length(npsi)!=n.Seg) stop(" 'npsi' and seg.Z should have the same length")
+        if(!all(names(npsi) %in% all.vars(seg.Z))) stop(" names in 'npsi' and 'seg.Z' do not match")    
       }
-    if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
+      psi<-lapply(npsi, function(.x) rep(NA,.x))
+      id.npsi<-TRUE ##id.npsi<-FALSE #e' stato fornito npsi?
+    } else {
+      if(n.Seg==1){
+        if(!is.list(psi)) {psi<-list(psi);names(psi)<-all.vars(seg.Z)}
+      } else {#se n.Seg>1
+        if(!is.list(psi)) stop("with multiple terms in `seg.Z', `psi' should be a named list")
+        if(n.Seg!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
+        if(!all(names(psi)%in%all.vars(seg.Z))) stop("Names in `seg.Z' and `psi' do not match")
+      }
+    }
+    min.step<-control$min.step
+    alpha<-control$alpha
     it.max <- old.it.max<- control$it.max
     digits<-control$digits
     toll <- control$toll
+    if(toll<0) stop("Negative tolerance ('tol' in seg.control()) is meaningless", call. = FALSE)
     visual <- control$visual
-    stop.if.error<-control$stop.if.error
-    n.boot<-control$n.boot
-#    n.boot<-0
+
+        stop.if.error<-control$stop.if.error
+    fix.npsi<-fix.npsi<-control$fix.npsi
+    if(!is.null(stop.if.error)) {#if the old "stop.if.error" has been used..
+      warning(" Argument 'stop.if.error' is working, but will be removed in the next releases. Please use 'fix.npsi' for the future..")
+    } else {
+      stop.if.error<-fix.npsi
+    }
+
+        n.boot<-control$n.boot
     size.boot<-control$size.boot
     gap<-control$gap
     random<-control$random
     pow<-control$pow
+    conv.psi<-control$conv.psi
     visualBoot<-FALSE
     if(n.boot>0){
         if(!is.null(control$seed)) {
@@ -58,8 +90,8 @@ dpmax<-function(x,y,pow=1){
      }
     last <- control$last
     K<-control$K
-    h<-min(abs(control$h),1)
-    if(h<1) it.max<-it.max+round(it.max/2)
+    h<-control$h #min(abs(control$h),1)
+#    if(h<1) it.max<-it.max+round(it.max/2)
     orig.call<-Call<-mf<-obj$call
     orig.call$formula<- mf$formula<-formula(obj) #per consentire lm(y~.)
     m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
@@ -110,29 +142,30 @@ dpmax<-function(x,y,pow=1){
     
     n.psi<-length(unlist(psi))
     #################
-    if(ncol(Z)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(Z[,1])} #devi selezionare la colonna perche' Z e' un dataframe!
+    #if(ncol(Z)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(Z[,1])} #devi selezionare la colonna perche' Z e' un dataframe!
     #################
 
-    
     if(ncol(Z)==1 && is.vector(psi) && (is.numeric(psi)||is.na(psi))){
         psi <- list(as.numeric(psi))
         names(psi)<-name.Z
         }
-   
     if (!is.list(psi) || is.null(names(psi))) stop("psi should be a *named* list")
-    
     id.nomiZpsi <- match(colnames(Z), names(psi))
-    
     if ((ncol(Z)!=length(psi)) || any(is.na(id.nomiZpsi))) stop("Length or names of Z and psi do not match")
-    
     nome <- names(psi)[id.nomiZpsi]
     psi <- psi[nome]
-    initial.psi<-psi
-    for(i in 1:length(psi)) {
+    if(id.npsi){
+      for(i in 1:length(psi)) {
+        K<-length(psi[[i]])
         if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[,i], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[,i])+ diff(range(Z[,i]))*(1:K)/(K+1))}
-        }
+      }
+    } else {
+      for(i in 1:length(psi)) {
+        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[,i], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[,i])+ diff(range(Z[,i]))*(1:K)/(K+1))}
+      }
+    }
+    initial.psi<-psi
     a <- sapply(psi, length)
-
     #per evitare che durante il processo iterativo i psi non siano ordinati
     id.psi.group <- rep(1:length(a), times = a) #identificativo di apparteneza alla variabile
 
@@ -162,18 +195,16 @@ dpmax<-function(x,y,pow=1){
 #   update(, evaluate=FALSE) non "le vuole" e poi comunque vengono calcolate in seg.def.fit()
 #   Servono solo se it.max=0..
 #----------------------------------------------------------
-    U <- pmax((Z - PSI), 0)^pow[1]#U <- pmax((Z - PSI), 0)
-    #V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
-    V<-ifelse((Z > PSI), -1, 0)
+    U<-(Z-PSI)*(Z>PSI)
+    if(pow[1]!=1) U<-U^pow[1]
+    colnames(U)<-nomiU
+    V<- -(Z > PSI)
     for(i in 1:k) {
         mfExt[nomiU[i]] <- U[,i]
         mfExt[nomiV[i]] <- V[,i]
         }
-
     Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
     Fo.noV <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
-    
-    #ho tolto "formula = Fo"
     call.ok <- update(obj,  Fo,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
     call.noV <- update(obj, Fo.noV,  evaluate=FALSE, data = mfExt) #objF <- update(obj0, formula = Fo, data = KK)
 
@@ -186,9 +217,6 @@ dpmax<-function(x,y,pow=1){
     #obj1 <- eval(call.ok, envir=mfExt)
     initial <- psi
     obj0 <- obj
-    
-    #browser()
-    
     dev0<- eval(parse(text=fn.obj), list(x=obj))
     if(length(dev0)<=0) stop("error in the objective to be minimized, see 'fn.obj' in ?seg.control") #per fit su cui logLik() does not work..
     if(length(dev0)>1) stop("the objective to be minimized is not scalar, see 'fn.obj' in ?seg.control") #per fit su cui logLik() does not work..
@@ -198,7 +226,8 @@ dpmax<-function(x,y,pow=1){
     nomiOK<-nomiU
 
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
-        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits)
+        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,
+        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step)
 
     opz$call.ok<-call.ok
     opz$call.noV<-call.noV
@@ -206,17 +235,13 @@ dpmax<-function(x,y,pow=1){
     opz$nomiU<-nomiU
     opz$nomiV<-nomiV
     opz$fn.obj <- fn.obj    
-
     opz<-c(opz,...) #8/10/16...
-
-#browser()
 
     if(n.boot<=0){
       obj<-seg.def.fit(obj, Z, PSI, mfExt, opz)
       } else {
       obj<-seg.def.fit.boot(obj, Z, PSI, mfExt, opz, n.boot=n.boot, size.boot=size.boot, random=random) #jt, nonParam
       }
-#browser()
 
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)
@@ -226,8 +251,8 @@ dpmax<-function(x,y,pow=1){
       if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
       }
     id.psi.group<-obj$id.psi.group
-    nomiOK<-obj$nomiOK #sarebbe nomiU
-    nomiVxb<-paste("psi",sapply(strsplit(nomiOK,"U"), function(x){x[2]}), sep="")
+    nomiU<-nomiOK<-obj$nomiOK #sarebbe nomiU
+    nomiVxb<-sub("U","psi", nomiOK) #nomiVxb<-paste("psi",sapply(strsplit(nomiOK,"U"), function(x){x[2]}), sep="")
     #nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
     nomiFINALI<-unique(sub("U[1-9]*[0-9].", "", nomiOK))
     #se e' stata usata una proc automatica "nomiFINALI" sara differente da "name.Z"
@@ -239,9 +264,7 @@ dpmax<-function(x,y,pow=1){
     psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
     U<-obj$U
     V<-obj$V
-#    return(obj)
-
-#browser()
+    id.warn<-obj$id.warn
 
     #if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
     for(jj in colnames(V)) {
@@ -259,49 +282,21 @@ dpmax<-function(x,y,pow=1){
     r<-obj$r
     obj<-obj$obj
     k<-length(psi)
-#    beta.c<-if(k == 1) coef(obj)["U"] else coef(obj)[paste("U", 1:ncol(U), sep = "")]
-
-    beta.c<- coef(obj)[nomiOK] #nomiOK e' stato estratto da obj e contiene tutti i nomi delle variabili U inserite nel modello
-    psi.values[[length(psi.values) + 1]] <- psi
-    id.warn <- FALSE
-    if (n.boot<=0 && it > it.max) { #it >= (it.max+1)
-        warning("max number of iterations attained", call. = FALSE)
-        id.warn <- TRUE
-    }
+    all.coef<-coef(obj)
+#    browser()
+    names(all.coef)<-c(names(coef(obj0)), nomiU, nomiVxb)
+    beta.c<- all.coef[nomiU] #beta.c<- coef(obj)[nomiOK]
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
+    nnomi <- c(nomiU, nomiVxb) #c(nomiOK, nomiVxb)
 
-
-#    #se usi una procedura automatica devi cambiare ripetizioni, nomiU e nomiV, e quindi:
-#    length.psi<-tapply(as.numeric(as.character(names(psi))), as.numeric(as.character(names(psi))), length)
-#    forma.nomiU<-function(xx,yy)paste("U",1:xx, ".", yy, sep="")
-#    forma.nomiVxb<-function(xx,yy)paste("psi",1:xx, ".", yy, sep="")
-#    nomiU   <- unlist(mapply(forma.nomiU, length.psi, nomiFINALI)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
-#    nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, nomiFINALI))
-#    for(i in 1:ncol(U)) {
-#        mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
-#        mfExt[nomiVxb[i]]<-mf[nomiVxb[i]]<-Vxb[,i]
-#        }
-
-#    ToDeletenomiU<-nomiU[!id.psi.ok] #salva i nomi delle U per i psi ammissibili
-#    ToDeletenomiV<-nomiV[!id.psi.ok] #salva i nomi delle V per i psi ammissibili
-#    if(length(ToDeletenomiU)>0 || length(ToDeletenomiV)>0) for(nn in c(ToDeletenomiU, ToDeletenomiV)) mfExt[[nn]]<-NULL
-
-#E' inutile lavorare sul mf, utilizzo quello restituito da seg.def.fit.r
-#    for(i in 1:k) {
-#        mfExt[nomiOK[i]]<-mf[nomiOK[i]]<-U[,i]
-#        mfExt[nomiVxb[i]]<-mf[nomiVxb[i]]<-Vxb[,i]
-#        }
-#ottobre 2016: ci vuole altrimenti Vxb non viene inserita nel dataframe
     for(i in 1:ncol(U)) {
         mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
         mfExt[nomiVxb[i]]<-mf[nomiVxb[i]]<-Vxb[,i]
         }
 
-    nnomi <- c(nomiOK, nomiVxb)
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
     objF <- update(obj0,  Fo,  evaluate=FALSE, data = mfExt) #tolto "formula =Fo"
     if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
-
     if(is.null(opz$constr)) opz$constr<-0
     if((opz$constr %in% 1:2) && class(obj0)=="rq"){
       objF$method<-"fnc"
@@ -313,12 +308,14 @@ dpmax<-function(x,y,pow=1){
     #sono di piu' ma hanno gli stessi valori di x
     #objF$coef puo' avere mancanti.. names(which(is.na(coef(objF))))
     objF$offset<- obj0$offset
-    isNAcoef<-any(is.na(objF$coefficients))
+
+    isNAcoef<-any(is.na(coef(objF)))
     if(isNAcoef){
       if(stop.if.error) {
         cat("breakpoint estimate(s):", as.vector(psi),"\n")
         stop("at least one coef is NA: breakpoint(s) at the boundary? (possibly with many x-values replicated)", 
-          call. = FALSE)} else {
+          call. = FALSE)
+        } else {
         warning("some estimate is NA: too many breakpoints? 'var(hat.psi)' cannot be computed \n ..returning a 'lm' model", call. = FALSE)
         Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         objF <- if((opz$constr %in% 1:2) && class(obj0)=="rq") {update(obj0, formula = Fo,  R=R.noV, r=r, method="fnc", evaluate=TRUE, data = mfExt) 
@@ -330,53 +327,46 @@ dpmax<-function(x,y,pow=1){
         return(objF)      
         }
     }
-# CONTROLLARE!!!!
-#    objF$offset<- obj0$offset
-    #sostituire i valori: objF include le U e V, obj solo le U
-    if(!gap){
+
      #names.coef <- names(objF$coefficients)
      #names(obj$coefficients)[match(nomiV, names(coef(obj)))]<-nomiVxb
      #objF$coefficients[names.coef]<-obj$coefficients[names.coef]
-     names.coef <- names(obj$coefficients)
-     objF$coefficients[names.coef]<-obj$coefficients[names.coef]
-     objF$coefficients[nomiVxb]<-rep(0, k)
-     if(!is.null(objF$geese$beta)) objF$geese$beta <- objF$coefficients#obj$geese$beta
-     if(!is.null(objF$geese$gamma)) objF$geese$gamma <- obj$geese$gamma
-     if(!is.null(objF$geese$alpha)) objF$geese$alpha <- obj$geese$alpha
-     if(!is.null(objF$fitted.values)) objF$fitted.values<-obj$fitted.values
-     if(!is.null(objF$residuals)) objF$residuals<-obj$residuals
-     if(!is.null(objF$linear.predictors)) objF$linear.predictors<-obj$linear.predictors
-     if(!is.null(objF$deviance)) objF$deviance<-obj$deviance
-     if(!is.null(objF$weights)) objF$weights<-obj$weights
-     if(!is.null(objF$aic)) objF$aic<-obj$aic + 2*k
-     if(!is.null(objF$loglik)) objF$loglik<-obj$loglik #per coxph
-     if(!is.null(objF$rho)) objF$rho<-obj$rho #per rq
-     if(!is.null(objF$dual)) objF$dual<-obj$dual #per rq
-     }
-    Cov <-  try(vcov(objF), silent=TRUE)
-    idd <- match(nomiVxb, names(coef(objF)))
-    if(class(Cov)!="try-error") {
-        vv <- if (length(idd) == 1) Cov[idd, idd] else diag(Cov[idd, idd])
-        #if(length(initial)!=length(psi)) initial<-rep(NA,length(psi))
-#        psi <- cbind(initial, psi, sqrt(vv))
-#        rownames(psi) <- colnames(Cov)[idd]
-#        colnames(psi) <- c("Initial", "Est.", "St.Err")
-        } else {
-#        psi <- cbind(initial, psi)
-#        rownames(psi) <- nomiVxb
-#        colnames(psi) <- c("Initial", "Est.")
-      vv<-NA
-        }
+     names.coef <- names(coef(objF))
+     objF[[grep("coef",names(objF), value=TRUE)]][names.coef]<-all.coef[names.coef]
+     #objF$coefficients[names.coef]<-obj$coefficients[names.coef]
+     #objF$coefficients[nomiVxb]<-rep(0, k) all.coef dovrebbe gia' avere gli 0 delle V..
 
-#browser()
-    a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
-    ris.psi<-matrix(,length(psi),3)
+    if(!is.null(objF$geese$beta)) objF$geese$beta <- objF$coefficients#obj$geese$beta
+    if(!is.null(objF$geese$gamma)) objF$geese$gamma <- obj$geese$gamma
+    if(!is.null(objF$geese$alpha)) objF$geese$alpha <- obj$geese$alpha
+    if(!is.null(objF$fitted.values)) objF$fitted.values<-obj$fitted.values
+    if(!is.null(objF$residuals)) objF$residuals<-obj$residuals
+    if(!is.null(objF$linear.predictors)) objF$linear.predictors<-obj$linear.predictors
+    if(!is.null(objF$deviance)) objF$deviance<-obj$deviance
+    if(!is.null(objF$weights)) objF$weights<-obj$weights
+    if(!is.null(objF$aic)) objF$aic<-obj$aic + 2*k
+    if(!is.null(objF$loglik)) objF$loglik<-obj$loglik #per coxph
+    if(!is.null(objF$rho)) objF$rho<-obj$rho #per rq
+    if(!is.null(objF$dual)) objF$dual<-obj$dual #per rq
+    if(!is.null(objF$penalized.deviance)) objF$penalized.deviance <- obj$penalized.deviance #per brglm
+    if(!is.null(objF$ModifiedScores)) objF$ModifiedScores<-c(obj$ModifiedScores, rep(0, k)) #per brglm
+    Cov <-  try(vcov(objF), silent=TRUE)
+    if(class(Cov)=="try-error") {
+      warning("cannot compute the covariance matrix", call.=FALSE)
+      vv<-NA
+    } else {
+      vv<-Cov[nomiVxb, nomiVxb,drop=FALSE]  
+    }
+    
+#browser()    
+    ris.psi<-matrix(NA,length(psi),3)
     colnames(ris.psi) <- c("Initial", "Est.", "St.Err")
     rownames(ris.psi) <- nomiVxb
     ris.psi[,2]<-psi
-    ris.psi[,3]<-sqrt(vv)
-#NB "a" deve essere un vettore che si appatta con "initial.psi" per ottnetere "initial" sotto... Se una variabile alla fine risulta
+    ris.psi[,3]<-sqrt(diag(vv))
+#NB "a" deve essere un vettore della stessa dimensione di "initial.psi" per ottnetere "initial" sotto... Se una variabile alla fine risulta
 # senza breakpoint questo non avviene e ci sono problemi nella formazione di "initial". Allora costruisco a.ok
+    a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
     a.ok<-NULL
     for(j in name.Z){
         if(j %in% nomiFINALI) {
@@ -388,11 +378,11 @@ dpmax<-function(x,y,pow=1){
         }
 #    initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi, a.ok, SIMPLIFY = TRUE))
     initial<-unlist(mapply(function(x,y){if(is.na(x)[1])rep(x,y) else x }, initial.psi[nomiFINALI], a.ok[a.ok!=0], SIMPLIFY = TRUE))
-    if(opz$stop.if.error)  ris.psi[,1]<-initial
+    if(stop.if.error)  ris.psi[,1]<-initial
     objF$rangeZ <- rangeZ
     objF$psi.history <- psi.values
     objF$psi <- ris.psi
-    objF$it <- (it - 1)
+    objF$it <- it
     objF$epsilon <- obj$epsilon
     objF$call <- match.call()
     objF$nameUV <- list(U = drop(nomiU), V = rownames(ris.psi), Z = nomiFINALI) #Z = name.Z
@@ -407,5 +397,6 @@ dpmax<-function(x,y,pow=1){
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"
     if (last) list.obj <- list.obj[[length(list.obj)]]
+    warning("The returned fit is ok, but not of class 'segmented'. If interested, call explicitly the segmented methods (plot.segmented, confint.segmented,..)",call.=FALSE)
     return(list.obj)
     } #end function

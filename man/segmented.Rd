@@ -16,19 +16,19 @@ Segmented relationships in regression models
    and one or more explanatory variables. Break-point estimates are provided.
 }
 \usage{
-segmented(obj, seg.Z, psi, control = seg.control(), 
+segmented(obj, seg.Z, psi, npsi, control = seg.control(), 
     model = TRUE, ...)
 
-\method{segmented}{default}(obj, seg.Z, psi, control = seg.control(),
+\method{segmented}{default}(obj, seg.Z, psi, npsi, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
 
-\method{segmented}{lm}(obj, seg.Z, psi, control = seg.control(),
+\method{segmented}{lm}(obj, seg.Z, psi, npsi, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
 
-\method{segmented}{glm}(obj, seg.Z, psi, control = seg.control(),
+\method{segmented}{glm}(obj, seg.Z, psi, npsi, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
 
-\method{segmented}{Arima}(obj, seg.Z, psi, control = seg.control(),
+\method{segmented}{Arima}(obj, seg.Z, psi, npsi, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -36,18 +36,16 @@ segmented(obj, seg.Z, psi, control = seg.control(),
   \item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression 
   fit may be supplied (see 'Details').}
   \item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} (a "lm" or "glm" fit) includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or even \code{seg.Z=~sqrt(x1)}, 
-      or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. 
-      
-               }
+      or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed.}
   \item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. 
       A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
       \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
-      
-\item{control}{ a list of parameters for controlling the fitting process.
+  \item{npsi}{A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally computed via the quantiles or equally spaced values, see argument \code{quant} in \code{\link{seg.control}}. If there is a single term in \code{seg.Z}, \code{npsi} can be missing and \code{npsi=1} is assumed, but in general one of \code{psi} or \code{npsi} has to be specified. If \code{psi} is provided, \code{npsi} is ignored.}
+  \item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
-\item{model}{logical value indicating if the model.frame should be returned.}
-\item{keep.class}{logical value indicating if the final fit returned by \code{segmented.default} should keep the class '\code{segmented}' (along with the class of the original fit \code{obj}). Ignored by the segmented methods. }
-\item{\dots}{ optional arguments. }
+  \item{model}{logical value indicating if the model.frame should be returned.}
+  \item{keep.class}{logical value indicating if the final fit returned by \code{segmented.default} should keep the class '\code{segmented}' (along with the class of the original fit \code{obj}). Ignored by the segmented methods. }
+  \item{\dots}{ optional arguments. }
 }
 \details{
   Given a linear regression model (usually of class "lm" or "glm"), segmented tries to estimate
@@ -91,17 +89,18 @@ original object \code{obj} with additionally the followings:
      Returned only if bootstrap restart is employed}
   \item{..}{Other components are not of direct interest of the user}
   }
-  
-\references{ 
-Muggeo, V.M.R. (2003) Estimating regression models with unknown 
-  break-points. \emph{Statistics in Medicine} \bold{22}, 3055--3071.
 
-Muggeo, V.M.R. (2008) Segmented: an R package to fit regression 
-  models with broken-line relationships. \emph{R News} \bold{8/1}, 20--25.
-  }
-
-    
-\author{ Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
+\section{ Warning }{It is well-known that the log-likelihood function for the 
+break-point may be not concave, especially 
+for poor clear-cut kink-relationships. In these circumstances the initial guess
+ for the break-point, i.e. the \code{psi} argument, must be provided with care. For instance visual 
+inspection of a, possibly smoothed, scatter-plot is usually a good way to obtain some idea on breakpoint location. 
+However bootstrap restarting, implemented since version 0.2-9.0, is relatively more robust to starting values specified 
+in  \code{psi}. Alternatively an automatic procedure may be implemented by specifying \code{psi=NA} and 
+\code{fix.npsi=FALSE} in \code{\link{seg.control}}: experience suggests to increase the number of iterations 
+via \code{it.max} in \code{seg.control()}. This automatic procedure, however, is expected to overestimate 
+the number of breakpoints. 
+}
 
 \note{
 \enumerate{
@@ -130,17 +129,20 @@ Others are inherited from the class \code{"lm"} or \code{"glm"} depending on the
 
      }
 }
-\section{ Warning }{It is well-known that the log-likelihood function for the 
-break-point may be not concave, especially 
-for poor clear-cut kink-relationships. In these circumstances the initial guess
- for the break-point, i.e. the \code{psi} argument, must be provided with care. For instance visual 
-inspection of a, possibly smoothed, scatter-plot is usually a good way to obtain some idea on breakpoint location. 
-However bootstrap restarting, implemented since version 0.2-9.0, is relatively more robust to starting values specified 
-in  \code{psi}. Alternatively an automatic procedure may be implemented by specifying \code{psi=NA} and 
-\code{stop.if.error=FALSE} in \code{\link{seg.control}}: experience suggests to increase the number of iterations 
-via \code{it.max} in \code{seg.control()}. This automatic procedure, however, is expected to overestimate 
-the number of breakpoints. 
-}
+
+
+  
+\references{ 
+Muggeo, V.M.R. (2003) Estimating regression models with unknown 
+  break-points. \emph{Statistics in Medicine} \bold{22}, 3055--3071.
+
+Muggeo, V.M.R. (2008) Segmented: an R package to fit regression 
+  models with broken-line relationships. \emph{R News} \bold{8/1}, 20--25.
+  }
+
+    
+\author{ Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
+
 
 \seealso{ \code{\link{lm}}, \code{\link{glm}} }
 
@@ -158,13 +160,18 @@ out.lm<-lm(y~x,data=dati)
 o<-segmented(out.lm,seg.Z=~z)
 
 #1 segmented variable, 2 breakpoints: you have to specify starting values (vector) for psi:
-o<-segmented(out.lm,seg.Z=~x,psi=c(30,60),
-    control=seg.control(display=FALSE))
+o<-segmented(out.lm,seg.Z=~x,psi=c(30,60), control=seg.control(display=FALSE))
 slope(o)
+#or by specifying just the *number* of breakpoints
+#o<-segmented(out.lm,seg.Z=~x, npsi=2, control=seg.control(display=FALSE)) 
+
 
 #2 segmented variables: starting values requested via a named list
 out.lm<-lm(y~z,data=dati)
 o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
+#or by specifying just the *number* of breakpoints
+#o1<-update(o,seg.Z=~x+z, npsi=c(x=2,z=1))
+
 
 
 #the default method leads to the same results (but it is slower)
@@ -173,19 +180,31 @@ o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 #    control=seg.control(fn.obj="sum(x$residuals^2)"))
 
 
-#automatic procedure to estimate breakpoints in the covariate x
-# Notice: bootstrap restart is not allowed!
+#automatic procedure to estimate breakpoints in the covariate x (starting from K quantiles)
+# Hint: increases number of iterations. Notice: bootstrap restart is not allowed!
 o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
-    control=seg.control(stop.if.error=FALSE,n.boot=0, it.max=20))
+    control=seg.control(fix.npsi=FALSE, n.boot=0, tol=1e-7, it.max = 50, K=5, display=TRUE))
 
 #assess the progress of the breakpoint estimates throughout the iterations
 \dontrun{
-par(mfrow=c(2,1))
+par(mfrow=c(1,2))
 draw.history(o, "x")
 draw.history(o, "z")
 }
 #try to increase the number of iterations and re-assess the 
 #convergence diagnostics 
+
+# An example using the Arima method:
+n<-50
+idt <-1:n #the time index
+
+mu<-50-idt +1.5*pmax(idt-30,0)
+set.seed(696)
+y<-mu+arima.sim(list(ar=.5),n)*3
+
+o<-arima(y, c(1,0,0), xreg=idt)
+os1<-segmented(o, ~idt, control=seg.control(display=TRUE)) 
+
 
 
 #An example using the default method:
@@ -198,7 +217,7 @@ o<-coxph(Surv(time, status)~age, data=stanford2)
 os<-segmented(o, ~age, psi=40) #estimate the breakpoint in the age effect
 summary(os) #actually it means summary.coxph(os)
 plot(os) #it does not work
-plot.segmented(os) #call explicitly plot.segmented() to plot the fitted piecewise lines
+plot.segmented(os) #call explicitly plot.segmented() to plot the fitted piecewise line
 }
             
 }

@@ -1,7 +1,7 @@
 plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, 
     interc=TRUE, link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, 
     shade=FALSE, rug=!add, dens.rug=FALSE, dens.col = grey(0.8),
-    transf=I, ...){
+    transf=I, isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL,...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -34,9 +34,9 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     if (inherits(x, what = "glm", which = FALSE) && linkinv && !is.null(x$offset) && res) stop("residuals with offset on the response scale?")
     if(conf.level< 0 || conf.level>.9999) stop("meaningless 'conf.level'")
     if ((inherits(x, what = "glm", which = FALSE) && linkinv) || res) {
-        if(!(identical(transf, I) || identical(transf, "I"))) {transf<-I; warning("'transf' set to I..")}
+        if(!(identical(transf, I) || identical(transf, "I"))) {transf<-I; warning("'transf' set to I with 'res=TRUE' and/or 'link=FALSE'.")}
         }
-    show.gap<-FALSE
+#    show.gap<-FALSE
     if (missing(term)) {
         if (length(x$nameUV$Z) > 1) {
             stop("please, specify `term'")
@@ -50,6 +50,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if (! isTRUE(term %in% x$nameUV$Z)) stop("invalid `term'")
     }
     opz <- list(...)
+    col.shade<-if(!is.null(opz$col.shade)) adjustcolor(opz$col.shade, .15) else "gray"
     cols<- if("col"%in% names(opz)) opz$col else 1
     lwds<- if("lwd"%in% names(opz)) opz$lwd else 1
     ltys<- if("lty"%in% names(opz)) opz$lty else 1
@@ -58,29 +59,6 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     ylabs<- if("ylab"%in% names(opz)) opz$ylab else paste("Effect  of ", term, sep = " ")
     xlabs<- if("xlab"%in% names(opz)) opz$xlab else term
 
-#    cols <- opz$col
-#    if (length(cols) <= 0) cols <- 1
-#    lwds <- opz$lwd
-#    if (length(lwds) <= 0)
-#        lwds <- 1
-#    ltys <- opz$lty
-#    if (length(ltys) <= 0)
-#        ltys <- 1
-#    
-#    cexs <- opz$cex
-#    if (length(cexs) <= 0)
-#        cexs <- 1
-#    pchs <- opz$pch
-#    if (length(pchs) <= 0)
-#        pchs <- 1
-#    xlabs <- opz$xlab
-#    if (length(xlabs) <= 0)
-#        xlabs <- term
-#    ylabs <- opz$ylab
-#    if (length(ylabs) <= 0)
-#        ylabs <- paste("Effect  of ", term, sep = " ")
-#    
-#    
 #    #a <- intercept(x, term, gap = show.gap)[[1]][, "Est."]
     a <- intercept(x, term, digits=20)[[1]][, "Est."]
     #Poiche' intercept() restituisce quantita' che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
@@ -107,8 +85,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     if(conf.level>0) {
         #k.alpha<-if(inherits(x, what = c("glm","Arima"), which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
         #cambiato nella 0.5-2.0:
-        k.alpha<-if(inherits(x, what = "lm", which = FALSE)) abs(qt((1-conf.level)/2, x$df.residual)) else abs(qnorm((1-conf.level)/2)) 
-        ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE)
+        k.alpha<- if(all(c("segmented","lm") %in% class(x))) abs(qt((1-conf.level)/2, x$df.residual)) else abs(qnorm((1-conf.level)/2))
+        ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE, isV=isV, is=is, var.diff=var.diff, p.df=p.df, .vcov=.vcov)
         ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit)
         #---> transf...
         ciValues<-apply(ciValues, 2, transf)
@@ -140,15 +118,15 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         fit0 <- broken.line(x, new.d, link = link, interc=interc, se.fit=FALSE)$fit
         }
 #-------------------------------------------------------------------------------
-    if (inherits(x, what = "glm", which = FALSE) && linkinv) { #se GLM con linkinv
+    if (inherits(x, what = "glm", which = FALSE) && linkinv) { #se GLM con link=FALSE (ovvero linkinv=TRUE)
         fit <- if (res)
             #predict.segmented(x, ifelse(rep(rev.sgn, length(xvalues)),-xvalues,xvalues), type=tipo) + resid(x, "response") + const
             #broken.line(x, term, gap = show.gap, link = link) + resid(x, "response") + const
               fit0 + resid(x, "response") + const        
                 else x$family$linkinv(c(y.val, y.val1))
 #        xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))]))
-        xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))],val[-c(1, length(val))]*1.005))
-        l <- approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout)
+        xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))],val[-c(1, length(val))]*1.0001))
+        l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
         val[length(val)]<-max(l$x) #aggiunto 11/09/17
         id.group <- cut(l$x, val, FALSE, TRUE)
         yhat <- l$y
@@ -186,17 +164,15 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
        
         if(conf.level>0){
           if(rev.sgn) vall<- -vall
-          if(shade) polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),
-            col = "gray", border=NA) else matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)
+          if(shade) {
+            polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),
+              col = col.shade, border=NA) } else { matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)}
             }
         if (res) points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)
         yhat <- x$family$linkinv(yhat)
-        if (length(cols) == 1)
-            cols <- rep(cols, max(id.group))
-        if (length(lwds) == 1)
-            lwds <- rep(lwds, max(id.group))
-        if (length(ltys) == 1)
-            ltys <- rep(ltys, max(id.group))
+        if (length(cols) == 1) cols <- rep(cols, max(id.group))
+        if (length(lwds) == 1) lwds <- rep(lwds, max(id.group))
+        if (length(ltys) == 1) ltys <- rep(ltys, max(id.group))
         for (i in 1:max(id.group)) {
             lines(xhat[id.group == i], yhat[id.group == i], col = cols[i],
                 lwd = lwds[i], lty = ltys[i])
@@ -250,12 +226,28 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if(conf.level>0) {
           if(rev.sgn) vall<- -vall
           if(shade) polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),
-            col = "gray", border=NA) else matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)
+            col = col.shade, border=NA) else matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)
             }
-        if (res)
-            points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)
-            segments(m[, 1], do.call(transf, list(m[, 2])), m[, 3], do.call(transf, list(m[, 4])), 
-                col = cols, lwd = lwds, lty = ltys)
+        if (res) points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)
+        #aggiunto 06/2019 perche' sotto disegnava linee (e non curve)
+        #        segments(m[, 1], do.call(transf, list(m[, 2])), m[, 3], do.call(transf, list(m[, 4])), 
+        #                col = cols, lwd = lwds, lty = ltys)
+        xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))],val[-c(1, length(val))]*1.0001))
+        l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
+        val[length(val)]<-max(l$x) #aggiunto 11/09/17
+        id.group <- cut(l$x, val, FALSE, TRUE)
+        xhat <- l$x
+        yhat <- l$y
+#        browser()
+        yhat <- do.call(transf, list(yhat)) #transf(yhat)
+        if (length(cols) == 1) cols <- rep(cols, max(id.group))
+        if (length(lwds) == 1) lwds <- rep(lwds, max(id.group))
+        if (length(ltys) == 1) ltys <- rep(ltys, max(id.group))
+        for (i in 1:max(id.group)) {
+          lines(xhat[id.group == i], yhat[id.group == i], col = cols[i],
+                lwd = lwds[i], lty = ltys[i])
         }
+        
+      }
     invisible(NULL)
 }

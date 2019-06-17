@@ -5,9 +5,9 @@ seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, j
 #nonParm. se TRUE implemneta il case resampling. Quello semiparam dipende dal non-errore di
 extract.psi<-function(lista){
 #serve per estrarre il miglior psi..
-    	dev.values<-lista[[1]]
-    	psi.values<-lista[[2]]
-    	dev.ok<-min(dev.values)
+  dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
+  psi.values<-lista[[2]][-1] #remove the 1st one (NA)
+  dev.ok<-min(dev.values)
     	id.dev.ok<-which.min(dev.values)
     	if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values),
     		nrow=length(dev.values), byrow=TRUE)
@@ -19,7 +19,7 @@ extract.psi<-function(lista){
 #-------------
       visualBoot<-opz$visualBoot
       opz.boot<-opz
-      opz.boot$pow=c(1.1,1.2)
+      opz.boot$pow=c(1,1) #c(1.1,1.2)
       opz1<-opz
       opz1$it.max <-1
       n<-nrow(mfExt)
@@ -46,7 +46,8 @@ extract.psi<-function(lista){
           ss00<-opz$dev0
         }
         }
-
+      n.intDev0<-nchar(strsplit(as.character(ss00),"\\.")[[1]][1])
+      
       all.est.psi.boot<-all.selected.psi<-all.est.psi<-matrix(, nrow=n.boot, ncol=length(est.psi0))
       all.ss<-all.selected.ss<-rep(NA, n.boot)
       if(is.null(size.boot)) size.boot<-n
@@ -54,7 +55,7 @@ extract.psi<-function(lista){
 #      na<- ,,apply(...,2,function(x)mean(is.na(x)))
 
       Z.orig<-Z
-      if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")
+#      if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")
       count.random<-0
       for(k in seq(n.boot)){
           PSI <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
@@ -93,12 +94,17 @@ extract.psi<-function(lista){
               all.selected.psi[k,] <- est.psi0
               all.selected.ss[k]<-o0$SumSquares.no.gap #min(c(o$SumSquares.no.gap, o0$SumSquares.no.gap))
               }
-            if(visualBoot) {
+            if (visualBoot) {
               flush.console()
-              spp <- if (k < 10) "" else NULL
-              cat(k, spp, "", formatC(o0$SumSquares.no.gap, 3, format = "f"), "\n")
-              }
-            } #end n.boot
+              cat(paste("boot sample = ", sprintf("%2.0f",k),
+                        "  opt.min.f = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$SumSquares.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                        "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
+                        "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
+                        sep=""), "\n")
+            }
+          } #end n.boot
+
+      
       all.selected.psi<-rbind(est.psi00,all.selected.psi)
       all.selected.ss<-c(ss00, all.selected.ss)
 

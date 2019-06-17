@@ -13,8 +13,8 @@ fixed number of break-points. The estimation method is described in Muggeo (2003
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 0.5-4.0\cr
-Date: \tab 2019-05-10\cr
+Version: \tab 1.0-0\cr
+Date: \tab 2019-06-10\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)
@@ -27,14 +27,17 @@ License: \tab GPL\cr
  with several breakpoints to be estimated. Moreover since version 0.2-9.0, \code{segmented} implements 
  the bootstrap restarting (Wood, 2001) to make the algorithm less sensitive to starting values. \cr
 
- Since version 0.5-0.0 a default method \code{segmented.dafault} has been added. It may be employed to include segmented relationships
+ Since version 0.5-0.0 a default method \code{segmented.default} has been added. It may be employed to include segmented relationships
  in \emph{general} regression models where specific methods do not exist. Examples include quantile and Cox regressions. See 
  examples in \code{\link{segmented.default}}.\cr
  
+ Since version 1.0-0 the estimating algorithm has been slight modified and it appears to be much stabler (in examples with noisy segmented relationhips and flat log likelihoods)
+ then previous versions.\cr
+
  Hypothesis testing (about the existence of the breakpoint) and confidence intervals are performed via appropriate methods and functions.
  
  A tentative approach to deal with unknown number of breakpoints
- is also provided, see option \code{stop.if.error} in \code{\link{seg.control}}.
+ is also provided, see option \code{fix.npsi} in \code{\link{seg.control}}.
 }
 \author{
 Vito M.R. Muggeo <vito.muggeo@unipa.it>

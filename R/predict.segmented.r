@@ -5,7 +5,24 @@ predict.segmented<-function(object, newdata, ...){
 #     restituisce una colonna per "x", "U.x", "psi.x".. (Eventualmente si dovrebbero sommare..)
 #if(!is.null(object$orig.call$offset)) stop("predict.segmented can not handle argument 'offset'. Include it in formula!")
 
-  dummy.matrix<-function(x.values, x.name, obj.seg, psi.est=TRUE){
+  vS<-function(obj){
+    X<-model.matrix(obj)
+    nomiZ<- obj$nameUV$Z
+    nomiV<- obj$nameUV$V
+    for(i in 1:length(nomiZ)){
+      nomeZ<-nomiZ[i]
+      nomeV<-nomiV[i]
+      Z<-X[,nomeZ]
+      est.psi<- obj$psi[nomeV,"Est."]
+      se.psi<- obj$psi[nomeV,"St.Err"]
+      X[,nomeV]<-X[,nomeV]*pnorm((Z-est.psi)/se.psi)
+    }
+    s2<-summary.lm(obj)$sigma^2
+    s2*solve(crossprod(X))
+  }
+  
+#se gli passo isV=TRUE cosa cambia in predict??  
+  dummy.matrix<-function(x.values, x.name, obj.seg, psi.est=TRUE, isV=FALSE){ 
     #given the segmented fit 'obj.seg' and a segmented variable x.name with corresponding values x.values,
     #this function simply returns a matrix with columns (x, (x-psi)_+, -b*I(x>psi))
     #or  ((x-psi)_+, -b*I(x>psi)) if obj.seg does not include the coef for the linear "x"
@@ -20,9 +37,10 @@ predict.segmented<-function(object, newdata, ...){
                 if(length(nomi.i)>1) nomi.i<-paste(nomi.i,collapse=".")
                 nomiU.ok[i]<-nomi.i
                 }
-          if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
-          return(nomiU.ok)
-        }
+            if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
+            return(nomiU.ok)
+            }
+        if(length(isV)==1) isV<-c(FALSE,isV)
         n<-length(x.values)
         #le seguenti righe selezionavano (ERRONEAMENTE) sia "U1.x" sia "U1.neg.x" (se "x" e "neg.x" erano segmented covariates)
         #nameU<- grep(paste("\\.",x.name,"$", sep=""), obj.seg$nameUV$U, value = TRUE)
@@ -31,17 +49,18 @@ predict.segmented<-function(object, newdata, ...){
         nameV<-obj.seg$nameUV$V[f.U(obj.seg$nameUV$V,x.name)]
 
         diffSlope<-coef(obj.seg)[nameU]
-        est.psi<-obj.seg$psi[nameV,2]
-
+        est.psi<-obj.seg$psi[nameV,"Est."]
+        se.psi<-obj.seg$psi[nameV, "St.Err"]
         k<-length(est.psi)
-
         PSI <- matrix(rep(est.psi, rep(n, k)), ncol = k)
+        SE.PSI <- matrix(rep(se.psi, rep(n, k)), ncol = k)
         newZ<-matrix(x.values, nrow=n,ncol=k, byrow = FALSE)
-
-        dummy1<-pmax(newZ-PSI,0)
+        
+        
+        dummy1<-if(isV[1]) (newZ-PSI)*pnorm((newZ-PSI)/SE.PSI) else  (newZ-PSI)*(newZ>PSI) #pmax(newZ-PSI,0)
         
         if(psi.est){
-          V<-ifelse(newZ>PSI,-1,0)
+          V<-if(isV[2]) -pnorm((newZ-PSI)/SE.PSI) else -(newZ>PSI) #ifelse(newZ>PSI,-1,0)
           dummy2<- if(k==1) V*diffSlope  else V%*%diag(diffSlope) #t(diffSlope*t(-I(newZ>PSI)))
           newd<-cbind(x.values,dummy1,dummy2)
           colnames(newd)<-c(x.name,nameU, nameV)
@@ -71,7 +90,7 @@ predict.segmented<-function(object, newdata, ...){
   names(newd.ok)<- unlist(sapply(r, colnames))
   idZ<-match(nameZ, names( newdata))
   newdata<-cbind(newdata[,-idZ, drop=FALSE], newd.ok) #  newdata<-subset(newdata, select=-idZ)
-  newdata<-cbind(newdata, newd.ok)
+  #newdata<-cbind(newdata, newd.ok) #e' una ripetizione (refuso?) comunque controlla
   }
   class(object)<-class(object)[-1]
   f<-predict(object, newdata=newdata, ...)

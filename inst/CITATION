@@ -28,3 +28,33 @@ citEntry(entry="Article",
                "R News, 8/1, 20-25.",
 	       "URL https://cran.r-project.org/doc/Rnews/.")
 )
+
+citEntry(entry="Article",
+         title = "Testing with a nuisance parameter present only under the alternative:
+    a score-based approach with application to segmented modelling.",
+         author = personList(as.person("Vito M.R. Muggeo")),
+         journal      = "J of Statistical Computation and Simulation",
+         year         = "2016",
+	       volume       = "86",
+	       pages        = "3059-3067",
+         textVersion = 
+         paste("Vito M. R. Muggeo (2016).", 
+               "Testing with a nuisance parameter present only under the alternative:
+                    a score-based approach with application to segmented modelling.",
+               "J of Statistical Computation and Simulation, 86, 3059-3067.")
+)
+
+citEntry(entry="Article",
+         title = "Interval estimation for the breakpoint in segmented regression: a smoothed score-based approach.",
+         author = personList(as.person("Vito M.R. Muggeo")),
+         journal      = "Australian & New Zealand Journal of Statistics",
+         year         = "2017",
+	       volume       = "59",
+	       pages        = "311-322",
+         url          = "https://cran.r-project.org/doc/Rnews/",
+         textVersion = 
+         paste("Vito M. R. Muggeo (2017).", 
+               "Interval estimation for the breakpoint in segmented regression: a smoothed score-based approach.",
+               "Australian & New Zealand Journal of Statistics, 59, 311-322.")
+)
+

@@ -1,5 +1,5 @@
-aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE){
-      blockdiag <- function(...) {
+aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, ...){
+  blockdiag <- function(...) {
         args <- list(...)
         nc <- sapply(args,ncol)
         cumnc <- cumsum(nc)
@@ -16,23 +16,19 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE){
         }
         ret
       }
-#PER UNA VARIABILE SEGMENTED
-        if(missing(parm)) {
-          nomeZ<- ogg$nameUV[[3]]
+  if(missing(parm)) {
+      nomeZ<- ogg$nameUV$Z
 #          if(length(rev.sgn)==1) rev.sgn<-rep(rev.sgn,length(nomeZ))
-          } else {
-                if(! all(parm %in% ogg$nameUV[[3]])) {stop("invalid parm")}
-                  else {nomeZ<-parm}
-                  }
-
-
+  } else {
+    if(! all(parm %in% ogg$nameUV$Z)) {stop("invalid parm")}
+        else {nomeZ<-parm}
+  }
 #for(i in 1:length(nomeZ)) {
 	term<-nomeZ[1]
-    nomi.psi<- grep(paste("\\.",term,sep=""), ogg$nameUV$V, value=TRUE)
-	
+  nomi.psi<- grep(paste("\\.",term,sep=""), ogg$nameUV$V, value=TRUE)
 	nomi.slope<- grep(paste("\\.",term,sep=""), ogg$nameUV$U,value=TRUE)
 	null.left<-TRUE
-	if(term %in% names(ogg$coefficients)) {
+	if(term %in% names(coef(ogg))) {
 		nomi.slope<-c(term, nomi.slope)
 		null.left<-FALSE
 		}
@@ -42,27 +38,19 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE){
   est.psi <- ogg$psi[nomi.psi,2]
   est.w<- diff(c(a,est.psi,b))/(b-a) #drop(B%*%c(a,est.psi,b))
   k<- length(est.psi)#n.changepoints
-#browser()
-#  if(null.left) {
-#                est.w<-est.w[-1]
-#                est.slope<-est.slope[-1]
-#                k<-k-1
-#                }
-  
-  
   A<-matrix(0,k+1,k+1)
   A[row(A)>=col(A)]<-1
   B<-diff(diag(k+2),diff=1)/(b-a)
   mu<-drop(crossprod(est.w,est.slope))
   xsi<-c(crossprod(est.w,A),crossprod(est.slope,B))
-	v.delta<-vcov(ogg)[nomi.slope,nomi.slope] 
+	COV <- vcov(ogg,...)
+  v.delta<-COV[nomi.slope,nomi.slope] 
 # if(null.left) v.delta<-rbind(0,cbind(0,v.delta))
 	
 	#v.delta<-vcov(ogg)[2:4,2:4] #questa e' la var cov della left slope e le altre diffSlope
   #v.psi<-vcov(ogg)[5:6,5:6] #questa e' la var-cov dei psi
-  v.psi<-as.matrix(vcov(ogg)[nomi.psi,nomi.psi])
-
-	VC<-vcov(ogg)[nomi.psi, nomi.slope]
+  v.psi<-as.matrix(COV[nomi.psi,nomi.psi])
+	VC<-COV[nomi.psi, nomi.slope]
 	VV<-blockdiag(v.delta,diag(1)*0,v.psi,diag(1)*0)
 	id.cov1<- 1:length(est.slope)
 	id.cov2<- seq.int((length(est.slope)+2), length.out=length(est.psi))
@@ -74,11 +62,8 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE){
 	
 	VV[id.cov2,id.cov1]<-VC
   VV[id.cov1,id.cov2]<-t(VC)
-	
 	#VV[5:6,1:3]<-vcov(os)[5:6,2:4]
   #VV[1:3,5:6]<-vcov(os)[2:4,5:6]
-
-
   se.mu<-sqrt(drop(xsi%*%VV%*%xsi))
 	z<-abs(qnorm((1-conf.level)/2))
 	r<-c(Est=mu, St.Err=se.mu, mu+c(-z,z)*se.mu)

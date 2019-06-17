@@ -8,7 +8,7 @@ Average annual per cent change in segmented trend analysis
 Computes the average annual per cent change  to summarize piecewise linear relationships in segmented regression models.
 }
 \usage{
-aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE)
+aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,6 +19,8 @@ aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE)
   \item{conf.level}{the confidence level desidered.}
   \item{wrong.se}{logical, if \code{TRUE}, the `wrong'' standard error (as discussed in Clegg et al. (2009)) ignoring 
   uncertainty in the breakpoint estimate is returned as an attribute \code{"wrong.se"}.}
+  \item{...}{further arguments to be passed on to \code{vcov.segmented()}, such as \code{var.diff} or \code{is}.}
+
 }
 \details{
  To summarize the fitted piecewise linear relationship, Clegg et al. (2009) proposed the 'average annual per cent change' (AAPC)
@@ -47,10 +49,11 @@ aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE)
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 %%}
 \examples{
+set.seed(12)
 x<-1:20
 y<-2-.5*x+.7*pmax(x-9,0)-.8*pmax(x-15,0)+rnorm(20)*.3
 o<-lm(y~x)
-os<-segmented(o, psi=c(5,10))
+os<-segmented(o, psi=c(5,12))
 aapc(os)
 }
 \keyword{ regression }

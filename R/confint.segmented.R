@@ -1,4 +1,5 @@
-`confint.segmented` <- function(object, parm, level=0.95, method=c("delta", "score", "gradient"), rev.sgn=FALSE, var.diff=FALSE, digits=max(4, getOption("digits") - 1), ...){
+`confint.segmented` <- function(object, parm, level=0.95, method=c("delta", "score", "gradient"), rev.sgn=FALSE, 
+        var.diff=FALSE, is=FALSE, digits=max(4, getOption("digits") - 1), ...){
 #...: argomenti da passare solo a confintSegIS. Questi sono "h", "d.h", "bw" (bw="(1/n)^(1/2)"), nvalues, msgWarn o useSeg.
         method<-match.arg(method)
         cls<-class(object)
@@ -7,7 +8,7 @@
 #=======================================================================================================
 #========== metodo Delta
 #=======================================================================================================
-confintSegDelta<- function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, ...){
+confintSegDelta<- function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FALSE, is=FALSE, ...){
 #--
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -55,7 +56,7 @@ confintSegDelta<- function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FAL
             colnames(m)<-c("Est.",paste("CI","(",level*100,"%",")",c(".low",".up"),sep=""))
             for(j in 1:length(nomi.U)){ #per ogni psi della stessa variabile segmented..
                     sel<-c(nomi.V[j],nomi.U[j])
-                    V<-vcov(object,var.diff=var.diff)[sel,sel] #questa e' vcov di (psi,U)
+                    V<-vcov(object,var.diff=var.diff, is=is, ...)[sel,sel] #questa e' vcov di (psi,U)
                     b<-coef(object)[sel[2]] #diff-Slope
                     th<-c(b,1)
                     orig.coef<-drop(diag(th)%*%coef(object)[sel]) #sono i (gamma,beta) th*coef(ogg)[sel]
@@ -159,8 +160,8 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                         # #if(length(id.change)!=length(val)) return x1[id.change]<-val x1<- -x1 x1 }
                         dpmax <- function(x, y, pow = 1) {
                                 # derivata prima di pmax; se pow=1 ? -I(x>psi)
-                                if (pow == 1)
-                                        ifelse(x > y, -1, 0) else -pow * pmax(x - y, 0)^(pow - 1)
+                                if (pow == 1) -(x > y) else -pow * (x>y)*(x - y)^(pow - 1)
+                                        #ifelse(x > y, -1, 0) else -pow * pmax(x - y, 0)^(pow - 1)
                         }
                         if (cadj && which.return != 3)
                                 stop("cadj=TRUE can return only the studentized score")
@@ -173,7 +174,9 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                                 o <- lm.fit(x = XX, y = y)
                                 #o <- lm.fit(x = cbind(XREG, (x - psi) * pnorm((x - psi)/se.psi)), y = y)
                         } else {
-                                XX<- cbind(pmax(x - psi, 0)^pow[1], XREG)
+                                .U<-(x > psi)*(x-psi)
+                                if(pow[1]!=1) .U<-.U^pow[1]
+                                XX<- cbind(.U, XREG) #cbind(pmax(x - psi, 0)^pow[1], XREG)
                                 o <- lm.fit(x = XX, y = y)  
                                 #o <- lm.fit(x = cbind(XREG, pmax(x - psi, 0)), y = y)  #o<-lm(y~0+XREG+pmax(x-psi,0))
                         }
@@ -269,7 +272,10 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                                 if(fit.is) {
                                         X<- if(altro) cbind(1,x, (x-psii)*pnorm((x - psii)/sepsi)+sepsi*dnorm((x-psii)/sepsi), XREG) else cbind(1,x,(x-psii)*pnorm((x-psii)/sepsi), XREG)
                                 } else {
-                                        X<- cbind(1,x,pmax(x - psii, 0)^pow[1], XREG)
+                                        .U<- (x-psii)*(x>psii)
+                                        if(pow[1]!=1) .U <- .U^pow[1]
+                                        X<- cbind(1, x, .U, XREG)
+                                        #X<- cbind(1,x,pmax(x - psii, 0)^pow[1], XREG)
                                 }
                                 
                                 o <- lm.fit(y = y, x = X)
@@ -611,7 +617,7 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
 #=======================================================================================================
 
 if(method=="delta"){
-        r<-confintSegDelta(object, parm, level, rev.sgn, var.diff, ...)    
+        r<-confintSegDelta(object, parm, level, rev.sgn, var.diff, is, ...)    
         } else {
         r<-confintSegIS(object, parm, stat=method, conf.level=level, ...)       
         }

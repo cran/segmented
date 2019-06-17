@@ -1,5 +1,5 @@
 `slope` <-
-function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
+function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, APC=FALSE, .vcov=NULL,...,
       digits = max(4, getOption("digits") - 2)){
 #--
 
@@ -19,12 +19,14 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
         }
 #--        
 #        if(!"segmented"%in%class(ogg)) stop("A 'segmented' model is requested")
-        if(var.diff && length(ogg$nameUV$Z)>1) {
-            var.diff<-FALSE
-            warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)
-            }
-    #se e' un "newsegmented"
 
+        #commentato il 28/05/19. vcov() fa gia' questo controllo..
+        # if(var.diff && length(ogg$nameUV$Z)>1) {
+        #     var.diff<-FALSE
+        #     warning("var.diff set to FALSE with multiple segmented variables", call.=FALSE)
+        #     }
+
+            #se e' un "newsegmented"
 #    if(!is.null(ogg$R.slope)) {
 #             covv<-old.coef.var(ogg)
 #             ogg$coefficients<- covv$b
@@ -32,14 +34,17 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
 #             ogg$psi<-old.psi(ogg)
 #             ogg$nameUV<-old.nomi(ogg)
 #             } else {
-             covv<-try(vcov(ogg,var.diff=var.diff), silent=TRUE)
+             covv<-try(vcov(ogg,...), silent=TRUE)
 #             }
-        
+
+        covv <- if(is.null(.vcov)) vcov(ogg, ...) else .vcov 
+        if(!all(dim(covv)==c(length(coef(ogg)), length(coef(ogg))))) stop("Incorrect dimension of cov matrix", call. = FALSE)
+             
         nomepsi<-rownames(ogg$psi) #OK
         nomeU<-ogg$nameUV$U
         nomeZ<-ogg$nameUV$Z
         if(missing(parm)) {
-          nomeZ<- ogg$nameUV[[3]]
+          nomeZ<- ogg$nameUV$Z
           if(length(rev.sgn)==1) rev.sgn<-rep(rev.sgn,length(nomeZ))
           }
              else {
@@ -72,8 +77,6 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, var.diff=FALSE, APC=FALSE,
             #cof<-coef(ogg)[nomiU]
             id.cof.U<- match(nomiU, names(ogg$coef)) #prima era names(ogg$coefficients)
             index[[i]]<-c(match(nomeZ[i],nomi), id.cof.U)
-            
-            
             }
         Ris<-list()   
         #digits <- max(3, getOption("digits") - 3)

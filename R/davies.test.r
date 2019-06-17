@@ -222,7 +222,7 @@ daviesGLM<-function(y, z, xreg, weights, offs, values=NULL, k, list.glm, alterna
     mt <- attr(mf, "terms")
     interc<-attr(mt,"intercept")
     y <- model.response(mf, "any")
-    XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, contrasts)
+    XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf, obj$contrasts)
     n <- nrow(XREG)
     if (is.null(weights)) weights <- rep(1, n)
     if (is.null(offs)) offs <- rep(0, n)
