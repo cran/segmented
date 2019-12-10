@@ -5,18 +5,23 @@
 ****************************
 
 
+===============
+version 1.1-0
+===============
+* Changes in segmented.default to allow estimation of betareg models (thanks to Malcolm Baptie and Jochen Wilhelm for their input)
+
 
 ===============
 version 1.0-0
 ===============
 * New implementation of the estimating algorithm. Now segmented is much stabler, and dependence on starting values (that occurred in some 'difficult' datasets)
-is greatly reduced and apparently canceled. 
+is greatly reduced and apparently cancelled. 
 * New arguments:
   - 'npsi' in segmented.* methods to specify the number of breakpoints (and not the values) to be estimated. 
-  - 'is' in vcov.segmented() to compute covariance matrix based on the idea of induced smoothing. This leads to higher (and more trustworthy) standard errors for the breakpoint
+  - 'is' in vcov.segmented() to compute covariance matrix based on the idea of induced smoothing. This leads to higher (and more trustworthy) standard errors for the breakpoint.
   - 'isV' in broken.line() and plot.segmented() to allow smooth "transition" in the standard errors values for the fitted values at the breakpoint. 
-  - 'conv.psi', 'alpha', 'fix.npsi', 'min.step' and 'tol' (replacing 'toll') in seg.control() (where arguments 'last', 'stop.if.error', and 'gap' will be removed in the next releases)
-  - 'n.break' in pscore.test()
+  - 'conv.psi', 'alpha', 'fix.npsi', 'min.step' and 'tol' (the last one replacing 'toll') in seg.control() (where arguments 'last', 'stop.if.error', and 'gap' will be removed in the next releases)
+  - 'n.break' in pscore.test().
   - .vcov in broken.line() and plot.segmented() to pass directly the full covariance matrix of estimates. plot.segmented() accepts 'col.shade', see ?plot.segmented
 * Minor changes: better display of the iterative steps (if display=TRUE in seg.control()) and general improvement in draw.history(). 
 

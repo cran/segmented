@@ -75,7 +75,7 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, APC=FALSE, .vcov=NULL,...,
             psii<- ogg$psi[nomiPsi , "Est."] 
             nomiU<-grep(paste(".", nomeZ[i], sep="") , ogg$nameUV$U, value=TRUE)
             #cof<-coef(ogg)[nomiU]
-            id.cof.U<- match(nomiU, names(ogg$coef)) #prima era names(ogg$coefficients)
+            id.cof.U<- match(nomiU, names(coef(ogg))) #prima era names(ogg$coefficients)
             index[[i]]<-c(match(nomeZ[i],nomi), id.cof.U)
             }
         Ris<-list()   
@@ -88,7 +88,9 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, APC=FALSE, .vcov=NULL,...,
 #        my.f<-function(x)eval(parse(text=transf[1]))
 #        my.f.deriv<-function(x)eval(parse(text=transf[2]))
        
-          
+
+        #browser()
+                  
         for(i in 1:length(index)){
             ind<-as.numeric(na.omit(unlist(index[[i]])))
             M<-matrix(1,length(ind),length(ind))
@@ -96,8 +98,8 @@ function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, APC=FALSE, .vcov=NULL,...,
             cof<-coef(ogg)[ind]
             cof.out<-M%*%cof 
 
-            
-            if(class(covv)!="try-error"){
+            if(!inherits(covv, "try-error")){
+            #if(class(covv)[1]!="try-error"){ #inherits(covv, "try-error") #is(covv, "try-error")
                 cov.ok<-covv[ind,ind]
                 cov.out<-M%*%cov.ok%*%t(M)
                 se.out<-sqrt(diag(cov.out))
