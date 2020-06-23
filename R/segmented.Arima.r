@@ -21,6 +21,10 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
   if(missing(seg.Z)) {
     if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
   }
+  if("V" %in% sub("V[1-9]*[0-9]","V", c(all.vars(seg.Z), names(coef(obj))))) stop("variable names 'V', 'V1', .. are not allowed")
+  if("U" %in% sub("U[1-9]*[0-9]","U", c(all.vars(seg.Z), names(coef(obj))))) stop("variable names 'U', 'U1', .. are not allowed")
+  if(any(c("$","[") %in% all.names(seg.Z))) stop(" '$' or '[' not allowed in 'seg.Z' ")
+  
   n.Seg<-length(all.vars(seg.Z))
   id.npsi<-FALSE
     if(missing(psi)) { 
@@ -30,7 +34,11 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
       if(length(npsi)!=length(all.vars(seg.Z))) stop("seg.Z and npsi do not match") 
       names(npsi)<-all.vars(seg.Z)
     } else {#se n.Seg>1
-      if(missing(npsi)) stop(" with multiple segmented variables in seg.Z, 'psi' or 'npsi' should be supplied", call.=FALSE) 
+      #if(missing(npsi)) stop(" with multiple segmented variables in seg.Z, 'psi' or 'npsi' should be supplied", call.=FALSE) 
+      if (missing(npsi)) {
+        npsi<-rep(1, n.Seg)
+        names(npsi)<-all.vars(seg.Z)
+      }
       if(length(npsi)!=n.Seg) stop(" 'npsi' and seg.Z should have the same length")
       if(!all(names(npsi) %in% all.vars(seg.Z))) stop(" names in 'npsi' and 'seg.Z' do not match")    
     }
@@ -46,7 +54,7 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     }
   }
   
-    
+    fc<- min(max(abs(control$fc),.8),1) 
     min.step<-control$min.step
     alpha<-control$alpha
     it.max <- old.it.max<- control$it.max
@@ -178,7 +186,7 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
               nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,
-              conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step)
+              conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,fc=fc)
     
     opz$call.ok<-call.ok
     opz$call.noV<-call.noV

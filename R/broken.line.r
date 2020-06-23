@@ -74,7 +74,9 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
 #-------------
     if(se.fit) {
       if(is.null(.vcov)) .vcov<-vcov.segmented(ogg, ...)
-      if(!all(dim(.vcov)==c(length(ogg$coef), length(ogg$coef)))) stop("Incorrect dimension of cov matrix", call. = FALSE)
+      #---Dalla versione 1.2.0 (20/06/20) ho eliminato il controllo sotto per consentire l'utilizzo
+      #----di modelli che restituivano una cov con dimensione diversa dal numero dei coeff lineari (ad es., censReg)
+      #if(!all(dim(.vcov)==c(length(ogg$coef), length(ogg$coef)))) stop("Incorrect dimension of cov matrix", call. = FALSE)
       }
     xvalues<-term
     nomeV <- ogg$nameUV$V

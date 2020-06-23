@@ -6,7 +6,7 @@
 }
 \usage{
 pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), 
-    values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1)
+    values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, only.term=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,6 +24,7 @@ pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   \item{more.break}{ optional, logical. If \code{obj} is a 'segmented' fit, \code{more.break=FALSE} tests for the actual breakpoint for the variable 'seg.Z', 
   while \code{more.break=TRUE} tests for an \emph{additional} breakpoint(s) for the variable 'seg.Z'. Ignored when \code{obj} is not a segmented fit.}
   \item{n.break}{optional. Number of breakpoints postuled under the alternative hypothesis.}
+  \item{only.term}{logical. If \code{TRUE}, only the pseudo covariate(s) relevant to the testing for the breakpoint is returned, and no test is computed.}
 
 }
 \details{
@@ -37,7 +38,7 @@ pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   The \code{k} evaluation points are \code{k} equally spaced values in the range of the segmented covariate. \code{k} should not be small. 
   Specific values can be set via \code{values}. However I have found no important difference due to number and location of the evaluation points, thus  default is \code{k=10} equally-spaced points.
   
-  If \code{obj} is a (segmented) \emph{lm} object, the returned p-value comes from the t-distribution with appropriate degrees of freedom. Otherwise, namely if \code{obj} is a (segmented) \emph{glm} object, the Normal distribution is used.   
+  If \code{obj} is a (segmented) \emph{lm} object, the returned p-value comes from the t-distribution with appropriate degrees of freedom. Otherwise, namely if \code{obj} is a (segmented) \emph{glm} object, the p-value is computed wrt the Normal distribution.   
 }
 \value{
   A list with class '\code{htest}' containing the following components:

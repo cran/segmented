@@ -6,6 +6,18 @@
 
 
 ===============
+version 1.2-0 
+===============
+* Changes in segmented.default to allow estimation of segmented censReg models (thanks to Georgina Kaltenecker for her input)
+* coef.segmented() introduced to extract regression coefficients and breakpoints
+* A small improvement in segmented.* methods: if fix.npsi=TRUE, the returned  number of breakpoints is always equal to the initial one 
+* npsi can be missing in the segmented.* methods, and one breakpoint is estimated for all variables specified in seg.Z
+* New argument 'fc' in seg.control() to manage situations when the estimated breakpoints come to the boundary.
+* New argument in plot.segmented() to draw also the trends before the breakpoints. 
+* Bug fixed: plot.segmented() did not recycle arguments 'col', 'lwd' and 'lty'
+
+
+===============
 version 1.1-0
 ===============
 * Changes in segmented.default to allow estimation of betareg models (thanks to Malcolm Baptie and Jochen Wilhelm for their input)
@@ -14,8 +26,7 @@ version 1.1-0
 ===============
 version 1.0-0
 ===============
-* New implementation of the estimating algorithm. Now segmented is much stabler, and dependence on starting values (that occurred in some 'difficult' datasets)
-is greatly reduced and apparently cancelled. 
+* New implementation of the estimating algorithm. Now segmented is much stabler, and dependence on starting values (that occurred in some 'difficult' datasets) is greatly reduced and apparently cancelled. 
 * New arguments:
   - 'npsi' in segmented.* methods to specify the number of breakpoints (and not the values) to be estimated. 
   - 'is' in vcov.segmented() to compute covariance matrix based on the idea of induced smoothing. This leads to higher (and more trustworthy) standard errors for the breakpoint.
@@ -30,11 +41,11 @@ is greatly reduced and apparently cancelled.
 version 0.5-4.0
 ===============
 * confint.segmented() now computes breakpoint confidence intervals via the (smoothed) Score or Gradient statistic, see new argument 'method' in confint.segmented().
-* if segmented does not converge (since the estimated psi leaves only 1 datum on its left/right) the last psi estimate is printed as a message. 
-* argument keep.class added in segmented.default() 
-* argument 'rug' defaults to '!add' in plot.segmented()
-* confint.segmented now returns a matrix (rather than a list)
-* bug fixed: plot.segmented() did not handle appropriately arguments cex.lab and cex.axis. segmented methods did not terminate appropriately when automatic selection of number of breakpoints was performed (i.e. 'stop.if.error=FALSE'). davies.test() and segmented.glm() required 'seg.Z' even if there was just one covariate in the starting model and it could be missing (thanks to Lein E. Pardo for reporting that). Some minor bug fixes (related to argument 'data' and one-sided alternative) in pscore.test (thanks to Karista Hudelson for reporting). 
+* If segmented does not converge (since the estimated psi leaves only 1 datum on its left/right) the last psi estimate is printed as a message. 
+* Argument keep.class added in segmented.default() 
+* Argument 'rug' defaults to '!add' in plot.segmented()
+* confint.segmented() now returns a matrix (rather than a list)
+* Bug fixed: plot.segmented() did not handle appropriately arguments cex.lab and cex.axis. segmented methods did not terminate appropriately when automatic selection of number of breakpoints was performed (i.e. 'stop.if.error=FALSE'). davies.test() and segmented.glm() required 'seg.Z' even if there was just one covariate in the starting model and it could be missing (thanks to Lein E. Pardo for reporting that). Some minor bug fixes (related to argument 'data' and one-sided alternative) in pscore.test (thanks to Karista Hudelson for reporting). 
 
 
 ===============
@@ -42,14 +53,14 @@ version 0.5-3.0
 ===============
 * aapc() introduced. The function computes the 'average annual percent change' to summarize piecewise linear trends (thanks to Yuchen Qin for his input).
 * plot.segmented() now accepts arguments 'cex.axis' and 'cex.lab' (thanks to Matthew Birk for his input).
-* bug fixed: segmented.Arima didn't work for arima fits including a seasonal component (thanks to Claudio Agostinelli for reportig the bug).
+* Bug fixed: segmented.Arima didn't work for arima fits including a seasonal component (thanks to Claudio Agostinelli for reportig the bug).
 
 
 ===============
 version 0.5-2.2
 ===============
-* when there is a single covariate in the starting (g)lm, seg.Z can be missing when calling the segmented methods.
-* bug fixed: plot.segmented(.., link=FALSE) did not work correctly (sometimes it returned an error) for glm fits with multiple breakpoints. Weights were not handled appropriately by segmented.lm.
+* When there is a single covariate in the starting (g)lm, seg.Z can be missing when calling the segmented methods.
+* Bug fixed: plot.segmented(.., link=FALSE) did not work correctly (sometimes it returned an error) for glm fits with multiple breakpoints. Weights were not handled appropriately by segmented.lm.
 
 
 ===============
@@ -64,14 +75,14 @@ version 0.5-2.1
 version 0.5-2.0
 ===============
 * pscore.test() introduced. The function tests for a breakpoint using a (pseudo) score statistic which is more powerful than davies.test(), especially when the breakpoint is expected to be in the middle of the covariate range and the signal-to-noise ratio is high.
-* argument 'digits' added in seg.control() to fix the number of digits of the breakpoint estimate during the iterative estimation algorithm.
-* bug fixed: conf.level>0 in plot.segmented() did not work for objects returned by segmented.default(). 
+* Argument 'digits' added in seg.control() to fix the number of digits of the breakpoint estimate during the iterative estimation algorithm.
+* Bug fixed: conf.level>0 in plot.segmented() did not work for objects returned by segmented.default(). 
 
 
 ===============
 version 0.5-1.5 (not on CRAN)
 ===============
-* arguments 'gap' and 'show.gap' removed in intercept() and in plot.segmented(). (they are meaningless, as segmented() always returns joined piecewise lines, i.e. with no gaps).
+* Arguments 'gap' and 'show.gap' removed in intercept() and in plot.segmented(). (they are meaningless, as segmented() always returns joined piecewise lines, i.e. with no gaps).
 * slope() and broken.line() (and then plot.segmented() which uses them) did not work for objects returned by segmented.default() (Thanks to Marcos Krull for reporting). 
 
 
@@ -168,8 +179,7 @@ version 0.3-0.0
 ===============
 version 0.2-9.5
 ===============
-* Some bugs fixed: segmented did not work if the starting linear model including an offset term was called from a dataframe; thanks to Aritz Adin Urtasun (and also to the 
-the guy which sent me the email on 26th Sept 2013. I lost his email and I do not remember his name). segmented did not work if the starting linear model included the "weights" argument expressed via a function (something like "weights= 1/myweights"); thanks to 
+* Some bugs fixed: segmented did not work if the starting linear model including an offset term was called from a dataframe; thanks to Aritz Adin Urtasun (and also to the guy which sent me the email on 26th Sept 2013. I lost his email and I do not remember his name). segmented did not work if the starting linear model included the "weights" argument expressed via a function (something like "weights= 1/myweights"); thanks to 
 Betty Fetscher. segmented did not work if the variable names in seg.Z included the capital "U"; thanks to Lutz Ph. Breitling.
 
 

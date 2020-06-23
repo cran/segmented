@@ -10,7 +10,7 @@
 \method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, 
     link=TRUE, res.col=1, rev.sgn=FALSE, const=0, shade=FALSE, rug=!add, 
     dens.rug=FALSE, dens.col = grey(0.8), transf=I, isV=FALSE, is=FALSE, 
-    var.diff=FALSE, p.df="p", .vcov=NULL, ...)
+    var.diff=FALSE, p.df="p", .vcov=NULL, prev.trend=FALSE, ...)
       }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -45,8 +45,9 @@
   \item{var.diff}{logical value to be passed to \code{\link{summary.segmented}} to compute dthe standard errors of fitted values (if \code{conf.level>0}).}
   \item{p.df}{ degrees of freedom when \code{var.diff=TRUE}, see \code{\link{summary.segmented}}}
   \item{.vcov}{ The \emph{full} covariance matrix of estimates to be used when \code{conf.level>0}. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov.segmented}.}
+  \item{prev.trend}{logical. If \code{TRUE} dashed lines corresponding to the `previous' trends (i.e. the trends if the breakpoints would not have occurred) are also drawn.}
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
-  can be vectors, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and 
+  can be vectors and are recycled if necessary, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and 
   `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}); \code{col.shade} for the shaded regions (provided that \code{shade=TRUE} and \code{conf.level>0}).
   }
 }

@@ -15,6 +15,9 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
   }
   n.Seg<-length(all.vars(seg.Z))
   id.npsi<-FALSE
+  if("V" %in% sub("V[1-9]*[0-9]","V", c(all.vars(seg.Z), all.vars(formula(obj) )[-1]))) stop("variable names 'V', 'V1', .. are not allowed")
+  if("U" %in% sub("U[1-9]*[0-9]","U", c(all.vars(seg.Z), all.vars(formula(obj) )[-1]))) stop("variable names 'U', 'U1', .. are not allowed")
+  if(any(c("$","[") %in% all.names(seg.Z))) stop(" '$' or '[' not allowed in 'seg.Z' ")
   if(missing(psi)) { 
     if(n.Seg==1){
       if(missing(npsi)) npsi<-1
@@ -22,7 +25,11 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
       if(length(npsi)!=length(all.vars(seg.Z))) stop("seg.Z and npsi do not match") 
       names(npsi)<-all.vars(seg.Z)
     } else {#se n.Seg>1
-      if(missing(npsi)) stop(" with multiple segmented variables in seg.Z, 'psi' or 'npsi' should be supplied", call.=FALSE) 
+      #if(missing(npsi)) stop(" with multiple segmented variables in seg.Z, 'psi' or 'npsi' should be supplied", call.=FALSE) 
+      if (missing(npsi)) {
+        npsi<-rep(1, n.Seg)
+        names(npsi)<-all.vars(seg.Z)
+      }
       if(length(npsi)!=n.Seg) stop(" 'npsi' and seg.Z should have the same length")
       if(!all(names(npsi) %in% all.vars(seg.Z))) stop(" names in 'npsi' and 'seg.Z' do not match")    
     }
@@ -38,7 +45,7 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     }
   }
   
-    
+    fc<- min(max(abs(control$fc),.8),1)
     maxit.glm <- control$maxit.glm
     it.max <- old.it.max<- control$it.max
     min.step<-control$min.step
@@ -289,7 +296,7 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
         fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,
-        pow=pow, visualBoot=visualBoot, digits=digits)   
+        pow=pow, visualBoot=visualBoot, digits=digits, fc=fc)   
 
     if(n.boot<=0){
       obj<-seg.glm.fit(y,XREG,Z,PSI,weights,offs,opz)

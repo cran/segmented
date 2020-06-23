@@ -1,7 +1,7 @@
 plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, 
     interc=TRUE, link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, 
     shade=FALSE, rug=!add, dens.rug=FALSE, dens.col = grey(0.8),
-    transf=I, isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL,...){
+    transf=I, isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, prev.trend=FALSE,...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -59,22 +59,23 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     ylabs<- if("ylab"%in% names(opz)) opz$ylab else paste("Effect  of ", term, sep = " ")
     xlabs<- if("xlab"%in% names(opz)) opz$xlab else term
 
-#    #a <- intercept(x, term, gap = show.gap)[[1]][, "Est."]
     a <- intercept(x, term, digits=20)[[1]][, "Est."]
     #Poiche' intercept() restituisce quantita' che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
     if(!interc && ("(Intercept)" %in% names(coef(x)))) a<- a-coef(x)["(Intercept)"]
     b <- slope(x, term, digits=20)[[1]][, "Est."]
-    
     #id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE) #confondeva "psi1.x","psi1.neg.x"
     id <- f.U(rownames(x$psi), term)
-    
     est.psi <- x$psi[id, "Est."]
-    K <- length(est.psi)
     val <- sort(c(est.psi, x$rangeZ[, term]))
+    #vettorializza i cols, lwds, ltys
+    cols<-rep(cols, l=length(est.psi)+1)
+    lwds<-rep(lwds, l=length(est.psi)+1)
+    ltys<-rep(ltys, l=length(est.psi)+1)
     #---------aggiunta per gli IC
     rangeCI<-NULL
-    n<-length(x$residuals) #fitted.values - Arima non ha "fitted.values", ma ha "residuals"..
-    tipo<- if(inherits(x, what = "glm", which = FALSE) && link) "link" else "response"
+    #K <- length(est.psi)
+    #n<-length(x$residuals) #fitted.values - Arima non ha "fitted.values", ma ha "residuals"..
+    #tipo<- if(inherits(x, what = "glm", which = FALSE) && link) "link" else "response"
     
     vall<-sort(c(seq(min(val), max(val), l=150), est.psi))
     #ciValues<-predict.segmented(x, newdata=vall, se.fit=TRUE, type=tipo, level=conf.level)
@@ -158,8 +159,9 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
           }
           
         if(rug) {
-            segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
-              rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/40)}
+          #usare rug()?  
+          segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
+              rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/80)}
             }
        
         if(conf.level>0){
@@ -176,6 +178,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         for (i in 1:max(id.group)) {
             lines(xhat[id.group == i], yhat[id.group == i], col = cols[i],
                 lwd = lwds[i], lty = ltys[i])
+          if(prev.trend) lines(xhat[xhat>est.psi[i]], x$family$linkinv((a[i]+b[i]*xhat)[xhat>est.psi[i]]), col=cols[i], lwd = lwds[i]*.65, lty = 2)
         }
 #-------------------------------------------------------------------------------
     } else { #se LM o "GLM con link=TRUE (ovvero linkinv=FALSE)"
@@ -220,7 +223,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
           box()
           }
         if(rug) {segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
-            rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/40)}
+            rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/80)}
 
 
         if(conf.level>0) {
@@ -246,7 +249,11 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         for (i in 1:max(id.group)) {
           lines(xhat[id.group == i], yhat[id.group == i], col = cols[i],
                 lwd = lwds[i], lty = ltys[i])
-        }
+          if(prev.trend) lines(xhat[xhat>est.psi[i]], (a[i]+b[i]*xhat)[xhat>est.psi[i]], col=cols[i], lwd = lwds[i]*.65, lty = 2)
+          }
+#        if(prev.trend){
+ #         for(i in 1:(length(est.psi)+1)) lines(xhat[xhat>est.psi[i]], a[i]+b[i]*xhat)[xhat>est.psi[i]], col=cols[i], lwd = lwds[i]*.7, lty = 2)
+  #      }
         
       }
     invisible(NULL)

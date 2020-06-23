@@ -25,6 +25,7 @@ extract.psi<-function(lista){
       n<-nrow(mfExt)
       o0<-try(seg.def.fit(obj, Z, PSI, mfExt, opz), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
+      
       if(!is.list(o0)) {
           o0<- seg.def.fit(obj, Z, PSI, mfExt, opz, return.all.sol=TRUE)
           o0<-extract.psi(o0)
@@ -78,7 +79,7 @@ extract.psi<-function(lista){
             PSI <- matrix(rep(est.psi.boot, rep(nrow(Z), length(est.psi.boot))), ncol = length(est.psi.boot))
             opz$h<-max(opz$h*.9, .2)
             opz$it.max<-opz$it.max+1
-                  o <- try(seg.def.fit(obj, Z.orig, PSI, mfExt, opz, return.all.sol=TRUE), silent=TRUE)
+            o <- try(seg.def.fit(obj, Z.orig, PSI, mfExt, opz, return.all.sol=TRUE), silent=TRUE)
             if(!is.list(o) && random){
                 est.psi0<-apply(rangeZ,2,function(r)runif(1,r[1],r[2]))
                 PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
@@ -86,7 +87,8 @@ extract.psi<-function(lista){
                 count.random<-count.random+1
               }
             if(is.list(o)){
-              if(!"coefficients"%in%names(o$obj)) o<-extract.psi(o)
+              #if(!"coefficients"%in%names(o$obj)) o<-extract.psi(o)
+              if( isFALSE( "coefficients"%in%names(o$obj) || "estimate"%in%names(o$obj) ) ) o<-extract.psi(o)
               all.est.psi[k,]<-o$psi
               all.ss[k]<-o$SumSquares.no.gap
               if(o$SumSquares.no.gap<=ifelse(is.list(o0), o0$SumSquares.no.gap, 10^12)) o0<-o

@@ -1,8 +1,8 @@
 `pscore.test`<- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
-                         values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1) { 
+                         values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, only.term=FALSE) { 
   #-------------------------------------------------------------------------------
   test.Sc2<-function(y, z, xreg, sigma=NULL, values=NULL, fn="pmax(x-p,0)", df.t="Inf", alternative, w=NULL, offs=NULL, 
-                     nbreaks=1, ties.ok=FALSE){
+                     nbreaks=1, ties.ok=FALSE, only.term=FALSE){
     #xreg: la matrice del disegno del modello nullo. Se mancante viene assunta solo l'intercetta.
     #Attenzione che se invXtX e xx vengono entrambe fornite, non viene fatto alcun controllo
     #invXtX: {X'X}^{-1}. if missing it is computed from xreg
@@ -47,6 +47,7 @@
         }
       }
     }
+    if(only.term) return(pmaxMedio)
     if(is.null(w)) w<-1
     invXtX<-solve(crossprod(sqrt(w)*xreg))
     IA<-diag(n) - xreg%*%tcrossprod(invXtX, xreg*w) #I-hat matrix
@@ -190,6 +191,7 @@
           pmaxMedio2 <- rowMeans(XX)
           pmaxMedio <- cbind(pmaxMedio, pmaxMedio2)
         }
+        if(only.term) return(pmaxMedio)
         #necessario salvare pmaxMedio in mf???
         mf$pmaxMedio<-pmaxMedio 
         Call$formula<- formulaNull
@@ -251,6 +253,7 @@
         pmaxMedio2 <- rowMeans(XX)
         pmaxMedio <- cbind(pmaxMedio, pmaxMedio2)
       }
+      if(only.term) return(pmaxMedio)
       #r<-as.numeric(as.matrix(add1(update(obj, data=mf), ~.+pmaxMedio,  scale=dispersion, test="Rao"))[2,c("scaled Rao sc.", "Pr(>Chi)")])       
       #Call$formula<- formulaNull
       #Call$data<-quote(mf)
@@ -337,7 +340,7 @@
 #      mf$pmaxMedio<- pmaxMedio <-rowMeans(X)
       
       r<-test.Sc2(y=y, z=Z, xreg=X0, sigma=sqrt(dispersion), values=values, fn=fn, df.t=df.t, alternative=alternative, 
-                  w=weights, offs=offset, nbreaks=n.break, ties.ok=FALSE)
+                  w=weights, offs=offset, nbreaks=n.break, ties.ok=FALSE, only.term=only.term)
       
       #fine se e' LM+segmented. 
     } else {
@@ -376,10 +379,13 @@
       #X<-eval(parse(text=fn), list(x=X1, p=PSI))    #   fn t.c.  length(fn)<=1
       #pmaxMedio<-rowMeans(X)
       r<-test.Sc2(y=y, z=Z, xreg=XREG, sigma=sqrt(dispersion), values=values, fn=fn, df.t=df.t, alternative=alternative, 
-                  w=weights, offs=offset, nbreaks=n.break, ties.ok=FALSE)
+                  w=weights, offs=offset, nbreaks=n.break, ties.ok=FALSE, only.term=only.term)
       #r<-as.numeric(as.matrix(add1(update(obj, data=mf), ~.+pmaxMedio,  scale=dispersion, test="Rao"))[2,c("scaled Rao sc.", "Pr(>Chi)")])       
     }
-  }
+  } #end se LM
+  #################################################
+  if(only.term) return(r)
+  #################################################
   if(is.null(obj$family$family)) {
     famiglia<-"gaussian"
     legame<-"identity"

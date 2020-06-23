@@ -11,7 +11,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     K = 10, quant = TRUE, maxit.glm = 25, h = 1, size.boot=NULL, jt=FALSE, nonParam=TRUE,
     random=TRUE, seed=NULL, fn.obj=NULL, digits=NULL, conv.psi=FALSE, 
     alpha=.02, min.step=.0001, 
-    powers=c(1,1), last = TRUE, stop.if.error = NULL, gap=FALSE)
+    powers=c(1,1), last = TRUE, stop.if.error = NULL, gap=FALSE, fc=.95)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -66,6 +66,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   \item{stop.if.error}{ same than \code{fix.npsi}. \emph{This argument will be removed in next releases}, and replaced by \code{fix.npsi}.
   If provided, and different from \code{NULL}, it overwrites \code{fix.npsi}}
   \item{gap}{logical, if \code{FALSE} the gap coefficients are \emph{always} constrained to zero at the convergence. \emph{This argument will be removed in next releases}.}
+  \item{fc}{A proportionality factor (\eqn{\le 1}{<= 1}) to adjust the breakpoint estimates \emph{if} these come close to the boundary or too close each other. For instance, if \code{psi} turns up close to the maximum, it will be changed to \code{psi*fc} or to \code{psi/fc} if close to the minimum. This is useful to get finite point estimate and standard errors for each slope parameter.}
 }
 
 

@@ -35,12 +35,12 @@ segmented(obj, seg.Z, psi, npsi, control = seg.control(),
 \arguments{
   \item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression 
   fit may be supplied (see 'Details').}
-  \item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} (a "lm" or "glm" fit) includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or even \code{seg.Z=~sqrt(x1)}, 
-      or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed.}
+  \item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or even \code{seg.Z=~sqrt(x1)}, 
+      or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. Also, variable names formed by \verb{U} or \verb{V} only (with or without numbers ) are not permitted.}
   \item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. 
       A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
       \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
-  \item{npsi}{A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally computed via the quantiles or equally spaced values, see argument \code{quant} in \code{\link{seg.control}}. If there is a single term in \code{seg.Z}, \code{npsi} can be missing and \code{npsi=1} is assumed, but in general one of \code{psi} or \code{npsi} has to be specified. If \code{psi} is provided, \code{npsi} is ignored.}
+  \item{npsi}{A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally computed via the quantiles or equally spaced values, as specified in argument \code{quant} in \code{\link{seg.control}}. \code{npsi} can be missing and \code{npsi=1} is assumed for all variables specified in \code{seg.Z}. If \code{psi} is provided, \code{npsi} is ignored.}
   \item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
   \item{model}{logical value indicating if the model.frame should be returned.}
@@ -155,15 +155,25 @@ yy<-2+1.5*pmax(xx-35,0)-1.5*pmax(xx-70,0)+15*pmax(zz-.5,0)+rnorm(100,0,2)
 dati<-data.frame(x=xx,y=yy,z=zz)
 out.lm<-lm(y~x,data=dati)
 
-#simple example: 1 segmented variable, 1 breakpoint: you do not need to specify 
-# the starting value for psi
+#the simplest example: the starting model includes just 1 covariate 
+#.. and 1 breakpoint has to be estimated for that
+o<-segmented(out.lm) #1 breakpoint for x
+
+#1 segmented variable not in the starting model and 1 breakpoint for that:
+#... you need to specify the variable via seg.Z, but no starting value for psi
 o<-segmented(out.lm,seg.Z=~z)
+
+#2 segmented variables, 1 breakpoint each (again no need to specify npsi or psi)
+o<-segmented(out.lm,seg.Z=~z+x)
+
 
 #1 segmented variable, 2 breakpoints: you have to specify starting values (vector) for psi:
 o<-segmented(out.lm,seg.Z=~x,psi=c(30,60), control=seg.control(display=FALSE))
-slope(o)
+
 #or by specifying just the *number* of breakpoints
 #o<-segmented(out.lm,seg.Z=~x, npsi=2, control=seg.control(display=FALSE)) 
+
+slope(o) #the slopes of the segmented relationship
 
 
 #2 segmented variables: starting values requested via a named list

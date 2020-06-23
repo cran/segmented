@@ -6,8 +6,10 @@
 #}
 
 vcov.segmented<-function(object, var.diff=FALSE, is=FALSE, ...){
-  if(is && inherits(object, "Arima")) {
-    warning("is=TRUE ignored with Arima fits", call.=FALSE)
+  #if(is && inherits(object, "Arima")) {
+  #  warning("is=TRUE ignored with Arima fits", call.=FALSE)
+  if(is && !inherits(object, "lm")) {
+    warning("is=TRUE ignored. Only works with lm or glm fits", call.=FALSE)
     is<-FALSE
   }
   if(is){
@@ -24,7 +26,10 @@ vcov.segmented<-function(object, var.diff=FALSE, is=FALSE, ...){
       Z<-X[,nomeZ]
       est.psi<- object$psi[nomeV,"Est."]
       se.psi<- object$psi[nomeV,"St.Err"]
-      X[,nomeV]<- (-object$coefficients[nomeU])*pnorm((Z-est.psi)/se.psi)
+      #questo e' se i coefficienti non sono nominati "coefficients"
+      nomeCoef<-grep("coef", names(object), value = TRUE)
+      if(length(nomeCoef)==0) nomeCoef<-grep("estimate", names(object), value = TRUE)
+      X[,nomeV]<- (-object[[nomeCoef]][nomeU])*pnorm((Z-est.psi)/se.psi)
       }
     s2<- if(inherits(object, "glm")) summary.glm(object)$dispersion else summary.lm(object)$sigma^2
     w<-object$weights

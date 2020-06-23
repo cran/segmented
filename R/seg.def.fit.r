@@ -23,14 +23,31 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
         isOK <- all(is.ok) && all(!is.na(is.ok))
         isOK
     }
-    far.psi <- function(Z, PSI, id.psi.group, ret.id = TRUE) {
-        id.far.ok <- sapply(unique(id.psi.group), function(.x) (tabulate(rowSums(((Z > 
-            PSI)[, id.psi.group == .x, drop = FALSE])) + 1) >= 
-            2)[-1])
-        id.far.ok <- unlist(id.far.ok)
-        if (ret.id) 
-            return(id.far.ok)
-        else return(all(id.far.ok))
+    far.psi<-function(Z, PSI, id.psi.group, ret.id=TRUE, fc=.93) {
+        #check if psi are far from the boundaries ..s
+        #   returns TRUE, if fine.
+        #id.far.ok<-sapply(unique(id.psi.group), function(.x) (table(rowSums(((Z>PSI)[,id.psi.group==.x,drop=FALSE])))>=2)[-1]) #[-1] esclude lo zero, x<psi[1] 
+        #id.far.ok<-sapply(unique(id.psi.group), function(.x) (tabulate(rowSums(((Z>PSI)[,id.psi.group==.x,drop=FALSE]))+1)>=2)[-1]) #[-1] esclude lo zero, x<psi[1]
+        #16/01/20:
+        # se un psi assume l'estremo superiore "Z>PSI" non se ne accorge, mentre Z>=PSI, si.. Il contrario e' vero con estremo inf e Z>PSI
+        nSeg<-length(unique(id.psi.group))
+        npsij<-tapply(id.psi.group,id.psi.group,length)
+        nj<-sapply(unique(id.psi.group), function(.x) { tabulate(rowSums((Z>PSI)[,id.psi.group==.x,drop=FALSE])+1) }, simplify = FALSE)    
+        ff<-id.far.ok<-vector("list",length=nSeg) 
+        for(i in 1:nSeg){
+            if(length(nj[[i]])!=npsij[i]+1) nj[[i]]<- tabulate(rowSums((Z>=PSI)[,id.psi.group==i,drop=FALSE])+1)
+            id.ok<-(nj[[i]] >= 2)
+            id.far.ok[[i]] <- id.ok[-length(id.ok)] & id.ok[-1] #esattamente uguale al numero di psi del gruppo i
+            ff[[i]]<-ifelse(diff(nj[[i]])>0, 1/fc, fc)
+        }
+        id.far.ok<-unlist(id.far.ok)
+        ff<-unlist(ff)
+        if(!ret.id) {return(all(id.far.ok))
+        } else {
+            attr(id.far.ok,"factor") <- ff
+            return(id.far.ok) 
+        }
+        #if(ret.id) return(id.far.ok) else return(all(id.far.ok))
     }
     adj.psi <- function(psii, LIM) {
         pmin(pmax(LIM[1, ], psii), LIM[2, ])
@@ -75,6 +92,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
     visual <- opz$visual
     id.psi.group <- opz$id.psi.group
     it.max <- old.it.max <- opz$it.max
+    fc<-opz$fc
     psi <- PSI[1, ]
     names(psi) <- id.psi.group
     epsilon <- 10
@@ -130,6 +148,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
                 format = "f"), collapse = "  "), sep = ""), "\n")
     }
     id.warn <- FALSE
+    id.psi.changed<-rep(FALSE, it.max)
     while (abs(epsilon) > toll) {
         it <- it + 1
         n.psi0 <- n.psi1
@@ -230,20 +249,16 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
         k.values[length(k.values) + 1] <- use.k
         psi.values[[length(psi.values) + 1]] <- psi
         dev.values[length(dev.values) + 1] <- L0
-        if (it >= it.max) {
-            id.warn <- TRUE
-            break
-        }
-        id.psi.far <- far.psi(Z, PSI, id.psi.group, TRUE)
+        id.psi.far <- far.psi(Z, PSI, id.psi.group, TRUE, fc=opz$fc)
         id.psi.in <- in.psi(limZ, PSI, TRUE)
         id.psi.ok <- id.psi.in & id.psi.far
         if (!all(id.psi.ok)) {
             if (fix.npsi) {
-                psi <- adj.psi(psi, limZ)
-                id.psi.far <- far.psi(Z, PSI, id.psi.group, TRUE)
+                #psi <- adj.psi(psi, limZ)
+                #id.psi.far <- far.psi(Z, PSI, id.psi.group, TRUE)
                 psi <- psi * ifelse(id.psi.far, 1, 0.9)
-                PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), 
-                  ncol = length(psi))
+                PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
+                id.psi.changed[it]<-TRUE
             }
             else {
                 Z <- Z[, id.psi.ok, drop = FALSE]
@@ -262,10 +277,14 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
                 }
             }
         }
+        if (it >= it.max) {
+            id.warn <- TRUE
+            break
+        }
     }
-    if (id.warn) 
-        warning(paste("max number of iterations (", it, ") attained", 
-            sep = ""), call. = FALSE)
+    if (id.warn)  warning(paste("max number of iterations (", it, ") attained", sep = ""), call. = FALSE)
+    if(id.psi.changed[length(id.psi.changed)]) warning(paste("Some psi (", (1:length(psi))[!id.psi.far],
+                                                             ") changed after the last iter.",sep=""), call. = FALSE)
     attr(psi.values, "dev") <- dev.values
     attr(psi.values, "k") <- k.values
     psi <- unlist(tapply(psi, id.psi.group, sort))
@@ -273,7 +292,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
     names.coef <- names(coef(obj))
     PSI.old <- PSI
     PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
-    if (sd(PSI - PSI.old) > 0) {
+    if(sd(PSI-PSI.old)>0 || id.psi.changed[length(id.psi.changed)]){
         U <- (Z - PSI) * (Z > PSI)
         colnames(U) <- paste("U", 1:ncol(U), sep = "")
         V <- -(Z > PSI)
@@ -290,13 +309,21 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
         obj <- obj1
     }
     nomeCoef <- grep("coef", names(obj), value = TRUE)
+    if(length(nomeCoef)==0){
+        nomeCoef <- grep("estimate", names(obj), value = TRUE) 
+    }
+    if(length(nomeCoef)==0) stop("I can't extract the estimated coefficients")
     if(is.list(obj[[nomeCoef]])) {
         obj[[nomeCoef]][[1]] <- c(obj[[nomeCoef]][[1]], rep(0, ncol(V)))
         names(obj[[nomeCoef]][[1]]) <- names.coef[1:length(obj[[nomeCoef]][[1]])]
         } else {
-            obj[[nomeCoef]] <- c(obj[[nomeCoef]], rep(0, ncol(V)))
-            names(obj[[nomeCoef]]) <- names.coef        
-            }
+        nomiconV<- c( names(obj[[nomeCoef]]), sub("V", "psi", nomiV)) 
+        obj[[nomeCoef]] <- c(obj[[nomeCoef]], rep(0, ncol(V)))
+        #se i coeff includono un altro parametro (ed es., la varianza come per censReg), l'ordine deve essere 
+        #  rispettato.. mentre "names.coef" 
+        #names(obj[[nomeCoef]]) <- names.coef
+        names(obj[[nomeCoef]]) <- nomiconV
+        }
     
     obj$epsilon <- epsilon
     obj$it <- it

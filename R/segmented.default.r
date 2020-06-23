@@ -45,6 +45,11 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
             seg.Z <- as.formula(paste("~", all.vars(formula(obj))[2]))
         else stop("please specify 'seg.Z'")
     }
+  
+    if("V" %in% sub("V[1-9]*[0-9]","V", c(all.vars(seg.Z), all.vars(formula(obj) )[-1]))) stop("variable names 'V', 'V1', .. are not allowed")
+    if("U" %in% sub("U[1-9]*[0-9]","U", c(all.vars(seg.Z), all.vars(formula(obj) )[-1]))) stop("variable names 'U', 'U1', .. are not allowed")
+    if(any(c("$","[") %in% all.names(seg.Z))) stop(" '$' or '[' not allowed in 'seg.Z' ")
+    
     n.Seg <- length(all.vars(seg.Z))
     id.npsi <- FALSE
     if (missing(psi)) {
@@ -55,15 +60,15 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
             if (length(npsi) != length(all.vars(seg.Z))) 
                 stop("seg.Z and npsi do not match")
             names(npsi) <- all.vars(seg.Z)
-        }
-        else {
-            if (missing(npsi)) 
-                stop(" with multiple segmented variables in seg.Z, 'psi' or 'npsi' should be supplied", 
-                  call. = FALSE)
-            if (length(npsi) != n.Seg) 
-                stop(" 'npsi' and seg.Z should have the same length")
-            if (!all(names(npsi) %in% all.vars(seg.Z))) 
-                stop(" names in 'npsi' and 'seg.Z' do not match")
+        } else {
+            #if (missing(npsi)) 
+            #    stop(" with multiple segmented variables in seg.Z, 'psi' or 'npsi' should be supplied", call. = FALSE)
+            if (missing(npsi)) {
+                npsi<-rep(1, n.Seg)
+                names(npsi)<-all.vars(seg.Z)
+                }
+            if (length(npsi) != n.Seg) stop(" 'npsi' and seg.Z should have the same length")
+            if (!all(names(npsi) %in% all.vars(seg.Z))) stop(" names in 'npsi' and 'seg.Z' do not match")
         }
         psi <- lapply(npsi, function(.x) rep(NA, .x))
         id.npsi <- TRUE
@@ -84,6 +89,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
                 stop("Names in `seg.Z' and `psi' do not match")
         }
     }
+    fc<- min(max(abs(control$fc),.8),1)       
     min.step <- control$min.step
     alpha <- control$alpha
     it.max <- old.it.max <- control$it.max
@@ -276,6 +282,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
     opz$nomiU <- nomiU
     opz$nomiV <- nomiV
     opz$fn.obj <- fn.obj
+    opz$fc=fc
     opz <- c(opz, ...)
     if (n.boot <= 0) {
         obj <- seg.def.fit(obj, Z, PSI, mfExt, opz)
@@ -325,8 +332,6 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
     obj <- obj$obj
     k <- length(psi)
     
-    #browser()
-    
     #coef(obj) ha gia i nomi corretti... 
     #all.coef <- coef(obj)
     #names(all.coef) <- c(names(coef(obj0)), nomiU, nomiVxb)
@@ -340,10 +345,8 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
     }
     Fo <- update.formula1(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))), opt=1)
     objF <- update(obj0, Fo, evaluate = FALSE, data = mfExt)
-    if (!is.null(objF[["subset"]])) 
-        objF[["subset"]] <- NULL
-    if (is.null(opz$constr)) 
-        opz$constr <- 0
+    if (!is.null(objF[["subset"]]))  objF[["subset"]] <- NULL
+    if (is.null(opz$constr)) opz$constr <- 0
     if ((opz$constr %in% 1:2) && class(obj0) == "rq") {
         objF$method <- "fnc"
         objF$R <- quote(R)
@@ -376,23 +379,27 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
             return(objF)
         }
     }
-    
     #4/12/19: modifica fatta per consentire betareg.. Attenzione
     #semplicemente controlla se la componente "coef*" e' una lista o no..
     #COSA succede con geese models?
-    if(!is.list(objF[[grep("coef", names(objF), value = TRUE)]])){
-            names.coef <- names(coef(objF))
-            names(obj[[grep("coef", names(obj), value = TRUE)]]) <- names(objF[[grep("coef", names(objF), value = TRUE)]])
-            objF[[grep("coef", names(objF), value = TRUE)]][names.coef] <- coef(obj)[names.coef]
-        } else {
+    #
+    #giugno 20: aggiunto un tentativo "estimate" per consentire oggetti censReg 
+    nomeCoef<-grep("coef", names(objF), value = TRUE)
+    if(length(nomeCoef)==0) nomeCoef<-grep("estimate", names(objF), value = TRUE)
+    if(!is.list(objF[[nomeCoef]])){
+            objF[[nomeCoef]][names(obj[[nomeCoef]])]<-obj[[nomeCoef]]
+            #names.coef <- names(coef(objF))
+            #names(obj[[nomeCoef]]) <- names(objF[[nomeCoef]])
+            #objF[[nomeCoef]][names.coef] <- coef(obj)[names.coef]
+    } else {
             #names.coef <- names(objF[[grep("coef", names(objF), value = TRUE)]][[1]])
-            names(obj[[grep("coef", names(obj), value = TRUE)]][[1]]) <- names(objF[[grep("coef", names(objF), value = TRUE)]][[1]])
-            objF[[grep("coef", names(objF), value = TRUE)]][[1]] <- 
-                obj[[grep("coef", names(obj), value = TRUE)]][[1]]
-            objF[[grep("coef", names(objF), value = TRUE)]][[2]] <- 
-                obj[[grep("coef", names(obj), value = TRUE)]][[2]]
+            names(obj[[nomeCoef]][[1]]) <- names(objF[[nomeCoef]][[1]])
+            objF[[nomeCoef]][[1]] <- obj[[nomeCoef]][[1]]
+            objF[[nomeCoef]][[2]] <- obj[[nomeCoef]][[2]]
         }
 
+    if (!is.null(objF$maximum)) 
+        objF$maximum <- obj$maximum
     if (!is.null(objF$pseudo.r.squared)) 
         objF$pseudo.r.squared <- obj$pseudo.r.squared
     if (!is.null(objF$geese$beta)) 

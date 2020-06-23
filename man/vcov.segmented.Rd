@@ -14,7 +14,8 @@ Returns the variance-covariance matrix of the parameters (including breakpoints)
   \item{object}{a fitted model object of class "segmented", returned by any \code{segmented} method.}
   \item{var.diff}{logical. If \code{var.diff=TRUE} and there is a single segmented variable, the covariance 
   matrix is computed using a sandwich-type formula. See Details in \code{\link{summary.segmented}}.}
-  \item{is}{logical. If \code{TRUE}, the \emph{asymptotic} covariance matrix based on the idea of induced smoothing is returned. If \code{is=TRUE}, \code{var.diff=FALSE} is set. }
+  \item{is}{logical. If \code{TRUE}, the \emph{asymptotic} covariance matrix based on the idea of induced smoothing is returned. If \code{is=TRUE}, \code{var.diff=FALSE} is set. 
+  \code{is=TRUE} only works with segmented (g)lm fits.}
   \item{\dots}{additional arguments. }
 }
 \details{

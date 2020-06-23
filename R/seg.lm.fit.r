@@ -56,12 +56,32 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     isOK<- all(is.ok) && all(!is.na(is.ok))
     isOK}
   #------------
-  far.psi<-function(Z, PSI, id.psi.group, ret.id=TRUE) {
+  far.psi<-function(Z, PSI, id.psi.group, ret.id=TRUE, fc=.93) {
+    #check if psi are far from the boundaries ..s
+    #   returns TRUE, if fine.
     #id.far.ok<-sapply(unique(id.psi.group), function(.x) (table(rowSums(((Z>PSI)[,id.psi.group==.x,drop=FALSE])))>=2)[-1]) #[-1] esclude lo zero, x<psi[1] 
-    id.far.ok<-sapply(unique(id.psi.group), function(.x) (tabulate(rowSums(((Z>PSI)[,id.psi.group==.x,drop=FALSE]))+1)>=2)[-1]) #[-1] esclude lo zero, x<psi[1]
+    #id.far.ok<-sapply(unique(id.psi.group), function(.x) (tabulate(rowSums(((Z>PSI)[,id.psi.group==.x,drop=FALSE]))+1)>=2)[-1]) #[-1] esclude lo zero, x<psi[1]
+    #16/01/20:
+    # se un psi assume l'estremo superiore "Z>PSI" non se ne accorge, mentre Z>=PSI, si.. Il contrario e vero con estremo inf e Z>PSI
+    nSeg<-length(unique(id.psi.group))
+    npsij<-tapply(id.psi.group,id.psi.group,length)
+    nj<-sapply(unique(id.psi.group), function(.x) { tabulate(rowSums((Z>PSI)[,id.psi.group==.x,drop=FALSE])+1) }, simplify = FALSE)    
+    ff<-id.far.ok<-vector("list",length=nSeg) 
+    for(i in 1:nSeg){
+      if(length(nj[[i]])!=npsij[i]+1) nj[[i]]<- tabulate(rowSums((Z>=PSI)[,id.psi.group==i,drop=FALSE])+1)
+      id.ok<-(nj[[i]] >= 2)
+      id.far.ok[[i]] <- id.ok[-length(id.ok)] & id.ok[-1] #esattamente uguale al numero di psi del gruppo i
+      ff[[i]]<-ifelse(diff(nj[[i]])>0, 1/fc, fc)
+      }
     id.far.ok<-unlist(id.far.ok)
-    if(ret.id) return(id.far.ok) else return(all(id.far.ok))
-    }
+    ff<-unlist(ff)
+    if(!ret.id) {return(all(id.far.ok))
+      } else {
+        attr(id.far.ok,"factor") <- ff
+        return(id.far.ok) 
+      }
+    #if(ret.id) return(id.far.ok) else return(all(id.far.ok))
+    } #end far.psi
     #-----------
   adj.psi<-function(psii, LIM) {pmin(pmax(LIM[1,],psii),LIM[2,])} 
   #-----------
@@ -85,6 +105,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
   dev.new<-opz$dev0
   visual<-opz$visual
   it.max<-old.it.max<-opz$it.max
+  fc<-opz$fc
   names(psi)<-id.psi.group
   it <- 0
   epsilon <- 10
@@ -99,6 +120,8 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
   invXtX<- opz$invXtX
   Xty<-opz$Xty
   #===================
+  #browser()
+  
   if(!in.psi(limZ,PSI,FALSE))  stop("starting psi out of the range", call.=FALSE)
   if(!far.psi(Z,PSI,id.psi.group,FALSE)) stop("psi values too close each other. Please change (decreases number of) starting values", call.=FALSE)
   n.psi1<-ncol(Z)
@@ -122,6 +145,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
   }
   #==============================================  
   id.warn <- FALSE
+  id.psi.changed<-rep(FALSE, it.max)
   while (abs(epsilon) > toll) {
     it<-it+1
     n.psi0 <- n.psi1
@@ -131,7 +155,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
       if(pow[1]!=1) U<-U^pow[1]
       obj0 <- mylm(cbind(XREG, U), y, w, offs)#lm.wfit(cbind(XREG, U), y, w, offs) #se 1 psi, si puo' usare la funz efficiente..
       L0<- sum(obj0$residuals^2*w)
-    } 
+      } 
     V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
     X <- cbind(XREG, U, V)
     rownames(X) <- NULL
@@ -197,12 +221,10 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
       L1<- if(class(obj1)[1]=="try-error") L0+10 else sum(obj1$residuals^2*w)
       L1.k[length(L1.k)+1]<-L1
       if(1/(use.k*h)<min.step){
-#        #        #warning("step halving too small") 
+#        #warning("step halving too small") 
         break}
       } #end while L0-L1
 
-#    if(psi>16 || psi<20) browser()
-    
 #    if(it==5) browser()
     
     if (visual) {
@@ -227,22 +249,20 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     psi.values[[length(psi.values) + 1]] <- psi
     dev.values[length(dev.values) + 1] <- L0
     
-    if (it >= it.max) {
-      id.warn <- TRUE
-      break
-    }
     #Mi sa che non servono i controlli.. soprattutto se non ha fatto step-halving
     #check if i psi ottenuti sono nel range o abbastanza lontani
-    id.psi.far <-far.psi(Z, PSI, id.psi.group, TRUE)
+    id.psi.far <-far.psi(Z, PSI, id.psi.group, TRUE, fc=opz$fc)
     id.psi.in <- in.psi(limZ, PSI, TRUE)
     id.psi.ok <- id.psi.in & id.psi.far 
     
     if(!all(id.psi.ok)){
       if(fix.npsi){
-        psi<-adj.psi(psi, limZ) #within range!!!
-        id.psi.far<-far.psi(Z, PSI, id.psi.group, TRUE)
-        psi<-psi*ifelse(id.psi.far,1,.9) 
+        #psi<-adj.psi(psi, limZ) #constrain psi within range!!!
+        #id.psi.far<-far.psi(Z, PSI, id.psi.group, TRUE)
+        
+        psi<-psi * ifelse(id.psi.far, 1, attr(id.psi.far,"factor")) #psi<-psi*ifelse(id.psi.far,1,.9) 
         PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
+        id.psi.changed[it]<-TRUE
       } else {
         Z<-Z[, id.psi.ok, drop=FALSE]
         PSI<-PSI[, id.psi.ok, drop=FALSE]
@@ -259,9 +279,16 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
           }
         }
       }
-  } #end while_it
+    if (it >= it.max) {
+      id.warn <- TRUE
+      break
+    }
+    
+    } #end while_it
     
 ##=============================================================================
+  if(id.psi.changed[length(id.psi.changed)]) warning(paste("Some psi (", (1:length(psi))[!id.psi.far],
+                  ") changed after the last iter.",sep=""), call. = FALSE)
   if(id.warn) warning(paste("max number of iterations (", it,") attained",sep=""), call. = FALSE)
 
   attr( psi.values, "dev") <- dev.values
@@ -276,7 +303,9 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
   PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
   
   #U e V possono essere cambiati (rimozione/ordinamento psi.. ) per cui si deve ricalcolare il tutto, altrimenti sarebbe uguale a U1 e obj1
-  if(sd(PSI-PSI.old)>0){
+#  browser()
+  
+  if(sd(PSI-PSI.old)>0 || id.psi.changed[length(id.psi.changed)]){
     U <- (Z-PSI)*(Z>PSI)
     colnames(U)<-paste("U", 1:ncol(U), sep = "")
     V <- -(Z>PSI)

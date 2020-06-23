@@ -15,7 +15,7 @@ importFrom("utils", "flush.console")
 
 export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,
 	broken.line ,confint.segmented,davies.test,pscore.test,draw.history,aapc,
-	intercept,lines.segmented,plot.segmented,print.segmented,
+	intercept,lines.segmented,plot.segmented,print.segmented, coef.segmented,
 	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
 	seg.def.fit,seg.def.fit.boot, seg.Ar.fit,seg.Ar.fit.boot,
 	slope, summary.segmented,print.summary.segmented,vcov.segmented, predict.segmented, 
@@ -35,3 +35,4 @@ S3method(confint,segmented)
 S3method(vcov,segmented)
 S3method(predict,segmented)
 S3method(points,segmented)
+S3method(coef,segmented)
