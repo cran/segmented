@@ -29,9 +29,8 @@ daviesLM<-function(y, z, xreg, weights, offs, values, k, alternative){
        y<-y-offs
        n<-length(y)
        n1<-length(values)
-       RIS<-matrix(,n1,2)
-
-       X.psi<-matrix(,n,length(fn))
+       RIS<-matrix(NA,n1,2)
+       X.psi<-matrix(NA,n,length(fn))
        df.res<- n - ncol(xreg) - length(fn)
        for(i in 1:n1){
           for(j in 1:length(fn)) X.psi[,j]<-eval(parse(text=fn[[j]]), list(x=z, p=values[i]))
@@ -43,7 +42,7 @@ daviesLM<-function(y, z, xreg, weights, offs, values, k, alternative){
           #RIS[i]<-((rss0-rss1)/ncol(X.psi))/sigma2
           #Wald
           invXtX1<-try(solve(crossprod(sqrt(weights)*xx1.new)), silent=TRUE)
-          if(class(invXtX1)!="try-error"){
+          if(class(invXtX1)[1]!="try-error"){
             hat.b<-drop(invXtX1%*%crossprod(weights*xx1.new,y))
             mu1.new<-xx1.new%*%hat.b
             devE<-sum((weights*(y-mu1.new)^2))

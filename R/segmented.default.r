@@ -1,4 +1,4 @@
-segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, 
+segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model = TRUE, 
     keep.class = FALSE, ...) {
 
 #if("|" %in% all.names(formula(obj))) {
@@ -9,6 +9,24 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
 #    Fo <- as.formula(Fo.charac)
 #    Fo.conDisp <- as.formula(paste(Fo.charac,nomiX.disp,sep="|"))
     #}
+  build.all.psi<-function(psi, fixed.psi){
+    all.names.psi<-union(names(psi),names(fixed.psi))
+    all.psi<-vector("list", length=length(all.names.psi))
+    names(all.psi)<- all.names.psi
+    for(i in names(all.psi)) {
+      if(!is.null(psi[[i]])){
+        psi[[i]]<-sort(psi[[i]])
+        names(psi[[i]])<-paste("U",1:length(psi[[i]]),".",i,sep="")
+      }
+      if(!is.null(fixed.psi[[i]])){
+        fixed.psi[[i]]<-sort(fixed.psi[[i]])
+        names(fixed.psi[[i]])<-	paste("U",1:length(fixed.psi[[i]]),".fixed.",i,sep="")
+      }
+      all.psi[[i]]<-sort(c(psi[[i]],fixed.psi[[i]]))
+    }
+    return(all.psi)
+  }
+  ##===inizio funzione
 
     update.formula1<-function(old,new,...,opt=1){
     #se old e' una formula che contiene "|", questa funzione aggiorna old con new, 
@@ -72,8 +90,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
         }
         psi <- lapply(npsi, function(.x) rep(NA, .x))
         id.npsi <- TRUE
-    }
-    else {
+    } else {
         if (n.Seg == 1) {
             if (!is.list(psi)) {
                 psi <- list(psi)
@@ -95,9 +112,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
     it.max <- old.it.max <- control$it.max
     digits <- control$digits
     toll <- control$toll
-    if (toll < 0) 
-        stop("Negative tolerance ('tol' in seg.control()) is meaningless", 
-            call. = FALSE)
+    if (toll < 0)  stop("Negative tolerance ('tol' in seg.control()) is meaningless", call. = FALSE)
     visual <- control$visual
     stop.if.error <- fix.npsi <- control$fix.npsi
     n.boot <- control$n.boot
@@ -121,8 +136,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
             visual <- FALSE
             visualBoot <- TRUE
         }
-        if (!stop.if.error) 
-            stop("Bootstrap restart only with a fixed number of breakpoints")
+        if (!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
     }
     last <- control$last
     K <- control$K
@@ -139,8 +153,6 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
     #mf$formula <- update.formula(mf$formula, paste(seg.Z, collapse = ".+"))
     mf$formula <- update.formula1(mf$formula, paste(seg.Z, collapse = ".+"), opt=2)
     mfExt <- mf
-    
-    
     
     if (!is.null(obj$call$offset) || !is.null(obj$call$weights) || 
         !is.null(obj$call$subset) || !is.null(obj$call$id)) {
@@ -179,18 +191,19 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
     name.Z <- names(mfExt)[id.seg]
     Z <- mfExt[, id.seg, drop = FALSE]
     n.psi <- length(unlist(psi))
-    if (ncol(Z) == 1 && is.vector(psi) && (is.numeric(psi) || 
-        is.na(psi))) {
+
+    if (ncol(Z) == 1 && is.vector(psi) && (is.numeric(psi) || is.na(psi))) {
         psi <- list(as.numeric(psi))
         names(psi) <- name.Z
     }
-    if (!is.list(psi) || is.null(names(psi))) 
-        stop("psi should be a *named* list")
-    id.nomiZpsi <- match(colnames(Z), names(psi))
-    if ((ncol(Z) != length(psi)) || any(is.na(id.nomiZpsi))) 
-        stop("Length or names of Z and psi do not match")
-    nome <- names(psi)[id.nomiZpsi]
-    psi <- psi[nome]
+    id.psi <- match(colnames(Z), names(psi))
+    if ((ncol(Z) != length(psi)) || any(is.na(id.seg))) stop("Length or names of Z and psi do not match")
+    
+    
+    #nome <- names(psi)[id.psi]
+    #psi <- psi[nome]
+    
+    
     if (id.npsi) {
         for (i in 1:length(psi)) {
             K <- length(psi[[i]])
@@ -218,12 +231,37 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
                 }
         }
     }
+  #########==================== SE PSI FIXED
+  id.psi.fixed <- FALSE
+  if(!is.null(fixed.psi)){
+    id.psi.fixed <- TRUE
+    if(is.numeric(fixed.psi) && n.Seg==1) {
+      fixed.psi<-list(fixed.psi)
+      names(fixed.psi)<-all.vars(seg.Z)
+    }
+    if(is.list(fixed.psi)) {
+      if(!(names(fixed.psi) %in% all.vars(seg.Z))) stop("names(fixed.psi) is not a subset of variables in 'seg.Z' ")
+    } else {
+      stop(" 'fixed.psi' has to be a named list ")
+      } 
+    fixed.psi<-lapply(fixed.psi, sort)
+    Zfixed<-matrix(unlist(mapply(function(x,y)rep(x,y),Z[names(fixed.psi)], sapply(fixed.psi, length), SIMPLIFY = TRUE)), nrow=n)
+    n.fixed.psi<-sapply(fixed.psi, length)
+    rip.nomi <- rep( names(fixed.psi), n.fixed.psi)
+    rip.numeri <- unlist(lapply(n.fixed.psi, function(.x) 1:.x))
+    colnames(Zfixed) <- paste("U", rip.numeri,".fixed.",rip.nomi, sep="")
+    PSI <- matrix(unlist(fixed.psi), ncol=ncol(Zfixed), nrow=n, byrow = TRUE)
+    fixedU<-(Zfixed-PSI)*(Zfixed>PSI)
+    #XREG<-cbind(XREG, fixedU)
+  }
+  #########====================END  SE PSI FIXED
+
     initial.psi <- psi
     a <- sapply(psi, length)
     id.psi.group <- rep(1:length(a), times = a)
     Z <- matrix(unlist(mapply(function(x, y) rep(x, y), Z, a, 
         SIMPLIFY = TRUE)), nrow = n)
-    colnames(Z) <- nomiZ.vett <- rep(nome, times = a)
+    colnames(Z) <- nomiZ.vett <- rep(name.Z, times = a)
     psi <- unlist(psi)
     psi <- unlist(tapply(psi, id.psi.group, sort))
     k <- ncol(Z)
@@ -232,8 +270,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
     c2 <- apply((Z >= PSI), 2, all)
     if (sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) 
         stop("starting psi out of the admissible range")
-    ripetizioni <- as.vector(unlist(tapply(id.psi.group, id.psi.group, 
-        function(x) 1:length(x))))
+    ripetizioni <- as.vector(unlist(tapply(id.psi.group, id.psi.group, function(x) 1:length(x))))
     nomiU <- paste("U", ripetizioni, sep = "")
     nomiU <- paste(nomiU, nomiZ.vett, sep = ".")
     nomiV <- paste("V", ripetizioni, sep = "")
@@ -248,10 +285,16 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
         mfExt[nomiU[i]] <- U[, i]
         mfExt[nomiV[i]] <- V[, i]
     }
-    Fo <- update.formula1(formula(obj), as.formula(paste(".~.+", 
-        paste(nnomi, collapse = "+"))), opt=1)
-    Fo.noV <- update.formula1(formula(obj), as.formula(paste(".~.+", 
-        paste(nomiU, collapse = "+"))), opt=1)
+
+    if(id.psi.fixed){
+        for(i in 1:ncol(fixedU)) mfExt[colnames(fixedU)[i]]<-fixedU[,i] #mf[colnames(fixedU)[i]]<-  mf e' definito sopra... Ma serve???
+        Fo <- update.formula1(formula(obj), as.formula(paste(".~.+", paste(c(nnomi,colnames(fixedU)), collapse = "+"))), opt=1)
+        Fo.noV <- update.formula1(formula(obj), as.formula(paste(".~.+", paste(c(nomiU,colnames(fixedU)), collapse = "+"))), opt=1)
+    } else {
+        Fo <- update.formula1(formula(obj), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))), opt=1)
+        Fo.noV <- update.formula1(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))), opt=1)
+    }
+    
     call.ok <- update(obj, Fo, evaluate = FALSE, data = mfExt)
     call.noV <- update(obj, Fo.noV, evaluate = FALSE, data = mfExt)
     if (it.max == 0) {
@@ -291,6 +334,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
         obj <- seg.def.fit.boot(obj, Z, PSI, mfExt, opz, n.boot = n.boot, 
             size.boot = size.boot, random = random)
     }
+    
     if (!is.list(obj)) {
         warning("No breakpoint estimated", call. = FALSE)
         return(obj0)
@@ -310,6 +354,16 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
             " "), call. = FALSE)
     it <- obj$it
     psi <- obj$psi
+    #########SE PSI FIXED
+
+    psi.list<-vector("list", length=length(unique(name.Z)))
+    names(psi.list)<-name.Z
+    names(psi)<-nomiZ.vett
+    for(i in names(psi.list)){
+      psi.list[[i]]<-psi[names(psi)==i]
+    }
+
+
     psi.values <- if (n.boot <= 0) 
         obj$psi.values
     else obj$boot.restart
@@ -344,6 +398,21 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
         mfExt[nomiVxb[i]] <- mf[nomiVxb[i]] <- Vxb[, i]
     }
     Fo <- update.formula1(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))), opt=1)
+    ###############
+
+
+
+
+
+    ############# DA GUARDARE!!!!!!!!!!!!!!!!!!!!
+    #se ci sono fixed.psi
+    if(id.psi.fixed){
+      for(i in 1:ncol(fixedU)) mfExt[colnames(fixedU)[i]]<-mf[colnames(fixedU)[i]]<-fixedU[,i]
+      Fo<-update.formula(Fo, paste(c("~.",colnames(fixedU)), collapse="+"))
+    }
+
+
+    #############
     objF <- update(obj0, Fo, evaluate = FALSE, data = mfExt)
     if (!is.null(objF[["subset"]]))  objF[["subset"]] <- NULL
     if (is.null(opz$constr)) opz$constr <- 0
@@ -475,8 +544,10 @@ segmented.default<-function (obj, seg.Z, psi, npsi, control = seg.control(), mod
     objF$id.psi.group <- id.psi.group
     objF$id.warn <- id.warn
     objF$orig.call <- orig.call
-    if (model) 
-        objF$model <- mf
+    ############## PSI FIXED
+    objF$indexU<-build.all.psi(psi.list, fixed.psi)
+    ##############
+    if (model) objF$model <- mf
     if (n.boot > 0) 
         objF$seed <- employed.Random.seed
     if (keep.class) 

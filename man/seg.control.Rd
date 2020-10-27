@@ -9,7 +9,7 @@
 \usage{
 seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     K = 10, quant = TRUE, maxit.glm = 25, h = 1, size.boot=NULL, jt=FALSE, nonParam=TRUE,
-    random=TRUE, seed=NULL, fn.obj=NULL, digits=NULL, conv.psi=FALSE, 
+    random=TRUE, seed=12345, fn.obj=NULL, digits=NULL, conv.psi=FALSE, 
     alpha=.02, min.step=.0001, 
     powers=c(1,1), last = TRUE, stop.if.error = NULL, gap=FALSE, fc=.95)
 }
@@ -42,8 +42,9 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   if \code{TRUE}, when the algorithm fails to obtain a solution, random values are employed to obtain candidate values.
   }
   \item{seed}{
-  The seed to be passed on to \code{set.seed()} when \code{n.boot>0}. Setting the seed can be useful to replicate
-  the results when the bootstrap restart algorithm is employed. In fact a segmented fit includes \code{seed} representing 
+  The seed to be passed on to \code{set.seed()} when \code{n.boot>0}. Set to \code{NULL} to use a random seed. 
+  Fixing the seed can be useful to replicate
+  the results when the bootstrap restart algorithm is employed. The segmented fit includes \code{seed} representing 
   the integer vector saved just before the bootstrap resampling. Re-use it if you want to replicate the bootstrap
   restarting algorithm with the \emph{same} samples.
   }

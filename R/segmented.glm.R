@@ -1,15 +1,24 @@
 `segmented.glm` <-
-function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
-    # n.Seg<-1
-    # if(missing(seg.Z) && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
-    # if(missing(psi)){if(length(all.vars(seg.Z))>1) stop("provide psi") else psi<-Inf}
-    # if(length(all.vars(seg.Z))>1 & !is.list(psi)) stop("`psi' should be a list with more than one covariate in `seg.Z'")
-    # if(is.list(psi)){
-    #   if(length(all.vars(seg.Z))!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
-    #   if(any(is.na(match(all.vars(seg.Z),names(psi), nomatch = NA)))) stop("Variables in `seg.Z' and `psi' do not match")
-    #   n.Seg <- length(psi)
-    #   }
-    # if(length(all.vars(seg.Z))!=n.Seg) stop("A wrong number of terms in `seg.Z' or `psi'")
+function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
+  #########====================END  SE PSI FIXED
+  build.all.psi<-function(psi, fixed.psi){
+    all.names.psi<-union(names(psi),names(fixed.psi))
+    all.psi<-vector("list", length=length(all.names.psi))
+    names(all.psi)<- all.names.psi
+    for(i in names(all.psi)) {
+      if(!is.null(psi[[i]])){
+        psi[[i]]<-sort(psi[[i]])
+        names(psi[[i]])<-paste("U",1:length(psi[[i]]),".",i,sep="")
+      }
+      if(!is.null(fixed.psi[[i]])){
+        fixed.psi[[i]]<-sort(fixed.psi[[i]])
+        names(fixed.psi[[i]])<-	paste("U",1:length(fixed.psi[[i]]),".fixed.",i,sep="")
+      }
+      all.psi[[i]]<-sort(c(psi[[i]],fixed.psi[[i]]))
+    }
+    return(all.psi)
+  }
+  ##===inizio funzione
   if(missing(seg.Z)) {
     if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
   }
@@ -44,7 +53,6 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
       if(!all(names(psi)%in%all.vars(seg.Z))) stop("Names in `seg.Z' and `psi' do not match")
     }
   }
-  
     fc<- min(max(abs(control$fc),.8),1)
     maxit.glm <- control$maxit.glm
     it.max <- old.it.max<- control$it.max
@@ -84,13 +92,6 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     K<-control$K
     h<-min(abs(control$h),1)
     if(h<1) it.max<-it.max+round(it.max/2)
-    #    if(!stop.if.error) objInitial<-obj        
-    #-------------------------------
-    #    #una migliore soluzione.........
-    #    objframe <- update(obj, model = TRUE, x = TRUE, y = TRUE)
-    #    y <- objframe$y
-    #    a <- model.matrix(seg.Z, data = eval(obj$call$data))
-    #    a <- subset(a, select = colnames(a)[-1])
     orig.call<-Call<-mf<-obj$call
     orig.call$formula<-mf$formula<-formula(obj) #per consentire lm(y~.)
     m <- match(c("formula", "data", "subset", "weights", "na.action","etastart","mustart","offset"), names(mf), 0L)
@@ -99,27 +100,8 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     mf[[1L]] <- as.name("model.frame")
     #non so a che serva la seguente linea..
     if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
-    #orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z))) #utile per plotting
-    
-    #    nomeRispo<-strsplit(paste(formula(obj))[2],"/")[[1]] #eventuali doppi nomi separati da "/" (tipo "y/n" per GLM binom)
-    #la linea sotto aggiunge nel mf anche la variabile offs..
-    #    if(length(all.vars(formula(obj)))>1){
-    #      id.rispo<-1
-    #      if(length(nomeRispo)>=2) id.rispo<-1:2      
-    #      #questo serve quando formula(obj) ha solo l'intercept
-    #      agg<-if(length(all.vars(formula(obj))[-id.rispo])==0) "" else "+"
-    #      mf$formula<-update.formula(mf$formula,paste(paste(seg.Z,collapse=".+"),agg,paste(all.vars(formula(obj))[-id.rispo],collapse="+")))
-    #    } else {
-    #  mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
-    #    }
     mfExt<- mf
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
-    
-    #    mfExt$formula<- update.formula(mfExt$formula,paste(paste(seg.Z,collapse=".+"),"+",paste(all.vars(formula(obj)),collapse="+")))   
-    #    mfExt$formula<- if(!is.null(obj$call$data)) 
-    #        update.formula(mf$formula,paste(".~",paste(all.vars(obj$call), collapse="+"),"-",obj$call$data,sep=""))
-    #            else update.formula(mf$formula,paste(".~",paste(all.vars(obj$call), collapse="+"),sep=""))
-    #-----------
     if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
       mfExt$formula <- 
         update.formula(mf$formula, 
@@ -157,19 +139,6 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     
     weights <- as.vector(model.weights(mf))
     offs <- as.vector(model.offset(mf))
-    
-    #    if(!is.null(Call$weights)){ #"(weights)"%in%names(mf)
-    #      mfExt[all.vars(Call$weights, functions=FALSE)]<- eval(parse(text=all.vars(Call$weights)))
-    #      #names(mfExt)[which(names(mf)=="(weights)")]<- all.vars(Call$weights, functions=FALSE)#prima di 0.2.9-4 era as.character(Call$weights)
-    #      # mf["(weights)"]<-weights
-    #      }
-    #
-    #    if(!is.null(Call$offset)){ 
-    #     mfExt[all.vars(Call$offset, functions=FALSE)]<- eval(parse(text=all.vars(Call$offset)))
-    ##     mfExt["(offset)"]<-eval(parse(text=all.vars(Call$offset)))
-    ##      names(mf)[which(names(mf)=="(offset)")]<-all.vars(Call$offset, functions=FALSE) 
-    #     }
-    
     mt <- attr(mf, "terms")
     interc<-attr(mt,"intercept")
     y <- model.response(mf, "any")
@@ -202,18 +171,8 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     n.psi<- length(unlist(psi))
     id.n.Seg<-(ncol(XREG)-n.Seg+1):ncol(XREG)
     XREGseg<-XREG[,id.n.Seg,drop=FALSE]
-    #XREG<-XREG[,-id.n.Seg,drop=FALSE]
-    #XREG<-model.matrix(obj0) non va bene perche' non elimina gli eventuali mancanti in seg.Z..
-    #Due soluzioni
-    #XREG<-XREG[,colnames(model.matrix(obj)),drop=FALSE]
-    #XREG<-XREG[,match(c("(Intercept)",all.vars(formula(obj))[-1]),colnames(XREG),nomatch =0),drop=FALSE]
     XREG <- XREG[, match(c("(Intercept)", namesXREG0),colnames(XREG), nomatch = 0), drop = FALSE]
     XREG<-XREG[,unique(colnames(XREG)), drop=FALSE]
-    
-    #################
-    #if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(XREGseg)}
-    #################
-    
     n <- nrow(XREG)
     #Z <- list(); for (i in colnames(XREGseg)) Z[[length(Z) + 1]] <- XREGseg[, i]
     Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
@@ -224,9 +183,7 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     }
     if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) || is.null(names(psi))) stop("Z and psi have to be *named* list")
     id.nomiZpsi <- match(names(Z), names(psi))
-    if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi))) 
-      stop("Length or names of Z and psi do not match")
-    #dd <- match(names(Z), names(psi))
+    if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi)))  stop("Length or names of Z and psi do not match")
     nome <- names(psi)[id.nomiZpsi]
     psi <- psi[nome]
     if(id.npsi){
@@ -239,9 +196,33 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
         if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
       }
     }
+  #########==================== SE PSI FIXED
+  id.psi.fixed <- FALSE
+  if(!is.null(fixed.psi)){
+    id.psi.fixed <- TRUE
+    if(is.numeric(fixed.psi) && n.Seg==1) {
+      fixed.psi<-list(fixed.psi)
+      names(fixed.psi)<-all.vars(seg.Z)
+    }
+    if(is.list(fixed.psi)) {
+      if(!(names(fixed.psi) %in% all.vars(seg.Z))) stop("names(fixed.psi) is not a subset of variables in 'seg.Z' ")
+    } else {
+      stop(" 'fixed.psi' has to be a named list ")
+      } 
+    fixed.psi<-lapply(fixed.psi, sort)
+    Zfixed<-matrix(unlist(mapply(function(x,y)rep(x,y),Z[names(fixed.psi)], sapply(fixed.psi, length), SIMPLIFY = TRUE)), nrow=n)
+    n.fixed.psi<-sapply(fixed.psi, length)
+    rip.nomi <- rep( names(fixed.psi), n.fixed.psi)
+    rip.numeri <- unlist(lapply(n.fixed.psi, function(.x) 1:.x))
+    colnames(Zfixed) <- paste("U", rip.numeri,".fixed.",rip.nomi, sep="")
+    PSI <- matrix(unlist(fixed.psi), ncol=ncol(Zfixed), nrow=n, byrow = TRUE)
+    fixedU<-(Zfixed-PSI)*(Zfixed>PSI)
+    XREG<-cbind(XREG, fixedU)
+  }
+  #########====================END  SE PSI FIXED
     initial.psi<-psi
     a <- sapply(psi, length)#b <- rep(1:length(a), times = a)
-    id.psi.group <- rep(1:length(a), times = a) #identificativo di apparteneza alla variabile
+    id.psi.group <- rep(1:length(a), times = a) #identificativo di appartenenza alla variabile
     #Znew <- list()
     #for (i in 1:length(psi)) Znew[[length(Znew) + 1]] <- rep(Z[i], a[i])
     #Z <- matrix(unlist(Znew), nrow = n)
@@ -256,12 +237,8 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     nomiU <- paste(nomiU, nomiZ, sep = ".")
     nomiV <- paste("V", ripetizioni, sep = "")
     nomiV <- paste(nomiV, nomiZ, sep = ".")
-    #forse non serve crearsi l'ambiente KK, usa mf..
-    #obj <- update(obj, formula = Fo, data = mf)
-    #if (model.frame) obj$model <- mf
-  #controlla che model.frame() funzioni sull'oggetto restituito    
-#    KK <- new.env()
-#    for (i in 1:ncol(objframe$model)) assign(names(objframe$model[i]), objframe$model[[i]], envir = KK)
+    #    KK <- new.env()
+    #    for (i in 1:ncol(objframe$model)) assign(names(objframe$model[i]), objframe$model[[i]], envir = KK)
     if (it.max == 0) {
         #mf<-cbind(mf, mfExt)
         U <- (Z>PSI)*(Z-PSI) #pmax((Z - PSI), 0)
@@ -281,9 +258,6 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
         obj$psi <- psi
         return(obj)
     }
-    #XREG <- model.matrix(obj) creata sopra         
-    #o <- model.offset(objframe)
-    #w <- model.weights(objframe)
     if (is.null(weights)) weights <- rep(1, n)
     if (is.null(offs)) offs <- rep(0, n)
     fam <- family(obj)
@@ -291,7 +265,6 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     obj0 <- obj
     dev0<-obj$dev
     list.obj <- list(obj)
-#    psi.values <- NULL
     nomiOK<-nomiU
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
         fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
@@ -307,9 +280,9 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
         warning("No breakpoint estimated", call. = FALSE)
         return(obj0)
         }
+    
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK
-    #nomiFINALI<-unique(sapply(strsplit(nomiOK, split="[.]"), function(x)x[2])) #nomi delle variabili con breakpoint stimati!
     nomiFINALI<-unique(sub("U[1-9]*[0-9].", "", nomiOK)) #nomi originali delle variabili con breakpoint stimati!
     #se e' stata usata una proc automatica "nomiFINALI" sara' differente da "name.Z"
     nomiSenzaPSI<-setdiff(name.Z,nomiFINALI)
@@ -331,7 +304,6 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
 #         }
     rangeZ<-obj$rangeZ 
     obj<-obj$obj
-    k<- length(psi)
     beta.c <- coef(obj)[paste("U", 1:ncol(U), sep = "")]
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
 
@@ -341,17 +313,25 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
         warning("max number of iterations attained", call. = FALSE)
         id.warn <- TRUE
     }
-    Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
-    
+
     #se usi una procedura automatica devi cambiare ripetizioni, nomiU e nomiV, e quindi:
     length.psi<-tapply(as.numeric(as.character(names(psi))), as.numeric(as.character(names(psi))), length)
     forma.nomiU<-function(xx,yy)paste("U",1:xx, ".", yy, sep="")
     forma.nomiVxb<-function(xx,yy)paste("psi",1:xx, ".", yy, sep="")
     nomiU   <- unlist(mapply(forma.nomiU, length.psi, nomiFINALI)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
     nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, nomiFINALI))
-
-    #se nomiOK sopra contiene gia' le U1.x,ecc... perche' non fare?nomiVxb<-sub("U","psi", nomiOK) 
     
+    #########========================= SE PSI FIXED
+    psi.list<-vector("list", length=length(unique(nomiZ)))
+    names(psi.list)<-unique(nomiZ)
+    #names(psi)<-nomiZ #se e' una procedure automatica nomiZ puo' essere piu lungo dei breakpoints "rimasti" 
+    names(psi)<-rep(nomiFINALI, length.psi)
+    for(i in names(psi.list)){
+      psi.list[[i]]<-psi[names(psi)==i]
+    }
+    ########===================================
+    
+    #se nomiOK sopra contiene gia' le U1.x,ecc... perche' non fare?nomiVxb<-sub("U","psi", nomiOK) 
     #mf<-cbind(mf, mfExt)
     for(i in 1:ncol(U)) {
         mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
@@ -362,8 +342,13 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
 #        assign(nomiVxb[i], Vxb[, i], envir = KK)
 #    }
     nnomi <- c(nomiU, nomiVxb)
-    Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", 
-        paste(nnomi, collapse = "+"))))
+    Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
+    #########========================= SE PSI FIXED
+    if(id.psi.fixed){
+      for(i in 1:ncol(fixedU)) mfExt[colnames(fixedU)[i]]<-mf[colnames(fixedU)[i]]<-fixedU[,i]
+      Fo<-update.formula(Fo, paste(c("~.",colnames(fixedU)), collapse="+"))
+    }
+    
     #la seguente linea si potrebbe rimuovere perche' in mfExt c'e' gia' tutto..
     if(is.matrix(y)&& (fam$family=="binomial" || fam$family=="quasibinomial")){
               mfExt<-cbind(mfExt[[1]], mfExt[,-1])
@@ -413,7 +398,7 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     vv <- if (length(id) == 1) Cov[id, id] else diag(Cov[id, id])
     #if(length(initial)!=length(psi)) initial<-rep(NA,length(psi))
     a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
-    ris.psi<-matrix(,length(psi),3)
+    ris.psi<-matrix(NA,length(psi),3)
     colnames(ris.psi) <- c("Initial", "Est.", "St.Err")
     rownames(ris.psi) <- nomiVxb
     ris.psi[,2]<-psi
@@ -443,6 +428,8 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     objF$id.psi.group <- id.psi.group
     objF$id.warn <- id.warn
     objF$orig.call<-orig.call
+    ###########################PSI FIXED
+    objF$indexU<-build.all.psi(psi.list, fixed.psi)
     if (model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
     if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", class(obj0))

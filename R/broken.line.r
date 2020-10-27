@@ -7,12 +7,12 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
     if(length(isV)==1) isV<-c(FALSE,isV)
     dummy.matrix<-NULL
     dummy.matrix<-function(x.values, x.name, obj.seg, psi.est=TRUE, isV=FALSE){
-    #given the segmented fit 'obj.seg' and a segmented variable x.name with corresponding values x.values,
-    #this function simply returns a matrix with columns (x, (x-psi)_+, -b*I(x>psi))
-    #or  ((x-psi)_+, -b*I(x>psi)) if obj.seg does not include the coef for the linear "x"
+        #given the segmented fit 'obj.seg' and a segmented variable x.name with corresponding values x.values,
+        #this function simply returns a matrix with columns (x, (x-psi)_+, -b*I(x>psi))
+        #or  ((x-psi)_+, -b*I(x>psi)) if obj.seg does not include the coef for the linear "x"
         f.U<-function(nomiU, term=NULL){
-        #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
-        #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
+          #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
+         #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
             k<-length(nomiU)
             nomiUsenzaU<-strsplit(nomiU, "\\.")
             nomiU.ok<-vector(length=k)
@@ -54,6 +54,16 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
           colnames(newd)<-c(x.name,nameU)
           }
         if(!x.name%in%names(coef(obj.seg))) newd<-newd[,-1,drop=FALSE]
+        #aggiungi (eventualmente) le colonne relative ai psi noti
+        all.psi<-obj.seg$indexU[[x.name]]
+        if(length(all.psi)!=k){
+          nomi.psi.noti<-setdiff(names(all.psi),nameU)
+          psi.noti<-setdiff(all.psi, est.psi)
+          PSI.noti <- matrix(rep(psi.noti, rep(n, length(psi.noti))), ncol = length(psi.noti))
+          nomi<-c(colnames(newd),nomi.psi.noti)
+          newd<-cbind(newd, (newZ-PSI.noti)*(newZ>PSI.noti))
+          colnames(newd)<-nomi
+        }
         return(newd)
     }
 #--------------
@@ -95,25 +105,19 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
     if(length(nomeOK)>1) stop("Please specify one variable")
     if(!nomeOK %in% nomeZ) stop("'names(xvalues)' is not a segmented covariate")
 
-    #if(n.seg>1 && !is.list(x.values)) stop("with multiple segmented covariates, please specify a named dataframe")
-    #x.values<-data.frame(x.values)
-    #names(x.values)<-nomeZ
-
     nomi <- names(coef(ogg))
     nomiSenzaV <- nomiSenzaU <- nomi
     nomiSenzaU[match(nomeU, nomi)] <- ""
     nomiSenzaV[match(nomeV, nomi)] <- ""
-
     index <- vector(mode = "list", length = length(nomeZ))
     for (i in 1:n.seg) {
         index[[i]] <- c(match(nomeZ[i], nomi),
             f.U(ogg$nameUV$U, nomeZ[i]) + (match(ogg$nameUV$U[1], nomi)-1),
             f.U(ogg$nameUV$V, nomeZ[i]) + (match(ogg$nameUV$V[1], nomi)-1))
-            #grep(paste("\\.", nomeZ[i], "$", sep = ""), nomiSenzaV, value = FALSE),
-            #grep(paste("\\.", nomeZ[i], "$", sep = ""), nomiSenzaU, value = FALSE))
+            #match(setdiff(names(ogg$indexU[[x.name]]), )))
             }
     ste.fit<-fit <- vector(mode = "list", length = length(nomeZ))
-        for (i in 1:n.seg) {
+    for(i in 1:n.seg) {
         x.name <- nomeZ[i]
         Xfit<-dummy.matrix(unlist(xvalues), x.name, ogg, isV=FALSE)
         if(se.fit) X<-dummy.matrix(unlist(xvalues), x.name, ogg, isV=isV)#<--NB: xvalues non varia con i!!! perche' farlo calcolare comunque? 
@@ -123,6 +127,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
           Xfit<-cbind(1,Xfit)
           if(se.fit) X<-cbind(1,X)
           }
+        ind<-union(ind, match(names(ogg$indexU[[x.name]]), nomi))
         cof <- coef(ogg)[ind]
         fit[[i]]<-drop(Xfit%*%cof)
         if(se.fit) ste.fit[[i]] <- sqrt(rowSums((X %*% .vcov[ind,ind]) * X)) #sqrt(diag(X%*%Var%*%t(X)))

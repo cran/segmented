@@ -13,8 +13,8 @@ fixed number of break-points. The estimation method is described in Muggeo (2003
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 1.2-0\cr
-Date: \tab 2020-06-23\cr
+Version: \tab 1.3-0\cr
+Date: \tab 2020-10-27\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)
@@ -36,8 +36,7 @@ License: \tab GPL\cr
 
  Hypothesis testing (about the existence of the breakpoint) and confidence intervals are performed via appropriate methods and functions.
  
- A tentative approach to deal with unknown number of breakpoints
- is also provided, see option \code{fix.npsi} in \code{\link{seg.control}}.
+ A tentative approach to deal with unknown number of breakpoints is also provided, see option \code{fix.npsi} in \code{\link{seg.control}}. Also, as version 1.3-0, the \code{\link{selgmented}} function has been introduced to select the number of breakpoints via the BIC or sequential hypothesis testing.
 }
 \author{
 Vito M.R. Muggeo <vito.muggeo@unipa.it>

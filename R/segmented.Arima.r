@@ -1,7 +1,26 @@
 segmented.Arima<-
-function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
+function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
 #Richiede control$f.obj that should be a string like "sum(x$residuals^2)" or "x$dev"
 #-----------------
+  build.all.psi<-function(psi, fixed.psi){
+    all.names.psi<-union(names(psi),names(fixed.psi))
+    all.psi<-vector("list", length=length(all.names.psi))
+    names(all.psi)<- all.names.psi
+    for(i in names(all.psi)) {
+      if(!is.null(psi[[i]])){
+        psi[[i]]<-sort(psi[[i]])
+        names(psi[[i]])<-paste("U",1:length(psi[[i]]),".",i,sep="")
+      }
+      if(!is.null(fixed.psi[[i]])){
+        fixed.psi[[i]]<-sort(fixed.psi[[i]])
+        names(fixed.psi[[i]])<-	paste("U",1:length(fixed.psi[[i]]),".fixed.",i,sep="")
+      }
+      all.psi[[i]]<-sort(c(psi[[i]],fixed.psi[[i]]))
+    }
+    return(all.psi)
+  }
+  ##===inizio funzione
+
   dpmax<-function(x,y,pow=1){
     #deriv pmax
     if(pow==1) -(x>y) #ifelse(x>y, -1, 0)
@@ -121,6 +140,29 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
         if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[,i], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[,i])+ diff(range(Z[,i]))*(1:K)/(K+1))}
       }
     }
+    ###### se ci sono fixed.psi
+    id.psi.fixed <- FALSE
+    if(!is.null(fixed.psi)){
+        id.psi.fixed <- TRUE
+        if(is.numeric(fixed.psi) && n.Seg==1) {
+          fixed.psi<-list(fixed.psi)
+          names(fixed.psi)<-all.vars(seg.Z)
+        }
+    if(is.list(fixed.psi)) {
+      if(!(names(fixed.psi) %in% all.vars(seg.Z))) stop("names(fixed.psi) is not a subset of variables in 'seg.Z' ")
+    } else {
+      stop(" 'fixed.psi' has to be a named list ")
+      } 
+    fixed.psi<-lapply(fixed.psi, sort)
+    Zfixed<-matrix(unlist(mapply(function(x,y)rep(x,y),Z[names(fixed.psi)], sapply(fixed.psi, length), SIMPLIFY = TRUE)), nrow=n)
+    n.fixed.psi<-sapply(fixed.psi, length)
+    rip.nomi <- rep( names(fixed.psi), n.fixed.psi)
+    rip.numeri <- unlist(lapply(n.fixed.psi, function(.x) 1:.x))
+    colnames(Zfixed) <- paste("U", rip.numeri,".fixed.",rip.nomi, sep="")
+    PSI <- matrix(unlist(fixed.psi), ncol=ncol(Zfixed), nrow=n, byrow = TRUE)
+    fixedU<-(Zfixed-PSI)*(Zfixed>PSI)
+    XREG<-cbind(XREG, fixedU)
+  }
     initial.psi<-psi
     a <- sapply(psi, length)
     #per evitare che durante il processo iterativo i psi non siano ordinati
@@ -213,6 +255,14 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     nomiSenzaPSI<-setdiff(name.Z,nomiFINALI)
     if(length(nomiSenzaPSI)>=1) warning("no breakpoints found for: ", paste(nomiSenzaPSI," "), call. = FALSE)
     
+    #########========================= SE PSI FIXED
+    psi.list<-vector("list", length=length(unique(name.Z)))
+    names(psi.list)<-unique(name.Z)
+    names(psi)<- nomiZ.vett
+    for(i in names(psi.list)){
+      psi.list[[i]]<-psi[names(psi)==i]
+    }
+
     #--
     it<-obj$it
     psi<-obj$psi
@@ -238,6 +288,10 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     nnomi <- c(nomiU, nomiVxb)
     XREG.ok<-cbind(XREG, U, Vxb)
     colnames(XREG.ok)[((ncol(XREG.ok)-length(nnomi)+1):ncol(XREG.ok))]<- nnomi
+    #se fixed.psi
+    if(id.psi.fixed){
+      XREG.ok<-cbind(XREG.ok, fixedU)
+    }
     objF <- update(obj0,  xreg = XREG.ok, evaluate=TRUE) 
 
     #    #se usi una procedura automatica devi cambiare ripetizioni, nomiU e nomiV, e quindi:
@@ -291,6 +345,8 @@ function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.clas
     objF$id.group <- if(length(name.Z)<=1) -rowSums(as.matrix(V))
     objF$id.psi.group <- id.psi.group
     objF$id.warn <- id.warn
+    ###########################PSI FIXED
+    objF$indexU<-build.all.psi(psi.list, fixed.psi)
 
     if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", class(obj0))

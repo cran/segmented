@@ -16,32 +16,34 @@ Segmented relationships in regression models
    and one or more explanatory variables. Break-point estimates are provided.
 }
 \usage{
-segmented(obj, seg.Z, psi, npsi, control = seg.control(), 
+segmented(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), 
     model = TRUE, ...)
 
-\method{segmented}{default}(obj, seg.Z, psi, npsi, control = seg.control(),
+\method{segmented}{default}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
 
-\method{segmented}{lm}(obj, seg.Z, psi, npsi, control = seg.control(),
+\method{segmented}{lm}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
 
-\method{segmented}{glm}(obj, seg.Z, psi, npsi, control = seg.control(),
+\method{segmented}{glm}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
 
-\method{segmented}{Arima}(obj, seg.Z, psi, npsi, control = seg.control(),
+\method{segmented}{Arima}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression 
-  fit may be supplied (see 'Details').}
-  \item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, such as \code{seg.Z=~log(x1)} or even \code{seg.Z=~sqrt(x1)}, 
-      or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. Also, variable names formed by \verb{U} or \verb{V} only (with or without numbers ) are not permitted.}
-  \item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. 
+\item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression 
+    fit may be supplied (see 'Details').}
+\item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, 
+such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. Also, variable names formed by \verb{U} or \verb{V} only (with or without numbers ) are not permitted.}
+\item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is   a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. 
       A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
       \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
-  \item{npsi}{A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally computed via the quantiles or equally spaced values, as specified in argument \code{quant} in \code{\link{seg.control}}. \code{npsi} can be missing and \code{npsi=1} is assumed for all variables specified in \code{seg.Z}. If \code{psi} is provided, \code{npsi} is ignored.}
-  \item{control}{ a list of parameters for controlling the fitting process.
+\item{npsi}{A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally computed via the quantiles or equally spaced values, as specified in argument \code{quant} in \code{\link{seg.control}}. \code{npsi} can be missing and \code{npsi=1} is assumed for all variables specified in \code{seg.Z}. If \code{psi} is provided, \code{npsi} is ignored.}
+\item{fixed.psi}{An optional named list meaning the breakpoints to be kept fixed during the estimation procedure. The names should be a subset of (or even the same) variables specified in \code{seg.Z}. If there is a single variable in \code{seg.Z}, a simple nmeric vector can be specified. }
+
+\item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
   \item{model}{logical value indicating if the model.frame should be returned.}
   \item{keep.class}{logical value indicating if the final fit returned by \code{segmented.default} should keep the class '\code{segmented}' (along with the class of the original fit \code{obj}). Ignored by the segmented methods. }
@@ -49,7 +51,7 @@ segmented(obj, seg.Z, psi, npsi, control = seg.control(),
 }
 \details{
   Given a linear regression model (usually of class "lm" or "glm"), segmented tries to estimate
-  a new model having broken-line relationships with the variables specified in \code{seg.Z}.
+  a new regression model having broken-line relationships with the variables specified in \code{seg.Z}.
   A segmented (or broken-line) relationship is defined by the slope
   parameters and the break-points where the linear relation changes. The number of breakpoints
   of each segmented relationship is fixed via the \code{psi} argument, where initial
@@ -113,15 +115,16 @@ variable to mean the difference-in-slopes coefficient.
 
 \item Methods specific to the class \code{"segmented"} are
     \itemize{
-  \item \code{print.segmented}
-  \item \code{summary.segmented}
-  \item \code{print.summary.segmented}
-  \item \code{plot.segmented}
-  \item \code{lines.segmented}
-  \item \code{confint.segmented}
-  \item \code{vcov.segmented}
-  \item \code{predict.segmented}
-  \item \code{points.segmented}
+  \item \code{\link{print.segmented}}
+  \item \code{\link{summary.segmented}}
+  \item \code{\link{print.summary.segmented}}
+  \item \code{\link{plot.segmented}}
+  \item \code{\link{lines.segmented}}
+  \item \code{\link{confint.segmented}}
+  \item \code{\link{vcov.segmented}}
+  \item \code{\link{predict.segmented}}
+  \item \code{\link{points.segmented}}
+  \item \code{\link{coef.segmented}}
             }
 
 Others are inherited from the class \code{"lm"} or \code{"glm"} depending on the

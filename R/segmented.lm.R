@@ -1,6 +1,25 @@
 `segmented.lm` <-
-function(obj, seg.Z, psi, npsi, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
-    
+function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
+  
+  build.all.psi<-function(psi, fixed.psi){
+    all.names.psi<-union(names(psi),names(fixed.psi))
+    all.psi<-vector("list", length=length(all.names.psi))
+    names(all.psi)<- all.names.psi
+    for(i in names(all.psi)) {
+      if(!is.null(psi[[i]])){
+        psi[[i]]<-sort(psi[[i]])
+        names(psi[[i]])<-paste("U",1:length(psi[[i]]),".",i,sep="")
+      }
+      if(!is.null(fixed.psi[[i]])){
+        fixed.psi[[i]]<-sort(fixed.psi[[i]])
+        names(fixed.psi[[i]])<-	paste("U",1:length(fixed.psi[[i]]),".fixed.",i,sep="")
+      }
+      all.psi[[i]]<-sort(c(psi[[i]],fixed.psi[[i]]))
+    }
+    return(all.psi)
+  }
+  ##===inizio funzione
+  
   if(missing(seg.Z)) {
       if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
   }
@@ -198,10 +217,33 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
         }
     }
+
+  #########==================== SE PSI FIXED
+  id.psi.fixed <- FALSE
+  if(!is.null(fixed.psi)){
+    id.psi.fixed <- TRUE
+    if(is.numeric(fixed.psi) && n.Seg==1) {
+      fixed.psi<-list(fixed.psi)
+      names(fixed.psi)<-all.vars(seg.Z)
+    }
+    if(is.list(fixed.psi)) {
+      if(!(names(fixed.psi) %in% all.vars(seg.Z))) stop("names(fixed.psi) is not a subset of variables in 'seg.Z' ")
+    } else {
+      stop(" 'fixed.psi' has to be a named list ")
+      } 
+    fixed.psi<-lapply(fixed.psi, sort)
+    Zfixed<-matrix(unlist(mapply(function(x,y)rep(x,y),Z[names(fixed.psi)], sapply(fixed.psi, length), SIMPLIFY = TRUE)), nrow=n)
+    n.fixed.psi<-sapply(fixed.psi, length)
+    rip.nomi <- rep( names(fixed.psi), n.fixed.psi)
+    rip.numeri <- unlist(lapply(n.fixed.psi, function(.x) 1:.x))
+    colnames(Zfixed) <- paste("U", rip.numeri,".fixed.",rip.nomi, sep="")
+    PSI <- matrix(unlist(fixed.psi), ncol=ncol(Zfixed), nrow=n, byrow = TRUE)
+    fixedU<-(Zfixed-PSI)*(Zfixed>PSI)
+    XREG<-cbind(XREG, fixedU)
+  }
+#########====================END  SE PSI FIXED
+
     initial.psi<-psi
-    
-#    browser()    
-    
     a <- sapply(psi, length)
     #per evitare che durante il processo iterativo i psi non siano ordinati
     id.psi.group <- rep(1:length(a), times = a) #identificativo di apparteneza alla variabile
@@ -280,6 +322,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         warning("No breakpoint estimated", call. = FALSE)
         return(obj0)
         }
+    
     if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK
@@ -312,6 +355,15 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     nomiU   <- unlist(mapply(forma.nomiU, length.psi, nomiFINALI)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
     nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, nomiFINALI))
 
+    #########========================= SE PSI FIXED
+    psi.list<-vector("list", length=length(unique(nomiZ)))
+    names(psi.list)<-unique(nomiZ)
+    #names(psi)<-nomiZ #se e' una procedure automatica nomiZ puo essere piu lungo dei breakpoints "rimasti" 
+    names(psi)<-rep(nomiFINALI, length.psi)
+    for(i in names(psi.list)){
+      psi.list[[i]]<-psi[names(psi)==i]
+    }
+
     #mf<-cbind(mf, mfExt) #questo creava ripetizioni..
     for(i in 1:ncol(U)) {
         mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
@@ -320,28 +372,17 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     nnomi <- c(nomiU, nomiVxb)
 #    browser()
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
+    #########========================= SE PSI FIXED
+    if(id.psi.fixed){
+      for(i in 1:ncol(fixedU)) mfExt[colnames(fixedU)[i]]<-mf[colnames(fixedU)[i]]<-fixedU[,i]
+      Fo<-update.formula(Fo, paste(c("~.",colnames(fixedU)), collapse="+"))
+    }
     #objF <- update(obj0, formula = Fo, data = KK)
     objF <- update(obj0, formula = Fo,  evaluate=FALSE, data = mfExt)
     #eliminiamo subset, perche' se e' del tipo subset=x>min(x) allora continuerebbe a togliere 1 osservazione 
     if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<-eval(objF, envir=mfExt)
- 
-
-# #11/10/16 il controllo e' stato commentato in modo tale da restituire anche un oggetto lm in cui psi viene considerato fisso..    
-#    for(jj in colnames(V)) {
-#        VV<-V[, which(colnames(V)==jj), drop=FALSE]
-#        sumV<-abs(rowSums(VV))
-##        if( (any(diff(sumV)>=2) #se ci sono due breakpoints uguali
-##            || any(table(sumV)<=1)) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
-## Tolto perche' se la variabile segmented non e' ordinata non ha senso..
-##magari potresti fare un abs(diff(psi))<=.0001? ma clusterizzato..
-#        if(any(table(sumV)<=1) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
-#        }
-    #Puo' capitare che psi sia ai margini o molto vicini (e ci sono solo 1 o 2 osservazioni in qualche intervallo. Oppure ce ne 
-    #sono di piu' ma hanno gli stessi valori di x. In questo caso objF$coef puo' avere mancanti.. names(which(is.na(coef(objF))))
-
     objF$offset<- obj0$offset
-    
     isNAcoef<-any(is.na(objF$coefficients))
     if(isNAcoef){
       if(stop.if.error) {
@@ -372,10 +413,8 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     id <- match(nomiVxb, names(coef(objF)))
     vv <- if (length(id) == 1) Cov[id, id] else diag(Cov[id, id])
     #if(length(initial)!=length(psi)) initial<-rep(NA,length(psi))
-#browser()
     a<-tapply(id.psi.group, id.psi.group, length) #ho sovrascritto "a" di sopra, ma non dovrebbe servire..
     
-    #browser()
     ris.psi<-matrix(NA,length(psi),3)
     colnames(ris.psi) <- c("Initial", "Est.", "St.Err")
     rownames(ris.psi) <- nomiVxb
@@ -409,14 +448,8 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     objF$id.psi.group <- id.psi.group
     objF$id.warn <- id.warn
     objF$orig.call<-orig.call
+    objF$indexU<-build.all.psi(psi.list, fixed.psi)
     if(model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
-    
-#    PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
-#    SE.PSI <- matrix(rep(sqrt(vv), rep(nrow(Z), length(psi))), ncol = length(psi))
-#    X.is<-model.matrix(Fo, data=objF$model)
-#    X.is[,nomiVxb]<-pnorm((Z-PSI)/SE.PSI)%*% diag(-beta.c, ncol = length(beta.c))
-#    objF$cov.unscaled.is<-crossprod(X.is)
-#browser()    
     if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF

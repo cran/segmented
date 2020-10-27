@@ -7,7 +7,7 @@
 }
 \usage{
 slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, 
-    APC=FALSE, .vcov=NULL, ..., digits = max(4, getOption("digits") - 2))
+    APC=FALSE, .vcov=NULL, use.t=NULL, ..., digits = max(4, getOption("digits") - 2))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,6 +20,7 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   \item{APC}{logical. If \code{APC=TRUE} the `annual percent changes', i.e. \eqn{100\times(\exp(\beta)-1)}{100*(exp(b)-1)}, 
   are computed for each interval (\eqn{\beta}{b} is the slope). Only point estimates and confidence intervals are returned.}
   \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov(ogg)}.}
+  \item{use.t}{Which quantiles should be used to computre the confidence intervals? If \code{NULL} (default) the \eqn{t}{t} distribution is used only for objects obtained by \code{segmented.lm}. }
   \item{...}{ Further arguments to be passed on to \code{vcov.segmented}, such as \code{var.diff} and \code{is}. See Details in \code{\link{vcov.segmented}} and \code{\link{summary.segmented}}.}
 \item{digits}{controls number of digits in the returned output.}
 }

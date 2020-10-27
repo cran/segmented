@@ -10,7 +10,7 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "printCoefmat", "pt", "qnorm", "qt", "quantile", "resid",
              "residuals", "runif", "summary.glm", "summary.lm", "update",
              "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun",
-             "complete.cases","sd","qchisq","pchisq")
+             "complete.cases","sd","qchisq","pchisq","BIC")
 importFrom("utils", "flush.console")
 
 export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,
@@ -19,7 +19,7 @@ export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arim
 	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
 	seg.def.fit,seg.def.fit.boot, seg.Ar.fit,seg.Ar.fit.boot,
 	slope, summary.segmented,print.summary.segmented,vcov.segmented, predict.segmented, 
-	points.segmented, aapc)
+	points.segmented, aapc, selgmented)
 
 S3method(segmented,default)
 S3method(segmented,lm)

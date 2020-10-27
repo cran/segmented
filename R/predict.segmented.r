@@ -69,9 +69,20 @@ predict.segmented<-function(object, newdata, ...){
           colnames(newd)<-c(x.name,nameU)
           }
         if(!x.name%in%names(coef(obj.seg))) newd<-newd[,-1,drop=FALSE]
+        #aggiungi (eventualmente) le colonne relative ai psi noti
+        all.psi<-obj.seg$indexU[[x.name]]
+        if(length(all.psi)!=k){
+          nomi.psi.noti<-setdiff(names(all.psi),nameU)
+          psi.noti<-setdiff(all.psi, est.psi)
+          PSI.noti <- matrix(rep(psi.noti, rep(n, length(psi.noti))), ncol = length(psi.noti))
+          nomi<-c(colnames(newd),nomi.psi.noti)
+          newd<-cbind(newd, (newZ-PSI.noti)*(newZ>PSI.noti))
+          colnames(newd)<-nomi
+        }
         return(newd)
-    }
-#--------------------------------------------------------------
+  }
+  #--------------
+  #--------------------------------------------------------------
   if(missing(newdata)){
     newd.ok<-model.frame(object)
   } else {

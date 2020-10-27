@@ -65,7 +65,10 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     b <- slope(x, term, digits=20)[[1]][, "Est."]
     #id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE) #confondeva "psi1.x","psi1.neg.x"
     id <- f.U(rownames(x$psi), term)
-    est.psi <- x$psi[id, "Est."]
+    
+    #est.psi <- x$psi[id, "Est."]
+    est.psi <- x$indexU[[term]]
+    
     val <- sort(c(est.psi, x$rangeZ[, term]))
     #vettorializza i cols, lwds, ltys
     cols<-rep(cols, l=length(est.psi)+1)
