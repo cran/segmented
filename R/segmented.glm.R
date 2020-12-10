@@ -124,7 +124,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     nomiNO<-NULL #dovrebbe contenere
     for(i in nomiTUTTI){
       r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
-      if(class(r)!="try-error" && length(r)==1 && !is.function(r)) nomiNO[[length(nomiNO)+1]]<-i
+      if(class(r)!="try-error" && length(r)==1 && !is.function(r) && !i%in%names(mf)) nomiNO[[length(nomiNO)+1]]<-i
     }
     #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
     if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))

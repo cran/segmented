@@ -39,7 +39,7 @@
 %      are hidden. When bootstrap restarting has been employed (default in \code{segmented}), \code{show.gap} is meaningless 
 %      as the gap coefficients are always set to zero in the fitted model.}
   \item{transf}{ A possible function to convert the fitted values before plotting. It is only effective 
-    if the fitted values refer to a linear or a generalized linear model (on the link scale) \emph{and} \code{res=FALSE}.}
+    if \code{res=FALSE}. If \code{res=TRUE} any transformation is ignored.}
   \item{isV}{logical value (to be passed to \code{\link{broken.line}}). Ignored if \code{conf.level=0}}
   \item{is}{logical value (to be passed to \code{\link{broken.line}}) indicating if the covariance matrix based on the induced smoothing should be used. Ignored if \code{conf.level=0}}
   \item{var.diff}{logical value to be passed to \code{\link{summary.segmented}} to compute dthe standard errors of fitted values (if \code{conf.level>0}).}

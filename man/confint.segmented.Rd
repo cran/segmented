@@ -61,8 +61,7 @@ y<-2+1.5*pmax(x-35,0)-1.5*pmax(x-70,0)+10*pmax(z-.5,0)+rnorm(100,0,2)
 out.lm<-lm(y~x)
 o<-segmented(out.lm,seg.Z=~x+z,psi=list(x=c(30,60),z=.4))
 confint(o) #delta CI for the 1st variable 
-confint(o, "x", method="score")
-confint(o, "z", method="g")
+confint(o, "x", method="score") #also method="g"
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

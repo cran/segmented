@@ -61,6 +61,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
           psi.noti<-setdiff(all.psi, est.psi)
           PSI.noti <- matrix(rep(psi.noti, rep(n, length(psi.noti))), ncol = length(psi.noti))
           nomi<-c(colnames(newd),nomi.psi.noti)
+          newZ<-matrix(newZ, nrow=nrow(newZ), ncol=length(psi.noti))
           newd<-cbind(newd, (newZ-PSI.noti)*(newZ>PSI.noti))
           colnames(newd)<-nomi
         }

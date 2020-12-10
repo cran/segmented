@@ -1,4 +1,4 @@
-`pscore.test`<- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
+pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
                          values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, only.term=FALSE) { 
   #-------------------------------------------------------------------------------
   test.Sc2<-function(y, z, xreg, sigma=NULL, values=NULL, fn="pmax(x-p,0)", df.t="Inf", alternative, w=NULL, offs=NULL, 
@@ -48,11 +48,31 @@
       }
     }
     if(only.term) return(pmaxMedio)
-    if(is.null(w)) w<-1
-    invXtX<-solve(crossprod(sqrt(w)*xreg))
-    IA<-diag(n) - xreg%*%tcrossprod(invXtX, xreg*w) #I-hat matrix
-    sc<-t(pmaxMedio*w) %*% IA  %*% y
-    v.s<- t(pmaxMedio*w) %*% crossprod(t(IA)/sqrt(w))%*%(w*pmaxMedio)
+    if(is.null(w)) {
+      invXtX<-solve(crossprod(xreg))
+      IA<- -xreg%*%tcrossprod(invXtX, xreg)
+      .a1<-1+diag(IA)
+      id<-col(IA)==row(IA)
+      IA[id]<-.a1  
+      pIA<- drop(crossprod(pmaxMedio,IA))
+      sc<-  drop(pIA %*% y)
+      v.s<- pIA %*% pmaxMedio #pIA%*% pmaxMedio #tcrossprod(pIA, pmaxMedio)
+    } else {
+      invXtX<-solve(crossprod(sqrt(w)*xreg))
+      #I-hat matrix
+      #dovrebbe essere diag(n) - xreg%*%tcrossprod(invXtX, xreg*w) ma non funziona se n e' grande (12000)
+      IA<- xreg%*%tcrossprod(invXtX, xreg*w)
+      .a1<-1-diag(IA)
+      id<-col(IA)==row(IA)
+      IA[id]<-.a1  
+      pIA<- drop(crossprod(pmaxMedio*w,IA))
+      #sc<-t(pmaxMedio*w) %*% IA  %*% y
+      sc<- drop(pIA %*% y)
+      pIA<-crossprod(pmaxMedio*w,IA/sqrt(w))
+      v.s<- pIA %*% (pmaxMedio*w) #crossprod(pIA, pmaxMedio*w) #t(pmaxMedio*w) %*% crossprod(t(IA)/sqrt(w))%*%(w*pmaxMedio)
+    }
+    
+    
     ris<-if(nbreaks==1) drop(sc/(sigma*sqrt(v.s))) else drop(crossprod(sc,solve(v.s,sc)))/(sigma^2)
     #if(length(fn)<=1 && cadj) ris<- sign(ris)*sqrt((ris^2)*(1-(3-(ris^2))/(2*n)))
     #passa alla F..

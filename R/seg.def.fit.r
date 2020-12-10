@@ -170,8 +170,9 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
         R.noV <- R[, -((ncol(R) - 1) + seq_len(ncol(U))), drop = FALSE]
         r <- rep(0, nrow(R))
         obj <- suppressWarnings(eval(call.ok, envir = mfExt))
-        beta.c <- coef(obj)[nomiU]
-        gamma.c <- coef(obj)[nomiV]
+        beta.c <- unlist( unique(coef(obj)[nomiU]))
+        gamma.c <-unlist(  unique(coef(obj)[nomiV]))
+#browser()
         if (any(is.na(c(beta.c, gamma.c)))) {
             if (fix.npsi) {
                 if (return.all.sol) 

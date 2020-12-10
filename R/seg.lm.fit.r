@@ -128,7 +128,8 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
   #==============================================
   U <- ((Z-PSI)*(Z>PSI)) #pmax((Z - PSI), 0)^pow[1]
   if(pow[1]!=1) U<-U^pow[1]
-  obj0 <- mylm(cbind(XREG, U), y, w, offs) #lm.wfit(cbind(XREG, U), y, w, offs) #se 1 psi, si puo' usare la funz efficiente..
+  obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent=TRUE) #lm.wfit(cbind(XREG, U), y, w, offs) #se 1 psi, si puo' usare la funz efficiente..
+  if(class(obj0)[1]=="try-error") obj0<-lm.wfit(cbind(XREG, U), y, w, offs)
   L0<- sum(obj0$residuals^2*w)
   n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
   dev.values[length(dev.values) + 1] <- opz$dev0 #del modello iniziale (senza psi)
@@ -153,7 +154,8 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     if(n.psi1!=n.psi0){
       U <- ((Z-PSI)*(Z>PSI)) #pmax((Z - PSI), 0)^pow[1]
       if(pow[1]!=1) U<-U^pow[1]
-      obj0 <- mylm(cbind(XREG, U), y, w, offs)#lm.wfit(cbind(XREG, U), y, w, offs) #se 1 psi, si puo' usare la funz efficiente..
+      obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent=TRUE)#lm.wfit(cbind(XREG, U), y, w, offs) #se 1 psi, si puo' usare la funz efficiente..
+      if(class(obj0)[1]=="try-error") obj0<-lm.wfit(cbind(XREG, U), y, w, offs)
       L0<- sum(obj0$residuals^2*w)
       } 
     V <- dpmax(Z,PSI,pow=pow[2])# ifelse((Z > PSI), -1, 0)
@@ -194,6 +196,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     U1<-(Z-PSI)*(Z>PSI)
     if(pow[1]!=1) U1<-U1^pow[1]
     obj1 <- try(mylm(cbind(XREG, U1), y, w, offs), silent = TRUE) #lm.wfit(cbind(XREG, pmax(Z-PSI,0)), y, w, offs)
+    if(class(obj1)[1]=="try-error") obj1<-try(lm.wfit(cbind(XREG, U1), y, w, offs), silent=TRUE)
     L1<- if(class(obj1)[1]=="try-error") L0+10 else sum(obj1$residuals^2*w)
     
     use.k<-k<-1
@@ -218,6 +221,7 @@ seg.lm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
       U1<-(Z-PSI)*(Z>PSI)
       if(pow[1]!=1) U1<-U1^pow[1]
       obj1 <- try(mylm(cbind(XREG, U1), y, w, offs), silent=TRUE) #lm.wfit(cbind(X,U1), y, w, offs)
+      if(class(obj1)[1]=="try-error") obj1<-lm.wfit(cbind(XREG, U1), y, w, offs)
       L1<- if(class(obj1)[1]=="try-error") L0+10 else sum(obj1$residuals^2*w)
       L1.k[length(L1.k)+1]<-L1
       if(1/(use.k*h)<min.step){

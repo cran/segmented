@@ -144,14 +144,18 @@ nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshol
 nomiNO<-NULL 
 for(i in nomiTUTTI){
     r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
-    if(class(r)!="try-error" && length(r)==1 && !is.function(r)) nomiNO[[length(nomiNO)+1]]<-i
+    if(class(r)!="try-error" && length(r)==1 && !is.function(r) && !i%in%names(mf)) nomiNO[[length(nomiNO)+1]]<-i
     }
 #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
 if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))
 #funziona ma se c'e' qualche variabile con il nome di una funzione (ad es., "filter")
 # anche questa variabile va a finire in nomiNO e quindi poi viene eliminata
 # problema risolto con "r<-try(evalq(.."? (prima era "r<-try(eval(..")
-#----------------------------------------------------   
+#----------------------------------------------------
+    
+    #nomiAgg<- setdiff(names(mf), names(mfExt))
+    #if(length(nomiAgg)>0) mfExt$formula<-update.formula(mfExt$formula,paste(".~.+", paste( nomiAgg, collapse="+"), sep=""))
+    
     mfExt<-eval(mfExt, parent.frame())
     
     #mantieni in mfExt solo le variabili che NON ci sono in mf (cosi la funzione occupa meno spazio..)

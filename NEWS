@@ -6,23 +6,30 @@
 
 
 ===============
+version 1.3-1 
+===============
+* segmented.default() now accepts "lme" objects (thanks to Hannah Watson for her input)
+* Bug fixed: pscore.test() crashed in large datasets (thanks to John Grego for reporting); segmented.lm() did not work when the scale of x was defined on very large range, e.g. 1e8 to 2e8 (thanks to Elio Campitelli for reporting) 
+
+
+===============
 version 1.3-0 
 ===============
-* New function selgmented() to select the number of breakpoints (via BIC or hypothesis testing)
-* New argument 'fixed.psi' in segmented.*() methods to fix some of breakpoints in the fitted model
-* The 'seed' argument in seg.control() defaults to 12345 to guarantee reproducibility  
+* New function selgmented() to select the number of breakpoints (via BIC or hypothesis testing).
+* New argument 'fixed.psi' in segmented.* methods to fix some of breakpoints in the fitted model.
+* The 'seed' argument in seg.control() defaults to 12345 to guarantee reproducibility.  
 
 
 ===============
 version 1.2-0 
 ===============
-* Changes in segmented.default to allow estimation of segmented censReg models (thanks to Georgina Kaltenecker for her input)
-* coef.segmented() introduced to extract regression coefficients and breakpoints
-* A small improvement in segmented.* methods: if fix.npsi=TRUE, the returned  number of breakpoints is always equal to the initial one 
-* npsi can be missing in the segmented.* methods, and one breakpoint is estimated for all variables specified in seg.Z
+* Changes in segmented.default to allow estimation of segmented censReg models (thanks to Georgina Kaltenecker for her input).
+* coef.segmented() introduced to extract regression coefficients and breakpoints.
+* A small improvement in segmented.* methods: if fix.npsi=TRUE, the returned  number of breakpoints is always equal to the initial one. 
+* npsi can be missing in the segmented.* methods, and one breakpoint is estimated for all variables specified in seg.Z.
 * New argument 'fc' in seg.control() to manage situations when the estimated breakpoints come to the boundary.
 * New argument in plot.segmented() to draw also the trends before the breakpoints. 
-* Bug fixed: plot.segmented() did not recycle arguments 'col', 'lwd' and 'lty'
+* Bug fixed: plot.segmented() did not recycle arguments 'col', 'lwd' and 'lty'.
 
 
 ===============

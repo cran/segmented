@@ -152,6 +152,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
         mf$formula <- eval(mf$formula)
     #mf$formula <- update.formula(mf$formula, paste(seg.Z, collapse = ".+"))
     mf$formula <- update.formula1(mf$formula, paste(seg.Z, collapse = ".+"), opt=2)
+
     mfExt <- mf
     
     if (!is.null(obj$call$offset) || !is.null(obj$call$weights) || 
@@ -161,6 +162,9 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
                 all.vars(obj$call$subset), all.vars(obj$call$id)), 
                 collapse = "+")))
     }
+    
+    if(!is.null(obj$call$random)) mfExt$formula<-update.formula(mf$formula, paste(".~.+", paste(all.vars(obj$call$random), collapse="+")))
+    
     mf <- eval(mf, parent.frame())
     n <- nrow(mf)
     nomiOff <- setdiff(all.vars(formula(obj)), names(mf))
@@ -171,7 +175,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     nomiNO <- NULL
     for (i in nomiTUTTI) {
         r <- try(eval(parse(text = i), parent.frame()), silent = TRUE)
-        if (class(r) != "try-error" && length(r) == 1 && !is.function(r)) 
+        if (class(r) != "try-error" && length(r) == 1 && !is.function(r) && !i%in%names(mf)) 
             nomiNO[[length(nomiNO) + 1]] <- i
         }
     if (!is.null(nomiNO)) 
@@ -390,7 +394,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     #all.coef <- coef(obj)
     #names(all.coef) <- c(names(coef(obj0)), nomiU, nomiVxb)
     #beta.c <- all.coef[nomiU]
-    beta.c<-coef(obj)[nomiU]
+    beta.c<-unlist( unique(coef(obj)[nomiU])) #beta.c<-coef(obj)[nomiU]
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
     nnomi <- c(nomiU, nomiVxb)
     for (i in 1:ncol(U)) {
