@@ -1,10 +1,12 @@
-predict.segmented<-function(object, newdata, ...){
+predict.segmented<-function(object, newdata, .coef=NULL, ...){
 #rev: 30/10/2013: it seems to work correctly, even with the minus variable (null right slope..)
 #rev: 14/4/2014 now it works like predict.lm/glm
 #BUT problems if type="terms" (in realta' funziona, il problema e' che
 #     restituisce una colonna per "x", "U.x", "psi.x".. (Eventualmente si dovrebbero sommare..)
 #if(!is.null(object$orig.call$offset)) stop("predict.segmented can not handle argument 'offset'. Include it in formula!")
 
+  estcoef<- if(is.null(.coef)) coef(object) else .coef
+  
   vS<-function(obj){
     X<-model.matrix(obj)
     nomiZ<- obj$nameUV$Z
@@ -48,7 +50,7 @@ predict.segmented<-function(object, newdata, ...){
         nameU<-obj.seg$nameUV$U[f.U(obj.seg$nameUV$U,x.name)]
         nameV<-obj.seg$nameUV$V[f.U(obj.seg$nameUV$V,x.name)]
 
-        diffSlope<-coef(obj.seg)[nameU]
+        diffSlope<-estcoef[nameU]
         est.psi<-obj.seg$psi[nameV,"Est."]
         se.psi<-obj.seg$psi[nameV, "St.Err"]
         k<-length(est.psi)

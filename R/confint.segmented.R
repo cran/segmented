@@ -1,10 +1,12 @@
 `confint.segmented` <- function(object, parm, level=0.95, method=c("delta", "score", "gradient"), rev.sgn=FALSE, 
-        var.diff=FALSE, is=FALSE, digits=max(4, getOption("digits") - 1), ...){
+        var.diff=FALSE, is=FALSE, digits=max(4, getOption("digits") - 1), .coef=NULL, .vcov=NULL, ...){
 #...: argomenti da passare solo a confintSegIS. Questi sono "h", "d.h", "bw" (bw="(1/n)^(1/2)"), nvalues, msgWarn o useSeg.
         method<-match.arg(method)
         cls<-class(object)
         if(length(cls)==1) cls<-c(cls, cls)
         if(method%in%c("score", "gradient") && !all(cls[1:2]==c("segmented","lm"))) stop("Score- or Gradient-based CI only work with segmented lm models") 
+        estcoef<-if(is.null(.coef)) coef(object) else .coef
+        COV<- if(is.null(.vcov)) vcov(object,var.diff=var.diff, is=is, ...) else .vcov
 #=======================================================================================================
 #========== metodo Delta
 #=======================================================================================================
@@ -56,10 +58,11 @@ confintSegDelta<- function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FAL
             colnames(m)<-c("Est.",paste("CI","(",level*100,"%",")",c(".low",".up"),sep=""))
             for(j in 1:length(nomi.U)){ #per ogni psi della stessa variabile segmented..
                     sel<-c(nomi.V[j],nomi.U[j])
-                    V<-vcov(object,var.diff=var.diff, is=is, ...)[sel,sel] #questa e' vcov di (psi,U)
-                    b<-coef(object)[sel[2]] #diff-Slope
+                    #15/12/20 V e' costruita sopra..
+                    V<-COV[sel, sel] #questa e' vcov di (psi,U)
+                    b<-estcoef[sel[2]] #diff-Slope
                     th<-c(b,1)
-                    orig.coef<-drop(diag(th)%*%coef(object)[sel]) #sono i (gamma,beta) th*coef(ogg)[sel]
+                    orig.coef<-drop(diag(th)%*% estcoef[sel]) #sono i (gamma,beta) th*coef(ogg)[sel]
                     gammma<-orig.coef[1]
                     est.psi<-object$psi[sel[1],2]
                     V<-diag(th)%*%V%*%diag(th) #2x2 vcov() di gamma e beta

@@ -1,5 +1,5 @@
 points.segmented<-function(x, term, interc=TRUE, link=TRUE, 
-    rev.sgn=FALSE, transf=I, ...){
+    rev.sgn=FALSE, transf=I, .vcov=NULL, .coef=NULL, ...){
 #--------------
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -25,7 +25,7 @@ points.segmented<-function(x, term, interc=TRUE, link=TRUE,
       psii<- x$psi[nameV, "Est."]
       d<-data.frame(a=psii)
       names(d)<-term
-      opz$y<-broken.line(x,d, se.fit=FALSE, interc=interc, link=link)[[1]]
+      opz$y<-broken.line(x,d, se.fit=FALSE, interc=interc, link=link, .coef=.coef, .vcov=.vcov)[[1]]
       if(rev.sgn) psii<- -psii
       opz$x<- psii 
       if(is.null(opz$cex)) opz$cex<-1.5

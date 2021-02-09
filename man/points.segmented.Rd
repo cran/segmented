@@ -10,7 +10,7 @@ Points method for segmented objects
 }
 \usage{
   \method{points}{segmented}(x, term, interc = TRUE, link = TRUE, rev.sgn=FALSE, 
-    transf=I, ...)
+    transf=I, .vcov=NULL, .coef=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -34,6 +34,8 @@ has been set on the last slope.
   \item{transf}{
 A possible function to convert the fitted values before plotting.
 }
+  \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov()}.}
+  \item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(x)}.}
   \item{\dots}{
 other graphics parameters to pass on to \code{points()} function.
 }

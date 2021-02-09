@@ -1,4 +1,4 @@
-`slope` <- function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, APC=FALSE, .vcov=NULL, use.t=NULL,...,
+`slope` <- function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, APC=FALSE, .vcov=NULL, .coef=NULL, use.t=NULL,...,
       digits = max(4, getOption("digits") - 2)){
 
 #   se e' un "newsegmented"
@@ -9,12 +9,14 @@
 #             ogg$psi<-old.psi(ogg)
 #             ogg$nameUV<-old.nomi(ogg)
 #             } else {
-             covv<-try(vcov(ogg,...), silent=TRUE)
+#             covv<-try(vcov(ogg,...), silent=TRUE)
 #             }
 
         covv <- if(is.null(.vcov)) vcov(ogg, ...) else .vcov 
-        if(!all(dim(covv)==c(length(coef(ogg)), length(coef(ogg))))) stop("Incorrect dimension of cov matrix", call. = FALSE)
-             
+        estcoef<- if(is.null(.coef)) coef(ogg) else .coef
+
+        if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
+        
         nomepsi<-rownames(ogg$psi) #OK
         nomeU<-ogg$nameUV$U
         nomeZ<-ogg$nameUV$Z
@@ -44,7 +46,7 @@
             ind<-as.numeric(na.omit(unlist(index[[i]])))
             M<-matrix(1,length(ind),length(ind))
             M[row(M)<col(M)]<-0
-            cof<-coef(ogg)[ind]
+            cof<-estcoef[ind]
             cof.out<-M%*%cof 
 
             if(!inherits(covv, "try-error")){

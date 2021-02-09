@@ -8,7 +8,8 @@ Average annual per cent change in segmented trend analysis
 Computes the average annual per cent change  to summarize piecewise linear relationships in segmented regression models.
 }
 \usage{
-aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE, ...)
+aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE, 
+    .vcov=NULL, .coef=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,6 +20,8 @@ aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE, ...)
   \item{conf.level}{the confidence level desidered.}
   \item{wrong.se}{logical, if \code{TRUE}, the `wrong'' standard error (as discussed in Clegg et al. (2009)) ignoring 
   uncertainty in the breakpoint estimate is returned as an attribute \code{"wrong.se"}.}
+    \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov(ogg,...)}.}
+  \item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(ogg)}.}
   \item{...}{further arguments to be passed on to \code{vcov.segmented()}, such as \code{var.diff} or \code{is}.}
 
 }

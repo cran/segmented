@@ -71,7 +71,7 @@ such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"
   "lm" or "glm" fits (as \code{segmented.default} is slower than the specific methods \code{segmented.lm} and \code{segmented.glm}), although 
   final results are the same. However the object returned by \code{segmented.default} is \emph{not} of class "segmented", as currently
   the segmented methods are not guaranteed to work for `generic' (i.e., besides "lm" and "glm") regression fits. The user 
-  could try each "segmented" method on the returned object by calling it explicitly (e.g. via \code{plot.segmented()} or \code{confint.segmented()}). 
+  could try each "segmented" method on the returned object by calling it explicitly (e.g. via \code{plot.segmented()} or \code{confint.segmented()} wherein the regression coefficients and relevant covariance matrix have to be specified, see \code{.coef} and \code{.vcov} in \code{plot.segmented()}, \code{confint.segmented()}, \code{slope()}). 
 }
 \value{
   The returned object depends on the \code{last} component returned by \code{seg.control}.
@@ -195,8 +195,8 @@ o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 
 #automatic procedure to estimate breakpoints in the covariate x (starting from K quantiles)
 # Hint: increases number of iterations. Notice: bootstrap restart is not allowed!
-o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
-    control=seg.control(fix.npsi=FALSE, n.boot=0, tol=1e-7, it.max = 50, K=5, display=TRUE))
+#o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
+#    control=seg.control(fix.npsi=FALSE, n.boot=0, tol=1e-7, it.max = 50, K=5, display=TRUE))
 
 #assess the progress of the breakpoint estimates throughout the iterations
 \dontrun{

@@ -5,6 +5,15 @@
 ****************************
 
 
+
+===============
+version 1.3-2 
+===============
+* New arguments '.vcov' and '.coef' in the utility functions (slope(), plot.segmented(), confint.segmented(),..) in order to account for 
+fit objects returned by segmented.default() (Thanks to Yi Hu for his input).
+* new argument 'smoos' in plot.segmented() to draw smoothed scatterplot when 'res=TRUE'.
+
+
 ===============
 version 1.3-1 
 ===============

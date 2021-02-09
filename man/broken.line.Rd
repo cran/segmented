@@ -7,7 +7,7 @@
 }
 \usage{
 broken.line(ogg, term = NULL, link = TRUE, interc=TRUE, se.fit=TRUE, isV=FALSE, 
-  .vcov=NULL, ...)
+  .vcov=NULL, .coef=NULL, ...)
 }
 \arguments{
   \item{ogg}{ A fitted object of class segmented (returned by any \code{segmented} method). }
@@ -20,7 +20,8 @@ broken.line(ogg, term = NULL, link = TRUE, interc=TRUE, se.fit=TRUE, isV=FALSE,
   \item{interc}{ Should the model intercept be added? (provided it exists).}
   \item{se.fit}{ If \code{TRUE} also standard errors for predictions are returned.}
   \item{isV}{ A couple of logicals indicating if the segmented terms \eqn{(x-\psi)_+}{(x-\psi)_+} and \eqn{I(x>\psi)}{I(x>\psi)} in the model matrix should be replaced by their smoothed counterparts. If a single logical is provided, it is applied to both terms.}
-\item{.vcov}{ Optional. The \emph{full} covariance matrix of estimates. If \code{NULL} (and \code{se.fit=TRUE}), the matrix is computed internally via \code{vcov.segmented()}.}
+  \item{.vcov}{ Optional. The \emph{full} covariance matrix of estimates. If \code{NULL} (and \code{se.fit=TRUE}), the matrix is computed internally via \code{vcov.segmented()}.}
+  \item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(ogg)}.}
   \item{...}{ Additional arguments to be passed on to \code{vcov.segmented()} when computing the standard errors for the predictions, namely
     \code{is}, \code{var.diff}, \code{p.df}. See \code{\link{summary.segmented}} and \code{\link{vcov.segmented}}.}
 }

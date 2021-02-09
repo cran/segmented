@@ -1,7 +1,7 @@
 plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, 
     interc=TRUE, link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, 
     shade=FALSE, rug=!add, dens.rug=FALSE, dens.col = grey(0.8),
-    transf=I, isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, prev.trend=FALSE,...){
+    transf=I, isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, .coef=NULL, prev.trend=FALSE, smoos=NULL, ...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -26,8 +26,14 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         }
 #--------------
   #se l'oggetto e' segmented.Arima il nome dell'eventuale interc va sostituito..
-#  if((all(class(x)==c("segmented", "Arima")))) names(x$coef)<-gsub("intercept", "(Intercept)", names(coef(x)))
+  #if((all(class(x)==c("segmented", "Arima")))) names(x$coef)<-gsub("intercept", "(Intercept)", names(coef(x)))
   if(all(c("segmented", "Arima") %in% class(x))) names(x$coef)<-gsub("intercept", "(Intercept)", names(coef(x)))
+  
+  covv <- if(is.null(.vcov)) vcov(x, ...) else .vcov 
+  estcoef<- if(is.null(.coef)) coef(x) else .coef
+  
+  if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
+  
 
 #--------------
     linkinv <- !link
@@ -59,10 +65,11 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     ylabs<- if("ylab"%in% names(opz)) opz$ylab else paste("Effect  of ", term, sep = " ")
     xlabs<- if("xlab"%in% names(opz)) opz$xlab else term
 
-    a <- intercept(x, term, digits=20)[[1]][, "Est."]
+    a <- intercept(x, term, digits=20, .vcov=covv, .coef=estcoef)[[1]][, "Est."]
     #Poiche' intercept() restituisce quantita' che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
-    if(!interc && ("(Intercept)" %in% names(coef(x)))) a<- a-coef(x)["(Intercept)"]
-    b <- slope(x, term, digits=20)[[1]][, "Est."]
+    if(!interc && ("(Intercept)" %in% names(estcoef))) a<- a-estcoef["(Intercept)"]
+    b <- slope(x, term, digits=20, .coef=estcoef, .vcov=covv)[[1]][, "Est."]
+
     #id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE) #confondeva "psi1.x","psi1.neg.x"
     id <- f.U(rownames(x$psi), term)
     
@@ -80,17 +87,19 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     #n<-length(x$residuals) #fitted.values - Arima non ha "fitted.values", ma ha "residuals"..
     #tipo<- if(inherits(x, what = "glm", which = FALSE) && link) "link" else "response"
     
-    vall<-sort(c(seq(min(val), max(val), l=150), est.psi))
+    vall<-sort(c(seq(min(val), max(val), l=100), est.psi))
     #ciValues<-predict.segmented(x, newdata=vall, se.fit=TRUE, type=tipo, level=conf.level)
     vall.list<-list(vall)
     names(vall.list)<-term
     
+    #browser()
     
     if(conf.level>0) {
         #k.alpha<-if(inherits(x, what = c("glm","Arima"), which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
         #cambiato nella 0.5-2.0:
         k.alpha<- if(all(c("segmented","lm") %in% class(x))) abs(qt((1-conf.level)/2, x$df.residual)) else abs(qnorm((1-conf.level)/2))
-        ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE, isV=isV, is=is, var.diff=var.diff, p.df=p.df, .vcov=.vcov)
+        ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE, isV=isV, is=is, var.diff=var.diff, 
+                              p.df=p.df, .vcov=covv, .coef=estcoef)
         ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit)
         #---> transf...
         ciValues<-apply(ciValues, 2, transf)
@@ -119,7 +128,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     if(res){
         new.d<-data.frame(ifelse(rep(rev.sgn, length(xvalues)),-xvalues, xvalues))
         names(new.d)<-term
-        fit0 <- broken.line(x, new.d, link = link, interc=interc, se.fit=FALSE)$fit
+        fit0 <- broken.line(x, new.d, link = link, interc=interc, se.fit=FALSE, .vcov=covv, .coef=estcoef)$fit
         }
 #-------------------------------------------------------------------------------
     if (inherits(x, what = "glm", which = FALSE) && linkinv) { #se GLM con link=FALSE (ovvero linkinv=TRUE)
@@ -128,11 +137,15 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
             #broken.line(x, term, gap = show.gap, link = link) + resid(x, "response") + const
               fit0 + resid(x, "response") + const        
                 else x$family$linkinv(c(y.val, y.val1))
-#        xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))]))
-        xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))],val[-c(1, length(val))]*1.0001))
+        xout <- sort(c(seq(val[1], val[length(val)], l = 50), val[-c(1, length(val))], 
+                       pmax(val[-c(1, length(val))]*1.0001, val[-c(1, length(val))]*.9999)))
         l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
         val[length(val)]<-max(l$x) #aggiunto 11/09/17
-        id.group <- cut(l$x, val, FALSE, TRUE)
+        id.group <- cut(l$x, val, labels=FALSE, include.lowest =TRUE, right=TRUE) 
+        #xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))],val[-c(1, length(val))]*1.0001))
+        #l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
+        #val[length(val)]<-max(l$x) #aggiunto 11/09/17
+        #id.group <- cut(l$x, val, FALSE, TRUE)
         yhat <- l$y
         xhat <- l$x
         m[, c(2, 4)] <- x$family$linkinv(m[, c(2, 4)])
@@ -167,13 +180,22 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
               rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/80)}
             }
        
+        if (res) {
+          if(is.null(smoos)) { smoos <- if(length(xvalues)>10000) TRUE else FALSE }
+          if(smoos){
+            smoothScatter(xvalues, fit, add=TRUE, nrpoints = 0, colramp= colorRampPalette(c("white", res.col)))
+          } else {
+            points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)
+            
+          }
+        }
         if(conf.level>0){
           if(rev.sgn) vall<- -vall
           if(shade) {
             polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),
-              col = col.shade, border=NA) } else { matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)}
-            }
-        if (res) points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)
+                    col = col.shade, border=NA) } else { matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)}
+        }
+        
         yhat <- x$family$linkinv(yhat)
         if (length(cols) == 1) cols <- rep(cols, max(id.group))
         if (length(lwds) == 1) lwds <- rep(lwds, max(id.group))
@@ -227,21 +249,30 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
           }
         if(rug) {segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
             rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/80)}
-
-
+        if (res) {
+          if(is.null(smoos)) { smoos <- if(length(xvalues)>10000) TRUE else FALSE }
+          if(smoos){
+            smoothScatter(xvalues, fit, add=TRUE, nrpoints = 0, colramp= colorRampPalette(c("white", res.col)))
+          } else {
+            points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)              
+          }
+        }
         if(conf.level>0) {
           if(rev.sgn) vall<- -vall
           if(shade) polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),
-            col = col.shade, border=NA) else matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)
-            }
-        if (res) points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)
+                            col = col.shade, border=NA) else matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)
+        }
         #aggiunto 06/2019 perche' sotto disegnava linee (e non curve)
         #        segments(m[, 1], do.call(transf, list(m[, 2])), m[, 3], do.call(transf, list(m[, 4])), 
         #                col = cols, lwd = lwds, lty = ltys)
-        xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))],val[-c(1, length(val))]*1.0001))
+        #---
+        # modificato 8/2/21.. adesso le linee si uniscono sempre.
+        xout <- sort(c(seq(val[1], val[length(val)], l = 50), val[-c(1, length(val))], 
+                       pmax(val[-c(1, length(val))]*1.0001, val[-c(1, length(val))]*.9999)))
         l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
         val[length(val)]<-max(l$x) #aggiunto 11/09/17
-        id.group <- cut(l$x, val, FALSE, TRUE)
+        id.group <- cut(l$x, val, labels=FALSE, include.lowest =TRUE, right=TRUE) 
+        #---
         xhat <- l$x
         yhat <- l$y
 #        browser()
@@ -261,3 +292,6 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
       }
     invisible(NULL)
 }
+
+
+ 

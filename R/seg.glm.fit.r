@@ -97,7 +97,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     #    invXtX<- opz$invXtX
     #    Xty<-opz$Xty
     #===================
-    if(!in.psi(limZ,PSI,FALSE))  stop("starting psi out of the range", call.=FALSE)
+    if(!in.psi(limZ,PSI,FALSE))  stop("starting psi out of the range.. see 'alpha' in seg.control", call.=FALSE)
     if(!far.psi(Z,PSI,id.psi.group,FALSE)) stop("psi values too close each other. Please change (decreases number of) starting values", call.=FALSE)
     n.psi1<-ncol(Z)
     #==============================================

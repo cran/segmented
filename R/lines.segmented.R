@@ -1,5 +1,5 @@
 lines.segmented<-function(x, term, bottom=TRUE, shift=TRUE, conf.level=0.95, k=50, 
-  pch=18, rev.sgn=FALSE,...){
+  pch=18, rev.sgn=FALSE,.vcov=NULL, .coef=NULL,...){
   if(missing(term)){
           if(length(x$nameUV$Z)>1 ) {stop("please, specify `term'")}
                else {term<-x$nameUV$Z}
@@ -10,7 +10,7 @@ lines.segmented<-function(x, term, bottom=TRUE, shift=TRUE, conf.level=0.95, k=5
   usr <- par("usr")
   h<-(usr[4]-usr[3])/abs(k)
   y<- if(bottom) usr[3]+h else usr[4]-h
-  m<- confint.segmented(object=x,parm=term,level=conf.level,rev.sgn=rev.sgn,digits=15,method=metodo)
+  m<- confint.segmented(object=x,parm=term,level=conf.level,rev.sgn=rev.sgn,digits=15,method=metodo,.vcov=NULL, .coef=NULL)
   #m<-r[[term]]
   #FORSE non e' necessaria
   #if(rev.sgn) m<- -m

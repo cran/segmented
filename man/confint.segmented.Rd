@@ -7,7 +7,8 @@
 }
 \usage{
 \method{confint}{segmented}(object, parm, level=0.95, method=c("delta", "score", "gradient"), 
-    rev.sgn=FALSE, var.diff=FALSE, is=FALSE, digits=max(4, getOption("digits") - 1), ...)
+    rev.sgn=FALSE, var.diff=FALSE, is=FALSE, digits=max(4, getOption("digits") - 1), 
+    .coef=NULL, .vcov=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,6 +23,8 @@
   \item{is}{logical. If \code{method="delta"}, \code{is=TRUE} means that the full covariance matrix is computed via 
   \code{vcov(.., is=TRUE)}}
   \item{digits}{controls the number of digits to print when returning the output. }
+  \item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(object)}.}
+  \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov(object)}.}
   \item{\dots}{additional parameters referring to Score-based confidence intervals, such as \code{"h"}, \code{"d.h"}, \code{"bw"}, \code{"msgWarn"}, and \code{"n.values"} 
   specifying the number of points used to profile the Score (or Gradient) statistic.}
 }

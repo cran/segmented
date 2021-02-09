@@ -9,7 +9,7 @@ Computes the intercepts of each `segmented' relationship in the fitted model.
 }
 \usage{
 intercept(ogg, parm, rev.sgn = FALSE, var.diff=FALSE,
-    digits = max(4, getOption("digits") - 2))
+    .vcov=NULL, .coef=NULL, digits = max(4, getOption("digits") - 2),...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,8 +29,13 @@ the segmented variable whose intercepts have to be computed. If missing all the 
   \item{var.diff}{Currently ignored as only point estimates are computed.
   %logical. If \code{var.diff=TRUE} and there is a single segmented variable, the computed standard errors 
   %  are based on a sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.
-    } 
+    }
+\item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by     \code{vcov(ogg)}.}
+\item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(ogg)}.}
+
  \item{digits}{controls number of digits in the returned output.}
+   \item{...}{ Further arguments to be passed on to \code{vcov.segmented}, such as \code{var.diff} and \code{is}. See Details in \code{\link{vcov.segmented}}.}
+ 
  }
 
 \details{

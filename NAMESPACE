@@ -1,7 +1,7 @@
 import(splines)
-importFrom("grDevices", "grey","adjustcolor")
+importFrom("grDevices", "grey","adjustcolor","colorRampPalette")
 importFrom("graphics", "abline", "axis", "box", "lines", "matlines",
-             "matplot", "par", "plot", "points", "polygon", "segments")
+             "matplot", "par", "plot", "points", "polygon", "segments","smoothScatter")
 importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "fitted", "formula", "gaussian", "glm.control", "glm.fit",
              "is.empty.model", "lm.wfit", "median", "model.frame",

@@ -1,4 +1,4 @@
-aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, ...){
+aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, .vcov=NULL, .coef=NULL,  ...){
   blockdiag <- function(...) {
         args <- list(...)
         nc <- sapply(args,ncol)
@@ -15,7 +15,12 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, ...){
           ret <- rbind(ret,rowfun(args[[i]],cumnc[i-1],NC-cumnc[i]))
         }
         ret
-      }
+  }
+  
+  COV <- if(is.null(.vcov)) vcov(ogg,...) else .vcov
+  estcoef<- if(is.null(.coef)) coef(ogg) else .coef
+  
+  
   if(missing(parm)) {
       nomeZ<- ogg$nameUV$Z
 #          if(length(rev.sgn)==1) rev.sgn<-rep(rev.sgn,length(nomeZ))
@@ -28,13 +33,13 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, ...){
   nomi.psi<- grep(paste("\\.",term,sep=""), ogg$nameUV$V, value=TRUE)
 	nomi.slope<- grep(paste("\\.",term,sep=""), ogg$nameUV$U,value=TRUE)
 	null.left<-TRUE
-	if(term %in% names(coef(ogg))) {
+	if(term %in% names(estcoef)) {
 		nomi.slope<-c(term, nomi.slope)
 		null.left<-FALSE
 		}
 	a<- min(ogg$rangeZ[,parm])# min(x)-1 #se discreto
   b<- max(ogg$rangeZ[,parm])
-  est.slope <- slope(ogg, parm)[[1]][,1]
+  est.slope <- slope(ogg, parm, .vcov=.vcov, .coef=.coef)[[1]][,1]
   est.psi <- ogg$psi[nomi.psi,2]
   est.w<- diff(c(a,est.psi,b))/(b-a) #drop(B%*%c(a,est.psi,b))
   k<- length(est.psi)#n.changepoints
@@ -43,7 +48,7 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, ...){
   B<-diff(diag(k+2),diff=1)/(b-a)
   mu<-drop(crossprod(est.w,est.slope))
   xsi<-c(crossprod(est.w,A),crossprod(est.slope,B))
-	COV <- vcov(ogg,...)
+	
   v.delta<-COV[nomi.slope,nomi.slope] 
 # if(null.left) v.delta<-rbind(0,cbind(0,v.delta))
 	

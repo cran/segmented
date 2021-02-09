@@ -108,7 +108,7 @@ Wood, S. N. (2001) Minimizing model fitting objectives that contain spurious loc
 
      #decrease the maximum number inner iterations and display the 
      #evolution of the (outer) iterations
-     seg.control(display = TRUE, maxit.glm=4)
+     #seg.control(display = TRUE, maxit.glm=4)
   }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

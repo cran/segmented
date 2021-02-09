@@ -108,7 +108,7 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
     k<-ncol(Z)
     mio.init<-NULL
     mio.init.noV<-NULL
-    if(!in.psi(limZ,PSI,FALSE))  stop("starting psi out of the range", call.=FALSE)
+    if(!in.psi(limZ,PSI,FALSE))  stop("starting psi out of the range.. see 'alpha' in seg.control", call.=FALSE)
     if(!far.psi(Z,PSI,id.psi.group,FALSE)) stop("psi values too close each other. Please change (decreases number of) starting values", call.=FALSE)
     n.psi1<-ncol(Z)
     #==============================================

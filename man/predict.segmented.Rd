@@ -8,7 +8,7 @@ Predict method for segmented model fits
 Returns predictions and optionally associated quantities (standard errors or confidence intervals) from a fitted segmented model object.
 }
 \usage{
-\method{predict}{segmented}(object, newdata, ...)
+\method{predict}{segmented}(object, newdata, .coef=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,6 +18,7 @@ a fitted segmented model coming from \code{segmented.lm} or \code{segmented.glm}
   \item{newdata}{
 An optional data frame in which to look for variables with which to predict. If omitted, the fitted values are used.
 }
+\item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef()}.}
   \item{\dots}{
 further arguments passed to \code{predict.lm} or \code{predict.glm}. Usually these 
 are \code{se.fit}, or \code{interval} or \code{type}.

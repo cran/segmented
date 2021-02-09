@@ -1,4 +1,4 @@
-broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=FALSE, .vcov=NULL, ...){
+broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=FALSE, .vcov=NULL, .coef=NULL, ...){
 #ogg: l'oggetto segmented
 #term: una lista *nominata* con i valori rispetto a cui calcolare i fitted
 #   OPPURE una stringa per indicare la variabile segmented OPPURE NULL (se c'e' solo una variabile)
@@ -6,10 +6,11 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
 #...: argomenti da passare a vcov.segmented(): per esempio var.diff, is, p.df  
     if(length(isV)==1) isV<-c(FALSE,isV)
     dummy.matrix<-NULL
-    dummy.matrix<-function(x.values, x.name, obj.seg, psi.est=TRUE, isV=FALSE){
+    dummy.matrix<-function(x.values, x.name, obj.seg, psi.est=TRUE, isV=FALSE, .coef=NULL){
         #given the segmented fit 'obj.seg' and a segmented variable x.name with corresponding values x.values,
         #this function simply returns a matrix with columns (x, (x-psi)_+, -b*I(x>psi))
         #or  ((x-psi)_+, -b*I(x>psi)) if obj.seg does not include the coef for the linear "x"
+        estcoef <- if(is.null(.coef)) coef(obj.seg) else .coef
         f.U<-function(nomiU, term=NULL){
           #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
          #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
@@ -32,7 +33,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
         nameU<-obj.seg$nameUV$U[f.U(obj.seg$nameUV$U,x.name)]
         nameV<-obj.seg$nameUV$V[f.U(obj.seg$nameUV$V,x.name)]
 
-        diffSlope<-coef(obj.seg)[nameU]
+        diffSlope<-estcoef[nameU]
         est.psi<-obj.seg$psi[nameV, "Est."]
         se.psi<-obj.seg$psi[nameV, "St.Err"]
         if(any(is.na(se.psi))) stop("The St.Err. of psi is NA", call. = FALSE)
@@ -83,11 +84,13 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
           return(nomiU.ok)
         }
 #-------------
+    estcoef<- if(is.null(.coef)) coef(ogg) else .coef
     if(se.fit) {
-      if(is.null(.vcov)) .vcov<-vcov.segmented(ogg, ...)
+      covv<- if(is.null(.vcov)) vcov.segmented(ogg, ...) else .vcov
       #---Dalla versione 1.2.0 (20/06/20) ho eliminato il controllo sotto per consentire l'utilizzo
       #----di modelli che restituivano una cov con dimensione diversa dal numero dei coeff lineari (ad es., censReg)
       #if(!all(dim(.vcov)==c(length(ogg$coef), length(ogg$coef)))) stop("Incorrect dimension of cov matrix", call. = FALSE)
+      if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
       }
     xvalues<-term
     nomeV <- ogg$nameUV$V
@@ -106,7 +109,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
     if(length(nomeOK)>1) stop("Please specify one variable")
     if(!nomeOK %in% nomeZ) stop("'names(xvalues)' is not a segmented covariate")
 
-    nomi <- names(coef(ogg))
+    nomi <- names(estcoef)
     nomiSenzaV <- nomiSenzaU <- nomi
     nomiSenzaU[match(nomeU, nomi)] <- ""
     nomiSenzaV[match(nomeV, nomi)] <- ""
@@ -120,8 +123,8 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
     ste.fit<-fit <- vector(mode = "list", length = length(nomeZ))
     for(i in 1:n.seg) {
         x.name <- nomeZ[i]
-        Xfit<-dummy.matrix(unlist(xvalues), x.name, ogg, isV=FALSE)
-        if(se.fit) X<-dummy.matrix(unlist(xvalues), x.name, ogg, isV=isV)#<--NB: xvalues non varia con i!!! perche' farlo calcolare comunque? 
+        Xfit<-dummy.matrix(unlist(xvalues), x.name, ogg, isV=FALSE, .coef=estcoef)
+        if(se.fit) X<-dummy.matrix(unlist(xvalues), x.name, ogg, isV=isV, .coef=estcoef)#<--NB: xvalues non varia con i!!! perche' farlo calcolare comunque? 
         ind <- as.numeric(na.omit(unlist(index[[i]])))
         if(interc && "(Intercept)"%in%nomi) {
           ind<- c(match("(Intercept)",nomi),ind)
@@ -129,7 +132,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
           if(se.fit) X<-cbind(1,X)
           }
         ind<-union(ind, match(names(ogg$indexU[[x.name]]), nomi))
-        cof <- coef(ogg)[ind]
+        cof <- estcoef[ind]
         fit[[i]]<-drop(Xfit%*%cof)
         if(se.fit) ste.fit[[i]] <- sqrt(rowSums((X %*% .vcov[ind,ind]) * X)) #sqrt(diag(X%*%Var%*%t(X)))
         #ste.fit[[i]] <- if(!se.fit) 10 else sqrt(rowSums((X %*% vcov.segmented(ogg,...)[ind,ind]) * X)) #sqrt(diag(X%*%Var%*%t(X)))

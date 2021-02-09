@@ -8,7 +8,7 @@
 }
 \usage{
 \method{lines}{segmented}(x, term, bottom = TRUE, shift=TRUE, conf.level = 0.95, k = 50, 
-    pch = 18, rev.sgn = FALSE, ...)
+    pch = 18, rev.sgn = FALSE, .vcov=NULL, .coef=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,6 +22,8 @@
   \item{pch}{ either an integer specifying a symbol or a single character to be used
         in plotting the point estimates of the breakpoints. See \code{\link{points}}. }
   \item{rev.sgn}{ should the signs of the breakpoint estimates be changed before plotting? see Details. }
+    \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov(x)}.}
+  \item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(x)}.}
   \item{\dots}{ further arguments passed to \code{\link{segments}}, for instance `col' that 
   can be a vector. }
 }

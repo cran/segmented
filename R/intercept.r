@@ -1,8 +1,8 @@
-intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, 
-    digits = max(4, getOption("digits") - 2)){
+intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, .vcov=NULL, .coef=NULL,
+    digits = max(4, getOption("digits") - 2),...){
 #corregge in caso di no model intercept -- CHE VOLEVO DIRE?? #forse che adesso funziona se nel modello non c'e' l'interc.
 #--
-        f.U<-function(nomiU, term=NULL){
+    f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
         #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
             k<-length(nomiU)
@@ -16,6 +16,13 @@ intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE,
           if(!is.null(term)) nomiU.ok<-(1:k)[nomiU.ok%in%term]
           return(nomiU.ok)
         }
+    
+    covv <- if(is.null(.vcov)) vcov(ogg, ...) else .vcov 
+    estcoef<- if(is.null(.coef)) coef(ogg) else .coef
+    
+    if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
+    
+    
     if (var.diff && length(ogg$nameUV$Z) > 1) {
         var.diff <- FALSE
         warning("var.diff set to FALSE with multiple segmented variables",
@@ -37,14 +44,14 @@ intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE,
         }
     }
     if (length(rev.sgn) != length(nomeZ)) rev.sgn <- rep(rev.sgn, length.out = length(nomeZ))
-    nomi <- names(coef(ogg))
+    nomi <- names(estcoef)
     nomi <- nomi[-match(nomepsi, nomi)]
     Allpsi <- index <- vector(mode = "list", length = length(nomeZ))
     # gapCoef<-summary.segmented(ogg)$gap   ##eliminato 10/11/15
     Ris <- list()
     rev.sgn <- rep(rev.sgn, length.out = length(nomeZ))
-    if("(Intercept)"%in%names(coef(ogg))){
-        alpha0 <- alpha00 <- coef(ogg)["(Intercept)"]} else {alpha0 <- alpha00 <-0}
+    if("(Intercept)"%in%names(estcoef)){
+        alpha0 <- alpha00 <- estcoef["(Intercept)"]} else {alpha0 <- alpha00 <-0}
     #per ogni variabile segmented...
     for (i in 1:length(nomeZ)) {
         #id.cof.U <- f.U(ogg$nameUV$U, nomeZ[i]) + (match(ogg$nameUV$U[1], nomi)-1)
@@ -54,10 +61,10 @@ intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE,
         #index[[i]] <- id.cof.U
         #ind <- as.numeric(na.omit(unlist(index[[i]])))
         #cof <- coef(ogg)[ind]
-        alpha0<-if("(Intercept)"%in%names(coef(ogg))) coef(ogg)["(Intercept)"] else 0
+        alpha0<-if("(Intercept)"%in%names(estcoef)) estcoef["(Intercept)"] else 0
         
         Allpsi[[i]] <-ogg$indexU[[nomeZ[i]]]
-        cof<- ogg$coefficients[names(ogg$indexU[[nomeZ[i]]])]
+        cof<- estcoef[names(ogg$indexU[[nomeZ[i]]])]
         alpha <- vector(length = length(cof)) #length(ind)
         for (j in 1:length(cof)) {
             alpha[j] <- alpha0 - Allpsi[[i]][j] * cof[j]
