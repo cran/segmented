@@ -54,7 +54,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
           newd<-cbind(x.values,dummy1)
           colnames(newd)<-c(x.name,nameU)
           }
-        if(!x.name%in%names(coef(obj.seg))) newd<-newd[,-1,drop=FALSE]
+        if(!x.name%in%names(estcoef)) newd<-newd[,-1,drop=FALSE]
         #aggiungi (eventualmente) le colonne relative ai psi noti
         all.psi<-obj.seg$indexU[[x.name]]
         if(length(all.psi)!=k){
@@ -67,7 +67,7 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
           colnames(newd)<-nomi
         }
         return(newd)
-    }
+    } #end dummy.matrix()
 #--------------
     f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -126,15 +126,23 @@ broken.line<-function(ogg, term=NULL, link=TRUE, interc=TRUE, se.fit=TRUE, isV=F
         Xfit<-dummy.matrix(unlist(xvalues), x.name, ogg, isV=FALSE, .coef=estcoef)
         if(se.fit) X<-dummy.matrix(unlist(xvalues), x.name, ogg, isV=isV, .coef=estcoef)#<--NB: xvalues non varia con i!!! perche' farlo calcolare comunque? 
         ind <- as.numeric(na.omit(unlist(index[[i]])))
-        if(interc && "(Intercept)"%in%nomi) {
-          ind<- c(match("(Intercept)",nomi),ind)
+        
+        idInterc<-grep("ntercept",names(estcoef))
+        #if(idInterc!= grep("ntercept",rownames(covv))) stop("intercept name in coeff and vcov do not match")
+         
+        
+        
+        #if(interc && "(Intercept)"%in%nomi) {
+        if(interc && length(idInterc)==1) {
+          ind<- c(idInterc, ind)
           Xfit<-cbind(1,Xfit)
           if(se.fit) X<-cbind(1,X)
           }
         ind<-union(ind, match(names(ogg$indexU[[x.name]]), nomi))
+#browser()
         cof <- estcoef[ind]
         fit[[i]]<-drop(Xfit%*%cof)
-        if(se.fit) ste.fit[[i]] <- sqrt(rowSums((X %*% .vcov[ind,ind]) * X)) #sqrt(diag(X%*%Var%*%t(X)))
+        if(se.fit) ste.fit[[i]] <- sqrt(rowSums((X %*% covv[ind,ind]) * X)) #sqrt(diag(X%*%Var%*%t(X)))
         #ste.fit[[i]] <- if(!se.fit) 10 else sqrt(rowSums((X %*% vcov.segmented(ogg,...)[ind,ind]) * X)) #sqrt(diag(X%*%Var%*%t(X)))
         }
         names(fit)<- names(ste.fit)<- nomeZ

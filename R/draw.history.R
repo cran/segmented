@@ -47,7 +47,7 @@ draw.history<-function(obj,term,...){
             plot(0:(nrow(A)-1), attr(obj$psi.history,"dev")[-1], ylab="deviance", xlab="iterations", type="o", xaxt="n")
             axis(1,at=0:(nrow(A)-1),cex.axis=.7)
             abline(h = min(attr(obj$psi.history,"dev")),lty=3,col=opz$col)
-                     } else { #automatic
+        } else { #automatic
             psihist<-obj$psi.history[-1]
             id.iter<-rep(1:length(psihist), times=sapply(psihist, length))
             psi.history<-unlist(psihist)
@@ -70,7 +70,7 @@ draw.history<-function(obj,term,...){
             #a<- ..names match
             #                    r[i,j]<-a[which.min(abs(a-psij))]
             #                    a<-setdiff(a, r[i,j])                    
-            }
+        }
       } else { #se boot
         par(mfrow=c(1,2))
         plot(obj$psi.history$all.selected.ss, type="b", xlab="bootstrap replicates", 

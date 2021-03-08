@@ -69,7 +69,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     } else {
       stop.if.error<-fix.npsi
     }
-    
+    break.boot=control$break.boot
     n.boot<-control$n.boot
     size.boot<-control$size.boot
     gap<-control$gap
@@ -274,7 +274,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     if(n.boot<=0){
       obj<-seg.glm.fit(y,XREG,Z,PSI,weights,offs,opz)
     } else {
-      obj<-seg.glm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random) #jt, nonParam
+      obj<-seg.glm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot) #jt, nonParam
       }
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)

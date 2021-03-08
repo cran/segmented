@@ -45,7 +45,7 @@ if("summary.lm"%in%class(x)){ #for lm
             digits = digits), "\n")}
         }
 if("summary.glm"%in%class(x)){ #for glm
-    cat("(Dispersion parameter for ", x$family$family, " family taken to be ", 
+    cat("\n(Dispersion parameter for ", x$family$family, " family taken to be ", 
         format(x$dispersion), ")\n\n", apply(cbind(paste(format.default(c("Null", 
             "Residual"), width = 8, flag = ""), "deviance:"), 
             format(unlist(x[c("null.deviance", "deviance")]), 

@@ -504,14 +504,14 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                         vLeft<-f.Left(valoriLeft,UvaloriLeft) #rendi monotona la curva..
                         valori.ok<-vLeft[,1]
                         Uvalori.ok<-vLeft[,2]
-                        f.interpL <- splinefun(Uvalori.ok, valori.ok, method="mono")
+                        f.interpL <- splinefun(Uvalori.ok, valori.ok, method="mono",ties=min)
                         ####right
                         valoriRight<-valori[valori>=est.psi]  #valori[U.valori<0]
                         UvaloriRight<-U.valori[valori>=est.psi] #U.valori[U.valori<0]
                         vRight<-f.Right(valoriRight,UvaloriRight)
                         valori.ok<-vRight[,1]
                         Uvalori.ok<-vRight[,2]
-                        f.interpR <- splinefun(Uvalori.ok, valori.ok, method="mono")
+                        f.interpR <- splinefun(Uvalori.ok, valori.ok, method="mono",ties=min)
                                 } else { #if smooth>0
                         if(useSeg){
                            oseg<-try(suppressWarnings(segmented(lm(U.valori~valori), ~valori, psi=quantile(valori, c(.25,.75),names=FALSE), 
@@ -539,7 +539,7 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                                 if( (min(valori)> intv[1]) && (fr[1]< max(zalpha))) return("errLeft")
                                 if( (max(valori)< intv[2]) && (fr[length(fr)]> min(-zalpha))) return("errRight")
                                 }
-                        f.interpL<-f.interpR<-splinefun(fr,valori,"m")
+                        f.interpL<-f.interpR<-splinefun(fr,valori,"m",ties=min)
                         }#end_if smooth 
                 L<-f.interpL(zalpha) 
                 U<-f.interpR(-zalpha)

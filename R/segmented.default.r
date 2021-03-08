@@ -115,6 +115,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     if (toll < 0)  stop("Negative tolerance ('tol' in seg.control()) is meaningless", call. = FALSE)
     visual <- control$visual
     stop.if.error <- fix.npsi <- control$fix.npsi
+    break.boot=control$break.boot
     n.boot <- control$n.boot
     size.boot <- control$size.boot
     gap <- control$gap
@@ -336,7 +337,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     }
     else {
         obj <- seg.def.fit.boot(obj, Z, PSI, mfExt, opz, n.boot = n.boot, 
-            size.boot = size.boot, random = random)
+            size.boot = size.boot, random = random, break.boot=break.boot)
     }
     
     if (!is.list(obj)) {

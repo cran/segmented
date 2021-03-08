@@ -88,6 +88,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     } else {
       stop.if.error<-fix.npsi
     }
+    break.boot=control$break.boot
     n.boot<-control$n.boot
     size.boot<-control$size.boot
     gap<-control$gap
@@ -238,13 +239,18 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     if(n.boot<=0){
       obj<-seg.Ar.fit(obj, XREG, Z, PSI, opz)
     } else {
-      obj<-seg.Ar.fit.boot(obj, XREG, Z, PSI, opz, n.boot=n.boot, size.boot=size.boot, random=random) #jt, nonParam
+      obj<-seg.Ar.fit.boot(obj, XREG, Z, PSI, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot) #jt, nonParam
     }
     
     if(!is.list(obj)){
       warning("No breakpoint estimated", call. = FALSE)
       return(obj0)
     }
+    it<-obj$it
+    psi<-obj$psi
+    psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
+    U<-obj$U
+    V<-obj$V
     id.warn<-obj$id.warn
     id.psi.group<-obj$id.psi.group
     nomiU<-nomiOK<-obj$nomiOK #sarebbe nomiU
@@ -263,14 +269,6 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
       psi.list[[i]]<-psi[names(psi)==i]
     }
 
-    #--
-    it<-obj$it
-    psi<-obj$psi
-    psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
-    U<-obj$U
-    V<-obj$V
-    #    return(obj)
-    
     #if(any(table(rowSums(V))<=1)) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close")
     for(jj in colnames(V)) {
       VV<-V[, which(colnames(V)==jj), drop=FALSE]
@@ -281,7 +279,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     rangeZ<-obj$rangeZ
     obj<-obj$obj
     k<-length(psi)
-    all.coef<-coef(obj)
+    all.coef<-obj$coef #coef(obj)
     names(all.coef)<-c(names(obj0$coef), nomiU, nomiVxb)
     beta.c<- all.coef[nomiU]
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
@@ -347,7 +345,6 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     objF$id.warn <- id.warn
     ###########################PSI FIXED
     objF$indexU<-build.all.psi(psi.list, fixed.psi)
-
     if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF

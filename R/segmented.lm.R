@@ -75,6 +75,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
       stop.if.error<-fix.npsi
     }
     
+    break.boot=control$break.boot
     n.boot<-control$n.boot
     size.boot<-control$size.boot
     gap<-control$gap
@@ -312,7 +313,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     list.obj <- list(obj)
 #    psi.values <- NULL
     nomiOK<-nomiU
-    invXtX<-chol2inv(qr.R(obj$qr)) #(XtX)^{-1}
+    invXtX<-if(!is.null(obj$qr)) chol2inv(qr.R(obj$qr)) else NULL #(XtX)^{-1}
     Xty<-crossprod(XREG,y)
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
@@ -320,7 +321,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     if(n.boot<=0){
     obj<-seg.lm.fit(y,XREG,Z,PSI,weights,offs,opz)
     } else {
-    obj<-seg.lm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random) #jt, nonParam
+    obj<-seg.lm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot) #jt, nonParam
       }
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)

@@ -13,7 +13,7 @@ pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   \item{obj}{ a fitted model typically returned by \code{glm} or \code{lm}. Even an object returned by 
   \code{segmented} can be set. Offset and weights are allowed.}
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1}, indicating the (continuous) segmented variable being tested. Only a single variable may be tested and an error is printed when \code{seg.Z} includes two or more terms. \code{seg.Z} can be omitted if i)\code{obj} is a segmented fit with a single segmented covariate (and that variable is taken), or ii)if it is a "lm" or "glm" fit with a single covariate (and that variable is taken).}
-  \item{k}{ optional. Number of points used to compute the pseudo Score statistic. See Details. }
+  \item{k}{ optional. Number of points (equi-spaced from the min to max) used to compute the pseudo Score statistic. See Details. }
   \item{alternative}{ a character string specifying the alternative hypothesis. }
   \item{values}{ optional. The evaluation points where the Score test is computed. See Details for default values.}
   \item{dispersion}{ optional. the dispersion parameter for the family to be used to compute the test statistic.
@@ -33,10 +33,10 @@ pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   i.e. the coefficient of the segmented function \eqn{\beta(x-\psi)_+}{beta*(x-psi)_+}. The hypothesis of interest 
   \eqn{\beta=0}{beta=0} means no breakpoint. Simulation studies have shown that such Score test is more powerful than the Davies test (see reference) when the alternative hypothesis is `one changepoint'. If there are two or more breakpoints (for instance, a sinusoidal-like relationships), \code{pscore.test} can have lower power, and \code{\link{davies.test}} can perform better.
   
-  The \code{dispersion} value, if unspecified,  is taken from \code{obj}. If \code{obj} represents the fit under the null hypothesis (no changepoint), the dispersion parameter estimate will be usually larger, leading to a (potentially severe) loss of power.  
+  The \code{dispersion} value, if unspecified, is taken from \code{obj}. If \code{obj} represents the fit under the null hypothesis (no changepoint), the dispersion parameter estimate will be usually larger, leading to a (potentially severe) loss of power.  
   
   The \code{k} evaluation points are \code{k} equally spaced values in the range of the segmented covariate. \code{k} should not be small. 
-  Specific values can be set via \code{values}. However I have found no important difference due to number and location of the evaluation points, thus  default is \code{k=10} equally-spaced points.
+  Specific values can be set via \code{values}, although I have found no important difference due to number and location of the evaluation points, thus  default is \code{k=10} equally-spaced points. However, when the possible breakpoint is believed to lie into a specified narrower range, the user can specify \code{k} values in that range leading to higher power in detecting it, i.e. typically lower p-value.
   
   If \code{obj} is a (segmented) \emph{lm} object, the returned p-value comes from the t-distribution with appropriate degrees of freedom. Otherwise, namely if \code{obj} is a (segmented) \emph{glm} object, the p-value is computed wrt the Normal distribution.   
 }

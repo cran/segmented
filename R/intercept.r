@@ -50,8 +50,14 @@ intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, .vcov=NULL, .
     # gapCoef<-summary.segmented(ogg)$gap   ##eliminato 10/11/15
     Ris <- list()
     rev.sgn <- rep(rev.sgn, length.out = length(nomeZ))
-    if("(Intercept)"%in%names(estcoef)){
-        alpha0 <- alpha00 <- estcoef["(Intercept)"]} else {alpha0 <- alpha00 <-0}
+    
+    alpha0 <- alpha00 <-0
+    idInterc<-grep("ntercept",names(estcoef))
+    if(length(idInterc)>0) if(idInterc!= grep("ntercept",rownames(covv))) stop("intercept name in coeff and vcov do not match")
+    if(length(idInterc)==1) alpha0 <- alpha00 <- estcoef[idInterc]
+    
+#    if("(Intercept)"%in%names(estcoef) || "intercept"%in%names(estcoef)){
+#        alpha0 <- alpha00 <- estcoef["(Intercept)"]} else {alpha0 <- alpha00 <-0}
     #per ogni variabile segmented...
     for (i in 1:length(nomeZ)) {
         #id.cof.U <- f.U(ogg$nameUV$U, nomeZ[i]) + (match(ogg$nameUV$U[1], nomi)-1)
@@ -61,8 +67,9 @@ intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, .vcov=NULL, .
         #index[[i]] <- id.cof.U
         #ind <- as.numeric(na.omit(unlist(index[[i]])))
         #cof <- coef(ogg)[ind]
-        alpha0<-if("(Intercept)"%in%names(estcoef)) estcoef["(Intercept)"] else 0
-        
+        #alpha0<-if("(Intercept)"%in%names(estcoef)) estcoef["(Intercept)"] else 0
+        alpha0<-if(length(idInterc)==1) estcoef[idInterc] else 0
+
         Allpsi[[i]] <-ogg$indexU[[nomeZ[i]]]
         cof<- estcoef[names(ogg$indexU[[nomeZ[i]]])]
         alpha <- vector(length = length(cof)) #length(ind)

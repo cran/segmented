@@ -67,7 +67,7 @@ This is a sperimental function. Please use that with caution.
 }
 \examples{
 ## from ?segmented
-
+\dontrun{
 set.seed(12)
 xx<-1:100
 zz<-runif(100)
@@ -78,7 +78,8 @@ out.lm<-lm(y~x,data=dati)
 os<-selgmented(out.lm) ## selects number of breakpoints via the Score test
 
 os <-selgmented(out.lm, Kmax=3, type="bic") #BIC-based selection
-  }
+}
+}
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

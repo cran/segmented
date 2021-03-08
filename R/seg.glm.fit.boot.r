@@ -1,5 +1,5 @@
 seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, jt=FALSE,
-    nonParam=TRUE, random=FALSE){
+    nonParam=TRUE, random=FALSE, break.boot=n.boot){
 #random: if TRUE, when the algorithm fails in minimizing f(y), random numbers are used as final estimates.
 # If the algorithm fails in minimizing f(y*), the final estimates (to be used as starting values with
 #   the original responses y) *always* are replaced by random numbers (regardless of the random argument)
@@ -63,6 +63,11 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
 #      if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")
       count.random<-0
       for(k in seq(n.boot)){
+          n.boot.rev<-4
+          if(length(na.omit(diff(all.selected.ss[1:n.boot.rev])))==(n.boot.rev-1) && all(round(diff(all.selected.ss[1:n.boot.rev]),6)==0)){
+            qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
+            est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
+          }
           PSI <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
           if(jt) Z<-apply(Z.orig,2,jitter)
           if(nonParam){
@@ -107,7 +112,11 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
                       "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
                       sep=""), "\n")
           }
-        } #end n.boot
+          asss<-na.omit(all.selected.ss)
+          if(length(asss)>break.boot){
+            if(all(rev(round(diff(asss),6))[1:(break.boot-1)]==0)) break
+          }
+      } #end n.boot
       all.selected.psi<-rbind(est.psi00,all.selected.psi)
       all.selected.ss<-c(ss00, all.selected.ss)
       
@@ -119,5 +128,6 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
       }
       if(!is.list(o0)) return(0)
       o0$boot.restart<-ris
+      rm(.Random.seed, envir=globalenv())
       return(o0)
       }

@@ -33,7 +33,7 @@ segmented(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-\item{obj}{ standard `linear' model of class "lm" or "glm". Since version 0.5.0-0 any regression 
+\item{obj}{ standard `linear' model of class "lm", "glm" or "Arima". Since version 0.5.0-0 any regression 
     fit may be supplied (see 'Details').}
 \item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, 
 such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. Also, variable names formed by \verb{U} or \verb{V} only (with or without numbers ) are not permitted.}
@@ -47,7 +47,7 @@ such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"
       See the documentation for \code{\link{seg.control}} for details. }
   \item{model}{logical value indicating if the model.frame should be returned.}
   \item{keep.class}{logical value indicating if the final fit returned by \code{segmented.default} should keep the class '\code{segmented}' (along with the class of the original fit \code{obj}). Ignored by the segmented methods. }
-  \item{\dots}{ optional arguments. }
+  \item{\dots}{ optional arguments (to be ignored safely). Notice specific arguments relevant to the original call (via \code{lm} or \code{glm} for instance), such as \code{weights} or \code{offet}, have to be included in the starting model \code{obj}}
 }
 \details{
   Given a linear regression model (usually of class "lm" or "glm"), segmented tries to estimate
@@ -208,20 +208,28 @@ draw.history(o, "z")
 #convergence diagnostics 
 
 # An example using the Arima method:
+\dontrun{
 n<-50
 idt <-1:n #the time index
 
 mu<-50-idt +1.5*pmax(idt-30,0)
-set.seed(696)
-y<-mu+arima.sim(list(ar=.5),n)*3
+set.seed(6969)
+y<-mu+arima.sim(list(ar=.5),n)*3.5
 
 o<-arima(y, c(1,0,0), xreg=idt)
-os1<-segmented(o, ~idt, control=seg.control(display=TRUE)) 
+os1<-segmented(o, ~idt, control=seg.control(display=TRUE))
+
+#note using the .coef argument is mandatory!
+slope(os1, .coef=os1$coef)
+plot(y)
+plot(os1, add=TRUE, .coef=os1$coef, col=2)
+
+}
 
 
+######Three examples using the default method:
 
-#An example using the default method:
-# Cox regression with a segmented relationship  
+# 1. Cox regression with a segmented relationship  
 \dontrun{
 library(survival)
 data(stanford2)
@@ -231,6 +239,36 @@ os<-segmented(o, ~age, psi=40) #estimate the breakpoint in the age effect
 summary(os) #actually it means summary.coxph(os)
 plot(os) #it does not work
 plot.segmented(os) #call explicitly plot.segmented() to plot the fitted piecewise line
+
+
+# 2. Linear mixed model via the nlme package   
+dati$g<-gl(10,10) #the cluster 'id' variable
+library(nlme)
+o<-lme(y~x+z, random=~1|g, data=dati)
+os<-segmented.default(o, ~x+z, npsi=list(x=2, z=1))
+
+#summarizing results (note the '.coef' argument)
+slope(os, .coef=fixef(os))
+plot.segmented(os, "x", .coef=fixef(os), conf.level=.95)
+confint.segmented(os, "x", .coef=fixef(os))
+
+
+# 3. segmented quantile regression via the quantreg  package   
+library(quantreg)
+data(Mammals)
+y<-with(Mammals, log(speed))
+x<-with(Mammals, log(weight))
+o<-rq(y~x, tau=.9)
+os<-segmented.default(o, ~x) #it does NOT work. It cannot computed the vcov matrix..
+
+#Let's define the vcov.rq function.. (I don't know if it is the best option..)
+vcov.rq<-function(x,...) {
+  V<-summary(x,cov=TRUE,se="nid",...)$cov
+  rownames(V)<-colnames(V)<-names(x$coef)
+V}
+
+os<-segmented.default(o, ~x) #now it does work
+ plot.segmented(os, res=TRUE, col=2, conf.level=.95)
 }
             
 }

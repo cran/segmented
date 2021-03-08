@@ -24,22 +24,22 @@ These functions should usually not be used directly by the user.
 seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)
 
 seg.lm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10,
-    size.boot=NULL, jt=FALSE, nonParam=TRUE, random=FALSE)
+    size.boot=NULL, jt=FALSE, nonParam=TRUE, random=FALSE, break.boot=n.boot)
 
 seg.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)
 
 seg.glm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10,
-    size.boot=NULL, jt=FALSE, nonParam=TRUE, random=FALSE)
+    size.boot=NULL, jt=FALSE, nonParam=TRUE, random=FALSE, break.boot=n.boot)
 
 seg.def.fit(obj, Z, PSI, mfExt, opz, return.all.sol=FALSE)
 
 seg.def.fit.boot(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, 
-    jt=FALSE, nonParam=TRUE, random=FALSE)
+    jt=FALSE, nonParam=TRUE, random=FALSE, break.boot=n.boot)
 
 seg.Ar.fit(obj, XREG, Z, PSI, opz, return.all.sol=FALSE)
 
 seg.Ar.fit.boot(obj, XREG, Z, PSI, opz, n.boot=10, size.boot=NULL, jt=FALSE,
-    nonParam=TRUE, random=FALSE)
+    nonParam=TRUE, random=FALSE, break.boot=n.boot)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -67,6 +67,10 @@ appropriate matrix including the segmented variables whose breakpoints have to b
 }
   \item{n.boot}{
   the number of bootstrap samples employed in the bootstrap restart algorithm.
+}
+  \item{break.boot}{
+  Integer, less than \code{n.boot}. If \code{break.boot} consecutive bootstrap samples lead to the same objective function, the algorithm stops without performing all \code{n.boot} 'trials'.
+  This can save computational time considerably.
 }
   \item{size.boot}{
   the size of the bootstrap resamples. If \code{NULL} (default), it is taken equal to the sample size.

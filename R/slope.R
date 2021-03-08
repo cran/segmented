@@ -14,6 +14,8 @@
 
         covv <- if(is.null(.vcov)) vcov(ogg, ...) else .vcov 
         estcoef<- if(is.null(.coef)) coef(ogg) else .coef
+        
+        if(length(estcoef)==0) stop("No coefficient in the object fit?")
 
         if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
         
@@ -28,7 +30,7 @@
               stop("invalid parm") } else {nomeZ<-parm}
             }
         if(length(rev.sgn)!=length(nomeZ)) rev.sgn<-rep(rev.sgn, length.out=length(nomeZ))
-        nomi<-names(coef(ogg))
+        nomi<-names(estcoef)
         index<-vector(mode = "list", length = length(nomeZ))
         for(i in 1:length(nomeZ)) {
             index[[i]]<-match(c(nomeZ[i], names(ogg$indexU[[nomeZ[i]]])),  nomi)

@@ -87,8 +87,8 @@ set.seed(1234)
 z<-runif(100)
 y<-rpois(100,exp(2+1.8*pmax(z-.6,0)))
 o<-glm(y~z,family=poisson)
-o.seg<-segmented(o, ~z) #single segmented covariate and one breakpoint:'psi' can be omitted
-par(mfrow=c(2,1))
+o.seg<-segmented(o) #single segmented covariate and one breakpoint: 'seg.Z' and 'psi' can be omitted
+par(mfrow=c(1,2))
 plot(o.seg, conf.level=0.95, shade=TRUE)
 points(o.seg, link=TRUE, col=2)
 ## new plot

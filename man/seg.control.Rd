@@ -8,9 +8,9 @@
 }
 \usage{
 seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
-    K = 10, quant = TRUE, maxit.glm = 25, h = 1, size.boot=NULL, jt=FALSE, nonParam=TRUE,
-    random=TRUE, seed=12345, fn.obj=NULL, digits=NULL, conv.psi=FALSE, 
-    alpha=.02, min.step=.0001, 
+    K = 10, quant = TRUE, maxit.glm = 25, h = 1, break.boot=5, size.boot=NULL, 
+    jt=FALSE, nonParam=TRUE, random=TRUE, seed=12345, fn.obj=NULL, digits=NULL, 
+    conv.psi=FALSE, alpha=.02, min.step=.0001, 
     powers=c(1,1), last = TRUE, stop.if.error = NULL, gap=FALSE, fc=.95)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -32,6 +32,10 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   \item{maxit.glm}{ integer giving the maximum number of inner IWLS iterations (see details). }
   \item{h}{ positive factor modifying the increments in breakpoint updates during
     the estimation process (see details). }
+  \item{break.boot}{
+  Integer, less than \code{n.boot}. If \code{break.boot} consecutive bootstrap samples lead to the same objective function, the algorithm stops without performing all \code{n.boot} 'trials'.
+  This can save computational time considerably.
+    }
   \item{size.boot}{the size of the bootstrap samples. If \code{NULL}, it is taken equal to the actual sample size.}
   \item{jt}{logical. If \code{TRUE} the values of the segmented variable(s) are jittered before fitting the model to the
   bootstrap resamples.}

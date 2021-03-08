@@ -29,8 +29,12 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
   #if((all(class(x)==c("segmented", "Arima")))) names(x$coef)<-gsub("intercept", "(Intercept)", names(coef(x)))
   if(all(c("segmented", "Arima") %in% class(x))) names(x$coef)<-gsub("intercept", "(Intercept)", names(coef(x)))
   
-  covv <- if(is.null(.vcov)) vcov(x, ...) else .vcov 
+  covv <- if(is.null(.vcov)) vcov(x, is=is, var.diff=var.diff) else .vcov 
   estcoef<- if(is.null(.coef)) coef(x) else .coef
+  
+  if(length(estcoef)==0) stop("No coefficient in the object fit?")
+  
+  #browser()
   
   if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
   
@@ -56,7 +60,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if (! isTRUE(term %in% x$nameUV$Z)) stop("invalid `term'")
     }
     opz <- list(...)
-    col.shade<-if(!is.null(opz$col.shade)) adjustcolor(opz$col.shade, .15) else "gray"
+    col.shade<-if(!is.null(opz$col.shade)) adjustcolor(opz$col.shade, .15) else adjustcolor("grey", .4)
     cols<- if("col"%in% names(opz)) opz$col else 1
     lwds<- if("lwd"%in% names(opz)) opz$lwd else 1
     ltys<- if("lty"%in% names(opz)) opz$lty else 1
@@ -65,14 +69,21 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     ylabs<- if("ylab"%in% names(opz)) opz$ylab else paste("Effect  of ", term, sep = " ")
     xlabs<- if("xlab"%in% names(opz)) opz$xlab else term
 
+    #browser()
+    
     a <- intercept(x, term, digits=20, .vcov=covv, .coef=estcoef)[[1]][, "Est."]
     #Poiche' intercept() restituisce quantita' che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
-    if(!interc && ("(Intercept)" %in% names(estcoef))) a<- a-estcoef["(Intercept)"]
+    
+    idInterc<-grep("ntercept",names(estcoef))
+    #if(!interc && ("(Intercept)" %in% names(estcoef))) a<- a-estcoef["(Intercept)"]
+    if(!interc && length(idInterc)==1) a<- a-estcoef[idInterc]
     b <- slope(x, term, digits=20, .coef=estcoef, .vcov=covv)[[1]][, "Est."]
 
     #id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE) #confondeva "psi1.x","psi1.neg.x"
     id <- f.U(rownames(x$psi), term)
     
+    
+    #browser()
     #est.psi <- x$psi[id, "Est."]
     est.psi <- x$indexU[[term]]
     
@@ -99,7 +110,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         #cambiato nella 0.5-2.0:
         k.alpha<- if(all(c("segmented","lm") %in% class(x))) abs(qt((1-conf.level)/2, x$df.residual)) else abs(qnorm((1-conf.level)/2))
         ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE, isV=isV, is=is, var.diff=var.diff, 
-                              p.df=p.df, .vcov=covv, .coef=estcoef)
+                              p.df=p.df, .vcov=covv, .coef=estcoef) #se gli passi covv, gli argomenti is e var.diff NON servono perche li ignora..
         ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit)
         #---> transf...
         ciValues<-apply(ciValues, 2, transf)
