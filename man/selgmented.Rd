@@ -9,7 +9,7 @@ This function selects the number of breakpoints of the segmented relationship ac
 }
 \usage{
 selgmented(olm, seg.Z, alpha = 0.05, type = c("score", "davies", "bic"), 
-  control = seg.control(), return.fit = TRUE, bonferroni = FALSE, Kmax = 2)
+  control = seg.control(), return.fit = TRUE, bonferroni = FALSE, Kmax = 2, msg=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -37,12 +37,15 @@ If \code{TRUE}, the Bonferroni correction is employed, i.e. \code{alpha/Kmax} is
   \item{Kmax}{
 The maximum number of breakpoints being tested. If \code{type='bic'} any integer value can be specified, otherwise at most \code{Kmax=2} breakpoints can be tested via the Score or Davies statistics.
 }
+  \item{msg}{
+If \code{FALSE} the final fit is returned silently with the selected number of breakpoints, otherwise the message including information about the selection procedure (i.e. the BIC values) is printed.
+}
 }
 \details{
 The function uses properly the functions \code{segmented}, \code{pscore.test} or \code{davies.test} to select the 'right' number
 of breakpoints.
 }
-\value{The returned object depends on argument \code{return.fit}. If \code{FALSE}, the returned object is a list with some information on the fitted models, otherwise a classical segmented object. See \code{\link{segmented}} for details.
+\value{The returned object depends on argument \code{return.fit}. If \code{FALSE}, the returned object is a list with some information on the compared models (i.e. the BIC values), otherwise a classical segmented object with the component \code{selection.psi} including the aforemntioned information. See \code{\link{segmented}} for details.
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}

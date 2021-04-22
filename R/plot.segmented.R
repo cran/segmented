@@ -151,7 +151,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         xout <- sort(c(seq(val[1], val[length(val)], l = 50), val[-c(1, length(val))], 
                        pmax(val[-c(1, length(val))]*1.0001, val[-c(1, length(val))]*.9999)))
         l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
-        val[length(val)]<-max(l$x) #aggiunto 11/09/17
+        val[length(val)]<- if(rev.sgn) min(l$x) else max(l$x) #aggiunto 11/09/17.. if else il 9/3/21
+        
         id.group <- cut(l$x, val, labels=FALSE, include.lowest =TRUE, right=TRUE) 
         #xout <- sort(c(seq(val[1], val[length(val)], l = 150), val[-c(1, length(val))],val[-c(1, length(val))]*1.0001))
         #l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
@@ -169,7 +170,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
                 xlim = opz$xlim,
                 ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim )
         if(dens.rug){
-          density <- density( xvalues )
+          density <- density(xvalues)
           # the height of the densityity curve
           max.density <- max(density$y)
           # Get the boundaries of the plot to
@@ -204,7 +205,13 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
           if(rev.sgn) vall<- -vall
           if(shade) {
             polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),
-                    col = col.shade, border=NA) } else { matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)}
+                    col = col.shade, border=NA) 
+          } else {
+            #browser()
+            id.group1 <- cut(vall, val, labels=FALSE, include.lowest =TRUE, right=TRUE) #serve per gli IC..
+            for (i in 1:max(id.group1)) matlines(vall[id.group1 == i], ciValues[id.group1 == i,-1], type="l", lty=2, col=cols[i])
+            #matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)
+            }
         }
         
         yhat <- x$family$linkinv(yhat)
@@ -243,7 +250,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
                 #ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim)
                 ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, do.call(transf, list(m[, c(2,4)])), enlarge=dens.rug) else opz$ylim)
         if(dens.rug){
-          density <- density( xvalues )
+          density <- density(xvalues)
           # the height of the densityity curve
           max.density <- max(density$y)
           # Get the boundaries of the plot to
@@ -255,7 +262,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
           # to the lower 10% of the plotting panel
           density$y <- (0.1 * y.scale / max.density) * density$y + plot_coordinates[3]
           ## plot the polygon
-          polygon( density$x , density$y , border = F , col = dens.col) 
+          polygon(density$x , density$y , border = F , col = dens.col) 
           box()
           }
         if(rug) {segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
@@ -270,8 +277,14 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         }
         if(conf.level>0) {
           if(rev.sgn) vall<- -vall
-          if(shade) polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])),
-                            col = col.shade, border=NA) else matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)
+          if(shade) {
+            polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])), col = col.shade, border=NA) 
+            } else {
+                #infittire vall, soprattutto in prossimita' dei psi?
+                id.group1 <- cut(vall, val, labels=FALSE, include.lowest =TRUE, right=TRUE) #serve per gli IC..
+                for (i in 1:max(id.group1)) matlines(vall[id.group1 == i], ciValues[id.group1 == i,-1], type="l", lty=2, col=cols[i])
+                #VECCHIO: matlines(vall, ciValues[,-1], type="l", lty=2, col=cols)              
+            }
         }
         #aggiunto 06/2019 perche' sotto disegnava linee (e non curve)
         #        segments(m[, 1], do.call(transf, list(m[, 2])), m[, 3], do.call(transf, list(m[, 4])), 
@@ -281,8 +294,11 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         xout <- sort(c(seq(val[1], val[length(val)], l = 50), val[-c(1, length(val))], 
                        pmax(val[-c(1, length(val))]*1.0001, val[-c(1, length(val))]*.9999)))
         l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
-        val[length(val)]<-max(l$x) #aggiunto 11/09/17
-        id.group <- cut(l$x, val, labels=FALSE, include.lowest =TRUE, right=TRUE) 
+        
+        val[length(val)]<- if(rev.sgn) min(l$x) else max(l$x) #aggiunto 11/09/17; messo il if .. else 9/3/21
+        
+        id.group <- cut(l$x, val, labels=FALSE, include.lowest =TRUE, right=TRUE)
+        #id.group1 <- cut(vall, val, labels=FALSE, include.lowest =TRUE, right=TRUE) #serve per gli IC..
         #---
         xhat <- l$x
         yhat <- l$y
@@ -292,8 +308,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if (length(lwds) == 1) lwds <- rep(lwds, max(id.group))
         if (length(ltys) == 1) ltys <- rep(ltys, max(id.group))
         for (i in 1:max(id.group)) {
-          lines(xhat[id.group == i], yhat[id.group == i], col = cols[i],
-                lwd = lwds[i], lty = ltys[i])
+          lines(xhat[id.group == i], yhat[id.group == i], col = cols[i], lwd = lwds[i], lty = ltys[i])
+          #if(conf.level>0 && !shade) matlines(vall[id.group1 == i], ciValues[id.group1 == i,-1], type="l", lty=2, col=cols[i])
           if(prev.trend) lines(xhat[xhat>est.psi[i]], (a[i]+b[i]*xhat)[xhat>est.psi[i]], col=cols[i], lwd = lwds[i]*.65, lty = 2)
           }
 #        if(prev.trend){

@@ -1,5 +1,5 @@
 selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), control=seg.control(),
-                          return.fit=TRUE, bonferroni=FALSE, Kmax=2){
+                          return.fit=TRUE, bonferroni=FALSE, Kmax=2, msg=TRUE){
   #Selecting number of breakpoints in segmented regression (via the R package segmented)
   #Author: vito.muggeo@unipa.it
   if(missing(seg.Z)){
@@ -30,14 +30,18 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), 
     bic.values<-c(BIC(olm), bic.values)
     names(bic.values)<-c("0", npsi)
     n.psi.ok<- c(0,npsi)[which.min(bic.values)]
+    r<-list(bic.values=bic.values, n.psi=n.psi.ok)
     if(!return.fit) {
-      r<-list(bic.values=bic.values, n.psi=n.psi.ok)
       return(r) #return(c(n.psi.ok, NA))
     }
-    cat("BIC to detect no. of breakpoints\n")
-    cat("BIC values:\n")
-    print(bic.values)
-    cat(paste("No. of selected breakpoints: ", n.psi.ok, " \n"))
+    
+    if(msg){
+      cat("BIC to detect no. of breakpoints\n")
+      cat("BIC values:\n")
+      print(bic.values)
+      cat(paste("No. of selected breakpoints: ", n.psi.ok, " \n"))
+    }
+    ris[[n.psi.ok]]$selection.psi <- bic.values
     return(ris[[n.psi.ok]])
   }
   alpha.adj<-alpha/Kmax
@@ -80,15 +84,18 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), 
   n.psi.ok<-length(out$psi[,2])
   x2<- -2*sum(log(c(p1,p2)))
   p<-1-pchisq(x2, df=2*2)
+  r<-list(pvalues=c(p1=p1, p2=p2, p=p), npsi=n.psi.ok)
+  attr(r, "label")<- p2.label
   if(!return.fit) {
-    r<-list(pvalues=c(p1=p1, p2=p2, p=p), npsi=n.psi.ok)
-    attr(r, "label")<- p2.label
     return(r)
   }
-  cat("Hypothesis testing to detect no. of breakpoints\n")
-  cat(paste("statistic:", type,"  level:", alpha, "  Bonferroni correction:", bonferroni, "\n"))
-  cat(paste(p1.label, "= ", format.pval(p1,4), "   ", p2.label, "= ", format.pval(p2,4) ,
+  if(msg){
+    cat("Hypothesis testing to detect no. of breakpoints\n")
+    cat(paste("statistic:", type,"  level:", alpha, "  Bonferroni correction:", bonferroni, "\n"))
+    cat(paste(p1.label, "= ", format.pval(p1,4), "   ", p2.label, "= ", format.pval(p2,4) ,
             " \nOverall p-value = ", format.pval(p,4),"\n",sep=""))
-  cat(paste("No. of selected breakpoints: ", n.psi.ok, "\n"))
+    cat(paste("No. of selected breakpoints: ", n.psi.ok, "\n"))
+  }
+  out$selection.psi<-r
   return(out)
 }

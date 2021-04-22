@@ -23,7 +23,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   \item{tol}{ positive convergence tolerance. }
   \item{it.max}{ integer giving the maximal number of iterations. }
   \item{fix.npsi}{logical (it replaces previous argument \code{stop.if.error}) If \code{TRUE} (default) the \emph{number} (and not location) of breakpoints is held fixed           throughout iterations. Otherwise a sort of `automatic' breakpoint selection is carried out, provided that several starting values are supplied for the breakpoints, 
-    see argument \code{psi} in \code{\link{segmented.lm}} or \code{\link{segmented.glm}}. The idea, relying on removing the `non-admissible' breakpoint estimates at each     iteration, is discussed in Muggeo and Adelfio (2011) and it is not compatible with the bootstrap restart algorithm. \code{fix.npsi=FALSE}, indeed, should be considered as a preliminary and tentative approach to deal with an unknown number of breakpoints.} 
+    see argument \code{psi} in \code{\link{segmented.lm}} or \code{\link{segmented.glm}}. The idea, relying on removing the `non-admissible' breakpoint estimates at each     iteration, is discussed in Muggeo and Adelfio (2011) and it is not compatible with the bootstrap restart algorithm. \code{fix.npsi=FALSE}, indeed, should be considered as a preliminary and tentative approach to deal with an unknown number of breakpoints. Alternatively, see \code{\link{selgmented}}.} 
   \item{K}{ the number of quantiles (or equally-spaced values) to supply as starting values for the breakpoints 
     when the \code{psi} argument of \code{segmented} is set to \code{NA}. \code{K} is ignored when \code{psi} is different from \code{NA}.
     }

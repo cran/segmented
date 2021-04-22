@@ -1,15 +1,22 @@
 ****************************
 *                          *
-*	  Changes in segmented   *
+*   Changes in segmented   *
 *                          *
 ****************************
 
+
+===============
+version 1.3-4 
+===============
+* selgmented() now returns information on the selection of the no.of breakpoints. It also gains argument 'msg'. 
+* Bugs fixed in plot.segmented(): it did not work correctly with rev.sgn=TRUE and it did not handle correctly multiple colors for displaying the conf.intervals 
+when shade=FALSE.
 
 
 ===============
 version 1.3-3 
 ===============
-*Two (internal) changes in the boot restarting algorithm: i) option 'break.boot' introduced in seg.control() to save computational time; ii) an improvement in the algorithm expected to better escape local solutions (thanks to Daniele Cuntrera for his input).
+* Two (internal) changes in the boot restarting algorithm: i) option 'break.boot' introduced in seg.control() to save computational time; ii) an improvement in the algorithm expected to better escape local solutions (thanks to Daniele Cuntrera for his input).
 * Bug fixed: broken.line() didn't work (a silly bug, thanks to Kirstin Deuss for reporting); confint.segmented() and plot.segmented() did not handle correctly the Arima fits.
 * Some further code examples in ?segmented.
 

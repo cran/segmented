@@ -14,7 +14,7 @@ pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   \code{segmented} can be set. Offset and weights are allowed.}
   \item{seg.Z}{ a formula with no response variable, such as \code{seg.Z=~x1}, indicating the (continuous) segmented variable being tested. Only a single variable may be tested and an error is printed when \code{seg.Z} includes two or more terms. \code{seg.Z} can be omitted if i)\code{obj} is a segmented fit with a single segmented covariate (and that variable is taken), or ii)if it is a "lm" or "glm" fit with a single covariate (and that variable is taken).}
   \item{k}{ optional. Number of points (equi-spaced from the min to max) used to compute the pseudo Score statistic. See Details. }
-  \item{alternative}{ a character string specifying the alternative hypothesis. }
+  \item{alternative}{ a character string specifying the alternative hypothesis (relevant to the slope difference parameter). }
   \item{values}{ optional. The evaluation points where the Score test is computed. See Details for default values.}
   \item{dispersion}{ optional. the dispersion parameter for the family to be used to compute the test statistic.
       When \code{NULL} (the default), it is inferred from \code{obj}. Namely it is taken as \code{1} for the

@@ -74,13 +74,19 @@ extract.psi<-function(lista){
 #     if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")
       count.random<-0
       id.uguali<-0
+      k.psi.change<- 1
+      alpha<-.1
       for(k in seq(n.boot)){
-        #if(k==4) browser()
-        ##se gli ultimi n.boot.rev valori di ss sono uguali, cambia i psi...
-        n.boot.rev<-4
-        if(length(na.omit(diff(all.selected.ss[1:n.boot.rev])))==(n.boot.rev-1) && all(round(diff(all.selected.ss[1:n.boot.rev]),6)==0)){
-            qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
-            est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
+        #if(k==5) browser()
+        ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
+        n.boot.rev<- 3 #3 o 4?
+        diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
+        #if(length(na.omit(diff(all.selected.ss[1:n.boot.rev])))==(n.boot.rev-1) && all(round(diff(all.selected.ss[1:n.boot.rev]),6)==0)){
+        if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
+          qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
+          qpsi<-ifelse(abs(qpsi-.5)<.1,alpha,qpsi)
+          alpha<-1-alpha
+          est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
         }
         
         #}
@@ -99,6 +105,10 @@ extract.psi<-function(lista){
         } else {
             est.psi.boot<-apply(rangeZ,2,function(r)runif(1,r[1],r[2]))
         }
+        #if(k==7) browser()
+        ### se est.psi.boot non e' cambiato (e puoi vederlo da all.est.psi.boot), allora cambialo!
+        
+        
         PSI <- matrix(rep(est.psi.boot, rep(nrow(Z), length(est.psi.boot))), ncol = length(est.psi.boot))
         opz$h<-max(opz$h*.9, .2)
         opz$it.max<-opz$it.max+1
@@ -114,7 +124,7 @@ extract.psi<-function(lista){
               if(!"coefficients"%in%names(o$obj)) o<-extract.psi(o)
               all.est.psi[k,]<-o$psi
               all.ss[k]<-o$SumSquares.no.gap
-              if(o$SumSquares.no.gap<=ifelse(is.list(o0), o0$SumSquares.no.gap, 10^12)) o0<-o
+              if(o$SumSquares.no.gap<=ifelse(is.list(o0), o0$SumSquares.no.gap, 10^12)) {o0<-o; k.psi.change<- k}
               est.psi0<-o0$psi
               all.selected.psi[k,] <- est.psi0
               all.selected.ss[k]<-o0$SumSquares.no.gap #min(c(o$SumSquares.no.gap, o0$SumSquares.no.gap))
@@ -138,19 +148,19 @@ extract.psi<-function(lista){
           if(all(rev(round(diff(asss),6))[1:(break.boot-1)]==0)) break
         }
         #id.uguali<-(round(diff(all.selected.ss[c(k-1,k-2)]),6)==0)+id.uguali      
-      } #end n.boot
+        } #end n.boot
 
       all.selected.psi<-rbind(est.psi00,all.selected.psi)
       all.selected.ss<-c(ss00, all.selected.ss)
 
-      SS.ok<-min(all.selected.ss)
-      id.accept<- ((abs(all.ss-SS.ok)/SS.ok )<= 0.05)
-      psi.mean<-apply(all.est.psi[id.accept,,drop=FALSE], 2, mean)
-      
-#      est.psi0<-psi.mean
-#      #devi ristimare il modello con psi.mean
-#      PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-#      o0<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
+
+      # SS.ok<-min(all.selected.ss)
+      # id.accept<- ((abs(all.ss-SS.ok)/SS.ok )<= 0.05)
+      # psi.mean<-apply(all.est.psi[id.accept,,drop=FALSE], 2, mean)
+      # est.psi0<-psi.mean
+      # devi ristimare il modello con psi.mean
+      # PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+      # o0<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
 
       
 

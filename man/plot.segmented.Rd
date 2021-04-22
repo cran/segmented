@@ -52,7 +52,7 @@ logical, indicating if the residuals (provided that \code{res=TRUE}) will be dra
 }
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
   can be vectors and are recycled if necessary, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and 
-  `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}); \code{col.shade} for the shaded regions (provided that \code{shade=TRUE} and \code{conf.level>0}).
+  `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}, \code{res.col} is for the color); \code{col.shade} for the shaded regions (provided that \code{shade=TRUE} and \code{conf.level>0}).
   }
 }
 \details{
@@ -100,7 +100,7 @@ points(o.seg,col=4, link=FALSE)
 ## using the options 'is', 'isV', 'shade' and 'col.shade'.
 par(mfrow=c(1,2))
 plot(o.seg, conf.level=.9, is=TRUE, isV=TRUE, col=1, shade = TRUE, col.shade=2)
-plot(o.seg, conf.level=.9, is=TRUE, isV=FALSE, col=2, shade = TRUE)
+plot(o.seg, conf.level=.9, is=TRUE, isV=FALSE, col=2, shade = TRUE, res=TRUE, res.col=4, pch=3)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

@@ -63,11 +63,15 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
 #      if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")
       count.random<-0
       for(k in seq(n.boot)){
-          n.boot.rev<-4
-          if(length(na.omit(diff(all.selected.ss[1:n.boot.rev])))==(n.boot.rev-1) && all(round(diff(all.selected.ss[1:n.boot.rev]),6)==0)){
-            qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
-            est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
-          }
+        ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
+        n.boot.rev<- 3 #3 o 4?
+        diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
+        #if(length(na.omit(diff(all.selected.ss[1:n.boot.rev])))==(n.boot.rev-1) && all(round(diff(all.selected.ss[1:n.boot.rev]),6)==0)){
+        if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
+          qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
+          qpsi<-ifelse(abs(qpsi-.5)<.1,.8,qpsi)
+          est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
+        }
           PSI <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
           if(jt) Z<-apply(Z.orig,2,jitter)
           if(nonParam){
