@@ -98,7 +98,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     #n<-length(x$residuals) #fitted.values - Arima non ha "fitted.values", ma ha "residuals"..
     #tipo<- if(inherits(x, what = "glm", which = FALSE) && link) "link" else "response"
     
-    vall<-sort(c(seq(min(val), max(val), l=100), est.psi))
+    vall<-sort(c(seq(min(val), max(val), l=100), est.psi, est.psi+1e-5))
     #ciValues<-predict.segmented(x, newdata=vall, se.fit=TRUE, type=tipo, level=conf.level)
     vall.list<-list(vall)
     names(vall.list)<-term
@@ -142,6 +142,9 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         fit0 <- broken.line(x, new.d, link = link, interc=interc, se.fit=FALSE, .vcov=covv, .coef=estcoef)$fit
         }
 #-------------------------------------------------------------------------------
+    
+    #browser()
+    
     if (inherits(x, what = "glm", which = FALSE) && linkinv) { #se GLM con link=FALSE (ovvero linkinv=TRUE)
         fit <- if (res)
             #predict.segmented(x, ifelse(rep(rev.sgn, length(xvalues)),-xvalues,xvalues), type=tipo) + resid(x, "response") + const
@@ -291,14 +294,17 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         #                col = cols, lwd = lwds, lty = ltys)
         #---
         # modificato 8/2/21.. adesso le linee si uniscono sempre.
-        xout <- sort(c(seq(val[1], val[length(val)], l = 50), val[-c(1, length(val))], 
-                       pmax(val[-c(1, length(val))]*1.0001, val[-c(1, length(val))]*.9999)))
+        #.. con valori tipo 2010 (date), non si uniscono..
+        #comunque vall ha piu' valori di xout, quindi e' sufficiente assegnare xout<-vall (01/10/2021)
+        #xout <- sort(c(seq(val[1], val[length(val)], l = 50), val[-c(1, length(val))], 
+         #              pmax(val[-c(1, length(val))]*1.0001, val[-c(1, length(val))]*.9999)))
+        xout<-vall
         l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
         
         val[length(val)]<- if(rev.sgn) min(l$x) else max(l$x) #aggiunto 11/09/17; messo il if .. else 9/3/21
         
-        id.group <- cut(l$x, val, labels=FALSE, include.lowest =TRUE, right=TRUE)
-        #id.group1 <- cut(vall, val, labels=FALSE, include.lowest =TRUE, right=TRUE) #serve per gli IC..
+        #id.group <- cut(l$x, val, labels=FALSE, include.lowest =TRUE, right=TRUE)
+        id.group <- cut(vall, val, labels=FALSE, include.lowest =TRUE, right=TRUE) #e' come id.group1
         #---
         xhat <- l$x
         yhat <- l$y

@@ -20,7 +20,9 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
   }
   ##===inizio funzione
   if(missing(seg.Z)) {
-    if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
+    #if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
+    #21/12/21 cosi se il mod e' cases/births~age lo prende!
+    if(length(attr(terms(formula(obj)), "term.labels"))==1) seg.Z<- as.formula(paste("~", attr(terms(formula(obj)), "term.labels"))) else stop("please specify 'seg.Z'")
   }
   n.Seg<-length(all.vars(seg.Z))
   id.npsi<-FALSE

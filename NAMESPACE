@@ -1,4 +1,5 @@
 import(splines)
+import(MASS)
 importFrom("grDevices", "grey","adjustcolor","colorRampPalette")
 importFrom("graphics", "abline", "axis", "box", "lines", "matlines",
              "matplot", "par", "plot", "points", "polygon", "segments","smoothScatter")
@@ -10,7 +11,7 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "printCoefmat", "pt", "qnorm", "qt", "quantile", "resid",
              "residuals", "runif", "summary.glm", "summary.lm", "update",
              "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun",
-             "complete.cases","sd","qchisq","pchisq","BIC")
+             "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", "terms")
 importFrom("utils", "flush.console")
 
 export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,
@@ -19,7 +20,7 @@ export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arim
 	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
 	seg.def.fit,seg.def.fit.boot, seg.Ar.fit,seg.Ar.fit.boot,
 	slope, summary.segmented,print.summary.segmented,vcov.segmented, predict.segmented, 
-	points.segmented, aapc, selgmented)
+	points.segmented, aapc, selgmented, pwr.seg)
 
 S3method(segmented,default)
 S3method(segmented,lm)

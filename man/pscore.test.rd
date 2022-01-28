@@ -6,7 +6,8 @@
 }
 \usage{
 pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), 
-    values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, only.term=FALSE)
+    values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, 
+    only.term=FALSE, break.type=1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,14 +19,13 @@ pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   \item{values}{ optional. The evaluation points where the Score test is computed. See Details for default values.}
   \item{dispersion}{ optional. the dispersion parameter for the family to be used to compute the test statistic.
       When \code{NULL} (the default), it is inferred from \code{obj}. Namely it is taken as \code{1} for the
-     Binomial and Poisson families, and otherwise estimated by the residual Chi-squared statistic in the model \code{obj} (calculated from cases with
-     non-zero weights divided by the residual degrees of freedom).}
+     Binomial and Poisson families, and otherwise estimated by the residual Chi-squared statistic in the model \code{obj} (calculated from cases with non-zero weights divided by the residual degrees of freedom).}
   \item{df.t}{ optional. The degress-of-freedom used to compute the p-value. When \code{NULL}, the df extracted from \code{obj} are used.}
   \item{more.break}{ optional, logical. If \code{obj} is a 'segmented' fit, \code{more.break=FALSE} tests for the actual breakpoint for the variable 'seg.Z', 
   while \code{more.break=TRUE} tests for an \emph{additional} breakpoint(s) for the variable 'seg.Z'. Ignored when \code{obj} is not a segmented fit.}
   \item{n.break}{optional. Number of breakpoints postuled under the alternative hypothesis.}
   \item{only.term}{logical. If \code{TRUE}, only the pseudo covariate(s) relevant to the testing for the breakpoint is returned, and no test is computed.}
-
+\item{break.type}{The kind of breakpoint being tested. \code{1} is for piecewise-linear relationships, \code{2} means piecewise-constant, i.e. a step-function, relationships.}
 }
 \details{
   \code{pscore.test} tests for a non-zero difference-in-slope parameter of a segmented

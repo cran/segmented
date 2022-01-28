@@ -1,5 +1,5 @@
 pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
-                         values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, only.term=FALSE) { 
+                  values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, only.term=FALSE, break.type=1) { 
   #-------------------------------------------------------------------------------
   test.Sc2<-function(y, z, xreg, sigma=NULL, values=NULL, fn="pmax(x-p,0)", df.t="Inf", alternative, w=NULL, offs=NULL, 
                      nbreaks=1, ties.ok=FALSE, only.term=FALSE){
@@ -15,6 +15,8 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
     y<-y[id.ok]
     z<-z[id.ok]
     xreg<-xreg[id.ok,,drop=FALSE]
+    idv <- which(apply(xreg,2,sd)!=0)
+    xreg[,idv]<-scale(xreg[,idv])
     n<-length(y)
     k=ncol(xreg) #per un modello ~1+x
     if(is.null(values)) values<-seq(min(z), max(z), length=10)
@@ -91,7 +93,7 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
   #-------------------------------------------------------------------------------
   scGLM<-function(y, z, xreg, family, values = NULL, size=1, weights.var,
                   fn="pmax(x-p,0)", alternative=alternative){
-    #score test for GLM
+    #score test for GLM (NON USATO!)
     #size (only if family=binomial())
     #weights.var: weights to be used for variance computations. If missing the weights come from the null fit
     output<-match.arg(output)
@@ -141,7 +143,8 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
   }
   #----------------------------------------------------
   if(!inherits(obj, "lm")) stop("A '(g)lm', or 'segmented-(g)lm' model is requested")
-  fn="pmax(x-p,0)"
+  if(!(break.type %in% 1:2)) stop(" 'break.type' should be 1 or 2")
+  fn=if(break.type==1) "pmax(x-p,0)" else "1*(x>p)"
   ties.ok=FALSE
   if(missing(seg.Z)){
     if(inherits(obj, "segmented") && length(obj$nameUV$Z)==1) seg.Z<- as.formula(paste("~", obj$nameUV$Z ))
@@ -163,10 +166,10 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
   if(!n.break%in%1:2) stop(" 'n.break' should be 1 or 2", call. = FALSE)
   if(n.break==2) alternative<-"two.sided"
   isGLM<-"glm"%in%class(obj)
-  
+  #==================================================================
   if(isGLM){
     if (is.null(dispersion)) dispersion <- summary.glm(obj)$dispersion
-    if(inherits(obj, "segmented")){
+    if(inherits(obj, "segmented")){ #============se e' GLM segmented
         if(more.break && !name.Z %in% obj$nameUV$Z) stop(" 'more.break' is meaningful only if at least 1 breakpoint has been estimated")
         Call<-mf<-obj$orig.call #del GLM
         formulaSeg <-formula(obj) #contiene le variabili U e le psi
@@ -236,7 +239,10 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
         r<-c(r, pvalue)
         # ================fine se e' GLM+segmented.
     } else { 
-      #=================Se e' GLM (non segmented)
+      #=================Se e' GLM NON segmented
+      
+    browser()
+      
       Call<-mf<-obj$call
       mf$formula<-formula(obj)
       m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
@@ -255,11 +261,43 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
                                       collapse = "+")))
       }
       mf <- eval(mf, parent.frame())
+      
+      
       mt <- attr(mf, "terms")
       XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf)
       n <- nrow(XREG)
       Z<- XREG[,match(name.Z, colnames(XREG))]
       if(!name.Z %in% names(coef(obj))) XREG<-XREG[,-match(name.Z, colnames(XREG)),drop=FALSE]
+      
+      
+      
+    #questo preso da LM...funziona?
+      # Call<-mf<-obj$call
+      # mf$formula<-formula(obj)
+      # m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
+      # mf <- mf[c(1, m)]
+      # mf$drop.unused.levels <- TRUE
+      # mf[[1L]] <- as.name("model.frame")
+      # formulaNull <- formula(obj)
+      # mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+      # mf<-eval(mf) #parent.frame()? 
+      # Z<- mf[[name.Z]]
+      # y <- model.response(mf, "any")
+      # weights <- as.vector(model.weights(mf))
+      # offset <- as.vector(model.offset(mf))
+      # #XREG <-model.matrix(formula(obj), data=build.mf(obj))
+      # #XREG<-XREG[,colnames(XREG0)]
+      # XREG<- model.matrix(update.formula(formula(obj),~.), mf)
+      # 
+      # if(length(weights)>0) formulaNull <- update.formula(formulaNull, 
+      #                                                     paste(".~.+ weights(", obj$call$weights, ")",sep=""))
+      
+      
+      
+
+      #======================================================================
+      
+      
       if(is.null(values)) values<-seq(min(Z), max(Z), length=k) #values<-seq(sort(Z)[2], sort(Z)[(n - 1)], length = k)
       n1<-length(values)
       PSI<-matrix(values, nrow=n, ncol=n1, byrow=TRUE) #(era X2) matrice di valori di psi
@@ -293,7 +331,7 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
                        two.sided = p2)
       r<-c(r, pvalue)
       
-      #fine se e' un GLM
+      #fine se e' un GLM NON segmented
     }
     
   } else { ##============================== Se e' un LM..
@@ -301,56 +339,92 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
     if(is.null(df.t)) df.t <- obj$df.residual
     #df.ok<- if(!is.null(df.t)) df.t else obj$df.residual
     
-    #============ se e' LM+segmented
-    if(inherits(obj, "segmented")){ 
+    
+    if(inherits(obj, "segmented")){  #===== se e' LM+segmented 
       if(more.break && !name.Z %in% obj$nameUV$Z) stop(" stop 'more.break' is meaningful only if at least 1 breakpoint has been estimated", call.=FALSE )
-      Call<-mf<-obj$orig.call
-      mf$formula<-formula(obj)
-      m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
-      mf <- mf[c(1, m)]
-      mf$drop.unused.levels <- TRUE
-      mf[[1L]] <- as.name("model.frame")
-      mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
-      #formulaOrig<-formula(obj)
-      if(!is.null(obj$orig.call$offset) || !is.null(obj$orig.call$weights) || !is.null(obj$orig.call$subset)){ 
-        mf$formula <- update.formula(mf$formula, 
-                                     paste(".~.+", paste(c(all.vars(obj$orig.call$offset), 
-                                                           all.vars(obj$orig.call$weights),
-                                                           all.vars(obj$orig.call$subset)), 
-                                                         collapse = "+")))
-      }
-      mf$formula<-update.formula(mf$formula,paste("~.-",paste(obj$nameUV$V, collapse="-"))) #rimuovi le variabili "psi.."
-      if(!more.break) {
-        if(length(nomiU.term)>1) stop(" 'more.break=FALSE' does not work with multiple breakpoints referring to the same variable specified in seg.Z", call. = FALSE)
-        #ovvero il test funziona per un solo breakpoint..
-        mf$formula<-update.formula(mf$formula,paste("~.-",paste(nomiU.term, collapse="-"))) #rimuovi il termine U in questione, cioe' solo per una variabile
-        #altre variabili "U" relative a piu' variabili devono rimanere.. 
-      }
-      formulaNull <- formula(mf)
+      
+      
+      # Call<-mf<-obj$orig.call
+      # mf$formula<-formula(obj)
+      # m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
+      # mf <- mf[c(1, m)]
+      # mf$drop.unused.levels <- TRUE
+      # mf[[1L]] <- as.name("model.frame")
+      # mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
+      # #formulaOrig<-formula(obj)
+      # if(!is.null(obj$orig.call$offset) || !is.null(obj$orig.call$weights) || !is.null(obj$orig.call$subset)){ 
+      #   mf$formula <- update.formula(mf$formula, 
+      #                                paste(".~.+", paste(c(all.vars(obj$orig.call$offset), 
+      #                                                      all.vars(obj$orig.call$weights),
+      #                                                      all.vars(obj$orig.call$subset)), 
+      #                                                    collapse = "+")))
+      # }
+      # 
+      # browser()
+      # 
+      # 
+      # mf$formula<-update.formula(mf$formula,paste("~.-",paste(obj$nameUV$V, collapse="-"))) #rimuovi le variabili "psi.."
+      # if(!more.break) {
+      #   if(length(nomiU.term)>1) stop(" 'more.break=FALSE' does not work with multiple breakpoints referring to the same variable specified in seg.Z", call. = FALSE)
+      #   #ovvero il test funziona per un solo breakpoint..
+      #   mf$formula<-update.formula(mf$formula,paste("~.-",paste(nomiU.term, collapse="-"))) #rimuovi il termine U in questione, cioe' solo per una variabile
+      #   #altre variabili "U" relative a piu' variabili devono rimanere.. 
+      # }
+      # formulaNull <- formula(mf)
       
       ###############
-      #PERCHE' NON estrarre direttamente la model.matrix(obj)
-      #X <-model.matrix(obj)
+      #PERCHE' NON estrarre direttamente la model.matrix(obj)?
+      #===>    se la variabile NON e' nel modello (perche' left slope=0) non so come recuperarla
+      #X <-model.matrix(mf) #non funziona se c'e' log(y)..
       #X <- X[, !(colnames(X) %in% obj$nameUV$V), drop=FALSE]
-      #perche' poi se la variabile NON e' nel modello (perche' left slope=0) non so come recuperarla
+      #perche' poi 
       
-      if(more.break) {
-        mf$data<-quote(model.frame(obj))
-        mf<-eval(mf)
-        } else {
-        mf <- eval(mf, parent.frame())  
-      }
+
+      
+      #      if(more.break) {
+#        #ATTENZIONE... A QUANTO PARE SE LA RISPOSTA E' CON log(y), non la trova perche' in model.frame(obj) e' salvata come log(y),
+        #mentre lui cerca y.. Quindi cambiare i nomi?
+#        eval.parent(obj$orig.call$data, n=1)
+        #mf$data<-quote(model.frame(obj))
+ #       mf<-eval(mf)
+#        } else {
+#        mf <- eval(mf, parent.frame())  
+#      }
       #for(i in 1:length(obj$nameUV$U)) assign(obj$nameUV$U[i], obj$model[,obj$nameUV$U[i]], envir=parent.frame())
       
+      mf<-model.frame(obj)
       y <- model.response(mf, "any")
       weights <- as.vector(model.weights(mf))
       offset <- as.vector(model.offset(mf))
       
-      mt <- attr(mf, "terms")
+      fo<-formula(obj) #NB formula(mf), stranamente, e' del modello lineare di partenza.. non include le U e le V!!
+      fo <-update.formula(fo ,paste("~.-",paste(obj$nameUV$V, collapse="-"))) #escludi tutte le V
+      if(!more.break) {
+        if(length(nomiU.term)>1) stop(" 'more.break=FALSE' does not work with multiple breakpoints referring to the same variable specified in seg.Z", call. = FALSE)
+        #ovvero il test funziona per un solo breakpoint..
+        fo <-update.formula(fo,paste("~.-",paste(nomiU.term, collapse="-"))) #rimuovi il termine U in questione, cioe' solo per una variabile
+        #altre variabili "U" relative a piu' variabili devono rimanere.. 
+      }
+      formulaNull <- fo
+      
+      if(length(weights)>0) formulaNull <- update.formula(formulaNull, 
+                                  paste(".~.+ weights(", obj$orig.call$weights, ")",sep=""))
+        
+      X0<-model.matrix(fo , mf)
+      #Z<-X0[ ,match(name.Z, colnames(X0))]
+      Z<- mf[[name.Z]] 
+      
+      
+      #COSA SUCCEDE SE IL MODELLO DI PARTENZA NON INCLUDE IL TERMINE LINEARE?
+      
+      #X0<- if (!is.empty.model(mt)) model.matrix(mt, mf) #E' quella del modello lineare di partenza.. strano!
+      #Z<-X0[ ,match(name.Z, colnames(X0))]
+
+      #browser()
+
+      #mt <- attr(mf, "terms")
       #interc<-attr(mt,"intercept")
       
-      X0<- if (!is.empty.model(mt)) model.matrix(mt, mf)
-      Z<-X0[ ,match(name.Z, colnames(X0))]
       n<-length(Z)
       if(is.null(values)) values<-seq(min(Z), max(Z), length=k) #values<-seq(sort(Z)[2], sort(Z)[(n - 1)], length = k)
 #      n1<-length(values)
@@ -362,8 +436,11 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
       r<-test.Sc2(y=y, z=Z, xreg=X0, sigma=sqrt(dispersion), values=values, fn=fn, df.t=df.t, alternative=alternative, 
                   w=weights, offs=offset, nbreaks=n.break, ties.ok=FALSE, only.term=only.term)
       
-      #fine se e' LM+segmented. 
+      #---fine se e' LM+segmented. 
     } else {
+      
+      #browser()
+      
       #=================Se e' LM (non segmented)
       Call<-mf<-obj$call
       mf$formula<-formula(obj)
@@ -373,31 +450,48 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
       mf[[1L]] <- as.name("model.frame")
       formulaNull <- formula(obj)
       mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
-      #aggiunto 12/03/18 (non trovava la variable weights perche' era salvata in mf come "(weights)")     
-      if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
-        mf$formula <-update.formula(mf$formula, 
-                                    paste(".~.+", paste(
-                                      c(all.vars(obj$call$offset), 
-                                        all.vars(obj$call$weights),
-                                        all.vars(obj$call$subset)), 
-                                      collapse = "+")))
-      }
-      mf <- eval(mf, parent.frame())
+      
+      #modifiche sett 2021
+      #XREG0 <-model.matrix(obj)
+      mf<-eval(mf) #parent.frame()? 
+      Z<- mf[[name.Z]]
+      
       y <- model.response(mf, "any")
       weights <- as.vector(model.weights(mf))
       offset <- as.vector(model.offset(mf))
       
-      mt <- attr(mf, "terms")
-      XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf)
-      n <- nrow(XREG)
-      Z<- XREG[,match(name.Z, colnames(XREG))]
-      if(!name.Z %in% names(coef(obj))) XREG<-XREG[,-match(name.Z, colnames(XREG)),drop=FALSE]
+      #XREG <-model.matrix(formula(obj), data=build.mf(obj))
+      #XREG<-XREG[,colnames(XREG0)]
+      
+      
+      
+      XREG<- model.matrix(update.formula(formula(obj),~.), mf)
+
+      if(length(weights)>0) formulaNull <- update.formula(formulaNull, 
+                                                          paste(".~.+ weights(", obj$call$weights, ")",sep=""))
+      
+      # #aggiunto 12/03/18 (non trovava la variable weights perche' era salvata in mf come "(weights)")     
+      # if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
+      #   mf$formula <-update.formula(mf$formula, 
+      #                               paste(".~.+", paste(
+      #                                 c(all.vars(obj$call$offset), 
+      #                                   all.vars(obj$call$weights),
+      #                                   all.vars(obj$call$subset)), 
+      #                                 collapse = "+")))
+      # }
+      # mf <- eval(mf, parent.frame())
+      # y <- model.response(mf, "any")
+      # weights <- as.vector(model.weights(mf))
+      # offset <- as.vector(model.offset(mf))
+      # 
+      # mt <- attr(mf, "terms")
+      # XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf)
+      # n <- nrow(XREG)
+      # Z<- XREG[,match(name.Z, colnames(XREG))]
+      # if(!name.Z %in% names(coef(obj))) XREG<-XREG[,-match(name.Z, colnames(XREG)),drop=FALSE]
+      
+      
       if(is.null(values)) values<-seq(min(Z), max(Z), length=k) #values<-seq(sort(Z)[2], sort(Z)[(n - 1)], length = k)
-      #n1<-length(values)
-      #PSI<-matrix(values, nrow=n, ncol=n1, byrow=TRUE) #(era X2) matrice di valori di psi
-      #X1<-matrix(Z, nrow=n, ncol=n1, byrow=FALSE) #matrice della variabile Z
-      #X<-eval(parse(text=fn), list(x=X1, p=PSI))    #   fn t.c.  length(fn)<=1
-      #pmaxMedio<-rowMeans(X)
       r<-test.Sc2(y=y, z=Z, xreg=XREG, sigma=sqrt(dispersion), values=values, fn=fn, df.t=df.t, alternative=alternative, 
                   w=weights, offs=offset, nbreaks=n.break, ties.ok=FALSE, only.term=only.term)
       #r<-as.numeric(as.matrix(add1(update(obj, data=mf), ~.+pmaxMedio,  scale=dispersion, test="Rao"))[2,c("scaled Rao sc.", "Pr(>Chi)")])       

@@ -23,7 +23,7 @@ extract.psi<-function(lista){
       opz1<-opz
       opz1$it.max <-1
       n<-nrow(mfExt)
-      o0<-try(seg.def.fit(obj, Z, PSI, mfExt, opz), silent=TRUE)
+      o0<-try(suppressWarnings(seg.def.fit(obj, Z, PSI, mfExt, opz)), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
       
       if(!is.list(o0)) {
@@ -40,7 +40,7 @@ extract.psi<-function(lista){
           if(random) {
             est.psi00<-est.psi0<-apply(rangeZ,2,function(r)runif(1,r[1],r[2]))
             PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-            o0<-try(seg.def.fit(obj, Z, PSI1, mfExt, opz1), silent=TRUE)
+            o0<-try(suppressWarnings(seg.def.fit(obj, Z, PSI1, mfExt, opz1)), silent=TRUE)
             ss00<-o0$SumSquares.no.gap
           } else {
           est.psi00<-est.psi0<-apply(PSI,2,mean)
@@ -73,13 +73,13 @@ extract.psi<-function(lista){
           if(jt) Z<-apply(Z.orig,2,jitter)
           if(nonParam){
               id<-sample(n, size=size.boot, replace=TRUE)
-              o.boot<-try(seg.def.fit(obj, Z[id,,drop=FALSE], PSI[id,,drop=FALSE], mfExt[id,,drop=FALSE], opz.boot), silent=TRUE)
+              o.boot<-try(suppressWarnings(seg.def.fit(obj, Z[id,,drop=FALSE], PSI[id,,drop=FALSE], mfExt[id,,drop=FALSE], opz.boot)), silent=TRUE)
          
           } else {
               yy<-fitted.ok+sample(residuals(o0),size=n, replace=TRUE)
 ##---->              o.boot<-try(seg.lm.fit(yy, XREG, Z.orig, PSI, weights, offs, opz.boot), silent=TRUE)
                     #in realta' la risposta dovrebbe essere "yy" da cambiare in mfExt
-                    o.boot<- try(seg.def.fit(obj, Z.orig, PSI, mfExt, opz.boot), silent=TRUE)
+                    o.boot<- try(suppressWarnings(seg.def.fit(obj, Z.orig, PSI, mfExt, opz.boot)), silent=TRUE)
           }
           if(is.list(o.boot)){
             all.est.psi.boot[k,]<-est.psi.boot<-o.boot$psi
@@ -93,7 +93,7 @@ extract.psi<-function(lista){
             if(!is.list(o) && random){
                 est.psi0<-apply(rangeZ,2,function(r)runif(1,r[1],r[2]))
                 PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-            o <- try(seg.def.fit(obj, Z, PSI1, mfExt, opz1), silent=TRUE)
+            o <- try(suppressWarnings(seg.def.fit(obj, Z, PSI1, mfExt, opz1)), silent=TRUE)
                 count.random<-count.random+1
               }
             if(is.list(o)){
@@ -129,7 +129,7 @@ extract.psi<-function(lista){
 
       if(is.null(o0$obj)){
           PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-            o0 <- try(seg.def.fit(obj, Z, PSI1, mfExt, opz1), silent=TRUE)
+            o0 <- try(suppressWarnings(seg.def.fit(obj, Z, PSI1, mfExt, opz1)), silent=TRUE)
       }
       if(!is.list(o0)) return(0)
       o0$boot.restart<-ris

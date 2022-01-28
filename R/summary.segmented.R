@@ -61,6 +61,7 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
       summ$Ttable[idU,4]<-NA
       summ$Ttable<-summ$Ttable[-idV,] 
       summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]
+      summ$n.boot<-length(na.omit(object$psi.history$all.ss))
       summ$var.diff<-var.diff
       summ$short<-short
       class(summ) <- c("summary.segmented", "summary.lm")
@@ -72,6 +73,7 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
       summ$Ttable<-summ$coefficients[-idV,]
       summ$Ttable[idU,4]<-NA
       summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]
+      summ$n.boot<-length(na.omit(object$psi.history$all.ss))
       summ$short<-short
       class(summ) <- c("summary.segmented", "summary.glm")
       return(summ)}
@@ -85,6 +87,7 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
       object$short<-short
       summ<-object
       summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]
+      summ$n.boot<-length(na.omit(object$psi.history$all.ss))
       class(summ) <- c("summary.segmented", "summary.Arima")
       return(summ)}
 }

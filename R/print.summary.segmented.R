@@ -65,6 +65,10 @@ if("summary.Arima"%in%class(x)){#for Arima
         "\n", sep = "")
     }
 invisible(x) 
-cat("\nConvergence",if(x$conv.warn) "*not*" else NULL , "attained in",x$it,"iter. (rel. change",paste(signif(x$epsilon,5),")\n",sep=""))
+if(x$n.boot>0){
+  cat("\nBoot restarting based on", x$n.boot, "samples. Last fit:") #if(x$conv.warn) "*not*" else NULL , "attained in",x$it,"iter. (rel. change",paste(signif(x$epsilon,5),")\n",sep=""))
+} 
+
+cat("\nConvergence",if(x$conv.warn) "*not*" else NULL , "attained in",x$it,"iterations (rel. change",paste(signif(x$epsilon,5),")\n",sep=""))
 }
 

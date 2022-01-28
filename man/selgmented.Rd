@@ -25,6 +25,9 @@ The fixed type I error probability.
   \item{type}{
 Which criterion should be used? Currently via sequential hypothesis testing \code{score} and \code{davies}, only \code{Kmax=2} is allowed. Using the BIC allows to compare models with more than 2 breakpoints.
 }
+%  \item{break.type}{
+%The kind of breakpoint being tested. \code{1} is for piecewise-linear relationships, \code{2} means piecewise-constant, i.e. a step-function, %relationships. See \code{\link{pscore.test}}. 
+%}
   \item{control}{
 See \code{\link{seg.control}}.
 }

@@ -84,7 +84,7 @@ extract.psi<-function(lista){
         #if(length(na.omit(diff(all.selected.ss[1:n.boot.rev])))==(n.boot.rev-1) && all(round(diff(all.selected.ss[1:n.boot.rev]),6)==0)){
         if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
           qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
-          qpsi<-ifelse(abs(qpsi-.5)<.1,alpha,qpsi)
+          qpsi<-ifelse(abs(qpsi-.5)<.1, alpha, qpsi)
           alpha<-1-alpha
           est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
         }
@@ -168,7 +168,7 @@ extract.psi<-function(lista){
 
       if(is.null(o0$obj)){
           PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-          o0<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
+          o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1)), silent=TRUE)
       }
       if(!is.list(o0)) return(0)
       o0$boot.restart<-ris

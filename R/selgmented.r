@@ -2,6 +2,26 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), 
                           return.fit=TRUE, bonferroni=FALSE, Kmax=2, msg=TRUE){
   #Selecting number of breakpoints in segmented regression (via the R package segmented)
   #Author: vito.muggeo@unipa.it
+  
+  build.mf<-function(o, data=NULL){
+    #returns the dataframe including the possibly untransformed variables,
+    #including weight and offset
+    fo<-formula(o)
+    if(!is.null(o$weights))
+      fo<-update.formula(fo,paste("~.+",all.vars(o$call$weights), sep="")) 
+    if(!is.null(o$call$offset))
+      fo<-update.formula(fo,paste("~.+",all.vars(o$call$offset), sep="")) 
+    if(!is.null(o$call$subset))
+      fo<-update.formula(fo,paste("~.+",all.vars(o$call$subset), sep=""))
+    #o$call$formula<-fo
+    if(is.null(o$call$data)) {
+      R<-get_all_vars(fo)
+    } else { 
+      R<-get_all_vars(fo, data=eval(o$call$data))
+    }
+    R
+  }
+  
   if(missing(seg.Z)){
     nomeX <- all.vars(formula(olm))[2]
     if(length(nomeX)>1 || any(is.na(nomeX))) stop("I cannot determine the segmented variable")
@@ -59,7 +79,12 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), 
   } else {
     p2.label<-"p-value '1 vs 2' "
     #################
-    olm<-update(olm, data=model.frame(olm)) #questo e' necessario per far funzionare davies.test() sotto..
+    #browser()
+    #MF<-build.mf(olm)
+    #olm<-update(olm, data=MF)
+    #olm$call$data<-quote(MF)
+    
+    #olm<-update(olm, data=model.frame(olm)) #questo e' necessario per far funzionare davies.test() sotto..
     ################
     o1<-segmented(olm, seg.Z, npsi=1, control=control)
     if(type=="score") {

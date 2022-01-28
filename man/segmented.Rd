@@ -41,8 +41,8 @@ such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"
       A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
       \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
 \item{npsi}{A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally computed via the quantiles or equally spaced values, as specified in argument \code{quant} in \code{\link{seg.control}}. \code{npsi} can be missing and \code{npsi=1} is assumed for all variables specified in \code{seg.Z}. If \code{psi} is provided, \code{npsi} is ignored.}
-\item{fixed.psi}{An optional named list meaning the breakpoints to be kept fixed during the estimation procedure. The names should be a subset of (or even the same) variables specified in \code{seg.Z}. If there is a single variable in \code{seg.Z}, a simple nmeric vector can be specified. }
-
+\item{fixed.psi}{An optional named list meaning the breakpoints to be kept fixed during the estimation procedure. The names should be a subset of (or even the same) variables specified in \code{seg.Z}. If there is a single variable in \code{seg.Z}, a simple numeric vector can be specified. Note that, in addition to the values specified here, \code{segmented} will estimate additional breakpoints. To keep fixed all breakpoints (to be specified in \code{psi}) use \code{it.max=0} in \code{\link{seg.control}}
+}
 \item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
   \item{model}{logical value indicating if the model.frame should be returned.}
@@ -238,7 +238,7 @@ o<-coxph(Surv(time, status)~age, data=stanford2)
 os<-segmented(o, ~age, psi=40) #estimate the breakpoint in the age effect
 summary(os) #actually it means summary.coxph(os)
 plot(os) #it does not work
-plot.segmented(os) #call explicitly plot.segmented() to plot the fitted piecewise line
+plot.segmented(os) #call explicitly plot.segmented() to plot the fitted piecewise lines
 
 
 # 2. Linear mixed model via the nlme package   
@@ -259,7 +259,7 @@ data(Mammals)
 y<-with(Mammals, log(speed))
 x<-with(Mammals, log(weight))
 o<-rq(y~x, tau=.9)
-os<-segmented.default(o, ~x) #it does NOT work. It cannot computed the vcov matrix..
+os<-segmented.default(o, ~x) #it does NOT work. It cannot compute the vcov matrix..
 
 #Let's define the vcov.rq function.. (I don't know if it is the best option..)
 vcov.rq<-function(x,...) {

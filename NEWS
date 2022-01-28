@@ -5,16 +5,26 @@
 ****************************
 
 
+
 ===============
-version 1.3-4 
+version 1.4-0 (2022-01-28)
+===============
+* New function pwr.seg() for power analysis in segmented regression (thanks to Bastian Kückelhaus for his input)
+* An improvement in the estimating algorithm (only for lm models) to gain efficiency
+* Bugs fixed: pscore.test() returned an error with covariates taking large values (tens of thousands) leading 
+to collinearity in the design matrix; (thanks to Michael Laviolette for reporting). A minor change in summary.segmented() which reports now 
+"n.boot" information 
+
+
+===============
+version 1.3-4 (2021-04-22)
 ===============
 * selgmented() now returns information on the selection of the no.of breakpoints. It also gains argument 'msg'. 
-* Bugs fixed in plot.segmented(): it did not work correctly with rev.sgn=TRUE and it did not handle correctly multiple colors for displaying the conf.intervals 
-when shade=FALSE.
+* Bugs fixed in plot.segmented(): it did not work correctly with rev.sgn=TRUE and it did not handle correctly multiple colors for displaying the conf.intervals when shade=FALSE.
 
 
 ===============
-version 1.3-3 
+version 1.3-3 (2021-03-08)
 ===============
 * Two (internal) changes in the boot restarting algorithm: i) option 'break.boot' introduced in seg.control() to save computational time; ii) an improvement in the algorithm expected to better escape local solutions (thanks to Daniele Cuntrera for his input).
 * Bug fixed: broken.line() didn't work (a silly bug, thanks to Kirstin Deuss for reporting); confint.segmented() and plot.segmented() did not handle correctly the Arima fits.
@@ -22,7 +32,7 @@ version 1.3-3
 
 
 ===============
-version 1.3-2 
+version 1.3-2 (2021-02-09)
 ===============
 * New arguments '.vcov' and '.coef' in the utility functions (slope(), plot.segmented(), confint.segmented(),..) in order to account for 
 fit objects returned by segmented.default() (Thanks to Yi Hu for his input).
@@ -30,14 +40,14 @@ fit objects returned by segmented.default() (Thanks to Yi Hu for his input).
 
 
 ===============
-version 1.3-1 
+version 1.3-1 (2020-12-10)
 ===============
 * segmented.default() now accepts "lme" objects (thanks to Hannah Watson for her input)
 * Bug fixed: pscore.test() crashed in large datasets (thanks to John Grego for reporting); segmented.lm() did not work when the scale of x was defined on very large range, e.g. 1e8 to 2e8 (thanks to Elio Campitelli for reporting) 
 
 
 ===============
-version 1.3-0 
+version 1.3-0 (2020-10-23) 
 ===============
 * New function selgmented() to select the number of breakpoints (via BIC or hypothesis testing).
 * New argument 'fixed.psi' in segmented.* methods to fix some of breakpoints in the fitted model.
@@ -45,7 +55,7 @@ version 1.3-0
 
 
 ===============
-version 1.2-0 
+version 1.2-0 (2020-06-23)
 ===============
 * Changes in segmented.default to allow estimation of segmented censReg models (thanks to Georgina Kaltenecker for her input).
 * coef.segmented() introduced to extract regression coefficients and breakpoints.
