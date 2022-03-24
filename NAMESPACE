@@ -11,7 +11,7 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "printCoefmat", "pt", "qnorm", "qt", "quantile", "resid",
              "residuals", "runif", "summary.glm", "summary.lm", "update",
              "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun",
-             "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", "terms")
+             "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", "terms","AIC")
 importFrom("utils", "flush.console")
 
 export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,

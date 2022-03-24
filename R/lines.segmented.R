@@ -1,4 +1,4 @@
-lines.segmented<-function(x, term, bottom=TRUE, shift=TRUE, conf.level=0.95, k=50, 
+lines.segmented<-function(x, term, bottom=TRUE, shift=FALSE, conf.level=0.95, k=50, 
   pch=18, rev.sgn=FALSE,.vcov=NULL, .coef=NULL,...){
   if(missing(term)){
           if(length(x$nameUV$Z)>1 ) {stop("please, specify `term'")}

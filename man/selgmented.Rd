@@ -8,7 +8,7 @@ Selecting number of breakpoints in segmented regression
 This function selects the number of breakpoints of the segmented relationship according to the BIC criterion or sequential hypothesis testing.
 }
 \usage{
-selgmented(olm, seg.Z, alpha = 0.05, type = c("score", "davies", "bic"), 
+selgmented(olm, seg.Z, alpha = 0.05, type = c("score", "davies", "bic", "aic"), 
   control = seg.control(), return.fit = TRUE, bonferroni = FALSE, Kmax = 2, msg=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.

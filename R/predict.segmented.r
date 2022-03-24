@@ -1,4 +1,4 @@
-predict.segmented<-function(object, newdata, .coef=NULL, ...){
+predict.segmented <-function(object, newdata, .coef=NULL, ...){
 #rev: 30/10/2013: it seems to work correctly, even with the minus variable (null right slope..)
 #rev: 14/4/2014 now it works like predict.lm/glm
 #BUT problems if type="terms" (in realta' funziona, il problema e' che
@@ -86,7 +86,7 @@ predict.segmented<-function(object, newdata, .coef=NULL, ...){
   #--------------
   #--------------------------------------------------------------
   if(missing(newdata)){
-    newd.ok<-model.frame(object)
+    newdata <- model.frame(object)
   } else {
   #devi trasformare la variabili segmented attraverso dummy.matrix()
   nameU<-object$nameUV$U
@@ -105,7 +105,12 @@ predict.segmented<-function(object, newdata, .coef=NULL, ...){
   newdata<-cbind(newdata[,-idZ, drop=FALSE], newd.ok) #  newdata<-subset(newdata, select=-idZ)
   #newdata<-cbind(newdata, newd.ok) #e' una ripetizione (refuso?) comunque controlla
   }
-  class(object)<-class(object)[-1]
+  if(class(object)[1]=="segmented") class(object)<-class(object)[-1]
+  if(class(object)[1]=="lme"){
+    object$call<- object$orig.call
+    object$call$fixed <- update.formula(object$call$fixed,
+      paste(".~.+", paste(c(object$nameUV$U, object$nameUV$V),collapse = "+")))
+  }
   f<-predict(object, newdata=newdata, ...)
   #f<-if(inherits(object, what = "glm", which = FALSE)) predict.glm(object, newdata=newd.ok, ...) else predict.lm(object, newdata=newd.ok, ...)
   return(f)

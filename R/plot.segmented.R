@@ -278,8 +278,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
             points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)              
           }
         }
+        if(rev.sgn) vall<- -vall
         if(conf.level>0) {
-          if(rev.sgn) vall<- -vall
           if(shade) {
             polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])), col = col.shade, border=NA) 
             } else {
@@ -298,9 +298,9 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         #comunque vall ha piu' valori di xout, quindi e' sufficiente assegnare xout<-vall (01/10/2021)
         #xout <- sort(c(seq(val[1], val[length(val)], l = 50), val[-c(1, length(val))], 
          #              pmax(val[-c(1, length(val))]*1.0001, val[-c(1, length(val))]*.9999)))
-        xout<-vall
+        #if(rev.sgn) vall<- -vall
+        xout <- vall
         l <- suppressWarnings(approx(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), xout = xout))
-        
         val[length(val)]<- if(rev.sgn) min(l$x) else max(l$x) #aggiunto 11/09/17; messo il if .. else 9/3/21
         
         #id.group <- cut(l$x, val, labels=FALSE, include.lowest =TRUE, right=TRUE)

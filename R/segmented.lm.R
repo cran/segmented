@@ -104,7 +104,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
-    if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
+    if(class(mf$formula)[1]=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
     #orig.call$formula<-update.formula(orig.call$formula, paste("~.-",all.vars(seg.Z)))
 #
 #genn 2013. dalla versione 0.2.9-4 ho tolto if(length(.. Tra l'altro non capisco perche' lo avevo fatto
@@ -145,7 +145,7 @@ nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshol
 nomiNO<-NULL 
 for(i in nomiTUTTI){
     r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
-    if(class(r)!="try-error" && length(r)==1 && !is.function(r) && !i%in%names(mf)) nomiNO[[length(nomiNO)+1]]<-i
+    if(class(r)[1]!="try-error" && length(r)==1 && !is.function(r) && !i%in%names(mf)) nomiNO[[length(nomiNO)+1]]<-i
     }
 #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
 if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))

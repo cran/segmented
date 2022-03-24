@@ -1,4 +1,4 @@
-selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), control=seg.control(),
+selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic", "aic"), control=seg.control(),
                           return.fit=TRUE, bonferroni=FALSE, Kmax=2, msg=TRUE){
   #Selecting number of breakpoints in segmented regression (via the R package segmented)
   #Author: vito.muggeo@unipa.it
@@ -30,15 +30,16 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), 
     if(length(all.vars(seg.Z))>1) stop("Multiple variables are not allowed in seg.Z")
   }
   type<-match.arg(type)
-  if(type!="bic" && Kmax!=2) stop("Kmax>2 is not (yet) allowed with hypothesis testing procedures", call.=FALSE)
-  if(type=="bic"){
+  if(!type%in%c("bic","aic") && Kmax!=2) stop("Kmax>2 is not (yet?) allowed with hypothesis testing procedures", call.=FALSE)
+  if(type%in%c("bic","aic")){
+    BIC.f<-if(type=="bic") BIC else AIC
     npsi<-1:Kmax
     ris<-vector("list", length(npsi))  
     bic.values<-rep(NA, length(npsi))
     for(i in npsi){
       ris[[i]]<-suppressWarnings(try(segmented(olm, seg.Z, npsi=i, control=control, silent=TRUE)))
       if(!inherits(ris[[i]], "segmented")) ris[[i]]<-suppressWarnings(try(segmented(olm, seg.Z, npsi=i, control=control, silent=TRUE))) 
-      if(inherits(ris[[i]], "segmented")) bic.values[i]<- BIC(ris[[i]]) #-2*logLik(ris[[i]]))+ edf*log(n)*Cn
+      if(inherits(ris[[i]], "segmented")) bic.values[i]<- BIC.f(ris[[i]]) #-2*logLik(ris[[i]]))+ edf*log(n)*Cn
       #if(inherits(ris[[i]], "segmented")) {
       #  osum<-summary(ris[[i]])
       #  edf<-osum$df[1]
@@ -47,7 +48,7 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), 
       #  bic.values[i]<- log(sigma2)+ edf * (log(n)/n)*1 
       #}
     }
-    bic.values<-c(BIC(olm), bic.values)
+    bic.values<-c(BIC.f(olm), bic.values)
     names(bic.values)<-c("0", npsi)
     n.psi.ok<- c(0,npsi)[which.min(bic.values)]
     r<-list(bic.values=bic.values, n.psi=n.psi.ok)
@@ -56,8 +57,8 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic"), 
     }
     
     if(msg){
-      cat("BIC to detect no. of breakpoints\n")
-      cat("BIC values:\n")
+      if(type=="BIC") cat("BIC to detect no. of breakpoints\n") else cat("AIC to detect no. of breakpoints\n")
+      if(type=="BIC")  cat("BIC values:\n") else cat("AIC values:\n")
       print(bic.values)
       cat(paste("No. of selected breakpoints: ", n.psi.ok, " \n"))
     }

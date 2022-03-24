@@ -2,6 +2,20 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
 #-------------------------
     useExp.k=TRUE
     #-----------------
+    #NB iniziato a modificare il 28/01 (dopo l'invio della 1.4-0)
+    
+    search.min <- function(h, psi, psi.old, X, y, w, offs) {#DUBBIO: Ma fam, eta0, L0 e maxit.glm devo passarli come argom,enti o li trova?
+        psi.ok<- psi*h + psi.old*(1-h)
+        PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
+        U1 <- (Z - PSI) * (Z > PSI)
+        if (pow[1] != 1) U1 <- U1^pow[1]
+        obj1 <- try(suppressWarnings(glm.fit(x = cbind(X, U1), y = y, offset = offs,
+                                    weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)),
+                                    silent = TRUE)
+        L1 <- if (class(obj1)[1] == "try-error") L0 + 10 else obj1$dev
+        L1
+    }
+    #----------------
     est.k<-function(x1,y1,L0){
         ax<-log(x1)
         .x<-cbind(1,ax,ax^2)
@@ -170,40 +184,53 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
         
         psi.old<-psi
         psi <- psi.old + gamma.c/beta.c
+        #############################aggiusta la stima di psi..
+        #DIREZIONE
+        psi<- adj.psi(psi, rangeZ)
+        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs) #DUBBIO: Ma fam, eta0, L0 e maxit.glm devo passarli come argom,enti o li trova?
+        k.values[length(k.values) + 1] <- use.k <- a$minimum
+        L1<- a$objective
+        #L1.k[length(L1.k) + 1] <- L1<- a$objective
+        psi <- psi*use.k + psi.old* (1-use.k)
+
         if(!is.null(digits)) psi<-round(psi, digits)
         PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
-        
         #--modello con il nuovo psi
         U1<-(Z-PSI)*(Z>PSI)
-        if(pow[1]!=1) U1<-U1^pow[1]
-        obj1 <- try(suppressWarnings(glm.fit(cbind(XREG, U1), y = y, offset = offs,
-                                             weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)), silent = TRUE)
-        L1<- if(class(obj1)[1]=="try-error") L0+10 else obj1$dev
-        use.k<-k<-1
-        L1.k<-NULL
-        L1.k[length(L1.k)+1]<-L1
         
-        while(L1>L0){
-            k<-k+1
-            use.k <- if(useExp.k) 2^(k-1) else k
-            psi <- psi.old + (gamma.c/beta.c)/(use.k*h)
-            if(!is.null(digits)) psi<-round(psi, digits)
-            PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
-            U1<-(Z-PSI)*(Z>PSI)
-            if(pow[1]!=1) U1<-U1^pow[1]
-            obj1 <- try(suppressWarnings(glm.fit(cbind(XREG, U1), y = y, offset = offs,
-                            weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)), silent = TRUE)
-            L1<- if(class(obj1)[1]=="try-error") L0+10 else obj1$dev
-            L1.k[length(L1.k)+1]<-L1
-            if(1/(use.k*h)<min.step){
-                #        #        #warning("step halving too small") 
-                break}
-        } #end while L0-L1
+        
+        #if(pow[1]!=1) U1<-U1^pow[1]
+        # obj1 <- try(suppressWarnings(glm.fit(cbind(XREG, U1), y = y, offset = offs,
+        #                                      weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)), silent = TRUE)
+        # L1<- if(class(obj1)[1]=="try-error") L0+10 else obj1$dev
+        # use.k<-k<-1
+        # L1.k<-NULL
+        # L1.k[length(L1.k)+1]<-L1
+        # 
+        # while(L1>L0){
+        #     k<-k+1
+        #     use.k <- if(useExp.k) 2^(k-1) else k
+        #     psi <- psi.old + (gamma.c/beta.c)/(use.k*h)
+        #     if(!is.null(digits)) psi<-round(psi, digits)
+        #     PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
+        #     U1<-(Z-PSI)*(Z>PSI)
+        #     if(pow[1]!=1) U1<-U1^pow[1]
+        #     obj1 <- try(suppressWarnings(glm.fit(cbind(XREG, U1), y = y, offset = offs,
+        #                     weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)), silent = TRUE)
+        #     L1<- if(class(obj1)[1]=="try-error") L0+10 else obj1$dev
+        #     L1.k[length(L1.k)+1]<-L1
+        #     if(1/(use.k*h)<min.step){
+        #         #        #        #warning("step halving too small") 
+        #         break}
+        # } #end while L0-L1
+        
+        
+        
         if (visual) {
             flush.console()
             cat(paste("iter = ", sprintf("%2.0f",it),
                       "  dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), L1), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
-                      "  k = ", sprintf("%2.0f", k),
+                      "  k = ", sprintf("%2.0f", use.k),
                       "  n.psi = ",formatC(length(unlist(psi)),digits=0,format="f"), 
                       "  est.psi = ",paste(formatC(unlist(psi),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
                       sep=""), "\n")
@@ -266,7 +293,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
     
     #U e V possono essere cambiati (rimozione/ordinamento psi.. ) per cui si deve ricalcolare il tutto, altrimenti sarebbe uguale a U1 e obj1
-    if(sd(PSI-PSI.old)>0 || id.psi.changed[length(id.psi.changed)]){
+    #if(sd(PSI-PSI.old)>0 || id.psi.changed[length(id.psi.changed)]){
         U <- (Z-PSI)*(Z>PSI)
         colnames(U)<-paste("U", 1:ncol(U), sep = "")
         V <- -(Z>PSI)
@@ -277,15 +304,16 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
                     weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)), 
                     silent = TRUE)
         L1<- obj$dev
-        } else {
-        obj<-obj1
-        }
+        #} else {
+        #obj<-obj1
+        #}
     obj$coefficients<-c(obj$coefficients, rep(0,ncol(V)))
     names(obj$coefficients)<-names.coef
     obj$epsilon <- epsilon
     obj$it <- it
     
     obj<-list(obj=obj,it=it,psi=psi, psi.values=psi.values, U=U,V=V,rangeZ=rangeZ,
-              epsilon=epsilon,nomiOK=nomiOK, dev.no.gap=L1, id.psi.group=id.psi.group,id.warn=id.warn) #inserire id.psi.ok?
+              epsilon=epsilon,nomiOK=nomiOK, dev.no.gap=L1, id.psi.group=id.psi.group,
+              id.warn=id.warn) #inserire id.psi.ok?
     return(obj)
 }

@@ -101,7 +101,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     #non so a che serva la seguente linea..
-    if(class(mf$formula)=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
+    if(class(mf$formula)[1]=="name" && !"~"%in%paste(mf$formula)) mf$formula<-eval(mf$formula)
     mfExt<- mf
     mf$formula<-update.formula(mf$formula,paste(seg.Z,collapse=".+"))
     if(!is.null(obj$call$offset) || !is.null(obj$call$weights) || !is.null(obj$call$subset)){ 
@@ -126,7 +126,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     nomiNO<-NULL #dovrebbe contenere
     for(i in nomiTUTTI){
       r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
-      if(class(r)!="try-error" && length(r)==1 && !is.function(r) && !i%in%names(mf)) nomiNO[[length(nomiNO)+1]]<-i
+      if(class(r)[1]!="try-error" && length(r)==1 && !is.function(r) && !i%in%names(mf)) nomiNO[[length(nomiNO)+1]]<-i
     }
     #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
     if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))

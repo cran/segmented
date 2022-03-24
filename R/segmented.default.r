@@ -149,7 +149,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
-    if (class(mf$formula) == "name" && !"~" %in% paste(mf$formula)) 
+    if (class(mf$formula)[1] == "name" && !"~" %in% paste(mf$formula)) 
         mf$formula <- eval(mf$formula)
     #mf$formula <- update.formula(mf$formula, paste(seg.Z, collapse = ".+"))
     mf$formula <- update.formula1(mf$formula, paste(seg.Z, collapse = ".+"), opt=2)
@@ -176,7 +176,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     nomiNO <- NULL
     for (i in nomiTUTTI) {
         r <- try(eval(parse(text = i), parent.frame()), silent = TRUE)
-        if (class(r) != "try-error" && length(r) == 1 && !is.function(r) && !i%in%names(mf)) 
+        if (class(r)[1] != "try-error" && length(r) == 1 && !is.function(r) && !i%in%names(mf)) 
             nomiNO[[length(nomiNO) + 1]] <- i
         }
     if (!is.null(nomiNO)) 
@@ -421,7 +421,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     objF <- update(obj0, Fo, evaluate = FALSE, data = mfExt)
     if (!is.null(objF[["subset"]]))  objF[["subset"]] <- NULL
     if (is.null(opz$constr)) opz$constr <- 0
-    if ((opz$constr %in% 1:2) && class(obj0) == "rq") {
+    if ((opz$constr %in% 1:2) && class(obj0)[1] == "rq") {
         objF$method <- "fnc"
         objF$R <- quote(R)
         objF$r <- quote(r)
@@ -440,7 +440,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
                 call. = FALSE)
             Fo <- update.formula1(formula(obj0), as.formula(paste(".~.+", 
                 paste(nomiU, collapse = "+"))), opt=1)
-            objF <- if ((opz$constr %in% 1:2) && class(obj0) == 
+            objF <- if ((opz$constr %in% 1:2) && class(obj0)[1] == 
                 "rq") {
                 update(obj0, formula = Fo, R = R.noV, r = r, 
                   method = "fnc", evaluate = TRUE, data = mfExt)

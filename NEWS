@@ -5,6 +5,12 @@
 ****************************
 
 
+===============
+version 1.4-1 (2022-03-24)
+===============
+* Improvement in the estimating algorithm for segmented.glm
+* Minor changes: option 'aic' introduced in selgmented(); 'alpha' in seg.control is set to 0.05 (it was 0.02); 'shift' in lines.segmented() now defaults to FALSE (was TRUE); a simple correction for plot.segmented(.., rev.sgn=TRUE); predict.segmented now also works for lme fits (thanks to Ting-Fang Lee for his input). 
+
 
 ===============
 version 1.4-0 (2022-01-28)

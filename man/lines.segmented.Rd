@@ -7,7 +7,7 @@
   on the current device
 }
 \usage{
-\method{lines}{segmented}(x, term, bottom = TRUE, shift=TRUE, conf.level = 0.95, k = 50, 
+\method{lines}{segmented}(x, term, bottom = TRUE, shift=FALSE, conf.level = 0.95, k = 50, 
     pch = 18, rev.sgn = FALSE, .vcov=NULL, .coef=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.

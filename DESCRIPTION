@@ -1,8 +1,8 @@
 Package: segmented
 Type: Package
 Title: Regression Models with Break-Points / Change-Points Estimation
-Version: 1.4-0
-Date: 2022-01-28
+Version: 1.4-1
+Date: 2022-03-22
 Authors@R: c(person(given = c("Vito","M.","R."), family = "Muggeo", role =
         c("aut", "cre"), email = "vito.muggeo@unipa.it", comment=c(ORCID="0000-0002-3386-4054")))
 Maintainer: Vito M. R. Muggeo <vito.muggeo@unipa.it>
@@ -14,7 +14,7 @@ Description: Given a regression model, segmented `updates' it by adding one or m
 Depends: MASS
 License: GPL
 NeedsCompilation: no
-Packaged: 2022-01-28 09:25:48 UTC; vito
+Packaged: 2022-03-24 12:19:54 UTC; vito
 Author: Vito M. R. Muggeo [aut, cre] (<https://orcid.org/0000-0002-3386-4054>)
 Repository: CRAN
-Date/Publication: 2022-01-28 09:50:02 UTC
+Date/Publication: 2022-03-24 15:40:02 UTC

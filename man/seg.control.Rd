@@ -10,7 +10,7 @@
 seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     K = 10, quant = TRUE, maxit.glm = 25, h = 1, break.boot=5, size.boot=NULL, 
     jt=FALSE, nonParam=TRUE, random=TRUE, seed=12345, fn.obj=NULL, digits=NULL, 
-    conv.psi=FALSE, alpha=.02, min.step=.0001, 
+    conv.psi=FALSE, alpha=.05, min.step=.0001, 
     powers=c(1,1), last = TRUE, stop.if.error = NULL, gap=FALSE, fc=.95)
 }
 %- maybe also 'usage' for other objects documented here.
