@@ -238,7 +238,7 @@ daviesGLM<-function(y, z, xreg, weights, offs, values=NULL, k, list.glm, alterna
     if(is.null(values)) values<-seq(sort(Z)[2], sort(Z)[(n - 1)], length = k)
        #values<-seq(min(z), max(z), length=k+2)
        #values<-values[-c(1,length(values))]
-    if(class(obj)=="lm" || identical(class(obj),c("segmented","lm")) ) {
+    if(class(obj)[1]=="lm" || identical(class(obj),c("segmented","lm")) ) {
         if(n<=300) { 
           rr<-daviesLM(y=y, z=Z, xreg=XREG, weights=weights, 
         offs=offs, values=values, k=k, alternative=alternative)

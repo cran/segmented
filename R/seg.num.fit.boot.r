@@ -1,4 +1,4 @@
-seg.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, jt=FALSE,
+seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL, jt=FALSE,
     nonParam=TRUE, random=FALSE, break.boot=n.boot){
 #random se TRUE prende valori random quando e' errore: comunque devi modificare qualcosa (magari con it.max)
 #     per fare restituire la dev in corrispondenza del punto psi-random
@@ -39,14 +39,14 @@ extract.psi<-function(lista){
       opz1<-opz
       opz1$it.max <-1
       n<-length(y)
-      o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)), silent=TRUE)
+      o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI, w, opz, return.all.sol=FALSE)), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
       
       alpha <- opz$alpha
       limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
       
       if(!is.list(o0)) {
-          o0<- suppressWarnings(seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))
+          o0<- suppressWarnings(seg.num.fit(y, XREG, Z, PSI, w, opz, return.all.sol=TRUE))
           o0<-extract.psi(o0)
           ss00<-opz$dev0
           if(!nonParam) {warning("using nonparametric boot");nonParam<-TRUE}
@@ -60,7 +60,7 @@ extract.psi<-function(lista){
           if(random) {
             est.psi00<-est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
             PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-            o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1)), silent=TRUE)
+            o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI1, w, opz1)), silent=TRUE)
             ss00<-o0$SumSquares.no.gap
           } else {
           est.psi00<-est.psi0<-apply(PSI,2,mean)
@@ -98,11 +98,11 @@ extract.psi<-function(lista){
         if(jt) Z<-apply(Z.orig,2,jitter)
         if(nonParam){
               id<-sample(n, size=size.boot, replace=TRUE)
-              o.boot<-try(suppressWarnings(seg.lm.fit(y[id], XREG[id,,drop=FALSE], Z[id,,drop=FALSE], PSI[id,,drop=FALSE],
-                w[id], offs[id], opz.boot)), silent=TRUE)
+              o.boot<-try(suppressWarnings(seg.num.fit(y[id], XREG[id,,drop=FALSE], Z[id,,drop=FALSE], PSI[id,,drop=FALSE],
+                w[id], opz.boot)), silent=TRUE)
         } else {
               yy<-fitted.ok+sample(residuals(o0),size=n, replace=TRUE)
-              o.boot<-try(suppressWarnings(seg.lm.fit(yy, XREG, Z.orig, PSI, weights, offs, opz.boot)), silent=TRUE)
+              o.boot<-try(suppressWarnings(seg.num.fit(yy, XREG, Z.orig, PSI, weights, opz.boot)), silent=TRUE)
         }
         if(is.list(o.boot)){
             all.est.psi.boot[k,]<-est.psi.boot<-o.boot$psi
@@ -116,11 +116,11 @@ extract.psi<-function(lista){
         PSI <- matrix(rep(est.psi.boot, rep(nrow(Z), length(est.psi.boot))), ncol = length(est.psi.boot))
         opz$h<-max(opz$h*.9, .2)
         opz$it.max<-opz$it.max+1
-        o<-try(suppressWarnings(seg.lm.fit(y, XREG, Z.orig, PSI, w, offs, opz, return.all.sol=TRUE)), silent=TRUE)
+        o<-try(suppressWarnings(seg.num.fit(y, XREG, Z.orig, PSI, w, opz, return.all.sol=TRUE)), silent=TRUE)
         if(!is.list(o) && random){
                 est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
                 PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-                o<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1)), silent=TRUE)
+                o<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI1, w, opz1)), silent=TRUE)
                 count.random<-count.random+1
         }
         #se il modello e' stato stimato controlla se la soluzione e' migliore..
@@ -172,7 +172,7 @@ extract.psi<-function(lista){
 
       if(is.null(o0$obj)){
           PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-          o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1)), silent=TRUE)
+          o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI1, w, opz1)), silent=TRUE)
       }
       if(!is.list(o0)) return(0)
       o0$boot.restart<-ris

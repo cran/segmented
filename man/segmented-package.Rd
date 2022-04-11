@@ -13,8 +13,8 @@ fixed number of break-points. The estimation method is described in Muggeo (2003
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 1.4-1\cr
-Date: \tab 2022-03-24\cr
+Version: \tab 1.5-0\cr
+Date: \tab 2022-04-11\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)

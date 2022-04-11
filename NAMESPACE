@@ -11,14 +11,16 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "printCoefmat", "pt", "qnorm", "qt", "quantile", "resid",
              "residuals", "runif", "summary.glm", "summary.lm", "update",
              "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun",
-             "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", "terms","AIC")
+             "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", 
+             "terms","is.ts", "tsp", "AIC",".lm.fit","var")
 importFrom("utils", "flush.console")
 
-export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,
+export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima, segmented.numeric,
 	broken.line ,confint.segmented,davies.test,pscore.test,draw.history,aapc,
 	intercept,lines.segmented,plot.segmented,print.segmented, coef.segmented,
 	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
 	seg.def.fit,seg.def.fit.boot, seg.Ar.fit,seg.Ar.fit.boot,
+	seg.num.fit, seg.num.fit.boot,
 	slope, summary.segmented,print.summary.segmented,vcov.segmented, predict.segmented, 
 	points.segmented, aapc, selgmented, pwr.seg)
 
@@ -26,7 +28,7 @@ S3method(segmented,default)
 S3method(segmented,lm)
 S3method(segmented,glm)
 S3method(segmented,Arima)
-
+S3method(segmented,numeric)
 S3method(plot,segmented)
 S3method(print,segmented)
 S3method(summary,segmented)

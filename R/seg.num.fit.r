@@ -1,15 +1,14 @@
-seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE) 
-{
+seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
+    #browser()
     useExp.k = TRUE
-    search.min<-function(h, psi, psi.old, X, y, w, offs) {
+    search.min<-function(h, psi, psi.old, X, y) {
         psi.ok<- psi*h + psi.old*(1-h)
         PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
         U1 <- (Z - PSI) * (Z > PSI)
-        if (pow[1] != 1) U1 <- U1^pow[1]
-        obj1 <- try(mylm(cbind(X, U1), y, w, offs), silent = TRUE)
-        if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w, offs), silent = TRUE)
+        obj1 <- try(mylm(cbind(X, U1), y), silent = TRUE)
+        if (class(obj1)[1] == "try-error") obj1 <- try(.lm.fit(x=cbind(X, U1), y), silent = TRUE)
         L1 <- if (class(obj1)[1] == "try-error") L0 + 10
-        else sum(obj1$residuals^2 * w)
+        else sum(obj1$residuals^2)
         L1
     }
     est.k <- function(x1, y1, L0) {
@@ -26,11 +25,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
             -(x > y)
         else -pow * ((x - y) * (x > y))^(pow - 1)
     }
-    mylm <- function(x, y, w, offs = rep(0, length(y))) {
-        x1 <- x * sqrt(w)
-        y <- y - offs
-        y1 <- y * sqrt(w)
-        b <- drop(solve(crossprod(x1), crossprod(x1, y1)))
+    mylm <- function(x, y) {
+        b <- drop(solve(crossprod(x), crossprod(x, y)))
         fit <- drop(tcrossprod(x, t(b)))
         r <- y - fit
         o <- list(coefficients = b, fitted.values = fit, residuals = r, 
@@ -89,12 +85,16 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     adj.psi <- function(psii, LIM) {
         pmin(pmax(LIM[1, ], psii), LIM[2, ])
     }
+    #XREG<-cbind(1,Z[,1])
+    
+
     n <- length(y)
     min.step <- opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha <- opz$alpha
     limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
     psi <- PSI[1, ]
+    npsi<- length(psi)
     id.psi.group <- opz$id.psi.group
     conv.psi <- opz$conv.psi
     h <- opz$h
@@ -121,7 +121,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         XREG <- XREG[, sel.col.XREG, drop = FALSE]
     invXtX <- opz$invXtX
     Xty <- opz$Xty
-    if (!in.psi(limZ, PSI, FALSE)) 
+    #browser()
+    if(!in.psi(limZ, PSI, FALSE)) 
         stop("starting psi out of the range.. see 'alpha' in seg.control.", 
             call. = FALSE)
     if (!far.psi(Z, PSI, id.psi.group, FALSE)) 
@@ -129,10 +130,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
             call. = FALSE)
     n.psi1 <- ncol(Z)
     U <- ((Z - PSI) * (Z > PSI))
-    if (pow[1] != 1) U <- U^pow[1]
-    obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
-    if (class(obj0)[1] == "try-error") obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
-    L0 <- sum(obj0$residuals^2 * w)
+    obj0 <-list(residuals=rep(1,3))
+    L0 <- var(y)*n #sum(obj0$residuals^2)
     n.intDev0 <- nchar(strsplit(as.character(L0), "\\.")[[1]][1])
     dev.values[length(dev.values) + 1] <- opz$dev0
     dev.values[length(dev.values) + 1] <- L0
@@ -147,28 +146,31 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     }
     id.warn <- FALSE
     id.psi.changed <- rep(FALSE, it.max)
+    nomiUV<-c(paste("U", 1:ncol(U), sep = ""), paste("V", 1:ncol(U), sep = ""))
+    idU <- seq_along(psi)+ncol(XREG)
+    idV <- seq_along(psi)+max(idU)
     #============================================== inizio ciclo
+    
     while (abs(epsilon) > toll) {
         it <- it + 1
         n.psi0 <- n.psi1
         n.psi1 <- ncol(Z)
         if (n.psi1 != n.psi0) {
             U <- ((Z - PSI) * (Z > PSI))
-            if (pow[1] != 1) 
-                U <- U^pow[1]
-            obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
-            if (class(obj0)[1] == "try-error") 
-                obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
-            L0 <- sum(obj0$residuals^2 * w)
+            #if (pow[1] != 1) U <- U^pow[1]
+            obj0 <- try(mylm(cbind(XREG, U), y), silent = TRUE)
+            if(class(obj0)[1] == "try-error") obj0 <- .lm.fit(cbind(XREG, U), y)
+            L0 <- sum(obj0$residuals^2)
         }
         V <- dpmax(Z, PSI, pow = pow[2])
+        U <- (Z - PSI) * (Z > PSI)
         X <- cbind(XREG, U, V)
-        rownames(X) <- NULL
-        colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U", 
-            1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
-        obj <- lm.wfit(x = X, y = y, w = w, offset = offs)
-        beta.c <- coef(obj)[paste("U", 1:ncol(U), sep = "")]
-        gamma.c <- coef(obj)[paste("V", 1:ncol(V), sep = "")]
+        #colnames(X)[2:ncol(X)] <- nomiUV
+            
+        
+        obj <- lm.fit(x = X, y = y) #puoi usare .lm.fit(), ma i coeff non stimati non sono NA ma zero! vedi seg.lm in cumSeg.. 
+        beta.c <-  obj$coefficients[idU] #coef(obj)[paste("U", 1:ncol(U), sep = "")]
+        gamma.c <- obj$coefficients[idV] # coef(obj)[paste("V", 1:ncol(V), sep = "")]
         if (any(is.na(c(beta.c, gamma.c)))) {
             if (fix.npsi) {
                 if (return.all.sol) 
@@ -197,10 +199,10 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         psi.old <- psi
         psi <- psi.old + gamma.c/beta.c
         #aggiusta la stima di psi..
-        psi<- adj.psi(psi, rangeZ)
+        psi<- adj.psi(psi, limZ)
         #browser()
         
-        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs)
+        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y)
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
         #L1.k[length(L1.k) + 1] <- L1<- a$objective
@@ -208,14 +210,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         psi<- adj.psi(psi, limZ)
         if (!is.null(digits)) psi <- round(psi, digits)
         PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
-        U1 <- (Z - PSI) * (Z > PSI)
         
-        
-        
-        #if (pow[1] != 1) U1 <- U1^pow[1]
-        #obj1 <- try(mylm(cbind(XREG, U1), y, w, offs), silent = TRUE)
-        #if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(XREG, U1), y, w, offs), silent = TRUE)
-
         if (visual) {
             flush.console()
             cat(paste("iter = ", sprintf("%2.0f", it), "  dev = ", 
@@ -230,7 +225,6 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
             max(abs((psi - psi.old)/psi.old))
         else (L0 - L1)/(abs(L0) + 0.1)
         L0 <- L1
-        U <- U1
         k.values[length(k.values) + 1] <- use.k
         psi.values[[length(psi.values) + 1]] <- psi
         dev.values[length(dev.values) + 1] <- L0
@@ -282,12 +276,12 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     #PSI.old <- PSI
     PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
     #if (sd(PSI - PSI.old) > 0 || id.psi.changed[length(id.psi.changed)]) {
-        U <- (Z - PSI) * (Z > PSI)
-        colnames(U) <- paste("U", 1:ncol(U), sep = "")
-        V <- -(Z > PSI)
-        colnames(V) <- paste("V", 1:ncol(V), sep = "")
-        obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
-        L1 <- sum(obj$residuals^2 * w)
+    U <- (Z - PSI) * (Z > PSI)
+    colnames(U) <- paste("U", 1:ncol(U), sep = "")
+    V <- -(Z > PSI)
+    colnames(V) <- paste("V", 1:ncol(V), sep = "")
+    obj <- .lm.fit(x = cbind(XREG, U), y = y)
+    L1 <- sum(obj$residuals^2)
     #}
     #else {
     #    obj <- obj1
@@ -299,6 +293,6 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, 
         U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
         SumSquares.no.gap = L1, id.psi.group = id.psi.group, 
-        id.warn = id.warn)
+        id.warn = id.warn, idU=idU, idV=idV)
     return(obj)
 }

@@ -115,7 +115,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
     n.psi1 <- ncol(Z)
     if (is.null(opz$constr)) 
         opz$constr <- 0
-    if ((opz$constr %in% 1:2) && class(obj) == "rq") {
+    if ((opz$constr %in% 1:2) && class(obj)[1] == "rq") {
         vincoli <- TRUE
         call.ok$method <- "fnc"
         call.ok$R <- quote(R)
@@ -195,6 +195,8 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
         }
         psi.old <- psi
         psi <- psi.old + gamma.c/beta.c
+        psi<- adj.psi(psi, limZ)
+        
         if (!is.null(digits)) 
             psi <- round(psi, digits)
         PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))

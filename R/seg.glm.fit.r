@@ -184,14 +184,16 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
         
         psi.old<-psi
         psi <- psi.old + gamma.c/beta.c
-        #############################aggiusta la stima di psi..
-        #DIREZIONE
         psi<- adj.psi(psi, rangeZ)
+        #############################aggiusta la stima di psi (nel range.. dopo in limZ)
+        #DIREZIONE
         a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs) #DUBBIO: Ma fam, eta0, L0 e maxit.glm devo passarli come argom,enti o li trova?
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
         #L1.k[length(L1.k) + 1] <- L1<- a$objective
         psi <- psi*use.k + psi.old* (1-use.k)
+        
+        psi<- adj.psi(psi, limZ)
 
         if(!is.null(digits)) psi<-round(psi, digits)
         PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))

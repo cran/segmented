@@ -28,6 +28,9 @@ extract.psi<-function(lista){
       n<-nrow(Z)
       o0<-try(suppressWarnings(seg.Ar.fit(obj, XREG, Z, PSI, opz)), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
+      alpha <- opz$alpha
+      limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+      
       if(!is.list(o0)) {
           o0<- seg.Ar.fit(obj, XREG, Z, PSI, opz, return.all.sol=TRUE)
           o0<-extract.psi(o0)
@@ -41,7 +44,7 @@ extract.psi<-function(lista){
         } else {
           if(!nonParam) stop("the first fit failed and I cannot extract fitted values for the semipar boot")
           if(random) {
-            est.psi00<-est.psi0<-apply(rangeZ,2,function(r)runif(1,r[1],r[2]))
+            est.psi00<-est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
             PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
             o0<-try(suppressWarnings(seg.Ar.fit(obj, Z, PSI1, opz1)), silent=TRUE)
             ss00<-o0$SumSquares.no.gap
@@ -85,14 +88,14 @@ extract.psi<-function(lista){
           if(is.list(o.boot)){
             all.est.psi.boot[k,]<-est.psi.boot<-o.boot$psi
             } else {
-            est.psi.boot<-apply(rangeZ,2,function(r)runif(1,r[1],r[2]))
+            est.psi.boot<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
             }
           PSI <- matrix(rep(est.psi.boot, rep(nrow(Z), length(est.psi.boot))), ncol = length(est.psi.boot))
           #opz$h<-max(opz$h*.9, .2)
           opz$it.max<-opz$it.max+1
           o <- try(suppressWarnings(seg.Ar.fit(obj, XREG, Z.orig, PSI, opz, return.all.sol=TRUE)), silent=TRUE)
           if(!is.list(o) && random){
-              est.psi0<-apply(rangeZ,2,function(r) runif(1,r[1],r[2]))
+              est.psi0<-apply(limZ,2,function(r) runif(1,r[1],r[2]))
               PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
               o <- try(suppressWarnings(seg.Ar.fit(obj, XREG, Z, PSI1, opz1)), silent=TRUE)
               count.random<-count.random+1

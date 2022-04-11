@@ -9,6 +9,10 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
 #    Fo <- as.formula(Fo.charac)
 #    Fo.conDisp <- as.formula(paste(Fo.charac,nomiX.disp,sep="|"))
     #}
+  if(is.ts(obj)) {
+    o<-segmented.numeric(obj, seg.Z, psi, npsi, fixed.psi, control, model, keep.class=FALSE, ...)
+    return(o)
+  }
   build.all.psi<-function(psi, fixed.psi){
     all.names.psi<-union(names(psi),names(fixed.psi))
     all.psi<-vector("list", length=length(all.names.psi))

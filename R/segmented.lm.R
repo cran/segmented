@@ -313,8 +313,10 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     list.obj <- list(obj)
 #    psi.values <- NULL
     nomiOK<-nomiU
-    invXtX<-if(!is.null(obj$qr)) chol2inv(qr.R(obj$qr)) else NULL #(XtX)^{-1}
-    Xty<-crossprod(XREG,y)
+    #invXtX<-if(!is.null(obj$qr)) chol2inv(qr.R(obj$qr)) else NULL #(XtX)^{-1}
+    #Xty<-crossprod(XREG,y)
+    invXtX<-Xty<-NULL
+    #browser()
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc)
@@ -403,11 +405,12 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         return(objF)      
         }
     }
+    #browser()
     if(!gap){
       names.coef<-names(objF$coefficients)
       #questi codici funzionano e si basano sull'assunzioni che le U e le V siano ordinate..
       names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi  
-      objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce gli 0 
+      objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce tutti i coef (gli ultimi sono 0)  
       #objF$coefficients<-obj$coefficients
       #names(objF$coefficients)<-names.coef
       objF$fitted.values<-obj$fitted.values

@@ -176,6 +176,8 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
         }
         psi.old<-psi
         psi <- psi.old + gamma.c/beta.c
+        psi<- adj.psi(psi, limZ)
+        
         if(!is.null(digits)) psi<-round(psi, digits)
         PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
         

@@ -4,6 +4,7 @@
 \alias{segmented.glm}
 \alias{segmented.default}
 \alias{segmented.Arima}
+\alias{segmented.numeric}
 %\alias{print.segmented}
 %\alias{summary.segmented}
 %\alias{print.summary.segmented}
@@ -30,27 +31,37 @@ segmented(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
 
 \method{segmented}{Arima}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
     model = TRUE, keep.class=FALSE, ...)
+    
+\method{segmented}{numeric}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
+    model = TRUE, keep.class=FALSE, adjX=FALSE, weights=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{obj}{ standard `linear' model of class "lm", "glm" or "Arima". Since version 0.5.0-0 any regression 
-    fit may be supplied (see 'Details').}
+    fit may be supplied (see 'Details'). \code{obj} could include any covariate, and if there is also the variable specified in \code{seg.Z}, then all the slopes of the fitted segmented relationship will be estimated. If \code{obj} misses the segmented variable, then the 1st (the leftmost) slope is assumed to be zero. Since version 1.5.0, \code{obj} can be a simple numeric or \code{ts} object, see examples below.}
 \item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, 
-such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. Also, variable names formed by \verb{U} or \verb{V} only (with or without numbers ) are not permitted.}
-\item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is   a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. 
-      A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; 
-      \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. }
-\item{npsi}{A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally computed via the quantiles or equally spaced values, as specified in argument \code{quant} in \code{\link{seg.control}}. \code{npsi} can be missing and \code{npsi=1} is assumed for all variables specified in \code{seg.Z}. If \code{psi} is provided, \code{npsi} is ignored.}
+such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. Also, variable names formed by \verb{U} or \verb{V} only (with or without numbers) are not permitted.}
+\item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. 
+      }
+\item{npsi}{
+  A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally   computed via the quantiles or equally spaced values, as specified in argument \code{quant} in \code{\link{seg.control}}. \code{npsi} can be   missing and \code{npsi=1} is assumed for all variables specified in \code{seg.Z}. If \code{psi} is provided, \code{npsi} is ignored.
+  }
 \item{fixed.psi}{An optional named list meaning the breakpoints to be kept fixed during the estimation procedure. The names should be a subset of (or even the same) variables specified in \code{seg.Z}. If there is a single variable in \code{seg.Z}, a simple numeric vector can be specified. Note that, in addition to the values specified here, \code{segmented} will estimate additional breakpoints. To keep fixed all breakpoints (to be specified in \code{psi}) use \code{it.max=0} in \code{\link{seg.control}}
 }
 \item{control}{ a list of parameters for controlling the fitting process.
       See the documentation for \code{\link{seg.control}} for details. }
   \item{model}{logical value indicating if the model.frame should be returned.}
   \item{keep.class}{logical value indicating if the final fit returned by \code{segmented.default} should keep the class '\code{segmented}' (along with the class of the original fit \code{obj}). Ignored by the segmented methods. }
-  \item{\dots}{ optional arguments (to be ignored safely). Notice specific arguments relevant to the original call (via \code{lm} or \code{glm} for instance), such as \code{weights} or \code{offet}, have to be included in the starting model \code{obj}}
+  \item{\dots}{ optional arguments (to be ignored safely). Notice specific arguments relevant to the original call (via \code{lm} or \code{glm} for instance), such as \code{weights} or \code{offet}, have to be included in the starting model \code{obj}
+  }
+  \item{adjX}{if \code{obj} is a \code{ts}, the segmented variable (if not specified in \code{seg.Z}) is computed by taking information from the time series (e.g., years starting from 2000, say). If \code{adjX=TRUE}, the segmented variable is shifted such that its min equals zero.
+  Default is using the unshifted values, but if there are several breakpoints to be estimated , it is strongly suggested to set \code{adjX=TRUE}.
+  }
+  \item{weights}{the weights if \code{obj} is a vector or a ts object, otherwise the  weights should be specified in the 
+  starting fit \code{obj}.}
 }
 \details{
-  Given a linear regression model (usually of class "lm" or "glm"), segmented tries to estimate
+  Given a linear regression model usually of class "lm" or "glm" (or even a simple numeric/ts vector), segmented tries to estimate
   a new regression model having broken-line relationships with the variables specified in \code{seg.Z}.
   A segmented (or broken-line) relationship is defined by the slope
   parameters and the break-points where the linear relation changes. The number of breakpoints
@@ -162,9 +173,10 @@ out.lm<-lm(y~x,data=dati)
 #.. and 1 breakpoint has to be estimated for that
 o<-segmented(out.lm) #1 breakpoint for x
 
-#1 segmented variable not in the starting model and 1 breakpoint for that:
+#the single segmented variable is not in the starting model and 1 breakpoint for that:
 #... you need to specify the variable via seg.Z, but no starting value for psi
-o<-segmented(out.lm,seg.Z=~z)
+o<-segmented(out.lm, seg.Z=~z)
+#note the leftmost slope is constrained to be zero (since out.lm does not include z)
 
 #2 segmented variables, 1 breakpoint each (again no need to specify npsi or psi)
 o<-segmented(out.lm,seg.Z=~z+x)
@@ -207,6 +219,13 @@ draw.history(o, "z")
 #try to increase the number of iterations and re-assess the 
 #convergence diagnostics 
 
+
+# A simple segmented model with continuous responses and no linear covariates
+# No need to fit the starting lm model:
+segmented(yy, npsi=2)
+#if seg.Z is unspecified, the segmented variable is taken as 1:n/n 
+
+
 # An example using the Arima method:
 \dontrun{
 n<-50
@@ -229,7 +248,7 @@ plot(os1, add=TRUE, .coef=os1$coef, col=2)
 
 ######Three examples using the default method:
 
-# 1. Cox regression with a segmented relationship  
+#==> 1. Cox regression with a segmented relationship  
 \dontrun{
 library(survival)
 data(stanford2)
@@ -241,7 +260,8 @@ plot(os) #it does not work
 plot.segmented(os) #call explicitly plot.segmented() to plot the fitted piecewise lines
 
 
-# 2. Linear mixed model via the nlme package   
+
+# ==> 2. Linear mixed model via the nlme package   
 dati$g<-gl(10,10) #the cluster 'id' variable
 library(nlme)
 o<-lme(y~x+z, random=~1|g, data=dati)
@@ -251,9 +271,11 @@ os<-segmented.default(o, ~x+z, npsi=list(x=2, z=1))
 slope(os, .coef=fixef(os))
 plot.segmented(os, "x", .coef=fixef(os), conf.level=.95)
 confint.segmented(os, "x", .coef=fixef(os))
+dd<-data.frame(x=c(20,50),z=c(.2,.6), g=1:2)
+predict.segmented(os, newdata=dd, .coef=fixef(os)) 
 
 
-# 3. segmented quantile regression via the quantreg  package   
+# ==> 3. segmented quantile regression via the quantreg  package   
 library(quantreg)
 data(Mammals)
 y<-with(Mammals, log(speed))
