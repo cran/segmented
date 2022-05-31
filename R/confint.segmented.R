@@ -494,8 +494,8 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                                 segments(est.psi,0, est.psi, -20, lty=2)
                                 }
                                              
-                if(prod(range(U.valori))>=0) stop("the signs of stat at extremes are not discordant, increase 'h' o set 'h=-1' ")    
-                
+                if(prod(range(U.valori))>=0) stop("the signs of stat at extremes are not discordant, increase 'h' o set 'h=-1' ")
+
                 if(smooth==0){
                         #rimuovi i pezzi di U.valori decrescenti..
                         ####left
@@ -578,6 +578,8 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
         #==========================================================================
         #==========================================================================
 
+        
+        
         if(!all(class(obj) == c("segmented","lm"))) stop("A segmented lm object is requested")
         if(missing(parm)){
                 nomeZ<- parm<- obj$nameUV$Z
@@ -607,13 +609,22 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                         it<-it+1
                         #cat(it,"\n")
                         if(it>=20) break
-                        }
-                ra[U.j,]<-a
                 }
+                #browser()
+                if(class(a)[1]=="try-error"){
+                    nomePsij<-sub("U","psi", U.j)
+                    est.psi <- obj$psi[nomePsij, "Est."]
+                    X <- obj$model[, nomeZ]
+                    a<-c(est.psi, range(X))
+                    warning("The profile Score is not decreasing enough.. returning the whole range as CI")
+                }
+                ra[U.j,]<-a
+        }
         colnames(ra)<-c("Est.",paste("CI","(",level*100,"%",")",c(".low",".up"),sep=""))
         rownames(ra)<-sub("U","psi", nomiU.term)
         ra
-        } #end fn confintSegIS
+} #end fn confintSegIS
+        
         
 #=======================================================================================================
 #========== inizio funzione
@@ -624,6 +635,6 @@ if(method=="delta"){
         } else {
         r<-confintSegIS(object, parm, stat=method, conf.level=level, ...)       
         }
-r<-signif(r,digits)
+        r<-signif(r,digits)
 return(r)                
 }

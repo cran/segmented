@@ -8,7 +8,7 @@
 \usage{
 slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, 
     APC=FALSE, .vcov=NULL, .coef=NULL, 
-    use.t=NULL, ..., digits = max(4, getOption("digits") - 2))
+    use.t=NULL, by=NULL, ..., digits = max(4, getOption("digits") - 2))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,6 +23,10 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov(ogg)}.}
   \item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(ogg)}.}
   \item{use.t}{Which quantiles should be used to computre the confidence intervals? If \code{NULL} (default) the \eqn{t}{t} distribution is used only for objects obtained by \code{segmented.lm}. }
+  \item{by}{Only for \code{segmented.lme} objects. 
+  It is a named list indicating covariate names and corresponding values affecting the fitted segmented relationship. 
+  For instance, \code{by=list(group="2",z2=.2)}, provided that the model has been fitted by specifying \code{group} and \code{z2} in \code{x.diff} and/or \code{z.psi}
+  }
   \item{...}{ Further arguments to be passed on to \code{vcov.segmented}, such as \code{var.diff} and \code{is}. See Details in \code{\link{vcov.segmented}} and \code{\link{summary.segmented}}.}
 \item{digits}{controls number of digits in the returned output.}
 }

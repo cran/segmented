@@ -323,6 +323,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
         dev0 <- 10
     list.obj <- list(obj)
     nomiOK <- nomiU
+    if(is.null(alpha)) alpha<- max(.05, 1/nrow(PSI))
     opz <- list(toll = toll, h = h, stop.if.error = stop.if.error, 
         dev0 = dev0, visual = visual, it.max = it.max, nomiOK = nomiOK, 
         id.psi.group = id.psi.group, gap = gap, visualBoot = visualBoot, 

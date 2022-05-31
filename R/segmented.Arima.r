@@ -227,6 +227,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     list.obj <- list(obj)
     nomiOK<-nomiU
     
+    if(is.null(alpha)) alpha<- max(.05, 1/nrow(PSI))
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
               nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,
               conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,fc=fc)

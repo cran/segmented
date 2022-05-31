@@ -150,7 +150,9 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
     if(inherits(obj, "segmented") && length(obj$nameUV$Z)==1) seg.Z<- as.formula(paste("~", obj$nameUV$Z ))
     if(!inherits(obj, "segmented") && length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2]))
   } else {
-    if(class(seg.Z)!="formula") stop("'seg.Z' should be an one-sided formula")
+    #if(class(seg.Z)!="formula") stop("'seg.Z' should be an one-sided formula")
+    #if(!is(seg.Z,"formula"))  stop("'seg.Z' should be an one-sided formula")
+    if(!inherits(seg.Z,"formula"))  stop("'seg.Z' should be an one-sided formula")
   }
   if(any(c("$","[") %in% all.names(seg.Z))) stop(" '$' or '[' not allowed in 'seg.Z' ")
   name.Z <- all.vars(seg.Z)
@@ -165,7 +167,7 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
   alternative <- match.arg(alternative)
   if(!n.break%in%1:2) stop(" 'n.break' should be 1 or 2", call. = FALSE)
   if(n.break==2) alternative<-"two.sided"
-  isGLM<-"glm"%in%class(obj)
+  isGLM<-"glm"%in%class(obj) #is(obj, "glm")
   #==================================================================
   if(isGLM){
     if (is.null(dispersion)) dispersion <- summary.glm(obj)$dispersion
@@ -241,7 +243,7 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
     } else { 
       #=================Se e' GLM NON segmented
       
-    browser()
+    #browser()
       
       Call<-mf<-obj$call
       mf$formula<-formula(obj)

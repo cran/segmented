@@ -10,7 +10,7 @@
 seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     K = 10, quant = TRUE, maxit.glm = 25, h = 1, break.boot=5, size.boot=NULL, 
     jt=FALSE, nonParam=TRUE, random=TRUE, seed=12345, fn.obj=NULL, digits=NULL, 
-    conv.psi=FALSE, alpha=.05, min.step=.0001, 
+    conv.psi=FALSE, alpha = NULL, min.step=.0001, 
     powers=c(1,1), last = TRUE, stop.if.error = NULL, gap=FALSE, fc=.95)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -61,7 +61,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     }
   \item{digits}{optional. If specified it means the desidered number of decimal points of the breakpoint to be used during the iterative algorithm.}
   \item{conv.psi}{optional. Should convergence of iterative procedure to be assessed on changes of breakpoint estimates or changes in the objective? Default to FALSE.}
-  \item{alpha}{optional numerical value. The breakpoint is estimated within the quantiles \code{alpha} and \code{1-alpha} of the relevant covariate.}
+  \item{alpha}{optional numerical value. The breakpoints are estimated within the quantiles \code{alpha} and \code{1-alpha} of the relevant covariate. Defaults to \code{NULL} which means \code{max(.05, 1/n)}}.
   \item{min.step}{optional. The minimum step size to break the iterative algorithm. Default to 0.0001.}
   \item{powers}{
   The powers of the pseudo covariates employed by the algorithm. These can be altered during the iterative 

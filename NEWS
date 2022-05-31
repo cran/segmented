@@ -6,6 +6,13 @@
 
 
 ===============
+version 1.6-0 (2022-05-30)
+===============
+* New function segmented.lme (and related methods) introduced to fit segmented mixed models, i.e. segmented model with random effects changepoints.
+* 'alpha' in seg.control() defaults to NULL, i.e. max(0.05, 1/n).  
+
+
+===============
 version 1.5-0 (2022-04-11)
 ===============
 * New method function segmented.numeric() to allow short call such as 'segmented(y)' (providing the same results of segmented(lm(y~x),~x)

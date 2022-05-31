@@ -4,7 +4,7 @@
 \title{ Plot method for segmented objects  }
 \description{
   Takes a fitted \code{segmented} object returned by \code{segmented()} and plots (or adds)
-  the fitted broken-line for the selected segmented term.
+  the fitted broken-line relationship for the selected segmented term.
 }
 \usage{
 \method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, 

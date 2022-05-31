@@ -1,8 +1,10 @@
 import(splines)
 import(MASS)
+import(nlme)
 importFrom("grDevices", "grey","adjustcolor","colorRampPalette")
 importFrom("graphics", "abline", "axis", "box", "lines", "matlines",
-             "matplot", "par", "plot", "points", "polygon", "segments","smoothScatter")
+             "matplot", "par", "plot", "points", "polygon", "segments","smoothScatter",
+           "legend","mtext")
 importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "fitted", "formula", "gaussian", "glm.control", "glm.fit",
              "is.empty.model", "lm.wfit", "median", "model.frame",
@@ -12,10 +14,13 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "residuals", "runif", "summary.glm", "summary.lm", "update",
              "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun",
              "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", 
-             "terms","is.ts", "tsp", "AIC",".lm.fit","var")
+             "terms","is.ts", "tsp", "AIC",".lm.fit","var",
+	           "asOneSidedFormula", "logLik","plogis")
 importFrom("utils", "flush.console")
 
-export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima, segmented.numeric,
+export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima, segmented.numeric, 
+	segmented.lme, print.segmented.lme, summary.segmented.lme, vcov.segmented.lme, confint.segmented.lme, 
+	logLik.segmented.lme, fixef.segmented.lme, fitted.segmented.lme, plot.segmented.lme,
 	broken.line ,confint.segmented,davies.test,pscore.test,draw.history,aapc,
 	intercept,lines.segmented,plot.segmented,print.segmented, coef.segmented,
 	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
@@ -29,6 +34,7 @@ S3method(segmented,lm)
 S3method(segmented,glm)
 S3method(segmented,Arima)
 S3method(segmented,numeric)
+S3method(segmented,lme)
 S3method(plot,segmented)
 S3method(print,segmented)
 S3method(summary,segmented)
@@ -39,3 +45,12 @@ S3method(vcov,segmented)
 S3method(predict,segmented)
 S3method(points,segmented)
 S3method(coef,segmented)
+
+S3method(print, segmented.lme)
+S3method(summary, segmented.lme)
+S3method(vcov, segmented.lme)
+S3method(confint, segmented.lme)
+S3method(logLik, segmented.lme)
+S3method(fixef, segmented.lme)
+S3method(fitted, segmented.lme)
+S3method(plot, segmented.lme)

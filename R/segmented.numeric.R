@@ -49,8 +49,9 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
   
   if(!missing(seg.Z) && length(all.vars(seg.Z))>1) stop(" multiple seg.Z allowed only with lm models")
   Fo0<-as.formula(paste(deparse(substitute(obj)), " ~ ", name.Z, sep=""))
+  #Fo0<-as.formula(paste(deparse(substitute(obj, env = parent.frame())), " ~ ", name.Z, sep="")) #qui mantiene il nome 'obj'
   
-  
+  #browser()
   y.only.vector <- TRUE
   
   if(missing(psi)){
@@ -121,7 +122,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     invXtX=NULL
     Xty<-NULL
     nomiOK<-nomiU
-    
+    if(is.null(alpha)) alpha<- max(.05, 1/length(y))
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc)
@@ -181,18 +182,23 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
       psi.list[[i]]<-psi[names(psi)==i]
     }
 
-    mf<- data.frame(y,x)
+    #browser()
+    
+    mf<- model.frame(update.formula(Fo0, .~ x))
+    #mf<- data.frame(y,x)
     names(mf)<-all.vars(Fo0)
     for(i in 1:ncol(U)) {
-        #mfExt[nomiU[i]]<-
-          mf[nomiU[i]]<-U[,i]
-        #mfExt[nomiVxb[i]]<-
-          mf[nomiVxb[i]]<-Vxb[,i]
-        }
+      #mfExt[nomiU[i]]<-
+      mf[nomiU[i]]<-U[,i]
+      #mfExt[nomiVxb[i]]<-
+      mf[nomiVxb[i]]<-Vxb[,i]
+    }
     nnomi <- c(nomiU, nomiVxb)
     Fo <- update.formula(Fo0, as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
+    mf <-  eval(mf, parent.frame())
     objF <-lm(Fo, data=mf)
-
+    #browser()
+    
     isNAcoef<-any(is.na(objF$coefficients))
     if(isNAcoef){
       if(stop.if.error) {

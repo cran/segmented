@@ -14,7 +14,7 @@ aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{ogg}{ the fitted model returned by \code{segmented}. }
-  \item{parm}{ the \emph{single} segmented variable of interest. It can be missing if the model includes a single segmented covariate. If missing and      \code{ogg} includes several segmented variables, the first one is considered.}
+  \item{parm}{ the \emph{single} segmented variable of interest. It can be missing if the model includes a single segmented covariate. If missing and \code{ogg} includes several segmented variables, the first one is considered.}
   \item{exp.it}{logical. If \code{TRUE}, the per cent change is computed, namely \eqn{\exp(\hat\mu)-1}{exp(mu)-1} where 
   \eqn{\mu=\sum_j \beta_jw_j}{mu=\sum j bjwj}, see `Details'.}
   \item{conf.level}{the confidence level desidered.}

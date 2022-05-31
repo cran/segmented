@@ -268,6 +268,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     dev0<-obj$dev
     list.obj <- list(obj)
     nomiOK<-nomiU
+    if(is.null(alpha)) alpha<- max(.05, 1/length(y))
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
         fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,

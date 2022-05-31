@@ -158,7 +158,7 @@ Muggeo, V.M.R. (2008) Segmented: an R package to fit regression
 \author{ Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
 
 
-\seealso{ \code{\link{lm}}, \code{\link{glm}} }
+\seealso{ \code{\link{segmented.lme}} for random changepoints (segmented mixed) models. }
 
 \examples{
 
