@@ -25,6 +25,8 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
   y <- obj
   n <- length(y)
   
+  #browser()
+  
   if(missing(seg.Z)) {
     if(is.ts(obj)){
       Tsp<-tsp(obj)
@@ -46,6 +48,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     adjX= FALSE
   }
   
+  #browser()
   
   if(!missing(seg.Z) && length(all.vars(seg.Z))>1) stop(" multiple seg.Z allowed only with lm models")
   Fo0<-as.formula(paste(deparse(substitute(obj)), " ~ ", name.Z, sep=""))
@@ -184,8 +187,8 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
 
     #browser()
     
-    mf<- model.frame(update.formula(Fo0, .~ x))
-    #mf<- data.frame(y,x)
+    #mf<- model.frame(update.formula(Fo0, .~ x))
+    mf<- data.frame(y,x)
     names(mf)<-all.vars(Fo0)
     for(i in 1:ncol(U)) {
       #mfExt[nomiU[i]]<-
@@ -194,8 +197,10 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
       mf[nomiVxb[i]]<-Vxb[,i]
     }
     nnomi <- c(nomiU, nomiVxb)
-    Fo <- update.formula(Fo0, as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
-    mf <-  eval(mf, parent.frame())
+    #Fo <- update.formula(Fo0, as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
+    #se c'e' un "y[-1]", la seguente linea modifica il nome in "y"..
+    Fo <- update.formula(Fo0, as.formula(paste(paste(all.vars(Fo0)[1]),"~.+", paste(nnomi, collapse = "+"))))
+    #mf <-  eval(mf, parent.frame()) #forse NON serve.. mf c'e'..
     objF <-lm(Fo, data=mf)
     #browser()
     

@@ -227,7 +227,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       opz$main <- ""
     if (!res)
       opz$type <- "n"
-    # browser()
+    
+     #browser()
     if (!add)
       do.call(plot, opz)
     
@@ -571,7 +572,22 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
         par(mfrow = n.plot)
         id.sx <- 1 + n.plot[2] * (0:(n.plot[1] - 1))  #i grafici di sx
         id.bot <- (prod(n.plot):1)[1:n.plot[2]]  #i grafici di sotto
-        par(mar = rep(0, 4))
+        if(yscale>=0) {
+          if(xscale>=0) {
+            par(mar = rep(0, 4)) 
+            } else {
+              opz$xaxt<-NULL
+              par(mar = c(0,0,2.2,0))
+              }
+        } else {
+          opz$yaxt<-NULL
+          if(xscale>=0) {
+            par(mar = c(0,0,0,2.5)) 
+            } else {
+              opz$xaxt<-NULL
+              par(mar = c(0,0,2,2.5))
+            }
+        }
         par(oma = c(5, 5, 1, 1))
         out <- TRUE
       } else {
@@ -597,10 +613,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       #browser()
       
       # tt<-axTicks(1) las=2
-      if (k %in% id.bot)
-        axis(1, cex.axis = 0.7, at = NULL) else axis(1, labels = FALSE)
-      if (k %in% id.sx)
-        axis(2, labels = TRUE, cex.axis = 0.7) else axis(2, labels = FALSE)
+      if((xscale>=0)&&(k %in% id.bot)) axis(1, cex.axis = 0.7, at = NULL) else axis(1, labels = FALSE)
+      if((yscale>=0)&&(k%in%id.sx)) axis(2, labels = TRUE, cex.axis = 0.7) else axis(2, labels = FALSE)
     }
     mtext(Xlab, 1, line = 3, outer = out)
     mtext(Ylab, 2, line = 3, outer = out)

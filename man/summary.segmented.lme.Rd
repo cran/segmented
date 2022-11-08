@@ -1,7 +1,7 @@
 \name{summary.segmented.lme}
 \alias{summary.segmented.lme}
 %\alias{print.summary.segmented}
-\title{ Summarizing  model fits for segmented regression }
+\title{ Summarizing  model fits for segmented mixed-effects regression }
 \description{
   summary method for class \code{segmented.lme}.
 }
@@ -25,12 +25,12 @@
 }
 \details{
   %If \code{short=TRUE} only coefficients of the segmented relationships are printed.
-  Da finire
+  The function summarizes and prints the most relevant information on the segmented mixed fit. The output is similar to that returned by \code{print.summary.lme} 
   
 }
 \value{
-A list (similar to one returned by \code{segmented.lm}) with additional components:
-  \item{psi}{estimated break-points and relevant (approximate) standard errors}
+A list (similar to one returned by \code{segmented.lm}) with estimates of the variance components, and point estimates, standard errors, DF, t-value and p-value for the fixed effects. p-values for the variables \code{U} and \code{G0} are omitted as pointless. 
+  
 %  \item{Ttable }{estimates and standard errors of the model parameters. This is similar
 %  to the matrix \code{coefficients} returned by \code{summary.lm} or \code{summary.glm},
 %  but without the rows corresponding to the breakpoints. Even the p-values relevant to the
@@ -42,7 +42,7 @@ A list (similar to one returned by \code{segmented.lm}) with additional componen
 }
 %\references{ ~put references to the literature/web site here ~ }
 \author{ Vito M.R. Muggeo }
-\seealso{ \code{\link{print.segmented}} }
+\seealso{ \code{\link{print.segmented.lme}} }
 \examples{
 ##continues example from segmented.lme()
 # summary(os)

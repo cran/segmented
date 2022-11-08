@@ -222,7 +222,7 @@ draw.history(o, "z")
 
 # A simple segmented model with continuous responses and no linear covariates
 # No need to fit the starting lm model:
-segmented(yy, npsi=2)
+segmented(yy, npsi=2) #NOTE: segmented(yy[-1],..) also works
 #if seg.Z is unspecified, the segmented variable is taken as 1:n/n 
 
 

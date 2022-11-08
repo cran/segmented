@@ -111,7 +111,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         k.alpha<- if(all(c("segmented","lm") %in% class(x))) abs(qt((1-conf.level)/2, x$df.residual)) else abs(qnorm((1-conf.level)/2))
         ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE, isV=isV, is=is, var.diff=var.diff, 
                               p.df=p.df, .vcov=covv, .coef=estcoef) #se gli passi covv, gli argomenti is e var.diff NON servono perche li ignora..
-        ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit)
+        ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit) + const
         #---> transf...
         ciValues<-apply(ciValues, 2, transf)
         rangeCI<-range(ciValues)
@@ -185,7 +185,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
           # to the lower 10% of the plotting panel
           density$y <- (0.1 * y.scale / max.density) * density$y + plot_coordinates[3]
           ## plot the polygon
-          polygon( density$x , density$y , border = F , col = dens.col) 
+          polygon( density$x , density$y , border = FALSE , col = dens.col) 
           box()
           }
           

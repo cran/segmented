@@ -5,8 +5,8 @@
 Plot method for segmented mixed objects
 }
 \description{
-Takes a fitted \code{segmented.lme} object returned by \code{segmented()} and plots (or adds)
-  the fitted broken-line relationship for the selected segmented term.
+Takes a fitted \code{segmented.lme} object returned by \code{segmented.lme()} and plots (or adds)
+  the fitted broken-line relationship for the segmented term.
 }
 \usage{
 \method{plot}{segmented.lme}(x, level=1, id = NULL, res = TRUE, pop = FALSE, yscale = 1, xscale = 1, 

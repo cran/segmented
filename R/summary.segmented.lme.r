@@ -26,7 +26,7 @@ summary.segmented.lme<-function(object, .vcov=NULL, digits = max(3, getOption("d
   #         }
   if(!is.null(object$history.boot.restart)) {
     n.sol<-length(unique(object$history.boot.restart[,"psi"]))
-    cat("  Bootstrap restarting on", nrow(object$history.boot.restart), "samples; ", n.sol, "different solution(s)\n")
+    cat(" Bootstrap restarting on", nrow(object$history.boot.restart), "samples; ", n.sol, "different solution(s)\n")
   }
   
   

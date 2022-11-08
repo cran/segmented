@@ -1,4 +1,4 @@
-citHeader("To cite segmented in publications use:")
+citHeader("To cite segmented in publications use one or more of the following papers:")
 
 citEntry(entry="Article",
          title = "Estimating regression models with unknown break-points.",
@@ -56,4 +56,18 @@ citEntry(entry="Article",
                "Interval estimation for the breakpoint in segmented regression: a smoothed score-based approach.",
                "Australian & New Zealand Journal of Statistics, 59, 311-322.")
 )
+
+citEntry(entry="Article",
+      title = "Segmented mixed models with random changepoints: a maximum likelihood approach with application to treatment for depression study",
+      author = personList(as.person("Vito M.R. Muggeo"), as.person("David C. Atkins"),as.person("Robert J Gallop"), as.person("Sona Dimidjian")),
+      journal      = "Statistical Modelling",
+      year         = "2014",
+	volume       = "14",
+	pages        = "293-313",
+      textVersion = 
+      paste("Vito M. R. Muggeo, David C. Atkinhs, Robert J. Gallopp, Sona Dimidjian (2014).", 
+            "Segmented mixed models with random changepoints: a maximum likelihood approach with application to treatment for depression study",
+            "Statistical Modelling, 14, 293-313.")
+)
+
 

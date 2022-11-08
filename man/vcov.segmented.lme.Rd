@@ -25,8 +25,8 @@ relationships. If \code{B>0} is set, case resampling bootstrap (on the outermost
 %If \code{is=TRUE}, the returned covariance matrix depends on the design matrix having the term \eqn{I(x>\psi)}{I(x>psi)} replaced by its smooth %counterpart.
 }
 \value{
-The full matrix of the estimated covariances of the parameter estimates, including 
-the breakpoints.
+The full matrix of the estimated covariances of the fixed effects estimates, including 
+the breakpoint.
 }
 %\references{}
 \author{Vito M. R. Muggeo, \email{vito.muggeo@unipa.it}}

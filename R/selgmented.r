@@ -57,8 +57,8 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic", "
     }
     
     if(msg){
-      if(type=="BIC") cat("BIC to detect no. of breakpoints\n") else cat("AIC to detect no. of breakpoints\n")
-      if(type=="BIC")  cat("BIC values:\n") else cat("AIC values:\n")
+      if(type=="bic") cat("BIC to detect no. of breakpoints\n") else cat("AIC to detect no. of breakpoints\n")
+      if(type=="bic")  cat("BIC values:\n") else cat("AIC values:\n")
       print(bic.values)
       cat(paste("No. of selected breakpoints: ", n.psi.ok, " \n"))
     }
@@ -87,13 +87,20 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic", "
     
     #olm<-update(olm, data=model.frame(olm)) #questo e' necessario per far funzionare davies.test() sotto..
     ################
-    o1<-segmented(olm, seg.Z, npsi=1, control=control)
+    
     if(type=="score") {
+      o1<-segmented(olm, seg.Z, npsi=1, control=control)
       p2<-pscore.test(o1, seg.Z, more.break=TRUE)$p.value
     } else {
       #KK<-new.env()
       #olm1<-update(olm, data=model.frame(o1))
       #o1<-  update(o1, obj=olm1)
+      MF<-build.mf(olm)
+      olm<-update(olm, data=MF)
+      # olm$call$data<-quote(MF)
+      #olm<-update(olm, data=model.frame(olm)) #questo e' necessario per far funzionare davies.test() sotto..
+      
+      o1 <- segmented(olm, seg.Z, npsi = 1, control = control)
       p2<-  davies.test(o1, seg.Z)$p.value
     }
     if(!bonferroni) alpha.adj<-alpha 
@@ -117,6 +124,7 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic", "
   }
   if(msg){
     cat("Hypothesis testing to detect no. of breakpoints\n")
+    type <- chartr(strsplit(type,"")[[1]][1], toupper(strsplit(type,"")[[1]][1]), type) #serve per render maiuscola la prima lettera..
     cat(paste("statistic:", type,"  level:", alpha, "  Bonferroni correction:", bonferroni, "\n"))
     cat(paste(p1.label, "= ", format.pval(p1,4), "   ", p2.label, "= ", format.pval(p2,4) ,
             " \nOverall p-value = ", format.pval(p,4),"\n",sep=""))

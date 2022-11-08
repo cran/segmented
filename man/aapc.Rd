@@ -36,7 +36,7 @@ aapc(ogg, parm, exp.it = FALSE, conf.level = 0.95, wrong.se = TRUE,
 }
 \references{
      Clegg LX, Hankey BF, Tiwari R, Feuer EJ, Edwards BK (2009) Estimating average annual per cent change in trend analysis. 
-     \emph{Statistics in Medicine}, \bold{28}; 3670-3682
+     \emph{Statistics in Medicine}, \bold{28}; 3670-3682.
     
     Muggeo, V.M.R. (2010) Comment on `Estimating average annual per cent change in trend analysis' by Clegg et al., 
     Statistics in Medicine; 28, 3670-3682. \emph{Statistics in Medicine}, \bold{29}, 1958--1960.

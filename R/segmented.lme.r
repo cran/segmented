@@ -808,8 +808,8 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   if(!is.null(opz.control$n.boot)) n.boot<- opz.control$n.boot
   if(it >= (it.max+1) && n.boot==0) warning("max no. of iterations achieved.. 'n.boot>0' suggested", call. = FALSE)
   if(n.boot>0){
-    cat("\n..implementing bootstrap restarting..\n")
-    RIS <- reboot.slme(RIS, B=n.boot, display=display, seed=control$seed)#, metodo=1, frac=1, it.max=6, it.max.b=5, start=NULL, msg=TRUE)
+    if(display) cat("Implementing bootstrap restarting..\n")
+    RIS <- reboot.slme(RIS, B=n.boot, display=display, seed=control$seed, msg=display)#, metodo=1, frac=1, it.max=6, it.max.b=5, start=NULL, msg=TRUE)
   }
   RIS
 }
