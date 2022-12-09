@@ -8,12 +8,19 @@
 
 
 ===============
+version 1.6-2 (2022-12-09)
+===============
+* slope() now accepts also a list of two segmented fits to compare the corresponding slope estimates (thanks to Florencia Camus for the input)
+* Substantial improvement in selgmented() when selecting a large number (and locations) of breakpoints 
+
+
+
+===============
 version 1.6-1 (2022-11-08)
 ===============
 * New argument 'const' in points.segmented().
-* A small correction to plot.segmented.lme() when xscale=-1 and/or yscale=-1 (i.e. for subject-specific x- or y-scales)
-* (Minor) bug fixed: in plot.segmented() 'const' was ignored when conf.level>0; in selgmented() type='davies' did not work and it printed
-  'AIC' even if type="bic" was set.
+* A small correction in plot.segmented.lme() when xscale=-1 and/or yscale=-1 (i.e. for subject-specific x- or y-scales)
+* (Minor) bug fixed: in plot.segmented() 'const' was ignored when conf.level>0; in selgmented() type='davies' did not work and 'AIC' was always printed, even if type="bic" was set.
 
 
 ===============

@@ -66,7 +66,7 @@
       colnames(const)<-names(by)
       nomiNOdiff <- names(which(colSums(const)==0))
       if(length(nomiNOdiff)>0) warning("The value of", paste(" '", paste(nomiNOdiff, collapse=" and "),"' ",sep=""), 
-                                    "supplied in 'by' does not modify the baseline slopes estimates", call. = FALSE)
+                                       "supplied in 'by' does not modify the baseline slopes estimates", call. = FALSE)
       
       nomiCoef<- c(nomeZ, "U", unlist(idList))
       ##########################################    
@@ -105,8 +105,9 @@
     ris
   }
   
+  if(length(ogg)>2 && inherits(ogg, "segmented")){
         
-        if(class(ogg)[1]=="segmented.lme"){
+    if(class(ogg)[1]=="segmented.lme"){
           a<-slopeM(ogg, conf.level=conf.level, vcov.=.vcov, by=by, ...)
           return(a)
           
@@ -177,7 +178,30 @@
                   } #end loop i
               #if(!missing(parm)){
               #    if(!all(parm %in% ogg$nameUV[[3]])) stop("invalid parm") else Ris<-Ris[parm]}
-              Ris
+              return(Ris)
         }
-      }
+  } else {
+    obj1<-ogg[[1]]
+    obj2<-ogg[[2]]
+    os1 <- slope(obj1,conf.level=conf.level,...)[[1]]
+    os2 <- slope(obj2,conf.level=conf.level,...)[[1]]
+    K<-min(length(os1[,1]),length(os2[,1]))
+    estdiff<-zvalue<-pvalue<-rep(NA,K)
+    for(id in 1:K){
+      est1<- os1[id,1]
+      se1 <- os1[id,2]
+      est2<- os2[id,1]
+      se2<- os2[id,1]
+      estdiff[id]<-abs(est1-est2)
+      zvalue[id] <-(est1-est2)/sqrt(se1^2+se2^2)
+      pvalue[id] <-2*(1-pnorm(abs(est1-est2)))
+    }
+    r<-cbind("|est diff|"=estdiff, "p-value"=signif(pvalue,3))
+    rownames(r)<-paste("slope",1:K,sep="")
+    #if(msg) 
+    cat("Comparing 'matched' slopes for two segmented fits\n")
+    r
+  }
+  
+}
 

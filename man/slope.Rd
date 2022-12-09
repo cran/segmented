@@ -12,7 +12,7 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{ogg}{ an object of class "segmented", returned by any \code{segmented} method. }
+  \item{ogg}{ an object of class "segmented", returned by any \code{segmented} method or a list of two segmented fits to compare the estimates of corresponding slopes.}
   \item{parm}{ the segmented variable whose slopes have to be computed. If missing all the segmented variables are considered. }
   \item{conf.level}{ the confidence level required. }
   \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled 

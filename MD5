@@ -1,6 +1,6 @@
-98d5dbc39f40008dbdd0a7845c1c3e16 *DESCRIPTION
+996a399dfcd61d9ddf380c7965e231c3 *DESCRIPTION
 3520b72800ff320304babce72e8b1d22 *NAMESPACE
-0b0363f2d64325492e53f07bdbf878d4 *NEWS
+b2b2daaf193361ea74269e5246528b77 *NEWS
 44314ec38fc8d85886e00f7e02b3f051 *R/aapc.r
 924a8770a162ab99c390fcb17c4c6edd *R/broken.line.r
 ac4704d275166b0b4ad149e994701429 *R/coef.segmented.r
@@ -41,8 +41,8 @@ fb0c87cd5f82b35b8120f77efc140652 *R/segmented.R
 22359f8a50019c010047162104865c85 *R/segmented.lm.R
 fcb8b59cfecc872caef788cf022ce069 *R/segmented.lme.r
 736ea5af9ab45f3a065270c375ee7f34 *R/segmented.numeric.R
-625d343f5d9fb4a6e0e68047575a4be5 *R/selgmented.r
-713c43bca6106eb9c76af0a32ae9597d *R/slope.R
+bd2abcdfaa9357f5b332eccd8c16241f *R/selgmented.r
+8895228222943393ca80f02aa123a138 *R/slope.R
 bb2aeb0d88a0fd458bdfc7bebe57d5ba *R/summary.segmented.R
 2e84dec73c1d995d1bbbb8363795dad0 *R/summary.segmented.lme.r
 435f139cec0d8208ccaee9f8d68c0d2d *R/vcov.segmented.R
@@ -72,11 +72,11 @@ eb62553aba6323ad4b64c3a4172c739d *man/print.segmented.Rd
 dbea2200645239b1994de5eb410a8b63 *man/pwr.seg.Rd
 41f106d3377d5cb426e3f8f1e4fa2117 *man/seg.control.Rd
 8fbbf049e161b6096ef635f07c4928b1 *man/seg.lm.fit.Rd
-feaaefdbc232cc604bbe27330f2a8a6c *man/segmented-package.Rd
+d5bccd34e0c5ff1122cac05a76eff744 *man/segmented-package.Rd
 9325b897330cdad2f40d1bfec09213bc *man/segmented.Rd
 fc72114a0420cf085c09f87d6821d093 *man/segmented.lme.Rd
-827fd0fbaee81ba74001dc9d335d63c7 *man/selgmented.Rd
-fddcb8bfb752e89a279074fec5c8b6e4 *man/slope.Rd
+d1d40ceaa2b9f5d0f61dbd337278ee78 *man/selgmented.Rd
+42f5364be028fc4457f0cb747b1f0e24 *man/slope.Rd
 1c8095f4472b4cabf3dc3cae5132260f *man/stagnant.Rd
 028642ed745c44283e034aee3e29c0f6 *man/summary.segmented.Rd
 41c76f9668e36064506edee8734693e9 *man/summary.segmented.lme.Rd
