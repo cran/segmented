@@ -102,7 +102,7 @@ psi<-seq(.1,.9,l=15)
 n=2000
 x<-1:n/n
 X<-cbind(x, outer(x,psi,function(x,y)pmax(x-y,0)))
-mu<-drop(X%*%b)
+mu<-drop(tcrossprod(X,t(b)))
 y<-mu + rnorm(n)*.02 
 par(mfrow=c(1,2))
 o<-selgmented(y, Kmax=20, type='bic', plot.ic=TRUE, refit=FALSE)

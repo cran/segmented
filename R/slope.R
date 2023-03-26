@@ -105,7 +105,7 @@
     ris
   }
   
-  if(length(ogg)>2 && inherits(ogg, "segmented")){
+  if(length(ogg)>2 && (inherits(ogg, "segmented") || inherits(ogg, "segmented"))){
         
     if(class(ogg)[1]=="segmented.lme"){
           a<-slopeM(ogg, conf.level=conf.level, vcov.=.vcov, by=by, ...)

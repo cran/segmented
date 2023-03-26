@@ -803,7 +803,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   RIS$rangeZ<- tapply(Z, id, range)
   names(Z)<-id #names(psi.new)
   RIS$Z<-Z
-  class(RIS)<-"segmented.lme"
+  class(RIS)<- "segmented.lme" #c("segmented.lme","segmented")
   opz.control<-list(...)
   if(!is.null(opz.control$n.boot)) n.boot<- opz.control$n.boot
   if(it >= (it.max+1) && n.boot==0) warning("max no. of iterations achieved.. 'n.boot>0' suggested", call. = FALSE)

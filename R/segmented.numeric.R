@@ -1,5 +1,6 @@
 `segmented.numeric` <-
-function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model = TRUE, keep.class=FALSE, adjX=FALSE, weights=NULL, ...) {
+function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model = TRUE, keep.class=FALSE, 
+         adjX=FALSE, weights=NULL,  ...) { #sparse=FALSE,
   build.all.psi<-function(psi, fixed.psi){
     all.names.psi<-union(names(psi),names(fixed.psi))
     all.psi<-vector("list", length=length(all.names.psi))
@@ -56,10 +57,16 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
   
   #browser()
   y.only.vector <- TRUE
+  alpha<-control$alpha
+  if(is.null(alpha)) alpha<- max(.05, 1/length(y)) 
   
+  #browser()
   if(missing(psi)){
     if(missing(npsi)) npsi<-1 #stop(" psi or npsi have to be provided ")
-    psi<- seq(min(x), max(x), l=npsi+2)[-c(1, npsi+2)] #psi[[i]]<-(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))
+    #psi <- seq(min(x), max(x), l=npsi+2)[-c(1, npsi+2)] #psi[[i]]<-(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))
+    qx <- quantile(x, probs=c(alpha, 1-alpha), names = FALSE)
+    psi <- seq(qx[1], qx[2], l=npsi+2)[-c(1, npsi+2)]
+    
   } else {
     npsi<-length(psi)
   }
@@ -82,7 +89,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
   
     fc<- min(max(abs(control$fc),.8),1)       
     min.step<-control$min.step
-    alpha<-control$alpha
+    
     it.max <- old.it.max<- control$it.max
     digits<-control$digits
     toll <- control$toll
@@ -125,20 +132,23 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     invXtX=NULL
     Xty<-NULL
     nomiOK<-nomiU
-    if(is.null(alpha)) alpha<- max(.05, 1/length(y))
+    
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc)
     if(n.boot<=0){
-    obj<-seg.num.fit(y, XREG, Z, PSI, weights,  opz)
+    #obj<- if(sparse) seg.num.spar.fit(y, XREG, Z, PSI, weights,  opz) else seg.num.fit(y, XREG, Z, PSI, weights,  opz)
+      obj<- seg.num.fit(y, XREG, Z, PSI, weights,  opz)
     } else {
-    obj<-seg.num.fit.boot(y, XREG, Z, PSI, weights, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot) #jt, nonParam
+    obj<-seg.num.fit.boot(y, XREG, Z, PSI, weights, opz, n.boot=n.boot, size.boot=size.boot, random=random, 
+                          break.boot=break.boot) #, sparse=sparse) #jt, nonParam
       }
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)
         return(y)
         }
     
+    #browser()
     
     #if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
     id.psi.group<-obj$id.psi.group
@@ -221,9 +231,12 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
         }
     }
 
+    #browser()
+    
+    
     objF$coefficients[names(objF$coefficients)] <- obj$coefficients #sostituisce tutti i coeff 
-    objF$residuals<-obj$residuals
-    objF$fitted.values<- y-obj$residuals 
+    objF$residuals<- as.numeric(obj$residuals)
+    objF$fitted.values<- y- as.numeric(obj$residuals) #as.numeric(obj$fitted.values) #y-obj$residuals 
     Cov <- vcov(objF) 
     id <- match(nomiVxb, names(coef(objF)))
     vv <- if (length(id) == 1) Cov[id, id] else diag(Cov[id, id])

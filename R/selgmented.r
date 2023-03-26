@@ -153,7 +153,7 @@ selgmented<-function(olm, seg.Z, alpha=0.05, type=c("score" , "davies", "bic", "
         ris[[id.best]]$call$control<-control
         ris[[id.best]] <- update(ris[[id.best]])
       }
-      ris[[n.psi.ok]]$selection.psi <- bic.values
+      ris[[id.best]]$selection.psi <- bic.values #era ris[[n.psi.ok]]$selection.psi <- bic.values. cambiato nella 1.6-3
       if(plot.ic) {
         #bic.values<-bic.values[!is.na(bic.values)]
         #plot(0: (length(bic.values)-1), bic.values, xlab=" No. of breakpoints", ylab=ICname, type="o")

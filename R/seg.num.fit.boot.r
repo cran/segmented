@@ -1,5 +1,5 @@
 seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL, jt=FALSE,
-    nonParam=TRUE, random=FALSE, break.boot=n.boot){
+    nonParam=TRUE, random=FALSE, break.boot=n.boot) { #, sparse=FALSE){
 #random se TRUE prende valori random quando e' errore: comunque devi modificare qualcosa (magari con it.max)
 #     per fare restituire la dev in corrispondenza del punto psi-random
 #nonParm. se TRUE implemneta il case resampling. Quello semiparam dipende dal non-errore di
@@ -33,6 +33,8 @@ extract.psi<-function(lista){
     	r
 	}
 #-------------
+      #seg.num.fit<-if(sparse) seg.num.spar.fit else seg.num.fit 
+
       visualBoot<-opz$visualBoot
       opz.boot<-opz
       opz.boot$pow=c(1,1) #c(1.1,1.2)

@@ -173,8 +173,8 @@ out.lm<-lm(y~x,data=dati)
 #.. and 1 breakpoint has to be estimated for that
 o<-segmented(out.lm) #1 breakpoint for x
 
-#the single segmented variable is not in the starting model and 1 breakpoint for that:
-#... you need to specify the variable via seg.Z, but no starting value for psi
+#the single segmented variable is not in the starting model, and thus..
+#... you need to specify it via seg.Z, but no starting value for psi
 o<-segmented(out.lm, seg.Z=~z)
 #note the leftmost slope is constrained to be zero (since out.lm does not include z)
 
@@ -182,10 +182,10 @@ o<-segmented(out.lm, seg.Z=~z)
 o<-segmented(out.lm,seg.Z=~z+x)
 
 
-#1 segmented variable, 2 breakpoints: you have to specify starting values (vector) for psi:
+#1 segmented variable, but 2 breakpoints: you have to specify starting values (vector) for psi:
 o<-segmented(out.lm,seg.Z=~x,psi=c(30,60), control=seg.control(display=FALSE))
 
-#or by specifying just the *number* of breakpoints
+#.. or you can specify just the *number* of breakpoints
 #o<-segmented(out.lm,seg.Z=~x, npsi=2, control=seg.control(display=FALSE)) 
 
 slope(o) #the slopes of the segmented relationship
@@ -194,7 +194,7 @@ slope(o) #the slopes of the segmented relationship
 #2 segmented variables: starting values requested via a named list
 out.lm<-lm(y~z,data=dati)
 o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
-#or by specifying just the *number* of breakpoints
+#..or by specifying just the *number* of breakpoints
 #o1<-update(o,seg.Z=~x+z, npsi=c(x=2,z=1))
 
 
@@ -222,7 +222,7 @@ draw.history(o, "z")
 
 # A simple segmented model with continuous responses and no linear covariates
 # No need to fit the starting lm model:
-segmented(yy, npsi=2) #NOTE: segmented(yy[-1],..) also works
+segmented(yy, npsi=2) #NOTE: subsetting the vector works ( segmented(yy[-1],..) ) 
 #if seg.Z is unspecified, the segmented variable is taken as 1:n/n 
 
 
