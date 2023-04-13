@@ -44,7 +44,9 @@ Namely if `my.x' is the segmented variable, predictions for `my.x', `U1.my.x' an
 meaningless individually, however their sum provides the predictions for the segmented term.
 }
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
+\section{Warning }{
+For segmented glm fits with offset obtained starting from the model \code{glm(.., offset=..)}, \code{predict.segmented} returns the fitted values without considering the offset. 
+}
 
 \seealso{
 \code{\link{segmented}}, \code{\link{plot.segmented}}, \code{\link{broken.line}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}

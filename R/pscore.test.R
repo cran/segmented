@@ -195,8 +195,13 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
         mf <- mf[c(1, m)]
         mf$drop.unused.levels <- TRUE
         mf[[1L]] <- as.name("model.frame")
-        for(i in 1:length(obj$nameUV$U)) assign(obj$nameUV$U[i], obj$model[,obj$nameUV$U[i]], envir=parent.frame())
-        mf <- eval(mf, parent.frame())
+        
+        #browser()
+
+        #for(i in 1:length(obj$nameUV$U)) assign(obj$nameUV$U[i], obj$model[,obj$nameUV$U[i]], envir=parent.frame())
+        #mf <- eval(mf, parent.frame())
+        mf$data <- quote(obj$model)
+        mf <- eval(mf)
         mt <- attr(mf, "terms")
         #interc<-attr(mt,"intercept")
         y <- model.response(mf, "any")
@@ -242,9 +247,6 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
         # ================fine se e' GLM+segmented.
     } else { 
       #=================Se e' GLM NON segmented
-      
-    #browser()
-      
       Call<-mf<-obj$call
       mf$formula<-formula(obj)
       m <- match(c("formula", "data", "subset", "weights", "na.action","offset"), names(mf), 0L)
@@ -263,8 +265,6 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
                                       collapse = "+")))
       }
       mf <- eval(mf, parent.frame())
-      
-      
       mt <- attr(mf, "terms")
       XREG <- if (!is.empty.model(mt)) model.matrix(mt, mf)
       n <- nrow(XREG)
@@ -510,13 +510,19 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
     legame<-obj$family$link
   }
   
+  #browser()
+  msg.alt <- if(n.break==1) " breakpoint) " else " breakpoints) "
+  if(more.break) msg.alt <- paste(" additional", msg.alt,sep="")
+  msg.alt <- paste(alternative,"   (",n.break , msg.alt , sep="")
+  
   out <- list(method = "Score test for one/two changes in the slope",
               data.name=paste("formula =", as.expression(formulaNull), "\nbreakpoint for variable =", name.Z, 
                               "\nmodel =",famiglia,", link =", legame ,", method =", obj$call[[1]]),
               statistic = c(`observed value` = r[1]),
               parameter = c(n.points = length(values)), p.value = r[2],
               #alternative = paste(alternative, " (",n.break ,"breakpoint ) ")
-              alternative = paste(alternative,"   (",n.break ,if(n.break==1) " breakpoint) " else " breakpoints) ", sep=""))
+              #alternative = paste(alternative,"   (",n.break ,if(n.break==1) " breakpoint) " else " breakpoints) ", sep="")
+              alternative=msg.alt)
   class(out) <- "htest"
   return(out)
 }

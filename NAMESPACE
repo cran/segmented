@@ -16,7 +16,7 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", 
              "terms","is.ts", "tsp", "AIC",".lm.fit","var",
 	           "asOneSidedFormula", "logLik","plogis")
-importFrom("utils", "flush.console")
+importFrom("utils", "flush.console", "capture.output")
 
 export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima, segmented.numeric, 
 	segmented.lme, print.segmented.lme, summary.segmented.lme, vcov.segmented.lme, confint.segmented.lme, 

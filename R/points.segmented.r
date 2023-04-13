@@ -21,6 +21,7 @@ points.segmented<-function(x, term, interc=TRUE, link=TRUE,
                else {term<-x$nameUV$Z}
                }
       opz<-list(...)
+      if(is.null(opz$col)) opz$col <- 2
       nameV<- x$nameUV$V[f.U(x$nameUV$V, term)]
       psii<- x$psi[nameV, "Est."]
       d<-data.frame(a=psii)

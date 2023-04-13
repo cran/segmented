@@ -79,8 +79,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
   }
   #========================================================================
   plotSegLme <- function(obj, id = stop("'id' should be provided"), add = FALSE, res = TRUE,
-                         pop = FALSE, yscale = -1, xscale = -1, main = paste("id =", id), leg = NULL, vline = FALSE,
-                         xLab, yLab, level, lines = TRUE, opzione = 1, ...) {
+                         pop = FALSE, yscale = -1, xscale = -1, text.leg = paste("id =", id), pos.leg = NULL, vline = FALSE,
+                         xLab, yLab, level, lines = TRUE, opzione = 1, ...) { #line.col=1, res.col=grey(.7),
     # Simply plots (or adds) the observed data and the segmented fitted lines for subject
     # 'id'
     #---
@@ -93,7 +93,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     # '' leg: if !NULL it can be one of 'top', 'topright',... and the id subject is put
     # on the plot. vline: if TRUE lines: if FALSE, points (rather than lines) are plotted
     # (useful if the segmented profile depends on additional covariates and cannot be
-    # displayed) ...: argomenti da passare al plot, compresi 'col.l' e 'lwd.l' 'lty.l'
+    # displayed) 
+    #...: argomenti da passare al plot, compresi 'col.l' e 'lwd.l' 'lty.l'
     # che servono per le segmented lines individuali e col.p, lty.p, lwd.p che servono
     # per le linee di pop (se pop=TRUE) Problema: se ci sono nested re i levels dell
     # innermost factor vengono modificati 'lev1/lev2' (che rappresentano i nomi dei
@@ -101,8 +102,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     # specifica il livello costruito 'lev1/lev2' oppure i nomi dei coef() si devono
     # modificare estraendo solo il valore dopo il '\'
     rnfGrp <- obj$lme.fit.noG$groups
-    if (missing(level))
-      level <- ncol(rnfGrp)
+    if (missing(level)) level <- ncol(rnfGrp)
     # con nested funziona ma i valori dei fitted sono 'strani..', cio? dovrebbero essere
     # comunque una relazione segmented S? ? giusto solo i psi sono diversi...
     if (level != ncol(rnfGrp))
@@ -134,8 +134,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     XY <- cbind(obj$Z, y)
     x <- XY[names(y) == id, 1]
     y <- XY[names(y) == id, 2]
-    if (yscale < 0)
-      range.ok <- range(y)
+    if (yscale < 0) range.ok <- range(y)
     
     range.ok[1] <- if (sign(range.ok[1]) > 0)
       range.ok[1] * 0.99 else range.ok[1] * 1.01
@@ -145,95 +144,100 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     # x<-obj$Z
     rangeX.ok <- range(obj$Z)
     # x<-x[names(obj$Z)==id]
-    if (xscale < 0)
-      rangeX.ok <- range(x)
+    if (xscale < 0) rangeX.ok <- range(x)
     
     opz <- list(...)
+    
+    #browser()
+    
+    
     opz$x <- x
     opz$y <- y
     
+    #browser()
+    
+    if (is.null(opz$col)) opz$col <- grey(.7) 
+    if (is.null(opz$cex)) opz$cex <- 1.5
+    if (is.null(opz$pch)) opz$pch <- 19
+    if (is.null(opz$ylim)) opz$ylim <- range.ok
+    if (is.null(opz$xlim)) opz$xlim <- rangeX.ok
+    if (!res) opz$type <- "n"
+    
+    
+    if (is.null(opz$ylab)) opz$ylab<- all.vars(formula(obj[[2]]))[1]
+    if (is.null(opz$xlab)) opz$xlab<- obj$namesGZ$nameZ
+    
+    
+    
+    #if (missing(yLab)) yLab <- "response"
+    #if (missing(xLab)) xLab <- obj$namesGZ$nameZ
+    #opz$ylab <- yLab
+    #opz$xlab <- xLab
+    
+    
     # set col.p, lwd.p, lty.p for *population* lines (provided pop=TRUE)
-    if (!is.null(opz$col.p)) {
-      col.p <- opz$col.p
-      opz$col.p <- NULL
+    if (!is.null(opz$p.col)) {
+      p.col <- opz$p.col
+      opz$p.col <- NULL
     } else {
-      col.p <- 1
+      p.col <- 1
     }
     
-    if (!is.null(opz$lty.p)) {
-      lty.p <- opz$lty.p
-      opz$lty.p <- NULL
+    if (!is.null(opz$p.lty)) {
+      lty.p <- opz$p.lty
+      opz$p.lty <- NULL
     } else {
-      lty.p <- 2
+      p.lty <- 2
     }
     
-    if (!is.null(opz$lwd.p)) {
-      lwd.p <- opz$lwd.p
-      opz$lwd.p <- NULL
+    if (!is.null(opz$p.lwd)) {
+      p.lwd <- opz$p.lwd
+      opz$p.lwd <- NULL
     } else {
-      lwd.p <- 1.5
+      p.lwd <- 1.5
     }
     
     # set col.l, lwd.l, lty.l for *individual* lines (or points if 'lines=FALSE')
-    if (!is.null(opz$pch.l)) {
-      pch.l <- opz$pch.l
-      opz$pch.l <- NULL
+    if (!is.null(opz$l.pch)) {
+      l.pch <- opz$l.pch
+      opz$l.pch <- NULL
     } else {
-      pch.l <- 3
+      l.pch <- 3
     }
     
-    if (!is.null(opz$lty.l)) {
-      lty.l <- opz$lty.l
-      opz$lty.l <- NULL
+    if (!is.null(opz$l.lty)) {
+      l.lty <- opz$l.lty
+      opz$l.lty <- NULL
     } else {
-      lty.l <- 1
+      l.lty <- 1
     }
     
-    if (!is.null(opz$col.l)) {
-      col.l <- opz$col.l
-      opz$col.l <- NULL
+    if (!is.null(opz$l.col)) {
+      l.col <- opz$l.col
+      opz$l.col <- NULL
     } else {
-      col.l <- 1
+      l.col <- 1
     }
-    if (!is.null(opz$lwd.l)) {
-      lwd.l <- opz$lwd.l
-      opz$lwd.l <- NULL
+    if (!is.null(opz$l.lwd)) {
+      l.lwd <- opz$l.lwd
+      opz$l.lwd <- NULL
     } else {
-      lwd.l <- 2
+      l.lwd <- 2
     }
     
-    if (missing(yLab))
-      yLab <- "response"
-    if (missing(xLab))
-      xLab <- obj$namesGZ$nameZ
+    if (!is.null(opz$t.col)) {
+      t.col <- opz$t.col
+      opz$t.col <- NULL
+    } else {
+      t.col <- 1
+    }
     
-    opz$ylab <- yLab
-    opz$xlab <- xLab
     
-    if (is.null(opz$cex))
-      opz$cex <- 1.5
-    if (is.null(opz$pch))
-      opz$pch <- 19
-    if (is.null(opz$col))
-      opz$col <- grey(0.7)
-    if (is.null(opz$ylim))
-      opz$ylim <- range.ok
-    if (is.null(opz$xlim))
-      opz$xlim <- rangeX.ok
     
-    opz$main <- if (add)
-      " " else main
-    if (!is.null(leg))
-      opz$main <- ""
-    if (!res)
-      opz$type <- "n"
     
-     #browser()
-    if (!add)
-      do.call(plot, opz)
+    if (!add) do.call(plot, opz)
+    if (!is.null(pos.leg)) legend(pos.leg, legend = paste(nameID, id, sep = " = "), bty = "n", text.col=t.col)
     
-    if (!is.null(leg))
-      legend(leg, legend = paste(nameID, id, sep = " = "), bty = "n")
     
     ff <- fitted(obj$lme.fit.noG, level = level)
     mu <- ff[names(ff) == id]  #? fitted.segmented.lme(fit,1)
@@ -242,7 +246,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     m <- m[order(m[, 1]), ]
     
     if (!lines) {
-      points(m, col = col.l, pch = pch.l, lwd = lwd.l)  #do.call(points, opz)
+      points(m, col = l.col, pch = l.pch, lwd = l.lwd)  #do.call(points, opz)
     } else {
       if (opzione == 1) {
         mL <- m[m[, 1] <= psi, , drop = FALSE]
@@ -263,8 +267,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
         # lines(c( mL[,1], psi, mR[,1]), c( mL[,2], f.psi, mR[,2]), col=col.l,
         # lwd=lwd.l, lty=lty.l)
         
-        lines(c(m[1, 1], psi, m[nrow(m), 1]), c(m[1, 2], f.psi, m[nrow(m), 2]), col = col.l,
-              lwd = lwd.l, lty = lty.l)
+        lines(c(m[1, 1], psi, m[nrow(m), 1]), c(m[1, 2], f.psi, m[nrow(m), 2]), col = l.col,
+              lwd = l.lwd, lty = l.lty)
       } else {
         nomiCoef.ok <- intersect(c("(Intercept)", obj$namesGZ$nameZ, "U"), colnames(coef(obj$lme.fit.noG)))
         nomiCoef.ok <- c(nomiCoef.ok, obj$namesGZ$nomiUx)
@@ -279,8 +283,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
         # 'id' E se ci sono interazioni con intercetta e left slope???
       }
     }
-    if(vline) segments(psi, par()$usr[3], psi, f.psi, lty = 3, col = col.l)
-    points(psi, par()$usr[3] * 1, pch = 17, col = col.l, cex = 1.2)
+    if(vline) segments(psi, par()$usr[3], psi, f.psi, lty = 3, col = l.col)
+    points(psi, par()$usr[3] * 1, pch = "|", col = l.col, cex = 1.2)
     
     
     # codici vecchi..  #left side mL<-m[m[,1]<=psi, ,drop=FALSE] fL<-splinefun(mL[,1],
@@ -329,13 +333,13 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       }
       if (nrow(m1) > 0) {
         if (nrow(m1) > 1)
-          lines(new.x1, f1(new.x1), col = col.p, lwd = lwd.p, lty = lty.p) else lines(new.x1, c(f1(new.x1)[1], f2(new.x2)[1]), col = col.p, lwd = lwd.p, lty = lty.p)
+          lines(new.x1, f1(new.x1), col = p.col, lwd = p.lwd, lty = p.lty) else lines(new.x1, c(f1(new.x1)[1], f2(new.x2)[1]), col = p.col, lwd = p.lwd, lty = p.lty)
       }
       if (nrow(m2) > 0) {
         if (nrow(m2) > 1)
-          lines(new.x2, f2(new.x2), col = col.p, lwd = lwd.p, lty = lty.p) else lines(new.x2, c(f1(new.x1)[2], f2(new.x2)[2]), col = col.p, lwd = lwd.p, lty = lty.p)
+          lines(new.x2, f2(new.x2), col = p.col, lwd = p.lwd, lty = p.lty) else lines(new.x2, c(f1(new.x1)[2], f2(new.x2)[2]), col = p.col, lwd = p.lwd, lty = p.lty)
       }
-      points(psi, par()$usr[3] * 1.015, pch = 4, col = col.p)
+      points(psi, par()$usr[3] * 1.015, pch = 4, col = p.col)
       # segments(psi, par()$usr[3], psi, f1(psi), lty=3, col=1)
     }
   }
@@ -450,7 +454,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     final.names<-setdiff(nomiCoef, c("G0",obj$namesGZ$nomiG,""))
     final.names<-final.names[!is.na(final.names)]
     
-    #  browser()
+      #browser()
     
     if(!is.null(drop.var)){
       colnames(M)<-final.names
@@ -528,7 +532,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     opz$main <- ""
     opz$xaxt <- "n"
     opz$yaxt <- "n"
-    opz$leg <- pos.leg
+    opz$pos.leg <- pos.leg
     opz$yscale <- yscale
     opz$xscale <- xscale
     opz$vline <- vline
@@ -541,33 +545,65 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       n.plot <- if (length(id) <= 1)
         c(1, 1) else c(3, ceiling(length(id)/3))
     
-    id <- id[1:min(prod(n.plot), length(id))]
-    if (!is.null(opz$col.l)) {
-      # color of individual lines
-      col.l <- opz$col.l
-      col.l <- rep(col.l, length(id))
-      col.l.id <- TRUE
-    } else {
-      col.l.id <- FALSE
-    }
-    if (!is.null(opz$col)) {
-      col <- opz$col
-      col <- rep(col, length(id))
-      col.id <- TRUE
-    } else {
-      col.id <- FALSE
-    }
-    if (!is.null(opz$col.p)) {
-      col.p <- opz$col.p
-      col.p <- rep(col.p, length(id))
-      col.p.id <- TRUE
-    } else {
-      col.p.id <- FALSE
-    }
+    if(prod(n.plot)!=1) id <- id[1:min(prod(n.plot), length(id))]
+    
+    # color of individual lines
+    l.col <- if (!is.null(opz$l.col)) opz$l.col else 1
+    l.col <- rep(l.col, length(id))
+    
+    l.lwd <- if (!is.null(opz$l.lwd)) opz$l.lwd else 1
+    l.lwd <- rep(l.lwd, length(id))
+
+    l.lty <- if (!is.null(opz$l.lty)) opz$l.lty else 1
+    l.lty <- rep(l.lty, length(id))
+    
+    col <- if (!is.null(opz$col)) opz$col else grey(.7) #for residuals..
+    col <- rep(col, length(id))
+    
+    p.col <- if (!is.null(opz$p.col)) opz$p.col else 1
+    p.lty <- if (!is.null(opz$p.lty)) opz$p.lty else 3
+    p.lwd <- if (!is.null(opz$p.lwd)) opz$p.lwd else 1
+    #p.col <- rep(p.col, length(id))
+    
+    t.col <- if (!is.null(opz$t.col)) opz$t.col else 1 #for legend text..
+    t.col <- rep(t.col, length(id))
+    
+        
+    
     # if(dev.cur()==1) { #se non e' aperto alcun device..
+    #unico grafico con tutti i profili individuali.. 
+    #======================================================
+    xlim<- if(!is.null(opz$xlim)) opz$xlim else range(x$Z)
+    ylim<- if(!is.null(opz$ylim)) opz$ylim else NULL
+    k<-1
+    if(prod(n.plot)==1 && length(id)>1){
+      plotSegLme(obj=x, id=id[k], add=FALSE, pop=FALSE, res=FALSE, xLab='', yLab='', 
+                 l.col=l.col[k], l.lwd=l.lwd[k], l.lty=l.lty[k], xlim=xlim, ylim=ylim)
+      for (i in id[-1]) {
+        k<-k+1
+        plotSegLme(obj=x, id=i, add=TRUE, pop=FALSE, res=FALSE, xLab='', yLab='', 
+                   l.col=l.col[k], l.lwd=l.lwd[k], l.lty=l.lty[k])
+        # main='', xaxt='n', yaxt='n', leg=leg, yscale=yscale,
+        # vline=vline, xscale=xscale, level=level, ...)
+        #opz$id <- i
+        #if (col.l.id) opz$col.l <- col.l[k]
+        #if (col.p.id) opz$col.p <- col.p[k]
+        #if (col.id) opz$col <- col[k]
+        
+        #guarda bene il discorso della stima sella relazione only-fixed-effects..
+        #opz$pop<-FALSE
+        #do.call(plotSegLme, opz)
+      }
+      box()
+      if(pop) plotmarg(obj, add=TRUE, col=p.col, lwd=p.lwd, lty=p.lty)
+      return(invisible(NULL))
+    }
+    
     old.mar<- par()$mar
     old.oma<- par()$oma
     old.mfrow<- par()$mfrow
+    
+    #======================================================
     if(length(id)>1){
         par(mfrow = n.plot)
         id.sx <- 1 + n.plot[2] * (0:(n.plot[1] - 1))  #i grafici di sx
@@ -596,15 +632,17 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
         out <- FALSE
       }
     k <- 0
+    opz$add<- add
+    #col.l lo prende anche sui punti????
     for (i in id) {
       k <- k + 1
       # plotSegLme(obj, id=i, pop=pop, res=res, xLab='', yLab='',
       # main='', xaxt='n', yaxt='n', leg=leg, yscale=yscale,
       # vline=vline, xscale=xscale, level=level, ...)
       opz$id <- i
-      if (col.l.id) opz$col.l <- col.l[k]
-      if (col.p.id) opz$col.p <- col.p[k]
-      if (col.id) opz$col <- col[k]
+      opz$l.col <- l.col[k]
+      opz$p.col <- p.col[k]
+      opz$col <- col[k]
       
       #guarda bene il discorso della stima sella relazione only-fixed-effects..
       opz$pop<-FALSE

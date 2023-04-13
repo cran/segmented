@@ -7,6 +7,14 @@
 
 
 ===============
+version 1.6-4 (2023-04-14)
+===============
+* A (relevant) enhancement in selgmented() which now can detect a large number of breakpoints not evenly distributed in the covariate range (see argument G). Also selgmented() now works with Kmax=1 (thanks to Marc Laurencelle for his input)
+* plot.segmented.lme() now can draw all the segmented profiles on the same panel (see argument 'n.plot') 
+* Bug fix: in slope() when managing "lme" fits; in pscore.test() when managing glm fits (thanks to Yuki Mori for reporting)
+
+
+===============
 version 1.6-3 (2023-03-20)
 ===============
 * selgmented was not always returning information about the number of selected breakpoints (thanks to Alba Serrat for reporting)
@@ -39,7 +47,7 @@ version 1.6-0 (2022-05-30)
 version 1.5-0 (2022-04-11)
 ===============
 * New method function segmented.numeric() to allow short call such as 'segmented(y)' (providing the same results of segmented(lm(y~x),~x). Such 'short' call also works for 'ts' objects.
-* Bug fixed: functions segmented.* (with boot restarting) were ignoring the 'alpha' argument of seg.control(). 
+* Bug fix: functions segmented.* (with boot restarting) were ignoring the 'alpha' argument of seg.control(). 
 
 
 ===============
@@ -62,14 +70,14 @@ to collinearity in the design matrix; (thanks to Michael Laviolette for reportin
 version 1.3-4 (2021-04-22)
 ===============
 * selgmented() now returns information on the selection of the no.of breakpoints. It also gains argument 'msg'. 
-* Bugs fixed in plot.segmented(): it did not work correctly with rev.sgn=TRUE and it did not handle correctly multiple colors for displaying the conf.intervals when shade=FALSE.
+* Bug fix in plot.segmented(): it did not work correctly with rev.sgn=TRUE and it did not handle correctly multiple colors for displaying the conf.intervals when shade=FALSE.
 
 
 ===============
 version 1.3-3 (2021-03-08)
 ===============
 * Two (internal) changes in the boot restarting algorithm: i) option 'break.boot' introduced in seg.control() to save computational time; ii) an improvement in the algorithm expected to better escape local solutions (thanks to Daniele Cuntrera for his input).
-* Bug fixed: broken.line() didn't work (a silly bug, thanks to Kirstin Deuss for reporting); confint.segmented() and plot.segmented() did not handle correctly the Arima fits.
+* Fixed bugs: broken.line() didn't work (a silly bug, thanks to Kirstin Deuss for reporting); confint.segmented() and plot.segmented() did not handle correctly the Arima fits.
 * Some further code examples in ?segmented.
 
 
@@ -84,7 +92,7 @@ version 1.3-2 (2021-02-09)
 version 1.3-1 (2020-12-10)
 ===============
 * segmented.default() now accepts "lme" objects (thanks to Hannah Watson for her input)
-* Bug fixed: pscore.test() crashed in large datasets (thanks to John Grego for reporting); segmented.lm() did not work when the scale of x was defined on very large range, e.g. 1e8 to 2e8 (thanks to Elio Campitelli for reporting) 
+* Bug fix: pscore.test() crashed in large datasets (thanks to John Grego for reporting); segmented.lm() did not work when the scale of x was defined on very large range, e.g. 1e8 to 2e8 (thanks to Elio Campitelli for reporting) 
 
 
 ===============
@@ -104,7 +112,7 @@ version 1.2-0 (2020-06-23)
 * npsi can be missing in the segmented.* methods, and one breakpoint is estimated for all variables specified in seg.Z.
 * New argument 'fc' in seg.control() to manage situations when the estimated breakpoints come to the boundary.
 * New argument in plot.segmented() to draw also the trends before the breakpoints. 
-* Bug fixed: plot.segmented() did not recycle arguments 'col', 'lwd' and 'lty'.
+* Bug fix: plot.segmented() did not recycle arguments 'col', 'lwd' and 'lty'.
 
 
 ===============

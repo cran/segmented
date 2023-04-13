@@ -88,22 +88,21 @@ predict.segmented <-function(object, newdata, .coef=NULL, ...){
   if(missing(newdata)){
     newdata <- model.frame(object)
   } else {
-  #devi trasformare la variabili segmented attraverso dummy.matrix()
-  nameU<-object$nameUV$U
-  nameV<-object$nameUV$V
-  nameZ<-object$nameUV$Z
-  n<-nrow(newdata)
-  r<-NULL
-  for(i in 1:length(nameZ)){
+    #devi trasformare la variabili segmented attraverso dummy.matrix()
+    nameU<-object$nameUV$U
+    nameV<-object$nameUV$V
+    nameZ<-object$nameUV$Z
+    n<-nrow(newdata)
+    r<-NULL
+    for(i in 1:length(nameZ)){
       x.values<-newdata[[nameZ[i]]]
       DM<-dummy.matrix(x.values, nameZ[i], object)
       r[[i]]<-DM
-      }  
-  newd.ok<-data.frame(matrix(unlist(r), nrow=n, byrow = FALSE))
-  names(newd.ok)<- unlist(sapply(r, colnames))
-  idZ<-match(nameZ, names( newdata))
-  newdata<-cbind(newdata[,-idZ, drop=FALSE], newd.ok) #  newdata<-subset(newdata, select=-idZ)
-  #newdata<-cbind(newdata, newd.ok) #e' una ripetizione (refuso?) comunque controlla
+    }
+    newd.ok<-data.frame(matrix(unlist(r), nrow=n, byrow = FALSE))
+    names(newd.ok)<- unlist(sapply(r, colnames))
+    idZ<-match(nameZ, names( newdata))
+    newdata<-cbind(newdata[,-idZ, drop=FALSE], newd.ok) #  newdata<-subset(newdata, select=-idZ)
   }
   if(class(object)[1]=="segmented") class(object)<-class(object)[-1]
   if(class(object)[1]=="lme"){

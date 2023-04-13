@@ -13,8 +13,8 @@ fixed number of break-points. Random effects changepoints are also allowed since
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 1.6-3\cr
-Date: \tab 2023-03-20\cr
+Version: \tab 1.6-4\cr
+Date: \tab 2023-04-14\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)

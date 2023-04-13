@@ -27,7 +27,7 @@ An integer giving the level of grouping to be used when computing the segmented 
 A scalar or vector meaning which subjects profiles have to be drawn. If \code{NULL} (default) all profiles are drawn. Ignored if \code{level=0}.
 }
   \item{res}{
-If \code{TRUE} the data points are also drawn. Ignored if \code{level=0}.
+If \code{TRUE}, the data points are also drawn. Ignored if \code{level=0}.
 }
   \item{pop}{
 if \code{TRUE}, the fitted segmented relationships based on fixed-effects only is also portrayed. Ignored if \code{level=0}.
@@ -39,7 +39,7 @@ If \code{>= 0}, the same and common y-scale is used for all 'subjects' (panels);
 If \code{>= 0}, the same and common x-scale is used for all 'subjects' (panels); otherwise the x-scale will depend on the actual observed values of the segmented covariate for each 'subject'.
 }
   \item{n.plot}{
-a vector to be passed to \code{par(mfrow=c(..))} for plotting multiple panels (should be coherent with \code{length(id)}). If missing, it is computed automatically depending on \code{length(id)}. 
+a vector to be passed to \code{par(mfrow=c(..))} for plotting multiple panels (should be coherent with \code{length(id)}). If missing, it is computed automatically depending on \code{length(id)}. Type \code{n.plot=1} to draw all the segmented profiles on the same panel.
 }
   \item{pos.leg}{
 a character ('topright', 'topleft',...) meaning the location of the legend. Set \code{NULL} for no legend.  
@@ -52,7 +52,7 @@ logical, if \code{FALSE} points, rather than lines, are used to portray the segm
 }
   \item{by}{
 A named list indicating covariate names and corresponding values affecting the fitted segmented relationship. For instance: 
-\code{by=list(sex="male",z=.2)}, provided that the variables \code{sex} and \code{z} affect the segmented relationship. Effective only if \code{level=0}.
+\code{by=list(sex="male",z=.2)}, provided that the variables \code{sex} and \code{z} affect the segmented relationship. Effective only if \code{level=0}. 
 }
   \item{add}{
 If \code{TRUE} the (fixed-effect) fitted segmented relationship is added to the current plot. Effective only if \code{level=0}. 
@@ -76,11 +76,11 @@ Possible coefficient names to be removed before computing the segmented relation
 If specified (and \code{pos.leg} has been also specified), it is the legend text. Effective only if \code{level=0}.
 }
   \item{\dots}{
-additional arguments, such as 'ylab', 'xlab', 'col.l' (for the fitted line) and 'col' (for the data points, provided that \code{res=TRUE} has been set). If \code{level=0} and \code{conf.level>0}, \code{lty} and \code{lwd} can be vectors.
+additional arguments, such as \code{ylab},\code{xlab}, \code{ylim} and \code{xlim}; \code{l.col,l.lwd,l.lty} (for the fitted individual lines - can be vectors and will be recycled); \code{p.col, p.lwd, p.lty} for the population line (if \code{pop=TRUE}); \code{col, cex, pch} for the data points (if \code{res=TRUE}); \code{t.col} for the legend color, if \code{pos.leg} is not \code{NULL}. If \code{level=0} and \code{conf.level>0}, \code{lty} and \code{lwd} can be vectors.
 }
 }
 \details{
-The function plots the 'subject'-specific segmented profiles for the 'subjects' specificed in \code{id} or, if \code{level=0}, the fitted segmented relationship based on fixed effects only.
+The function plots the 'subject'-specific segmented profiles for the 'subjects' specificed in \code{id} or, if \code{level=0}, the fitted segmented relationship based on fixed effects only. The number of panels to drawn is actually the minimum between \code{length(id)} and \code{prod(n.plot)}, but if \code{n.plot=c(1,1)} (or also simply \code{n.plot=1}), the `individual' profiles will be pictured on the same panel. 
 }
 \value{
 A single or multiple (depending on \code{level} and \code{id}) plot showing the fitted segmented profiles.
@@ -113,6 +113,8 @@ All the functions for segmented mixed models (*.segmented.lme) are still at an e
 #continues example from segmented.lme
 
 plot(os, yscale=-1) #different y-scales
+
+plot(os2, n.plot=1, l.col=2:6, l.lwd=2) #all segmented profiles on the same plot
 
 }
 }

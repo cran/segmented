@@ -190,7 +190,8 @@ o1 <-lme(lconc ~ lTime*group, random=~1|Subject, data=Cefamandole)
 os1 <- segmented(o1, ~lTime, x.diff=~group, z.psi=~z, 
   random=list(Subject=pdDiag(~1+lTime+U+G0)))
 
-slope(os1, by=list(z=.1)) #the slope estimates when z=.1
+slope(os1, by=list(group="a")) #the slope estimates in group="a" (baseline level)
+slope(os1, by=list(group="b")) #the slope estimates in group="b" 
 
 
 ###################################################

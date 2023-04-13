@@ -35,9 +35,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
   if(length(estcoef)==0) stop("No coefficient in the object fit?")
   
   #browser()
-  
   if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
-  
 
 #--------------
     linkinv <- !link
@@ -61,8 +59,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     }
     opz <- list(...)
     col.shade<-if(!is.null(opz$col.shade)) adjustcolor(opz$col.shade, .15) else adjustcolor("grey", .4)
-    cols<- if("col"%in% names(opz)) opz$col else 1
-    lwds<- if("lwd"%in% names(opz)) opz$lwd else 1
+    cols<- if("col"%in% names(opz)) opz$col else 2
+    lwds<- if("lwd"%in% names(opz)) opz$lwd else 2
     ltys<- if("lty"%in% names(opz)) opz$lty else 1
     cexs<- if("cex"%in% names(opz)) opz$cex else 1
     pchs<- if("pch"%in% names(opz)) opz$pch else 1
