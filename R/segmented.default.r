@@ -168,9 +168,20 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
                 collapse = "+")))
     }
     
-    if(!is.null(obj$call$random)) mfExt$formula<-update.formula(mf$formula, paste(".~.+", paste(all.vars(obj$call$random), collapse="+")))
+    if(!is.null(obj$call$random)) {
+      nomiRandom <- all.vars(obj$call$random)
+      if(is.list(eval(obj$call$random))) nomiRandom <- c(nomiRandom, names(eval(obj$call$random))) 
+      mfExt$formula<-update.formula(mf$formula, paste(".~.+", paste(nomiRandom, collapse="+")))
+    }
     
-    mf <- eval(mf, parent.frame())
+    if (inherits(obj, "svyglm")) {
+      mydesign <- eval(obj$call$design)
+      mf$data=quote(mydesign$variables)
+      mfExt$data=quote(mydesign$variables)
+      mf<- eval(mf)
+    } else {
+      mf <- eval(mf, parent.frame())
+    }
     n <- nrow(mf)
     nomiOff <- setdiff(all.vars(formula(obj)), names(mf))
     if (length(nomiOff) >= 1) 
@@ -186,7 +197,12 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     if (!is.null(nomiNO)) 
         mfExt$formula <- update.formula(mfExt$formula, paste(".~.-", 
             paste(nomiNO, collapse = "-"), sep = ""))
-    mfExt <- eval(mfExt, parent.frame())
+    
+    if(inherits(obj, "svyglm")){
+      mfExt <- eval(mfExt)
+    } else {
+      mfExt <- eval(mfExt, parent.frame())
+    }
     if (inherits(obj, "coxph")) {
         is.Surv <- NA
         rm(is.Surv)
@@ -306,6 +322,19 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     
     call.ok <- update(obj, Fo, evaluate = FALSE, data = mfExt)
     call.noV <- update(obj, Fo.noV, evaluate = FALSE, data = mfExt)
+    
+    #browser()
+    
+    if (inherits(obj, "svyglm")){
+      #mydesign <- eval(obj$call$design)
+      for (i in 1:k) {
+        mydesign$variables[nomiU[i]] <- U[, i]
+        mydesign$variables[nomiV[i]] <- V[, i]
+      }
+      call.ok$design<- call.noV$design<-quote(mydesign)
+      call.ok$data<-call.noV$data<-NULL
+    }
+    
     if (it.max == 0) {
         if (!is.null(call.noV[["subset"]])) 
             call.noV[["subset"]] <- NULL
@@ -324,6 +353,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     list.obj <- list(obj)
     nomiOK <- nomiU
     if(is.null(alpha)) alpha<- max(.05, 1/nrow(PSI))
+    if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
     opz <- list(toll = toll, h = h, stop.if.error = stop.if.error, 
         dev0 = dev0, visual = visual, it.max = it.max, nomiOK = nomiOK, 
         id.psi.group = id.psi.group, gap = gap, visualBoot = visualBoot, 
@@ -336,6 +366,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     opz$nomiV <- nomiV
     opz$fn.obj <- fn.obj
     opz$fc=fc
+    if (inherits(obj, "svyglm")) opz$mydesign <- mydesign
     opz <- c(opz, ...)
     if (n.boot <= 0) {
         obj <- seg.def.fit(obj, Z, PSI, mfExt, opz)
@@ -403,14 +434,19 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     beta.c<-unlist( unique(coef(obj)[nomiU])) #beta.c<-coef(obj)[nomiU]
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
     nnomi <- c(nomiU, nomiVxb)
-    for (i in 1:ncol(U)) {
-        mfExt[nomiU[i]] <- mf[nomiU[i]] <- U[, i]
-        mfExt[nomiVxb[i]] <- mf[nomiVxb[i]] <- Vxb[, i]
-    }
     Fo <- update.formula1(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))), opt=1)
     ###############
-
-
+    if (inherits(obj, "svyglm")){
+      for (i in 1:ncol(U)) {
+        mydesign$variables[nomiU[i]] <- U[, i]
+        mydesign$variables[nomiVxb[i]] <- Vxb[, i]
+      }
+    } else {
+      for (i in 1:ncol(U)) {
+        mfExt[nomiU[i]] <- mf[nomiU[i]] <- U[, i]
+        mfExt[nomiVxb[i]] <- mf[nomiVxb[i]] <- Vxb[, i]
+      }
+    }
 
 
 
@@ -431,7 +467,23 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
         objF$R <- quote(R)
         objF$r <- quote(r)
     }
+    
+    #browser()
+    
+    if (inherits(obj, "svyglm")){
+      objF$design<- call.noV$design<-quote(mydesign)
+      objF$data<-call.noV$data<-NULL
+    }
+    
     objF <- eval(objF, envir = mfExt)
+    
+    
+    
+    
+    
+    
+    
+    
     objF$offset <- obj0$offset
     isNAcoef <- any(is.na(coef(objF)))
     if (isNAcoef) {
@@ -562,11 +614,12 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
         objF$seed <- employed.Random.seed
     if (keep.class) 
         class(objF) <- c("segmented", class(obj0))
+    objF$psi[,"Initial"]<-NA
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"
     if (last) 
         list.obj <- list.obj[[length(list.obj)]]
-    warning("The returned fit is ok, but not of class 'segmented'. If interested, call explicitly the segmented methods (plot.segmented, confint.segmented,..)", 
+    warning("The returned fit is OK, but not of class 'segmented'.\n If interested, call explicitly the segmented methods (plot.segmented, confint.segmented,..)", 
         call. = FALSE)
     return(list.obj)
 }

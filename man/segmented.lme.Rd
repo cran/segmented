@@ -13,7 +13,7 @@ a numeric covariate. Random effects are allowed in each model parameter, includi
     control = seg.control(), model = TRUE, 
     z.psi = ~1, x.diff = ~1, random = NULL, 
     random.noG = NULL, start.pd = NULL, psi.link = c("identity", "logit"), 
-    nq = 0, adjust = 0, start = NULL, data, fixed.parms = NULL,...)
+    start = NULL, data, fixed.parms = NULL,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,10 +29,10 @@ An optional starting value for the breakpoint. If missing a starting value is ob
 When provided it may be a single numeric value or a vector of length equal to the number of clusters (i.e. subjects).
 }
   \item{z.psi}{
-Optional. A one-sided formula meaning the sub-regression model for the changepoint parameter. Default to \code{~1}. 
+Optional. A one-sided formula meaning the covariates in the sub-regression model for the changepoint parameter. Default to \code{~1}. 
 }
   \item{x.diff}{
-Optional. A one-sided formula meaning the sub-regression model for the difference-in-slopes parameter. 
+Optional. A one-sided formula meaning the covariates in the sub-regression model for the difference-in-slopes parameter. 
 Default to \code{~1} for no covariate for the difference-in-slope parameter.
 }
   \item{npsi}{
@@ -74,19 +74,19 @@ The identity (default) assumes
 \deqn{\psi_i=\eta_i}
 while the logit link is
 \deqn{\psi_i=(m+M*exp(\eta_i))/(1+exp(\eta_i))}
-where m and M are the observed minimum and maximum of the segmented variable \code{Z}.
-In each case the `linear predictor' is \eqn{\eta_i=\kappa_0+\kappa_1*z_i+k_i}, where z is 
-the covariate specified in \code{z.psi} and the \eqn{k_i}s are the changepoint random effects 
+where \eqn{m} and \eqn{M} are the observed minimum and maximum of the segmented variable in \code{seg.Z}.
+In each case the `linear predictor' is \eqn{\eta_i=\kappa_0+z_i^T\kappa_1+k_i}, where \eqn{z^T} includes the covariates 
+specified in \code{z.psi} and the \eqn{k_i}s are the changepoint random effects 
 included by means of \code{G0} in the \code{random} argument.
-}
-  \item{nq}{
-Integer value to assess if the estimated breakpoint for the subject i can be considered 'reliable' or not. For each subject, \eqn{\hat\psi} is not considered reliable if 
-\deqn{\hat{\psi}\le z_{(1+nq)} \; \mathrm{ and } \; \hat{\psi}\ge z_{(n_i-nq)} }
-where \eqn{z_{(\cdot)}} means the sorted values of the segmented variable. Note \code{nq} just affects the logical vector \code{attr(psi.i,"is.break")} where \code{psi.i} is the component of the model fit including the subject-specific breakpoints. Default is \code{nq=0}.
-}
-  \item{adjust}{
-A numerical (0 or 1) value. If \code{adjust=1} at convergence and for each subject \code{i} the estimated breakpoint assessed as unreliable (see argument \code{nq}) is moved to the maximum of the covariate range (for the subject i). Thus for the subjects with 'unreliable' breakpoint, the corresponding fitted  profile will be truly linear. 
-}
+  }
+%  \item{nq}{
+%Integer value to assess if the estimated breakpoint for the subject i can be considered 'reliable' or not. For each subject, \eqn{\hat\psi} is not considered reliable if 
+%\deqn{\hat{\psi}\le z_{(1+nq)} \; \mathrm{ and } \; \hat{\psi}\ge z_{(n_i-nq)} }
+%where \eqn{z_{(\cdot)}} means the sorted values of the segmented variable. Note \code{nq} just affects the logical vector \code{attr(psi.i,"is.break")} where \code{psi.i} is the component of the model fit including the subject-specific breakpoints. Default is \code{nq=0}.
+%}
+%  \item{adjust}{
+%A numerical (0 or 1) value. If \code{adjust=1} at convergence and for each subject \code{i} the estimated breakpoint assessed as %unreliable (see argument \code{nq}) is moved to the maximum of the covariate range (for the subject i). Thus for the subjects with %'unreliable' breakpoint, the corresponding fitted  profile will be truly linear. 
+%}
   \item{start}{
 An optional list including the \emph{starting values} for the difference-in-slopes parameter, delta0 and delta,
 and the changepoint parameter, kappa and kappa0. When provided, 'kappa0' overwrites 'psi'.
@@ -149,13 +149,13 @@ Working paper available on RG. doi: 10.13140/RG.2.1.4180.8402
 Vito M.R. Muggeo \email{vito.muggeo@unipa.it}
 }
 \note{
-Currently only one breakpoint (with or without random effects) can be estimated.
+Currently only one breakpoint (with or without random effects) can be estimated. If \code{fit} is the segmented.lme fit, use \code{VarCorr(fit$lme.fit)} to extract the random effect covariance matrix.
 }
 
 \section{Warning }{
-All the functions for segmented mixed models (*.segmented.lme) are still at an experimental stage 
+The function deals with estimation with a \emph{single} breakpoint only.
+%All the functions for segmented mixed models (*.segmented.lme) work pretty well, but you should are still at an experimental stage
 } 
-
 
 \seealso{
 \code{\link{plot.segmented.lme}} for the plotting method and \code{\link{segmented.default}} (example 2) for segmented models with no random effects in breakpoints or slope difference.
@@ -212,11 +212,13 @@ o<-lme(lconc ~ x, random=~1|Subject, data=d)
 os2<-segmented.lme(o, ~x, random=list(Subject=pdDiag(~1+x+U+G0)), 
   control=seg.control(n.boot=5, display=TRUE))
 
-plot(os2, n.plot = c(3,3))
+#plots with common x- and y- scales (to note heterogeneity in the changepoints)
+plot(os2, n.plot = c(3,3)) 
 os2$psi.i
 attr(os2$psi.i, "is.break") #it is FALSE for Subject #7
 
-plot(os2, n.plot = c(3,3), xscale=-1, yscale = -1) #plots with subject-specific scales
+#plots with subject-specific scales
+plot(os2, n.plot = c(3,3), xscale=-1, yscale = -1) 
 }
 
 }

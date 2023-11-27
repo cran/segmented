@@ -1,6 +1,22 @@
 citHeader("To cite segmented in publications use one or more of the following papers:")
 
 bibentry(bibtype="Article",
+    title = "A heuristic, iterative algorithm for change-point detection in abrupt change models",
+    author = c(as.person("Salvatore Fasola"), as.person("Vito M.R. Muggeo"), as.person("Helmut Kuchenhoff")),      
+    journal = "Computational Statistics",
+    year = "2018",
+    volume = "33",
+    number = "2",
+    pages = "997-1015",
+    textVersion = 
+         paste("Fasola S, Muggeo VMR, Kuchenhoff K. (2018).", 
+               "A heuristic, iterative algorithm for change-point detection in abrupt change models.",
+               "Computational Statistics, 33, 997-1015.")
+
+) 
+
+
+bibentry(bibtype="Article",
          title = "Estimating regression models with unknown break-points.",
          author = "Vito M.R. Muggeo",
          journal      = "Statistics in Medicine",

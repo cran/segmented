@@ -1,6 +1,6 @@
 `segmented.lm` <-
 function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model = TRUE, keep.class=FALSE, ...) {
-  
+
   build.all.psi<-function(psi, fixed.psi){
     all.names.psi<-union(names(psi),names(fixed.psi))
     all.psi<-vector("list", length=length(all.names.psi))
@@ -134,7 +134,13 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
             collapse = "+")
             ))
           }
-    mf <-  eval(mf, parent.frame())
+    
+    #browser()
+    #mf <-  try(eval(mf, parent.frame(max(1,sys.parent()))), silent=TRUE)
+    #if(inherits(mf, "try-error")) mf <-  try(eval(mf, parent.frame()), silent=TRUE)
+    # 
+    mf <- eval(mf, parent.frame())
+    
     n<-nrow(mf)
     #questo serve per inserire in mfExt le eventuali variabili contenute nella formula con offset(..)
     nomiOff<-setdiff(all.vars(formula(obj)), names(mf))
@@ -144,7 +150,11 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
 nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshold) "variabili"
 nomiNO<-NULL 
 for(i in nomiTUTTI){
-    r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
+  #r<-try(eval(parse(text=i), parent.frame(max(1,sys.parent()))), silent=TRUE)  
+  #
+    #if(inherits(r,"try-error")) 
+      r<-try(eval(parse(text=i), parent.frame()), silent=TRUE) 
+      
     if(class(r)[1]!="try-error" && length(r)==1 && !is.function(r) && !i%in%names(mf)) nomiNO[[length(nomiNO)+1]]<-i
     }
 #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
@@ -157,7 +167,14 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     #nomiAgg<- setdiff(names(mf), names(mfExt))
     #if(length(nomiAgg)>0) mfExt$formula<-update.formula(mfExt$formula,paste(".~.+", paste( nomiAgg, collapse="+"), sep=""))
     
-    mfExt<-eval(mfExt, parent.frame())
+#
+  # 
+#    mfExt <-  try(eval(mfExt, parent.frame(max(1,sys.parent()))), silent=TRUE)
+#    if(inherits(mfExt, "try-error")) mfExt <-  try(eval(mfExt, parent.frame()), silent=TRUE)
+mfExt <-eval(mfExt, parent.frame())
+#    mfExt <- eval(mfExt, parent.frame(max(1,sys.parent())))
+
+
     
     #mantieni in mfExt solo le variabili che NON ci sono in mf (cosi la funzione occupa meno spazio..)
     #mfExt<-mfExt[,setdiff(names(mfExt), names(mf)),drop=FALSE]
@@ -200,6 +217,8 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     #################
     #if(ncol(XREGseg)==1 && length(psi)==1 && n.psi==1 && !any(is.na(psi))) { if(psi==Inf) psi<-median(XREGseg)}
     #################
+    #browser()
+
     n <- nrow(XREG)
     Z<-lapply(apply(XREGseg,2,list),unlist) #prende anche i nomi!
     name.Z <- names(Z) <- colnames(XREGseg)
@@ -222,7 +241,9 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
         if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
         }
     }
-
+  
+    
+    
   #########==================== SE PSI FIXED
   id.psi.fixed <- FALSE
   if(!is.null(fixed.psi)){
@@ -318,6 +339,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     invXtX<-Xty<-NULL
     #browser()
     if(is.null(alpha)) alpha<- max(.05, 1/length(y))
+    if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc)
@@ -357,9 +379,6 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     length.psi<-tapply(as.numeric(as.character(names(psi))), as.numeric(as.character(names(psi))), length)
     forma.nomiU<-function(xx,yy)paste("U",1:xx, ".", yy, sep="")
     forma.nomiVxb<-function(xx,yy)paste("psi",1:xx, ".", yy, sep="")
-    
-    #nomiU   <- unlist(mapply(forma.nomiU, length.psi, name.Z)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
-    #nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, name.Z))
     nomiU   <- unlist(mapply(forma.nomiU, length.psi, nomiFINALI)) #invece di un ciclo #paste("U",1:length.psi[i], ".", name.Z[i])
     nomiVxb <- unlist(mapply(forma.nomiVxb, length.psi, nomiFINALI))
 
@@ -461,6 +480,7 @@ if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", p
     if(model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
     if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", class(obj0))
+    objF$psi[,"Initial"]<-NA
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"
     if (last)

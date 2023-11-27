@@ -114,7 +114,9 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
                          collapse = "+")
                        ))
     }
-    mf <-  eval(mf, parent.frame())
+    #browser()
+    mf <-  eval(mf, parent.frame()) 
+    #mf <-  eval(mf, parent.frame(max(1,sys.parent())))
     n<-nrow(mf)
     #La linea sotto serve per inserire in mfExt le eventuali variabili contenute nella formula con offset(..)
     #   o anche variabili che rientrano in espressioni (ad es., y/n o I(y*n))
@@ -125,14 +127,14 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     nomiTUTTI<-all.vars(mfExt$formula) #comprende anche altri nomi (ad es., threshold) "variabili"
     nomiNO<-NULL #dovrebbe contenere
     for(i in nomiTUTTI){
-      r<-try(eval(parse(text=i), parent.frame()), silent=TRUE)
+      r<-try(eval(parse(text=i), parent.frame()), silent=TRUE) # parent.frame(max(1,sys.parent())))
       if(class(r)[1]!="try-error" && length(r)==1 && !is.function(r) && !i%in%names(mf)) nomiNO[[length(nomiNO)+1]]<-i
     }
     #nomiNO dovrebbe contenere i nomi delle "altre variabili" (come th in subset=x<th) 
     if(!is.null(nomiNO)) mfExt$formula<-update.formula(mfExt$formula,paste(".~.-", paste( nomiNO, collapse="-"), sep=""))
     
-    mfExt<-eval(mfExt, parent.frame())
     
+    mfExt<-eval(mfExt, parent.frame()) #mfExt<-eval(mfExt, parent.frame(max(1,sys.parent())))
     #id.offs<-pmatch("offset",names(mf)) #questa identifica il nome offset(..). ELiminarlo dal dataframe? non conviene
     #       altrimenti nel model.frame non risulta l'offset
     
@@ -269,7 +271,8 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     list.obj <- list(obj)
     nomiOK<-nomiU
     if(is.null(alpha)) alpha<- max(.05, 1/length(y))
-    opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,nomiOK=nomiOK,
+    if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
+    opz<-list(toll=toll, h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max, nomiOK=nomiOK,
         fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,
         pow=pow, visualBoot=visualBoot, digits=digits, fc=fc)   
@@ -435,6 +438,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     objF$indexU<-build.all.psi(psi.list, fixed.psi)
     if (model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
     if(n.boot>0) objF$seed<-employed.Random.seed
+    objF$psi[,"Initial"]<-NA
     class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"

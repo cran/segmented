@@ -5,11 +5,25 @@
 ****************************
 
 
+===============
+version 2.0-0 (2023-11-27)
+===============
+* New class "stepmented" introduced, with some relevant methods. The functions stepmented.* allow to fit regression models (lm and glm) with step-function effects (and additional linear terms).
+* segreg() introduced for segmented modelling. This function allows to specify segmented (G)LM's via a proper formula including both linear and multiple segmented terms wherein some slopes can be constrained to be zero. 
+* Some improvements in segmented.lme() wherein arguments 'nq' and 'adjust' have been removed.
+* Some changes in seg.control(): arguments 'gap', 'last', 'stop.if.error', and 'powers' removed; 'quant' now defaults to FALSE. 
+  -- 'alpha' accepts 2 values to fix (via the quantile probability values) the covariate range within which the breakpoint should stay (thanks to Clement Laroche for his input).
+  -- h=0 is now allowed to keep fixed the breakpoints by also setting n.boot=0 (as an alternative to 'it.max=0') 
+* new function model.matrix.segmented()
+* segmented.default() works with objects "svyglm" (thanks to Huifeng Jin for his input)
+* predict.segmented has been rewritten and is stabler.
+* changed some default values in plot.segmented() (for lines and residuals).
+
 
 ===============
 version 1.6-4 (2023-04-14)
 ===============
-* A (relevant) enhancement in selgmented() which now can detect a large number of breakpoints not evenly distributed in the covariate range (see argument G). Also selgmented() now works with Kmax=1 (thanks to Marc Laurencelle for his input)
+* A (relevant) enhancement in selgmented() which now can detect a large number of breakpoints not evenly distributed in the covariate range (see argument G). Also, selgmented() now works with Kmax=1 (thanks to Marc Laurencelle for his input)
 * plot.segmented.lme() now can draw all the segmented profiles on the same panel (see argument 'n.plot') 
 * Bug fix: in slope() when managing "lme" fits; in pscore.test() when managing glm fits (thanks to Yuki Mori for reporting)
 

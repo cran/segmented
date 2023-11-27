@@ -3,7 +3,9 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
                           random=NULL, #una lista quale 'list(id=pdDiag(~1+x+U+G0))'
                           random.noG=NULL, #una lista senza G0. Se NULL viene aggiornata la formula di random escludendo "G0"
                           start.pd=NULL, #una matrice come starting value
-                          psi.link=c("identity","logit"), nq=0, adjust=0,
+                          psi.link=c("identity","logit"), 
+                          #nq=0, 
+                          #adjust=0,
                           start=NULL, #*named* list list(delta0, delta, kappa) and the 'delta' component, dovrebbe essere anche
                           #nominata con i nomi delle variabili in x.diff
                           data,
@@ -14,11 +16,21 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   ################################################################################
   
   #require(nlme)
+  adj.psi <- function(psii, LIM) {
+    pmin(pmax(LIM[1, ], psii), LIM[2, ])
+  }
+  
   newData<-aa<-betaa<-fn1<-kappa1<-NULL
   tol <- control$toll
   it.max <- control$it.max
   display <- control$visual
   n.boot <- control$n.boot
+  alpha <- control$alpha
+  if(is.null(alpha)) alpha<- max(.05, 1/obj$dims$N)
+  if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
+  
+  adjust=0 #ho rimosso dagli argomenti adjust=0, pero' devo ancora vederlo bene..
+  
   
   psi.link<-match.arg(psi.link)
   logit<-function(xx,a,b){log((xx-a)/(b-xx))}
@@ -280,6 +292,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #---------------------------------------------------------------------------
   ###
   #browser()
+  h <- control$h 
   if(!(is.call(obj) || class(obj)[1]=="lme")) stop(" 'obj' should be a lme fit or a lme call")
   if(missing(psi) && it.max==0) stop("Please supply 'psi' with 'it.max=0'")
   
@@ -329,6 +342,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   
   if(missing(seg.Z)) stop(" 'seg.Z' should be provided")
   name.Z<- all.vars(seg.Z)
+  if(length(name.Z)>1) stop("segmented.lme works with 1 breakpoint only")
   
   allNOMI<-unique(c(name.Z, all.vars(my.call$fixed), random.vars, all.vars(z.psi), all.vars(x.diff)))
   formTUTTI<-as.formula(paste("~.+", paste(allNOMI,collapse="+")))
@@ -368,8 +382,29 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   nomeRispo<-names(mf)[1]
   Rispo<-model.response(mf)
   #
+  
+  #browser()
   Z <- mf[[name.Z]]
-  if(!missing(psi)) {if(psi<=min(Z) || psi>=max(Z)) stop("the provided psi is outside the covariate range", call.=FALSE)}
+  
+  #limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
+
+  limZ <- as.matrix(quantile(Z, names = FALSE, probs = c(alpha[1], alpha[2])))
+  
+  min.Z<- min(limZ[,1])
+  max.Z<- max(limZ[,1])
+  
+  
+  
+  
+  
+  
+  
+  #browser()
+  
+  if(!missing(psi)) {
+    if(length(psi)>1) stop("segmented.lme works with 1 breakpoint only")
+    if(psi<=min(limZ) || psi>=max(limZ)) stop("the provided psi is outside the range, see 'alpha' in seg.control()", call.=FALSE)
+    }
   
   id <- mf[[nameRandom[J]]] #the innermost factor
   if(is.factor(id)) id <-factor(id, levels = unique(id)) 
@@ -378,8 +413,8 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   N<-length(ni)#n. of clusters (subjects)
   n<-length(id) #n. of total measurements
   
-  id.x.diff<-FALSE
-  id.z.psi<-FALSE
+  id.x.diff<- FALSE
+  id.z.psi <- FALSE
   #M.z.psi <- mf[all.vars(z.psi)] #
   #M.x.diff <- mf[all.vars(x.diff)] #
   
@@ -401,7 +436,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       Offs.kappa<-Fixed.z.psi<-drop(Z.psi[, name.fixed.butG0, drop=FALSE]%*% fixed.parms[name.fixed.butG0])
       Z.psi<-Z.psi[,setdiff(colnames(Z.psi), name.fixed.butG0), drop=FALSE]
     }
-    if(ncol(Z.psi)>0){
+  if(ncol(Z.psi)>0){
       nomiG<-paste("G.",colnames(Z.psi),sep="") 
       namesGZ$nomiG<-nomiG
       fixed<-paste(fixed,paste(nomiG,collapse="+"),sep="+")
@@ -421,19 +456,21 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   
   #==================================================================
   #Queste funzioni min1() e max1() restituiscono il "quasi" min o max
-  if(nq>0){
-    min1<-function(x,na.rm=FALSE){x<-sort(x)[-(1:nq)];min(x,na.rm=na.rm)}
-    max1<-function(x,na.rm=FALSE){x<-rev(x)[-(1:nq)];max(x,na.rm=na.rm)}
-  } else {
-    min1<-min
-    max1<-max
-  }
-  adjust<-max(min(adjust,2),0)  #solo 0,1,2 sono consentiti..
+  # if(nq>0){
+  #   min1<-function(x,na.rm=FALSE){x<-sort(x)[-(1:nq)];min(x,na.rm=na.rm)}
+  #   max1<-function(x,na.rm=FALSE){x<-rev(x)[-(1:nq)];max(x,na.rm=na.rm)}
+  # } else {
+  #   min1<-min
+  #   max1<-max
+  # }
+  # adjust<-max(min(adjust,2),0)  #solo 0,1,2 sono consentiti..
+  # 
+  # #==================================================================
+  # 
+  # min.Z<-min1(Z)
+  # max.Z<-max1(Z)
   
-  #==================================================================
   
-  min.Z<-min1(Z)
-  max.Z<-max1(Z)
   mf["U"]<- 1 #rep(1, n)
   #if(!is.null(obj$data)) my.dd<-cbind(obj$data,my.dd)
   #browser()
@@ -449,9 +486,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     est.kappa0<-FALSE
     kappa0<-kappa0Fixed<-fixed.parms["G0"]
   }
-  
-  
-  
+
   if(est.kappa0){
     if(!is.null(start$kappa0)) {
       psi<-if(psi.link=="logit") inv.logit(start$kappa0,min.Z,max.Z) else start$kappa0
@@ -467,6 +502,11 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   } else { #se e' fissato e quindi non devi stimarlo
     psi<- kappa0
   }
+  
+  
+  #browser()
+  
+  
   psi.new <- psi #stime iniziali
   if(length(psi)!=1 && length(psi)!=N) stop("length(psi) has to be equal to 1 or n. of clusters")
   if(length(psi) == 1) {
@@ -537,7 +577,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   
   if(!est.kappa0) formulaFix<-update.formula(formulaFix, .~.-G0)
   formulaRand<-formulaRandOrig<-my.call$random
-  minMax<-cbind(tapply(Z,id,min1),tapply(Z,id,max1)) #matrice nx2 dei min-max
+  minMax <- cbind(tapply(Z,id,min),tapply(Z,id,max)) #matrice nx2 dei min-max
   #---------------------------------------------------------
   call.ok<-update.lme.call(my.call, fixed = formulaFix, random=random, data=mf, evaluate=FALSE,
                            control = list(msVerbose = FALSE, niterEM = 100, opt = "optim"))
@@ -579,23 +619,21 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     Off<- if(est.kappa0)  -kappa0i*mf$G0 else -ki*mf$G0
     if(id.z.psi) Off<- Off - drop(as.matrix(mf[nomiG])%*%kappa[nomiG])
     mf[nomeRispo]<-Rispo-Off
+    
     # estimate the model
     ########################################
     obj<-eval(call.ok)
-    #fare un altro tentativo?
     ########################################
+    
+    #formulaFix.noG
+    #random.noG
+    
     b.old<-b.new
     b.new<-fixed.effects(obj)
     ###    if(psi.new>max(Z)| psi.new<min(Z)) stop("estimated psi out of range: try another starting value!")
     dev.new <- obj$logLik#sum((fitted(obj)-my.dd[,paste(formula(obj))[2]])^2) #
-    #        if(display){
-    #            flush.console()
-    #            if(it == 1) cat(0," ",formatC(dev.old,3,format="f"),"", "(No breakpoint(s))","\n")
-    #            spp <- if(it < 10) "" else NULL
-    #            cat(it,spp,"",formatC(dev.new,3,format="f"),formatC(abs(epsilon),3,format="f"),
-    #            formatC(fixef(obj)["G0"],digits=3,width=4, format="fg"),
-    #            "\n")
-    #            }
+    
+    
     #===============================================================================
     if (display) {
       flush.console()
@@ -603,7 +641,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       cat(paste("iter = ", spp, it,
                 "  work.LL = ",formatC(dev.new,digits=3,format="f"), #era format="fg"
                 "  diff.s = ",formatC(fixef(obj)["U"],digits=3,format="f"), 
-                "  psi = ",paste(formatC(fixef(obj)["G0"],digits=3, format="f"), collapse="  "),
+                "  kappa0 = ",paste(formatC(fixef(obj)["G0"],digits=3, format="f"), collapse="  "),
                 sep=""), "\n")
     }
     
@@ -623,16 +661,21 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     #delta0i<-if(inflate.res) inflate.2residuals(obj, coeff=TRUE)[,"U"] else unlist(coef(obj)["U"])    #length=N
     if(id.x.diff) delta <- fixed.effects(obj)[nomiUx]
     
-    delta0i<-unlist(coef(obj)["U"])
-    
-    #browser()
+    delta0i <- unlist(coef(obj)["U"])
     
     if(est.kappa0){
-      kappa0.old<-kappa0 #length=1
+      kappa0.old <- kappa0 #length=1
       kappa0 <- fixed.effects(obj)["G0"]
+      kappa0<- if(psi.link=="identity")  adj.psi(kappa0, limZ) else max(min(9,kappa0),-9)
+      kappa0 <- kappa0.old + (kappa0 - kappa0.old)*h/2 
       #questo controllo e' sbagliato se link.psi="logit"
       #if(kappa0<= min(Z) || kappa0>=max(Z)) stop("estimated psi outside the range")
     }
+    
+    
+    
+    #browser()
+    
     kappa0i.old<-kappa0i #length=n
     
     #browser()
@@ -660,6 +703,9 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     if(anyFixedG){ #questo e' se ci sono parametri con valori *fissati* da non stimare..
       etai <- etai+ Offs.kappa
     }
+    
+    #browser()
+    
     psi.old <- psi.ex #length=n.obs
     psi.ex<-if(psi.link=="logit") inv.logit(etai,min.Z,max.Z) else etai  #length=n
     #eventuale aggiustamento dei psi.
@@ -667,6 +713,8 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     #            id.bp<-I(psi.new>minMax[,1]&psi.new<minMax[,2])
     #            psi.new[!id.bp] <- tapply(Z,id,max)[!id.bp]# minMax[!id.bp,2]
     #            }
+    
+    #if(it==2) browser()
     
     if(it >= (it.max+1)) break
     #        if(abs(epsilon) <= tol) break #NON serve, c'? il while(abs(epsilon) > tol)

@@ -43,8 +43,8 @@ extract.psi<-function(lista){
       rangeZ <- apply(Z, 2, range) #serve sempre
       
       alpha <- opz$alpha
-      limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
-      
+      #limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+      limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
       if(!is.list(o0)) {
           o0<- suppressWarnings(seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))
           o0<-extract.psi(o0)
@@ -80,6 +80,7 @@ extract.psi<-function(lista){
       id.uguali<-0
       k.psi.change<- 1
       alpha<-.1
+      #browser()
       for(k in seq(n.boot)){
         #if(k==5) browser()
         ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
@@ -166,7 +167,7 @@ extract.psi<-function(lista){
       # PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
       # o0<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
 
-      
+      #browser()
 
       ris<-list(all.selected.psi=drop(all.selected.psi),all.selected.ss=all.selected.ss, all.psi=all.est.psi, all.ss=all.ss)
 
@@ -174,7 +175,7 @@ extract.psi<-function(lista){
           PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
           o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1)), silent=TRUE)
       }
-      if(!is.list(o0)) return(0)
+      if(!is.list(o0)) return(0) #NOn e' meglio che restituisca un errore?
       o0$boot.restart<-ris
       rm(.Random.seed, envir=globalenv())
       return(o0)

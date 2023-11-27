@@ -26,8 +26,8 @@ extract.psi<-function(lista){
       o0<-try(suppressWarnings(seg.def.fit(obj, Z, PSI, mfExt, opz)), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
       alpha <- opz$alpha
-      limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
-      
+      #limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+      limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
       if(!is.list(o0)) {
           o0<- seg.def.fit(obj, Z, PSI, mfExt, opz, return.all.sol=TRUE)
           o0<-extract.psi(o0)

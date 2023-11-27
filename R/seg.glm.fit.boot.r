@@ -34,7 +34,8 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
       rangeZ <- apply(Z, 2, range) #serve sempre 
       
       alpha<-opz$alpha
-      limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha,1-alpha))
+      #limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha,1-alpha))
+      limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
       
       if(!is.list(o0)) {
         o0<- suppressWarnings(seg.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))

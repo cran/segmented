@@ -21,7 +21,7 @@ function(x, short = x$short, var.diff = x$var.diff,
     nomiU<-rownames(x$gap)
     #idU<-match(nomiU,rownames(x$Ttable))
     print(x$Ttable[nomiU,])
-      } else {cat("\nMeaningful coefficients of the linear terms:\n")
+      } else {cat("\nCoefficients of the linear terms:\n")
         if(is.null(dim(x$Ttable))){
         print(x$Ttable)
         #printCoefmat(matrix(x$Ttable,nrow=1,ncol=4,dimnames=list(" ",names(x$Ttable))),has.Pvalue=FALSE)

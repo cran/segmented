@@ -10,7 +10,7 @@ Points method for segmented objects
 }
 \usage{
   \method{points}{segmented}(x, term, interc = TRUE, link = TRUE, rev.sgn=FALSE, 
-    transf=I, .vcov=NULL, .coef=NULL, const=0, ...)
+    transf=I, .vcov=NULL, .coef=NULL, const=0, v=TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -37,8 +37,9 @@ A possible function to convert the fitted values before plotting.
   \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov()}.}
   \item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(x)}.}
   \item{const}{ A constant to be added (on the y-scale) to the values before transforming and plotting.}
+  \item{v}{logical. If \code{TRUE}, vertical lines at the breakpoints are also drawn.}
   \item{\dots}{
-other graphics parameters to pass on to \code{points()} function.
+other graphics parameters to pass on to \code{points()} and \code{segments()} (if \code{v=TRUE}).
 }
 }
 \details{

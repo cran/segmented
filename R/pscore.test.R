@@ -393,7 +393,7 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
 #        mf <- eval(mf, parent.frame())  
 #      }
       #for(i in 1:length(obj$nameUV$U)) assign(obj$nameUV$U[i], obj$model[,obj$nameUV$U[i]], envir=parent.frame())
-      
+      if(!is.null(obj$formulaLin)) stop(" 'pscore()' does not work with objects returned by segreg()")
       mf<-model.frame(obj)
       y <- model.response(mf, "any")
       weights <- as.vector(model.weights(mf))

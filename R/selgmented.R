@@ -148,7 +148,7 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
         all.psi<- r$psi[,"Est."]
         #rm.id <- which(abs(slope(r)[[1]][,3]) <= qnorm(1-alpha/2))
         soglia <- if(!bonferroni) qnorm(1-alpha/2) else qnorm(1-alpha/(2* length(r$nameUV$U)) ) 
-        rm.id <- which(abs(summary.lm(r)$coefficients[r$nameUV$U,"t value"]) <= soglia)
+        rm.id <- which(abs(summary.lm(r)$coefficients[r$nameUV$U, 3]) <= soglia) #era "t value" invece che 3 ma non funzionava con glm..
           
         if(length(rm.id)>0){
           all.psi <- all.psi[-rm.id]
@@ -223,6 +223,8 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
       R
     }
     
+    #browser()
+    
     if(is.numeric(olm)){
       y<-olm
       Z<-x<- 1:length(y)
@@ -251,6 +253,8 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
       npsi<-1:Kmax
       startpsi<-ris<-vector("list", length(npsi))  
       conv<-bic.values<- rep(NA, length(npsi))
+      
+      if(!is.null(olm$call$data)) assign(paste(olm$call$data), eval(olm$call$data, envir=parent.frame() ))
       
       #fit with 1 breakpoint
       .a<-capture.output(os<- suppressWarnings(try(segmented(olm, seg.Z, npsi=1, control=control1), silent=TRUE)))
@@ -387,7 +391,7 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
       if(check.dslope){
         all.psi<- r$psi[,"Est."]
         soglia <- if(!bonferroni) qnorm(1-alpha/2) else qnorm(1-alpha/(2* length(r$nameUV$U))) 
-        tU <- abs(summary(r)$coefficients[r$nameUV$U,"t value"])
+        tU <- abs(summary(r)$coefficients[r$nameUV$U, 3])
         #if(length(tU[tU<=soglia])==length(tU)) #anche se tutti i t<= soglia fai comunque la procedura, perche' 
         #riducendo i psi, i tU potrebbero cambiare
         #rm.id <- which.min(tU[tU<=soglia])
@@ -405,7 +409,7 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
             .a <- capture.output(r<-suppressWarnings(try(r<-update(r0), silent=TRUE)))
           }
           if(inherits(r,"segmented")){
-            tU <- abs(summary(r)$coefficients[r$nameUV$U,"t value"])
+            tU <- abs(summary(r)$coefficients[r$nameUV$U, 3])
             #rm.id <- which.min(tU[tU<=soglia])
             rm.id <- f(tU, soglia)
             all.psi<-r$psi[,"Est."]

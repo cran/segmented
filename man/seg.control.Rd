@@ -1,17 +1,16 @@
 \name{seg.control}
 \alias{seg.control}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ Auxiliary for controlling segmented model fitting }
+\title{ Auxiliary for controlling segmented/stepmented model fitting }
 \description{
-  Auxiliary function as user interface for 'segmented' fitting. Typically
-     only used when calling any 'segmented' method (\code{segmented.lm}, \code{segmented.glm}, \code{segmented.Arima} or \code{segmented.default}).
+  Auxiliary function as user interface for 'segmented' and 'stepmented' fitting. Typically
+     only used when calling any 'segmented' or 'stepmented' method.
 }
 \usage{
 seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
-    K = 10, quant = TRUE, maxit.glm = 25, h = 1, break.boot=5, size.boot=NULL, 
+    K = 10, quant = FALSE, maxit.glm = 25, h = 1.25, break.boot=5, size.boot=NULL, 
     jt=FALSE, nonParam=TRUE, random=TRUE, seed=12345, fn.obj=NULL, digits=NULL, 
-    conv.psi=FALSE, alpha = NULL, min.step=.0001, 
-    powers=c(1,1), last = TRUE, stop.if.error = NULL, gap=FALSE, fc=.95)
+    conv.psi=FALSE, alpha = NULL, min.step=.0001, fc=.95)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -33,10 +32,10 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   \item{h}{ positive factor modifying the increments in breakpoint updates during
     the estimation process (see details). }
   \item{break.boot}{
-  Integer, less than \code{n.boot}. If \code{break.boot} consecutive bootstrap samples lead to the same objective function, the algorithm stops without performing all \code{n.boot} 'trials'.
-  This can save computational time considerably.
+  Integer, less than \code{n.boot}. If \code{break.boot} consecutive bootstrap samples lead to the same objective function during the estimation process, the algorithm stops without performing all \code{n.boot} 'trials'.
+  This can save computational time considerably. Default is \code{5} for the \code{segmented} and \code{5+2} for the \code{stepmented} functions.
     }
-  \item{size.boot}{the size of the bootstrap samples. If \code{NULL}, it is taken equal to the actual sample size.}
+  \item{size.boot}{the size of the bootstrap samples. If \code{NULL}, it is taken equal to the actual sample size. If the sample is very large, the idea is to run bootstrap restarting using smaller bootstrap samples.}
   \item{jt}{logical. If \code{TRUE} the values of the segmented variable(s) are jittered before fitting the model to the
   bootstrap resamples.}
   \item{nonParam}{
@@ -59,22 +58,19 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   \code{"coxph"} fits it should be \code{fn.obj="-x$loglik[2]"}. If \code{NULL} the `minus log likelihood' extracted from 
   the object, namely \code{"-logLik(x)"}, is used. See \code{\link{segmented.default}}.
     }
-  \item{digits}{optional. If specified it means the desidered number of decimal points of the breakpoint to be used during the iterative algorithm.}
-  \item{conv.psi}{optional. Should convergence of iterative procedure to be assessed on changes of breakpoint estimates or changes in the objective? Default to FALSE.}
-  \item{alpha}{optional numerical value. The breakpoints are estimated within the quantiles \code{alpha} and \code{1-alpha} of the relevant covariate. Defaults to \code{NULL} which means \code{max(.05, 1/n)}}.
-  \item{min.step}{optional. The minimum step size to break the iterative algorithm. Default to 0.0001.}
-  \item{powers}{
-  The powers of the pseudo covariates employed by the algorithm. These can be altered during the iterative 
-  process to stabilize the estimation procedure. Usually of no interest for the user. \emph{This argument will be removed in next releases}.
+  \item{digits}{optional. If specified it means the desidered number of decimal points of the breakpoint to be used during the iterative algorithm.
   }
-  \item{last}{ logical indicating if output should include only the last fitted model. \emph{This argument will be removed in next releases}}
-  \item{stop.if.error}{ same than \code{fix.npsi}. \emph{This argument will be removed in next releases}, and replaced by \code{fix.npsi}.
-  If provided, and different from \code{NULL}, it overwrites \code{fix.npsi}}
-  \item{gap}{logical, if \code{FALSE} the gap coefficients are \emph{always} constrained to zero at the convergence. \emph{This argument will be removed in next releases}.}
-  \item{fc}{A proportionality factor (\eqn{\le 1}{<= 1}) to adjust the breakpoint estimates \emph{if} these come close to the boundary or too close each other. For instance, if \code{psi} turns up close to the maximum, it will be changed to \code{psi*fc} or to \code{psi/fc} if close to the minimum. This is useful to get finite point estimate and standard errors for each slope parameter.}
+  \item{conv.psi}{optional. Should convergence of iterative procedure to be assessed on changes of breakpoint estimates or changes in the objective? Default to FALSE.
+  }
+  \item{alpha}{optional numerical values. The breakpoints are estimated within the quantiles \code{alpha[1]} and \code{alpha[2]} of the relevant covariate. If a single value is provided, it is assumed \code{alpha} and \code{1-alpha}. Defaults to \code{NULL} which means \code{alpha=max(.05, 1/n)}. Note: Proving \code{alpha=c(mean(x<=a),mean(x<=b))} means to constrain the breakpoint estimates within \eqn{[a,b]}{[a,b]}.
+  }
+  \item{min.step}{optional. The minimum step size to break the iterative algorithm. Default to 0.0001.}
+%  \item{stop.if.error}{ same than \code{fix.npsi}. \emph{This argument will be removed in next releases}, %and replaced by 
+%  \code{fix.npsi}.
+% If provided, and different from \code{NULL}, it overwrites \code{fix.npsi}
+%  }
+  \item{fc}{A proportionality factor (\eqn{\le 1}{<= 1}) to adjust the breakpoint estimates \emph{if} these come close to the boundary or too close each other. For instance, if \code{psi} turns up close to the maximum, it will be changed to \code{psi*fc} or to \code{psi/fc} if close to the minimum. This is useful to get finite point estimate and standard errors for each slope paramete.}
 }
-
-
 \details{
   Fitting a `segmented' GLM model is attained via fitting iteratively standard GLMs. The number of (outer) 
   iterations is governed by \code{it.max}, while the (maximum) number of (inner) iterations to fit the GLM at 
@@ -85,8 +81,8 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   In this case, it may be useful to set also \code{fix.npsi=FALSE} to automate the procedure, see Muggeo and Adelfio (2011).
   The maximum number of iterations (\code{it.max}) should be also increased when the `automatic' procedure is used.
 
-  If \code{last=TRUE}, the object resulting from \code{segmented.lm} (or \code{segmented.glm}) is a
-  list of fitted GLM; the i-th model is the segmented model with the values of the breakpoints at the i-th iteration. 
+%  If \code{last=TRUE}, the object resulting from \code{segmented.lm} (or \code{segmented.glm}) is a
+%  list of fitted GLM; the i-th model is the segmented model with the values of the breakpoints at the i-th %iteration. 
 
   Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood (2001).
   The bootstrap restarting is expected to escape the local optima of the objective function when the

@@ -59,7 +59,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
   y.only.vector <- TRUE
   alpha<-control$alpha
   if(is.null(alpha)) alpha<- max(.05, 1/length(y)) 
-  
+  if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
   #browser()
   if(missing(psi)){
     if(missing(npsi)) npsi<-1 #stop(" psi or npsi have to be provided ")
@@ -278,6 +278,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     objF$id.warn <- id.warn
     objF$orig.call<- update(objF, Fo0, evaluate=FALSE)
     objF$indexU<-build.all.psi(psi.list, fixed.psi)
+    objF$psi[,"Initial"]<-NA
     if(model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
     if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", "lm")

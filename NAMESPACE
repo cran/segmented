@@ -4,7 +4,7 @@ import(nlme)
 importFrom("grDevices", "grey","adjustcolor","colorRampPalette")
 importFrom("graphics", "abline", "axis", "box", "lines", "matlines",
              "matplot", "par", "plot", "points", "polygon", "segments","smoothScatter",
-           "legend","mtext")
+           "legend","mtext", "text", "rect", "arrows")
 importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "fitted", "formula", "gaussian", "glm.control", "glm.fit",
              "is.empty.model", "lm.wfit", "median", "model.frame",
@@ -15,10 +15,12 @@ importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
              "update.formula", "vcov", "weights", "dnorm", "lm", "lm.fit", "splinefun",
              "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", 
              "terms","is.ts", "tsp", "AIC",".lm.fit","var",
-	           "asOneSidedFormula", "logLik","plogis")
+	           "asOneSidedFormula", "logLik","plogis", ".getXlevels", 
+             "cov2cor", "glm", "uniroot")
+
 importFrom("utils", "flush.console", "capture.output")
 
-export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima, segmented.numeric, 
+export(segreg, seg, segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima, segmented.numeric, 
 	segmented.lme, print.segmented.lme, summary.segmented.lme, vcov.segmented.lme, confint.segmented.lme, 
 	logLik.segmented.lme, fixef.segmented.lme, fitted.segmented.lme, plot.segmented.lme,
 	broken.line ,confint.segmented,davies.test,pscore.test,draw.history,aapc,
@@ -26,8 +28,15 @@ export(segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arim
 	seg.control,seg.lm.fit,seg.glm.fit,seg.lm.fit.boot,seg.glm.fit.boot,
 	seg.def.fit,seg.def.fit.boot, seg.Ar.fit,seg.Ar.fit.boot,
 	seg.num.fit, seg.num.fit.boot,
-	slope, summary.segmented,print.summary.segmented,vcov.segmented, predict.segmented, 
-	points.segmented, aapc, selgmented, pwr.seg)
+	slope, summary.segmented, print.summary.segmented, vcov.segmented, predict.segmented, 
+	points.segmented, aapc, selgmented, pwr.seg, model.matrix.segmented)
+
+export(stepmented, stepmented.lm, stepmented.glm, stepmented.ts, stepmented.numeric,
+       step.lm.fit, step.glm.fit, step.ts.fit, step.num.fit, 
+       step.lm.fit.boot, step.glm.fit.boot, step.ts.fit.boot, step.num.fit.boot,
+       summary.stepmented, print.summary.stepmented, print.stepmented,
+       plot.stepmented, vcov.stepmented)
+
 
 S3method(segmented,default)
 S3method(segmented,lm)
@@ -54,3 +63,16 @@ S3method(logLik, segmented.lme)
 S3method(fixef, segmented.lme)
 S3method(fitted, segmented.lme)
 S3method(plot, segmented.lme)
+
+#S3method(stepmented,default)
+S3method(stepmented,lm)
+S3method(stepmented,glm)
+S3method(stepmented,ts)
+S3method(stepmented,numeric)
+#S3method(stepmented,Arima)
+S3method(plot,stepmented)
+S3method(print,stepmented)
+S3method(summary,stepmented)
+S3method(print, summary.stepmented)
+S3method(confint,stepmented)
+S3method(lines,stepmented)

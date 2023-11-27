@@ -1,6 +1,7 @@
 plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
          yscale = 1, xscale = 1, n.plot, pos.leg = "topright", vline = FALSE, lines = TRUE, 
-         by=NULL, add=FALSE, conf.level=0, withI=TRUE, vcov.=NULL, shade=FALSE, drop.var=NULL, text.leg=NULL, ...) {
+         by=NULL, add=FALSE, conf.level=0, withI=TRUE, vcov.=NULL, shade=FALSE, drop.var=NULL, text.leg=NULL, 
+         id.name=TRUE, ...) {
   # plotting fitted segmented relationships for multiple subjects
   # obj: a 'segmented.lme' object 
   # id: the subject id to be plotted
@@ -136,10 +137,12 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     y <- XY[names(y) == id, 2]
     if (yscale < 0) range.ok <- range(y)
     
+    #browser()
+    
     range.ok[1] <- if (sign(range.ok[1]) > 0)
-      range.ok[1] * 0.99 else range.ok[1] * 1.01
+      range.ok[1] * 0.98 else range.ok[1] * 1.03
     range.ok[2] <- if (sign(range.ok[2]) > 0)
-      range.ok[2] * 1.01 else range.ok[2] * 0.99
+      range.ok[2] * 1.03 else range.ok[2] * 0.98
     
     # x<-obj$Z
     rangeX.ok <- range(obj$Z)
@@ -236,7 +239,10 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     
     
     if (!add) do.call(plot, opz)
-    if (!is.null(pos.leg)) legend(pos.leg, legend = paste(nameID, id, sep = " = "), bty = "n", text.col=t.col)
+    if (!is.null(pos.leg)){ 
+      legg <- if(id.name) paste(nameID, id, sep = " = ") else id
+      legend(pos.leg, legend = legg, bty = "n", text.col=t.col)
+    }
     
     
     ff <- fitted(obj$lme.fit.noG, level = level)
@@ -274,8 +280,22 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
         nomiCoef.ok <- c(nomiCoef.ok, obj$namesGZ$nomiUx)
         coef.ok <- coef(obj$lme.fit.noG, level = level)[id, nomiCoef.ok]
         psi.ok <- return.psi(obj, level = level)[id]  #dipende da eventuali termini fissi in z.psi, e dal livello di nesting.
-        # adesso devi copstruire la matrice del disegno. xvar<-seq(min(x), max(x),
-        # l=100) cbind(1, xvar, pmax(xvar-psi.ok,0))
+        # adesso devi copstruire la matrice del disegno. 
+        
+        
+        #########################################################
+        ### GUARDARE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #########################################################
+        
+        xvar<-seq(min(x), max(x), l=100) 
+        
+        mu.ok <- cbind(1, xvar, pmax(xvar-psi.ok,0))%*%coef.ok
+        lines(xvar, mu.ok, col = l.col, lwd = l.lwd, lty = l.lty)
+        
+        coef.ok<- as.numeric(coef.ok)
+        if(!is.null(obj$namesGZ$nomiUx)) {
+          coef.ok[3] <- coef.ok[3]+ coef.ok["bUx"]* obj$lme.fit.noG$data[,obj$namesGZ$nomiUx]
+        }
         
         # come fare se ci sono variabili U.x? coef.ok include il coef ma c'? bisogno
         # del valore corrispondente all'unita' id..
@@ -284,8 +304,13 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       }
     }
     if(vline) segments(psi, par()$usr[3], psi, f.psi, lty = 3, col = l.col)
-    points(psi, par()$usr[3] * 1, pch = "|", col = l.col, cex = 1.2)
     
+    #browser()
+    if(attr(obj$psi.i,"is.break")[paste(id)]){
+      points(psi, par()$usr[3] * 1, pch = "X", col = l.col, cex = 1.2)
+      points(psi, f.psi, pch = "x", col = l.col, cex = 1, lwd=1.5)
+    }
+    #browser()
     
     # codici vecchi..  #left side mL<-m[m[,1]<=psi, ,drop=FALSE] fL<-splinefun(mL[,1],
     # mL[,2]) new.xL<- c(min(mL[,1]), psi) #right side mR<-m[m[,1]>=psi, ,drop=FALSE]
@@ -568,7 +593,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     t.col <- if (!is.null(opz$t.col)) opz$t.col else 1 #for legend text..
     t.col <- rep(t.col, length(id))
     
-        
+     #browser()   
     
     # if(dev.cur()==1) { #se non e' aperto alcun device..
     #unico grafico con tutti i profili individuali.. 
@@ -612,15 +637,15 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
           if(xscale>=0) {
             par(mar = rep(0, 4)) 
             } else {
-              opz$xaxt<-NULL
+              opz$xaxt<-"n"
               par(mar = c(0,0,2.2,0))
               }
         } else {
-          opz$yaxt<-NULL
+          #opz$yaxt<-NULL
           if(xscale>=0) {
             par(mar = c(0,0,0,2.5)) 
             } else {
-              opz$xaxt<-NULL
+              opz$xaxt<-"n"
               par(mar = c(0,0,2,2.5))
             }
         }
@@ -635,6 +660,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     opz$add<- add
     #col.l lo prende anche sui punti????
     for (i in id) {
+      #browser()
       k <- k + 1
       # plotSegLme(obj, id=i, pop=pop, res=res, xLab='', yLab='',
       # main='', xaxt='n', yaxt='n', leg=leg, yscale=yscale,
@@ -651,11 +677,25 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       #browser()
       
       # tt<-axTicks(1) las=2
-      if((xscale>=0)&&(k %in% id.bot)) axis(1, cex.axis = 0.7, at = NULL) else axis(1, labels = FALSE)
-      if((yscale>=0)&&(k%in%id.sx)) axis(2, labels = TRUE, cex.axis = 0.7) else axis(2, labels = FALSE)
+      #if((xscale>=0)&&(k %in% id.bot)) axis(1, cex.axis = 0.7, at = NULL) else axis(1, labels = FALSE)
+      #if((yscale>=0)&&(k%in%id.sx)) axis(2, labels = TRUE, cex.axis = 0.7) else axis(2, labels = FALSE)
+      #if((k %in% id.bot)) axis(1, cex.axis = 0.7, at = NULL) else axis(1, labels = FALSE)
+      #
+      #if(xscale>=0) {
+       # if((k %in% id.bot)) axis(1, cex.axis = 0.7, at = NULL)
+      #  axis(1, labels = FALSE)
+      #}
+      #browser()
+      if((xscale<0)|| ((xscale>=0)&&(k%in%id.bot))) axis(1, labels = TRUE, cex.axis = 0.7) else axis(1, labels = FALSE)
+      #if(((xscale>=0)&&(k%in%id.bot))) axis(1, labels = TRUE, cex.axis = 0.7) else axis(1, labels = FALSE)
+      
+      if((yscale<0)|| ((yscale>=0)&&(k%in%id.sx))) axis(2, labels = TRUE, cex.axis = 0.7) else axis(2, labels = FALSE)
+      
     }
-    mtext(Xlab, 1, line = 3, outer = out)
-    mtext(Ylab, 2, line = 3, outer = out)
-    if(length(id)>1) par(mar=old.mar, oma=old.oma, mfrow=old.mfrow)
+    if(length(id)>1) {
+      mtext(Xlab, 1, line = 3, outer = out)
+      mtext(Ylab, 2, line = 3, outer = out)
+      par(mar=old.mar, oma=old.oma, mfrow=old.mfrow)
+    }
   }
 }

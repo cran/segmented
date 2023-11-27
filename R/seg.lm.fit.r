@@ -3,7 +3,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     useExp.k = TRUE
     search.min<-function(h, psi, psi.old, X, y, w, offs) {
         psi.ok<- psi*h + psi.old*(1-h)
-        PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
+        #PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
+        PSI <- matrix(psi.ok, nrow=n, ncol = length(psi.ok), byrow=TRUE)
         U1 <- (Z - PSI) * (Z > PSI)
         if (pow[1] != 1) U1 <- U1^pow[1]
         obj1 <- try(mylm(cbind(X, U1), y, w, offs), silent = TRUE)
@@ -52,8 +53,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         o
     }
     in.psi <- function(LIM, PSI, ret.id = TRUE) {
-        a <- PSI[1, ] <= LIM[1, ]
-        b <- PSI[1, ] >= LIM[2, ]
+        a <- PSI[1, ] < LIM[1, ]
+        b <- PSI[1, ] > LIM[2, ]
         is.ok <- !a & !b
         if (ret.id) 
             return(is.ok)
@@ -93,16 +94,18 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     min.step <- opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha <- opz$alpha
-    limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+    limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
+
     psi <- PSI[1, ]
+    psi<-adj.psi(psi, limZ)
+    PSI<-matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
     id.psi.group <- opz$id.psi.group
     conv.psi <- opz$conv.psi
-    h <- opz$h
+    hh <- opz$h
     digits <- opz$digits
     pow <- opz$pow
     nomiOK <- opz$nomiOK
     toll <- opz$toll
-    h <- opz$h
     gap <- opz$gap
     fix.npsi <- opz$stop.if.error
     dev.new <- opz$dev0
@@ -121,6 +124,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         XREG <- XREG[, sel.col.XREG, drop = FALSE]
     invXtX <- opz$invXtX
     Xty <- opz$Xty
+    #browser()
     if (!in.psi(limZ, PSI, FALSE)) 
         stop("starting psi out of the range.. see 'alpha' in seg.control.", 
             call. = FALSE)
@@ -195,9 +199,10 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
             }
         }
         psi.old <- psi
-        psi <- psi.old + gamma.c/beta.c
+        psi <- psi.old + hh*gamma.c/beta.c
         #aggiusta la stima di psi..
-        psi<- adj.psi(psi, rangeZ)
+        #psi<- adj.psi(psi, rangeZ) 
+        psi<- adj.psi(psi, limZ)
         #browser()
         
         a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs)
@@ -207,7 +212,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         psi <- psi*use.k + psi.old* (1-use.k)
         psi<- adj.psi(psi, limZ)
         if (!is.null(digits)) psi <- round(psi, digits)
-        PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
+        #PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
+        PSI <- matrix(psi, nrow=n, ncol = length(psi), byrow=TRUE)
         U1 <- (Z - PSI) * (Z > PSI)
         
         
@@ -241,8 +247,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
             if (fix.npsi) {
                 psi <- psi * ifelse(id.psi.far, 1, attr(id.psi.far, 
                   "factor"))
-                PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), 
-                  ncol = length(psi))
+                #PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
+                PSI <- matrix(psi, nrow=n, ncol = length(psi), byrow=TRUE)
                 id.psi.changed[it] <- TRUE
             }
             else {
@@ -280,14 +286,15 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     names(psi) <- id.psi.group
     names.coef <- names(obj$coefficients)
     #PSI.old <- PSI
-    PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
+    #PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
+    PSI <- matrix(psi, nrow=n, ncol = length(psi), byrow=TRUE)
     #if (sd(PSI - PSI.old) > 0 || id.psi.changed[length(id.psi.changed)]) {
-        U <- (Z - PSI) * (Z > PSI)
-        colnames(U) <- paste("U", 1:ncol(U), sep = "")
-        V <- -(Z > PSI)
-        colnames(V) <- paste("V", 1:ncol(V), sep = "")
-        obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
-        L1 <- sum(obj$residuals^2 * w)
+    U <- (Z - PSI) * (Z > PSI)
+    colnames(U) <- paste("U", 1:ncol(U), sep = "")
+    V <- -(Z > PSI)
+    colnames(V) <- paste("V", 1:ncol(V), sep = "")
+    obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
+    L1 <- sum(obj$residuals^2 * w)
     #}
     #else {
     #    obj <- obj1

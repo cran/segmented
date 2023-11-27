@@ -103,17 +103,18 @@ original object \code{obj} with additionally the followings:
   \item{..}{Other components are not of direct interest of the user}
   }
 
-\section{ Warning }{It is well-known that the log-likelihood function for the 
-break-point may be not concave, especially 
-for poor clear-cut kink-relationships. In these circumstances the initial guess
- for the break-point, i.e. the \code{psi} argument, must be provided with care. For instance visual 
-inspection of a, possibly smoothed, scatter-plot is usually a good way to obtain some idea on breakpoint location. 
-However bootstrap restarting, implemented since version 0.2-9.0, is relatively more robust to starting values specified 
-in  \code{psi}. Alternatively an automatic procedure may be implemented by specifying \code{psi=NA} and 
-\code{fix.npsi=FALSE} in \code{\link{seg.control}}: experience suggests to increase the number of iterations 
-via \code{it.max} in \code{seg.control()}. This automatic procedure, however, is expected to overestimate 
-the number of breakpoints. 
-}
+%\section{ Warning }{
+%It is well-known that the log-likelihood function for the 
+%break-point may be not concave, especially 
+%for poor clear-cut kink-relationships. In these circumstances the initial guess
+% for the break-point, i.e. the \code{psi} argument, must be provided with care. For instance visual 
+%inspection of a, possibly smoothed, scatter-plot is usually a good way to obtain some idea on breakpoint location. 
+%However bootstrap restarting, implemented since version 0.2-9.0, is relatively more robust to starting values specified 
+%in  \code{psi}. Alternatively an automatic procedure may be implemented by specifying \code{psi=NA} and 
+%\code{fix.npsi=FALSE} in \code{\link{seg.control}}: experience suggests to increase the number of iterations 
+%via \code{it.max} in \code{seg.control()}. This automatic procedure, however, is expected to overestimate 
+%the number of breakpoints. 
+%}
 
 \note{
 \enumerate{
@@ -245,10 +246,16 @@ plot(os1, add=TRUE, .coef=os1$coef, col=2)
 
 }
 
+################################################################
+################################################################
+######Four examples using the default method:
+################################################################
+################################################################
 
-######Three examples using the default method:
 
+################################################################
 #==> 1. Cox regression with a segmented relationship  
+################################################################
 \dontrun{
 library(survival)
 data(stanford2)
@@ -260,8 +267,10 @@ plot(os) #it does not work
 plot.segmented(os) #call explicitly plot.segmented() to plot the fitted piecewise lines
 
 
+################################################################
+# ==> 2. Linear mixed model via the nlme package
+################################################################
 
-# ==> 2. Linear mixed model via the nlme package   
 dati$g<-gl(10,10) #the cluster 'id' variable
 library(nlme)
 o<-lme(y~x+z, random=~1|g, data=dati)
@@ -275,7 +284,10 @@ dd<-data.frame(x=c(20,50),z=c(.2,.6), g=1:2)
 predict.segmented(os, newdata=dd, .coef=fixef(os)) 
 
 
-# ==> 3. segmented quantile regression via the quantreg  package   
+################################################################
+# ==> 3. segmented quantile regression via the quantreg  package
+################################################################
+
 library(quantreg)
 data(Mammals)
 y<-with(Mammals, log(speed))
@@ -291,6 +303,24 @@ V}
 
 os<-segmented.default(o, ~x) #now it does work
  plot.segmented(os, res=TRUE, col=2, conf.level=.95)
+
+
+################################################################
+# ==> 4. segmented regression with the svyglm() (survey  package)   
+################################################################
+
+library(survey)
+data(api)
+dstrat<-svydesign(id=~1,strata=~stype, weights=~pw, data=apistrat, fpc=~fpc)
+
+o<-svyglm(api00~ell, design=dstrat)
+
+#specify as a string the objective function to be minimized. It can be obtained via svyvar() 
+
+fn.x<- 'as.numeric(svyvar(resid(x, "pearson"), x$survey.design, na.rm = TRUE))'
+os<-segmented.default(o, ~ell, control=seg.control(fn.obj=fn.x, display=TRUE))
+slope(os)
+plot.segmented(os, res=TRUE, conf.level=.9, shade=TRUE)
 }
             
 }

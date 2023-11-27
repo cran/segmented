@@ -29,9 +29,16 @@
 \examples{
 \dontrun{
 data(plant)
-attach(plant)
-%lattice::xyplot(y~time,groups=group,pch=19,col=2:4,auto.key=list(space="right"))
-lattice::xyplot(y~time,groups=group,auto.key=list(space="right"))
+
+lattice::xyplot(y~time,groups=group,auto.key=list(space="right"), data=plant)
+
+o<-segreg(y~ group+seg(time, by=group, npsi=2), data=plant)
+summary(o)
+
+with(plant, plot(time, y))
+plot(o, 1, add=TRUE)
+plot(o, 2, add=TRUE, col=3)
+plot(o, 3, add=TRUE, col=4)
 }
 }
 \keyword{datasets}

@@ -31,10 +31,10 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, .vcov=NU
 #for(i in 1:length(nomeZ)) {
 	term<-nomeZ[1]
   nomi.psi<- grep(paste("\\.",term,sep=""), ogg$nameUV$V, value=TRUE)
-	nomi.slope<- grep(paste("\\.",term,sep=""), ogg$nameUV$U,value=TRUE)
+	nomi.dslope<- grep(paste("\\.",term,sep=""), ogg$nameUV$U,value=TRUE)
 	null.left<-TRUE
 	if(term %in% names(estcoef)) {
-		nomi.slope<-c(term, nomi.slope)
+		nomi.dslope<-c(term, nomi.dslope)
 		null.left<-FALSE
 		}
 	a<- min(ogg$rangeZ[,parm])# min(x)-1 #se discreto
@@ -49,18 +49,47 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, .vcov=NU
   mu<-drop(crossprod(est.w,est.slope))
   xsi<-c(crossprod(est.w,A),crossprod(est.slope,B))
 	
-  v.delta<-COV[nomi.slope,nomi.slope] 
+  #browser()
+  
+  
+  if(is.null(ogg$constr)){
+    cof <- estcoef[nomi.dslope]
+    if(!term%in%names(estcoef)) Xfit<-Xfit[,-1,drop=FALSE]
+  } else {
+    #idU.i <- match(nomeU.i, names(estcoef))
+    #cosa srevono le slope? o le diffSlope?
+    cof<- drop(ogg$constr$invA.RList[[match(parm, ogg$nameUV$Z)]]%*%estcoef[nomi.dslope])
+    names(cof)<-c(parm, paste("U",1:(length(cof)-1),".",parm,sep="" ))
+    
+  }
+  
+  
+  v.DeltaPsi<-COV[c(nomi.dslope,nomi.psi),c(nomi.dslope,nomi.psi)] 
+  if(!is.null(ogg$constr)){
+    B <- ogg$constr$invA.RList[[match(parm, ogg$nameUV$Z)]]
+    B <- do.call(blockdiag, list(B, diag(length(est.psi)))) 
+    v.DeltaPsi <- B %*% v.DeltaPsi %*% t(B)
+  } 
+  rownames(v.DeltaPsi) <- colnames(v.DeltaPsi) <- c(names(cof),nomi.psi)
+    
+  v.delta <- v.DeltaPsi[names(cof),names(cof)]
+  VC<-v.DeltaPsi[nomi.psi, names(cof)]
+  v.psi<-as.matrix(COV[nomi.psi,nomi.psi])
+  
 # if(null.left) v.delta<-rbind(0,cbind(0,v.delta))
 	
+  
 	#v.delta<-vcov(ogg)[2:4,2:4] #questa e' la var cov della left slope e le altre diffSlope
   #v.psi<-vcov(ogg)[5:6,5:6] #questa e' la var-cov dei psi
-  v.psi<-as.matrix(COV[nomi.psi,nomi.psi])
-	VC<-COV[nomi.psi, nomi.slope]
-	VV<-blockdiag(v.delta,diag(1)*0,v.psi,diag(1)*0)
+  
+	
+  
+	
+  VV<-blockdiag(v.delta,diag(1)*0,v.psi,diag(1)*0)
 	id.cov1<- 1:length(est.slope)
 	id.cov2<- seq.int((length(est.slope)+2), length.out=length(est.psi))
 	
-  if(null.left) {
+  if(null.left && is.null(ogg$constr)) { #
                 VC<-cbind(0,VC) #column relevant to the "x"	term (missing)
                 VV<- rbind(0,cbind(0,VV))
                 }
@@ -75,7 +104,7 @@ aapc<-function(ogg, parm, exp.it=FALSE, conf.level=0.95, wrong.se=TRUE, .vcov=NU
 	cin <- paste("CI", "(", conf.level * 100, "%", ")", c(".l", ".u"), sep = "")
 	names(r)<-c("Est.","St.Err",cin)
   if(wrong.se){
-        if(null.left) v.delta<-rbind(0,cbind(0, v.delta))
+        if(null.left && is.null(ogg$constr)) v.delta<-rbind(0,cbind(0, v.delta))
         se.mu.wrong<- sqrt(drop(t(est.w)%*%A%*%v.delta%*%t(A)%*%est.w))
 	      attr(r,"wrong.se")<- se.mu.wrong
         }

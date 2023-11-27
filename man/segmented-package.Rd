@@ -3,41 +3,40 @@
 %\alias{segmented}
 \docType{package}
 \title{
-Segmented Relationships in Regression Models with Breakpoints / Changepoints (with Possibly Random Effects) Estimation
+Segmented Relationships in Regression Models with Breakpoints / Changepoints Estimation (with Possibly Random Effects) 
 }
 \description{
-Estimation and inference of regression models with piecewise linear relationships, also known as segmented regression models, having a
-fixed number of break-points. Random effects changepoints are also allowed since version 1.6-0.
+Estimation and inference of regression models with piecewise linear relationships, also known as segmented regression models, with a number of break-points fixed or to be `selected'. Random effects changepoints are also allowed since version 1.6-0, and since version 2.0-0 it is also possible to fit regression models with piecewise constant (or `stepmented') relationships.
 }
 \details{
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 1.6-4\cr
-Date: \tab 2023-04-14\cr
+Version: \tab 2.0-0\cr
+Date: \tab 2023-11-27\cr
 License: \tab GPL\cr
 }
- Package \code{segmented} is aimed to estimate linear and generalized linear models (and virtually any regression model)
- having one or more segmented relationships in the linear predictor. Estimates of the slopes and
+ Package \code{segmented} aims to estimate linear and generalized linear models (and virtually any regression model) having one or more segmented or stepmented relationships in the linear predictor. Estimates of the slopes and
  breakpoints are provided along with standard errors. The package includes testing/estimating
- functions and methods to print, summarize and plot the results. \cr
+ functions and methods to print, summarize and plot the results. 
  
- The algorithm used by \code{segmented} is \emph{not} grid-search. It is an iterative procedure (Muggeo, 2003) 
- that needs starting values \emph{only} for the breakpoint parameters and therefore it is quite efficient even
+ The algorithms used by \code{segmented} are \emph{not} grid-search. They are iterative procedures (Muggeo, 2003; Fasola et al., 2018) that need starting values \emph{only} for the breakpoint parameters and therefore they are quite efficient even
  with several breakpoints to be estimated. Moreover since version 0.2-9.0, \code{segmented} implements 
- the bootstrap restarting (Wood, 2001) to make the algorithm less sensitive to starting values. \cr
+ the bootstrap restarting (Wood, 2001) to make the algorithms less sensitive to the starting values (which can be also omitted by the user) . 
 
- Since version 0.5-0.0 a default method \code{segmented.default} has been added. It may be employed to include segmented relationships
- in \emph{general} regression models where specific methods do not exist. Examples include quantile, Cox, and lme regressions (where the random effects do not refer to the breakpoints!). See examples in \code{\link{segmented.default}}.\cr
+ Since version 0.5-0.0 a default method \code{segmented.default} has been added. It may be employed to include segmented relationships in \emph{general} regression models where specific methods do not exist. Examples include quantile, Cox, and lme regressions where the random effects do not refer to the breakpoints; see \code{segmented.lme} to include random changepoints.  \code{\link{segmented.default}} includes some examples.
  
  Since version 1.0-0 the estimating algorithm has been slight modified and it appears to be much stabler (in examples with noisy segmented relationhips and flat log likelihoods)
- then previous versions.\cr
+ then previous versions.
 
  Hypothesis testing (about the existence of the breakpoint) and confidence intervals are performed via appropriate methods and functions.
  
  A tentative approach to deal with unknown number of breakpoints is also provided, see option \code{fix.npsi} in \code{\link{seg.control}}. Also, as version 1.3-0, the \code{\link{selgmented}} function has been introduced to select the number of breakpoints via the BIC or sequential hypothesis testing.
  
-Since version 1.6-0, estimation of segmented mixed models has been introduced, see \code{\link{segmented.lme}} and related functions.  
+Since version 1.6-0, estimation of segmented mixed models has been introduced, see \code{\link{segmented.lme}} and related function. 
+Since version 2.0-0, it is possible to fit segmented relationships with constraints on the slopes, see \code{\link{segreg}}. 
+
+Finally, since 2.0-0, it is possible to fit (G)LM wherein one or more covariates  have a stepmented (i.e. a step-function like) relationship, see \code{\link{stepmented}}.
 }
 \author{
 Vito M.R. Muggeo <vito.muggeo@unipa.it>
@@ -48,7 +47,9 @@ Segmented mixed models with random changepoints: a maximum likelihood approach
 with application to treatment for depression study. \emph{Statistical Modelling}, \bold{14}, 293-313.
 
 Muggeo, V.M.R. (2017) Interval estimation for the breakpoint in segmented regression: a smoothed score-based approach. 
-\emph{Australian & New Zealand Journal of Statistics} \bold{59}, 311--322.
+\emph{Australian & New Zealand Journal of Statistics}, \bold{59}, 311--322.
+
+Fasola S, Muggeo V.M.R., Kuchenhoff, H. (2018) A heuristic, iterative algorithm for change-point detection in abrupt change models, \emph{Computational Statistics}, \bold{2}, 997--1015.
 
 Muggeo, V.M.R. (2016) Testing with a nuisance parameter present only under the alternative: a score-based approach with application to segmented modelling. \emph{J of Statistical Computation and Simulation} \bold{86}, 3059--3067.
 

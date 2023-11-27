@@ -1,7 +1,8 @@
 plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0, 
-    interc=TRUE, link = TRUE, res.col = 1, rev.sgn = FALSE, const = 0, 
+    interc=TRUE, link = TRUE, res.col = grey(.15, alpha = .4), rev.sgn = FALSE, const = NULL, 
     shade=FALSE, rug=!add, dens.rug=FALSE, dens.col = grey(0.8),
-    transf=I, isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, .coef=NULL, prev.trend=FALSE, smoos=NULL, ...){
+    transf=I, isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, .coef=NULL, prev.trend=FALSE, 
+    smoos=NULL, hide.zeros=FALSE,...){
 #funzione plot.segmented che consente di disegnare anche i pointwise CI
         f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
@@ -38,84 +39,85 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
   if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
 
 #--------------
-    linkinv <- !link
-    if (inherits(x, what = "glm", which = FALSE) && linkinv && !is.null(x$offset) && res) stop("residuals with offset on the response scale?")
-    if(conf.level< 0 || conf.level>.9999) stop("meaningless 'conf.level'")
-    if ((inherits(x, what = "glm", which = FALSE) && linkinv) || res) {
+  linkinv <- !link
+  if (inherits(x, what = "glm", which = FALSE) && linkinv && !is.null(x$offset) && res) stop("residuals with offset on the response scale?")
+  if(conf.level< 0 || conf.level>.9999) stop("meaningless 'conf.level'")
+  if ((inherits(x, what = "glm", which = FALSE) && linkinv) || res) {
         if(!(identical(transf, I) || identical(transf, "I"))) {transf<-I; warning("'transf' set to I with 'res=TRUE' and/or 'link=FALSE'.")}
-        }
-#    show.gap<-FALSE
-    if (missing(term)) {
+  }
+  if (missing(term)) {
         if (length(x$nameUV$Z) > 1) {
             stop("please, specify `term'")
-        }
-        else {
+          } else {
             term <- x$nameUV$Z
-        }
+          }
     } else {
-        dterm<- deparse(substitute(term))
-        if(dterm %in% x$nameUV$Z) term<-dterm
-        if (! isTRUE(term %in% x$nameUV$Z)) stop("invalid `term'")
+      if(is.numeric(term)) term <- x$nameUV$Z[term]
+      #if(!is.character(term)) stop("please specify correctly 'term' ")
+      #term<- deparse(substitute(term))
+      #if(dterm %in% x$nameUV$Z) term<-dterm
+      if (!isTRUE(term %in% x$nameUV$Z)) stop(paste("Unknown term. It should be numeric or one of: ", paste(" '", x$nameUV$Z, "' ", sep="", collapse="")))
     }
-    opz <- list(...)
-    col.shade<-if(!is.null(opz$col.shade)) adjustcolor(opz$col.shade, .15) else adjustcolor("grey", .4)
-    cols<- if("col"%in% names(opz)) opz$col else 2
-    lwds<- if("lwd"%in% names(opz)) opz$lwd else 2
-    ltys<- if("lty"%in% names(opz)) opz$lty else 1
-    cexs<- if("cex"%in% names(opz)) opz$cex else 1
-    pchs<- if("pch"%in% names(opz)) opz$pch else 1
-    ylabs<- if("ylab"%in% names(opz)) opz$ylab else paste("Effect  of ", term, sep = " ")
-    xlabs<- if("xlab"%in% names(opz)) opz$xlab else term
+  #browser()
+  
+  if(is.null(const)){
+    interc.gr<- strsplit(term, ":")[[1]][2]
+    const<- estcoef[interc.gr]
+    if(is.na(const)) const<-0
+  } 
+  if(!is.numeric(const)) stop(" 'const' should be NULL (default) or numeric")
 
-    #browser()
+  opz <- list(...)
+  col.shade<-if(!is.null(opz$col.shade)) adjustcolor(opz$col.shade, .15) else adjustcolor("grey", .4)
+  cols<- if("col"%in% names(opz)) opz$col else 2
+  lwds<- if("lwd"%in% names(opz)) opz$lwd else 2
+  ltys<- if("lty"%in% names(opz)) opz$lty else 1
+  cexs<- if("cex"%in% names(opz)) opz$cex else .75
+  pchs<- if("pch"%in% names(opz)) opz$pch else 19
+  ylabs<- if("ylab"%in% names(opz)) opz$ylab else paste("Effect  of ", term, sep = " ")
+  xlabs<- if("xlab"%in% names(opz)) opz$xlab else term
+  
+  #browser()
+  
+  a <- intercept(x, term, digits=20, .vcov=covv, .coef=estcoef)[[1]][, "Est."]
+  #Poiche' intercept() restituisce quantita' che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
     
-    a <- intercept(x, term, digits=20, .vcov=covv, .coef=estcoef)[[1]][, "Est."]
-    #Poiche' intercept() restituisce quantita' che includono sempre l'intercetta del modello, questa va eliminata se interc=FALSE
-    
-    idInterc<-grep("ntercept",names(estcoef))
-    #if(!interc && ("(Intercept)" %in% names(estcoef))) a<- a-estcoef["(Intercept)"]
-    if(!interc && length(idInterc)==1) a<- a-estcoef[idInterc]
-    b <- slope(x, term, digits=20, .coef=estcoef, .vcov=covv)[[1]][, "Est."]
+  idInterc<-grep("ntercept",names(estcoef))
+  if(!interc && length(idInterc)==1) a<- a-estcoef[idInterc]
+  b <- slope(x, term, digits=20, .coef=estcoef, .vcov=covv)[[1]][, "Est."]
 
-    #id <- grep(paste("\\.", term, "$", sep = ""), rownames(x$psi), value = FALSE) #confondeva "psi1.x","psi1.neg.x"
-    id <- f.U(rownames(x$psi), term)
+  id <- f.U(rownames(x$psi), term)
     
-    
-    #browser()
-    #est.psi <- x$psi[id, "Est."]
-    est.psi <- x$indexU[[term]]
-    
-    val <- sort(c(est.psi, x$rangeZ[, term]))
-    #vettorializza i cols, lwds, ltys
-    cols<-rep(cols, l=length(est.psi)+1)
-    lwds<-rep(lwds, l=length(est.psi)+1)
-    ltys<-rep(ltys, l=length(est.psi)+1)
+  est.psi <- x$indexU[[term]]
+  val <- sort(c(est.psi, x$rangeZ[, term]))
+  #vettorializza i cols, lwds, ltys
+  cols<-rep(cols, l=length(est.psi)+1)
+  lwds<-rep(lwds, l=length(est.psi)+1)
+  ltys<-rep(ltys, l=length(est.psi)+1)
     #---------aggiunta per gli IC
-    rangeCI<-NULL
-    #K <- length(est.psi)
-    #n<-length(x$residuals) #fitted.values - Arima non ha "fitted.values", ma ha "residuals"..
-    #tipo<- if(inherits(x, what = "glm", which = FALSE) && link) "link" else "response"
-    
-    vall<-sort(c(seq(min(val), max(val), l=100), est.psi, est.psi+1e-5))
-    #ciValues<-predict.segmented(x, newdata=vall, se.fit=TRUE, type=tipo, level=conf.level)
-    vall.list<-list(vall)
-    names(vall.list)<-term
-    
-    #browser()
-    
-    if(conf.level>0) {
-        #k.alpha<-if(inherits(x, what = c("glm","Arima"), which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
-        #cambiato nella 0.5-2.0:
-        k.alpha<- if(all(c("segmented","lm") %in% class(x))) abs(qt((1-conf.level)/2, x$df.residual)) else abs(qnorm((1-conf.level)/2))
-        ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE, isV=isV, is=is, var.diff=var.diff, 
+  rangeCI<-NULL
+  vall<-sort(c(seq(min(val), max(val), l=100), est.psi, est.psi+1e-5))
+  
+  #ciValues<-predict.segmented(x, newdata=vall, se.fit=TRUE, type=tipo, level=conf.level)
+  vall.list<-list(vall)
+  names(vall.list)<-term
+
+  #browser()
+  
+  if(conf.level>0) {
+    #k.alpha<-if(inherits(x, what = c("glm","Arima"), which = FALSE)) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, x$df.residual))
+    #cambiato nella 0.5-2.0:
+    k.alpha<- if(all(c("segmented","lm") %in% class(x))) abs(qt((1-conf.level)/2, x$df.residual)) else abs(qnorm((1-conf.level)/2))
+    ciValues<-broken.line(x, vall.list, link=link, interc=interc, se.fit=TRUE, isV=isV, is=is, var.diff=var.diff, 
                               p.df=p.df, .vcov=covv, .coef=estcoef) #se gli passi covv, gli argomenti is e var.diff NON servono perche li ignora..
-        ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit) + const
-        #---> transf...
-        ciValues<-apply(ciValues, 2, transf)
-        rangeCI<-range(ciValues)
-        #ciValues  e' una matrice di length(val)x3. Le 3 colonne: stime, inf, sup
-        #polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])), col = "gray", border=NA)
-        }
+    ciValues<-cbind(ciValues$fit, ciValues$fit- k.alpha*ciValues$se.fit, ciValues$fit + k.alpha*ciValues$se.fit) + const
+    #---> transf...
+    ciValues<-apply(ciValues, 2, transf)
+    rangeCI<-range(ciValues)
+    #ciValues  e' una matrice di length(val)x3. Le 3 colonne: stime, inf, sup
+    #polygon(c(vall, rev(vall)), c(ciValues[,2],rev(ciValues[,3])), col = "gray", border=NA)
+  }
+  
 
     #---------
     a.ok <- c(a[1], a)
@@ -125,20 +127,31 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     b.ok1 <- c(b, b[length(b)])
     y.val <- y.val1 <- a.ok1 + b.ok1 * val + const
     s <- 1:(length(val) - 1)
-#    xvalues <- if(all(class(x)==c("segmented", "Arima"))) x$Z[,1] else  x$model[, term]
-    xvalues <-  if(all(c("segmented", "Arima") %in% class(x))) x$Z[,1] else  x$model[, term]
+    
+    #xvalues <-  if(all(c("segmented", "Arima") %in% class(x))) x$Z[,1] else  model.matrix(x)[,term] #x$model[, term]
 
+    if(inherits(x,"Arima")){
+      xvalues <-x$Z[,1]
+    } else {
+      M <- model.matrix.segmented(x)
+      xvalues <- if(term %in% colnames(M)) M[,term] else x$model[,term]
+    }
+     
+    
     if (rev.sgn) {
         val <- -val
         xvalues <- -xvalues
     }
     m <- cbind(val[s], y.val1[s], val[s + 1], y.val[s + 1])
     #values where to compute predictions (useful only if res=TRUE)
+    #browser()
     if(res){
         new.d<-data.frame(ifelse(rep(rev.sgn, length(xvalues)),-xvalues, xvalues))
         names(new.d)<-term
+        #browser()
         fit0 <- broken.line(x, new.d, link = link, interc=interc, se.fit=FALSE, .vcov=covv, .coef=estcoef)$fit
-        }
+    }
+    
 #-------------------------------------------------------------------------------
     
     #browser()
@@ -190,10 +203,14 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if(rug) {
           #usare rug()?  
           segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
-              rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/80)}
-            }
-       
+              rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/80)
+        }
+        }
         if (res) {
+          if(hide.zeros) {
+            fit <- fit[abs(xvalues)>1e-8]
+            xvalues <- xvalues[abs(xvalues)>1e-8]
+          }
           if(is.null(smoos)) { smoos <- if(length(xvalues)>10000) TRUE else FALSE }
           if(smoos){
             smoothScatter(xvalues, fit, add=TRUE, nrpoints = 0, colramp= colorRampPalette(c("white", res.col)))
@@ -269,10 +286,15 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
         if(rug) {segments(xvalues, rep(par()$usr[3],length(xvalues)), xvalues,
             rep(par()$usr[3],length(xvalues))+ abs(diff(par()$usr[3:4]))/80)}
         if (res) {
+          if(hide.zeros) {
+            fit <- fit[abs(xvalues)>1e-8]
+            xvalues <- xvalues[abs(xvalues)>1e-8]
+          }
           if(is.null(smoos)) { smoos <- if(length(xvalues)>10000) TRUE else FALSE }
           if(smoos){
             smoothScatter(xvalues, fit, add=TRUE, nrpoints = 0, colramp= colorRampPalette(c("white", res.col)))
           } else {
+            #browser()
             points(xvalues, fit, cex = cexs, pch = pchs, col = res.col)              
           }
         }

@@ -9,6 +9,12 @@
 \alias{seg.def.fit.boot}
 \alias{seg.Ar.fit.boot}
 \alias{seg.num.fit.boot}
+\alias{segConstr.lm.fit}
+\alias{segConstr.glm.fit}
+\alias{segConstr.lm.fit.boot}
+\alias{segConstr.glm.fit.boot}
+
+
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Fitter Functions for Segmented Linear Models
@@ -19,6 +25,8 @@ Fitter Functions for Segmented Linear Models
 generalized segmented linear models, and \code{seg.def.fit} is called by \code{segmented.default} to fit  
 segmented relationships in general regression models (e.g., quantile regression and Cox regression). \code{seg.lm.fit.boot}, 
 \code{seg.glm.fit.boot}, and \code{seg.def.fit.boot} are employed to perform bootstrap restart. 
+The functions \code{segConstr.*} are called by \code{segreg()} when some contraints are set on the slopes of the segmented relationships.
+
 These functions should usually not be used directly by the user.
 }
 \usage{
@@ -45,6 +53,16 @@ seg.Ar.fit.boot(obj, XREG, Z, PSI, opz, n.boot=10, size.boot=NULL, jt=FALSE,
 seg.num.fit(y, XREG, Z, PSI, w, opz, return.all.sol=FALSE)
 
 seg.num.fit.boot(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL, jt=FALSE,
+    nonParam=TRUE, random=FALSE, break.boot=n.boot)
+    
+segConstr.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
+
+segConstr.lm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, jt=FALSE,
+    nonParam=TRUE, random=FALSE, break.boot=n.boot)
+
+segConstr.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
+
+segConstr.glm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, jt=FALSE,
     nonParam=TRUE, random=FALSE, break.boot=n.boot)
 
 }

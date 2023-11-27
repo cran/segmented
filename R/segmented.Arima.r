@@ -228,6 +228,8 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     nomiOK<-nomiU
     
     if(is.null(alpha)) alpha<- max(.05, 1/nrow(PSI))
+    if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
+    
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
               nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,
               conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,fc=fc)
@@ -346,6 +348,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     objF$id.warn <- id.warn
     ###########################PSI FIXED
     objF$indexU<-build.all.psi(psi.list, fixed.psi)
+    objF$psi[,"Initial"]<-NA
     if(n.boot>0) objF$seed<-employed.Random.seed
     class(objF) <- c("segmented", class(obj0))
     list.obj[[length(list.obj) + 1]] <- objF

@@ -1,14 +1,14 @@
 \name{slope}
 \alias{slope}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ Slope estimates from segmented relationships }
+\title{ Slope estimates from segmented/stepmented relationships }
 \description{
-  Computes the slopes of each `segmented' relationship in the fitted model.
+  Computes the slopes of each `segmented' (or even `stepmented') relationship in the fitted model.
 }
 \usage{
 slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, 
     APC=FALSE, .vcov=NULL, .coef=NULL, 
-    use.t=NULL, by=NULL, ..., digits = max(4, getOption("digits") - 2))
+    use.t=NULL, by=NULL, interc=TRUE, ..., digits = max(4, getOption("digits") - 2))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,7 +27,10 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   It is a named list indicating covariate names and corresponding values affecting the fitted segmented relationship. 
   For instance, \code{by=list(group="2",z2=.2)}, provided that the model has been fitted by specifying \code{group} and \code{z2} in \code{x.diff} (or as interaction with the segmented variable). Note that if the provided variables or values are irrelevant for changing the slopes, a warning message is printed.   
   }
-  \item{...}{ Further arguments to be passed on to \code{vcov.segmented}, such as \code{var.diff} and \code{is}. See Details in \code{\link{vcov.segmented}} and \code{\link{summary.segmented}}.}
+  \item{interc}{logical, only for \code{'stepmented'} fits. If \code{TRUE}, the mean levels also account for the intercept; otherwise the first level is assumed to be zero.
+  }
+  \item{...}{ Further arguments to be passed on to \code{vcov.segmented}, such as \code{var.diff} and \code{is}. See Details in \code{\link{vcov.segmented}} and \code{\link{summary.segmented}}.
+  }
 \item{digits}{controls number of digits in the returned output.}
 }
 \details{

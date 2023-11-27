@@ -5,8 +5,27 @@
         cls<-class(object)
         if(length(cls)==1) cls<-c(cls, cls)
         if(method%in%c("score", "gradient") && !all(cls[1:2]==c("segmented","lm"))) stop("Score- or Gradient-based CI only work with segmented lm models") 
+        if(!is.null(object$constr) && method%in%c("score", "gradient")) stop(" Score/Gradient CI with constrained fits are not allowed") 
         estcoef<-if(is.null(.coef)) coef(object) else .coef
         COV<- if(is.null(.vcov)) vcov(object,var.diff=var.diff, is=is, ...) else .vcov
+#===========
+        #browser()
+        
+        if(missing(parm)) {
+          parm<- object$nameUV$Z
+          if(length(rev.sgn)==1) rev.sgn<-rep(rev.sgn,length(parm))
+        } else {
+          if(is.numeric(parm)) parm<-object$nameUV$Z[parm] 
+          } 
+        
+        if(! all(parm %in% object$nameUV$Z)) stop("invalid 'parm' name", call.=FALSE)
+        
+         if(length(parm)>1) {
+           warning("There are multiple segmented terms. The first is taken", call.=FALSE, immediate. = TRUE)  
+           parm<-parm[1]
+         }
+        
+        
 #=======================================================================================================
 #========== metodo Delta
 #=======================================================================================================
@@ -27,25 +46,32 @@ confintSegDelta<- function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FAL
           return(nomiU.ok)
         }
 #--        
-#        if(!"segmented"%in%class(object)) stop("A segmented model is needed")
+        blockdiag <- function(...) {
+          args <- list(...)
+          nc <- sapply(args,ncol)
+          cumnc <- cumsum(nc)
+          ##  nr <- sapply(args,nrow)
+          ## NR <- sum(nr)
+          NC <- sum(nc)
+          rowfun <- function(m,zbefore,zafter) {
+            cbind(matrix(0,ncol=zbefore,nrow=nrow(m)),m,
+                  matrix(0,ncol=zafter,nrow=nrow(m)))
+          }
+          ret <- rowfun(args[[1]],0,NC-ncol(args[[1]]))
+          for (i in 2:length(args)) {
+            ret <- rbind(ret,rowfun(args[[i]],cumnc[i-1],NC-cumnc[i]))
+          }
+          ret
+        }
+        
+        #        if(!"segmented"%in%class(object)) stop("A segmented model is needed")
         if(var.diff && length(object$nameUV$Z)>1) {
             var.diff<-FALSE
             warning(" 'var.diff' set to FALSE with multiple segmented variables", call.=FALSE)
             }
         #nomi delle variabili segmented:
-        if(missing(parm)) {
-          nomeZ<- object$nameUV$Z
-          if(length(rev.sgn)==1) rev.sgn<-rep(rev.sgn,length(nomeZ))
-          } else {
-                if(! all(parm %in% object$nameUV$Z)) {stop("invalid 'parm' name", call.=FALSE)}
-                  else {nomeZ<-parm}
-                }
-        if(length(nomeZ)>1) {
-                warning("There are multiple segmented terms. The first is taken", call.=FALSE, immediate. = TRUE)  
-                nomeZ<-nomeZ[1]
-        }
-        
-        
+        #browser()
+        nomeZ<-parm
         if(length(rev.sgn)!=length(nomeZ)) rev.sgn<-rep(rev.sgn, length.out=length(nomeZ))
         rr<-list()
         z<-if("lm"%in%class(object)) abs(qt((1-level)/2,df=object$df.residual)) else abs(qnorm((1-level)/2))
@@ -54,15 +80,30 @@ confintSegDelta<- function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FAL
             #nomi.V<-grep(paste("\\.",nomeZ[i],"$",sep=""),object$nameUV$V,value=TRUE)
             nomi.U<- object$nameUV$U[f.U(object$nameUV$U, nomeZ[i])]
             nomi.V<- object$nameUV$V[f.U(object$nameUV$V, nomeZ[i])]
-            m<-matrix(,length(nomi.U),3)
+            m<-matrix(,length(nomi.V),3)
             colnames(m)<-c("Est.",paste("CI","(",level*100,"%",")",c(".low",".up"),sep=""))
-            for(j in 1:length(nomi.U)){ #per ogni psi della stessa variabile segmented..
+            if(!is.null(object$constr)){
+              R<-object$constr$invA.RList[[i]]
+              diffSlope<-drop(R%*%estcoef[nomi.U])[-1]
+              Rpsi <- blockdiag(R, diag(length(nomi.V)))
+              COV1 <- Rpsi %*% COV[c(nomi.U, nomi.V),c(nomi.U, nomi.V)] %*% t(Rpsi)
+              COV1<-COV1[-1,-1] #la prima linea e' relativa alla prima slope.. NON Serve
+              nomi.U<-gsub("psi", "U", nomi.V)
+              rownames(COV1)<-colnames(COV1)<-c(nomi.U, nomi.V)
+              names(diffSlope)<-nomi.U
+            } else {
+              diffSlope<- estcoef[nomi.U]
+              COV1 <- COV[c(nomi.U, nomi.V),c(nomi.U, nomi.V)]
+            }
+            for(j in 1:length(nomi.V)){ #per ogni psi della stessa variabile segmented..
                     sel<-c(nomi.V[j],nomi.U[j])
                     #15/12/20 V e' costruita sopra..
-                    V<-COV[sel, sel] #questa e' vcov di (psi,U)
-                    b<-estcoef[sel[2]] #diff-Slope
+                    V<-COV1[sel, sel] #questa e' vcov di (psi,U)
+                    #b<-estcoef[sel[2]] #diff-Slope
+                    b<- diffSlope[sel[2]]
                     th<-c(b,1)
-                    orig.coef<-drop(diag(th)%*% estcoef[sel]) #sono i (gamma,beta) th*coef(ogg)[sel]
+                    #orig.coef<-drop(diag(th)%*% estcoef[sel]) #sono i (gamma,beta) th*coef(ogg)[sel]
+                    orig.coef<-drop(diag(th)%*% c(estcoef[sel[1]], b ))
                     gammma<-orig.coef[1]
                     est.psi<-object$psi[sel[1],2]
                     V<-diag(th)%*%V%*%diag(th) #2x2 vcov() di gamma e beta
@@ -70,7 +111,8 @@ confintSegDelta<- function(object, parm, level=0.95, rev.sgn=FALSE, var.diff=FAL
                     r<-c(est.psi, est.psi-z*se.psi, est.psi+z*se.psi)
                     if(rev.sgn[i]) r<-c(-r[1],rev(-r[2:3]))
                     m[j,]<-r
-                    } #end loop j (ogni psi della stessa variabile segmented)
+            }
+            #end loop j (ogni psi della stessa variabile segmented)
             #CONTROLLA QUESTO:..sarebbe piu' bello
             m<-m[order(m[,1]),,drop=FALSE]
             rownames(m)<-nomi.V
@@ -421,7 +463,7 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                 #==========================================================================
                 #==========================================================================
                 #==========================================================================
-                
+                #browser()
                 stat <- match.arg(stat)
                 if (missing(sigma)) sigma <- summary.lm(obj.seg)$sigma
                 if (cadj) use.z = TRUE
@@ -432,12 +474,17 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                 
                 Y <- obj.seg$model[, 1]  #la risposta
                 X <- obj.seg$model[, nomeZ]
-                formula.lin<- update.formula(formula(obj.seg), paste(".~.", paste("-",paste(obj.seg$nameUV$V,collapse =  "-")))) #remove *all* V variables
-                formula.lin<- update.formula(formula.lin, paste(".~.-", nomeUj))
-                #formula.lin <- update.formula(formula(obj.seg), paste(".~.", paste("-",paste(c(obj.seg$nameUV$U,obj.seg$nameUV$V),collapse =  "-"))))
-                XREG <- model.matrix(formula.lin, data = obj.seg$model)
+                if(is.null(obj.seg$formulaLin)){
+                  formula.lin<- update.formula(formula(obj.seg), paste(".~.", paste("-",paste(obj.seg$nameUV$V,collapse =  "-")))) #remove *all* V variables
+                  formula.lin<- update.formula(formula.lin, paste(".~.-", nomeUj))
+                  XREG <- model.matrix(formula.lin, data = obj.seg$model)
+                } else {
+                  formula.lin <- obj.seg$formulaLin
+                  addU<-setdiff(obj.seg$nameUV$U, nomeUj)
+                  if(length(addU)>0) formula.lin <- update.formula(formula.lin, paste(". ~ . +", paste(addU, collapse =" + ")))
+                  XREG <- model.matrix(formula.lin, data = data.frame(model.matrix(obj.seg)))
+                  }
                 if (ncol(XREG) == 0) XREG <- NULL
-                                             
                 nomePsij<-sub("U","psi", nomeUj)
                 est.psi <- obj.seg$psi[nomePsij, "Est."]
                 se.psi <- obj.seg$psi[nomePsij, "St.Err"]
@@ -515,7 +562,7 @@ confintSegIS<-function(obj, parm, d.h=1.5, h=2.5, conf.level=level, ...){
                                 } else { #if smooth>0
                         if(useSeg){
                            oseg<-try(suppressWarnings(segmented(lm(U.valori~valori), ~valori, psi=quantile(valori, c(.25,.75),names=FALSE), 
-                                control=seg.control(n.boot=0,stop.if.error = F))),silent=TRUE)
+                                control=seg.control(n.boot=0, fix.npsi= FALSE))),silent=TRUE)
                            #seg.lm.fit.boot(U.valori, XREG, Z, PSI, w, offs, opz)
                            if(class(oseg)[1]=="try-error"){
                                 oseg<-try(suppressWarnings(segmented(lm(U.valori~valori), ~valori, psi=quantile(valori, .5,names=FALSE), 

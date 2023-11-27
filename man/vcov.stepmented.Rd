@@ -1,0 +1,61 @@
+\name{vcov.stepmented}
+\alias{vcov.stepmented}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{
+Variance-Covariance Matrix for a Fitted Segmented Model
+}
+\description{
+Returns the variance-covariance matrix of the parameters (including breakpoints) of a
+     fitted stepmented model object.
+}
+\usage{
+\method{vcov}{stepmented}(object, k=NULL, ...)
+}
+%- maybe also 'usage' for other objects documented here.
+\arguments{
+  \item{object}{
+a fitted model object of class "stepmented", returned by any \code{stepmented} method
+}
+  \item{k}{
+The power of \code{n} for the smooth approximation. Simulation evidence suggests \code{k} in [-1, -1/2]; with k=-1/2 providing somewhat 'conservative' standard errors especially at small sample sizes.
+}
+\item{\dots}{additional arguments. }
+}
+\details{
+The full covariance matrix is based on the smooth approximation 
+\deqn{I(x>\psi)\approx \Phi((x-\psi)/n^{k})} 
+via the sandwich formula using the empirical information matrix. \eqn{\Phi(\cdot)} is the standard Normal cdf, and \eqn{k} is the argument \code{k}. When \code{k=NULL} (default), it is computed via
+\deqn{k=-(0.6 + 0.3 \ \log(snr) - (|\hat\psi-0.5|/n)^{1/2})}
+ where \eqn{snr} is the signal-to-noise ratio corresponding to the estimated changepoint \eqn{\hat\psi} (in the range (0,1)). The above formula comes from extensive simulation study under different scenarios.
+}
+\value{
+The full matrix of the estimated covariances between the parameter estimates, including 
+the breakpoints.
+}
+%\references{
+%% ~put references to the literature/web site here ~
+%}
+\author{
+Vito Muggeo
+}
+\note{
+If the fit \code{object} has been called by \code{stepmented(.., var.psi=TRUE)}, then \code{vcov.stepmented} will return \code{object$vcov}, unless the power \code{k} differs from \code{-2/3}.  
+}
+
+%% ~Make other sections like Warning with \section{Warning }{....} ~
+
+\seealso{
+\code{\link{stepmented}}
+}
+\examples{
+##see ?stepmented
+}
+% Add one or more standard keywords, see file 'KEYWORDS' in the
+% R documentation directory (show via RShowDoc("KEYWORDS")):
+% \keyword{ ~kwd1 }
+% \keyword{ ~kwd2 }
+% Use only one keyword per line.
+% For non-standard keywords, use \concept instead of \keyword:
+% \concept{ ~cpt1 }
+% \concept{ ~cpt2 }
+% Use only one concept per line.

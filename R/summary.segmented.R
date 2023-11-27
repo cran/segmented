@@ -12,13 +12,27 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
     if(var.diff && length(object$nameUV$Z)>1) {
       var.diff<-FALSE
       warning(" 'var.diff' set to FALSE with multiple segmented variables", call.=FALSE)
-      }
-    nomiU<-object$nameUV$U
-    nomiV<-object$nameUV$V
+    }
+    nomiU <- object$nameUV$U
+    nomiV <- object$nameUV$V
     idU<-match(nomiU,names(coef(object)[!is.na(coef(object))]))
     idV<-match(nomiV,names(coef(object)[!is.na(coef(object))]))
     beta.c<- coef(object)[nomiU]
     #per metodo default.. ma serve????
+    #browser()
+    if(all(is.na(object[["psi"]][,"St.Err"]))) {
+      if(inherits(object, "lm")){
+        R <- chol2inv(object$qr$qr)
+        if(!inherits(object, "glm")){
+          s2 <- sum(object$weights*object$residuals^2)/object$df.residual
+          se.psi <- sqrt(diag(R)*s2)[idV]
+        } else {
+          s2<- if(object$fam$fam%in%c("poisson","binomial")) 1 else object$deviance/object$df.residual
+          se.psi <- sqrt(diag(R)*s2)[idV]
+        }
+      object[["psi"]][,"St.Err"] <- se.psi
+      }
+    }
     if("segmented.default" == as.character(object$call)[1]){
       summ <- c(summary(object, ...), object["psi"])
       summ[c("it","epsilon")]<-object[c("it","epsilon")]
@@ -53,11 +67,12 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
                   c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
             }
             if(!is.null(.vcov)){
-            summ$Ttable[,2]<-sqrt(diag(.vcov))
-            summ$Ttable[,3]<-summ$Ttable[,1]/summ$Ttable[,2]
-            summ$Ttable[,4]<- 2 * pt(abs(summ$Ttable[,3]),df=object$df.residual, lower.tail = FALSE)
+              summ$Ttable[,2]<-sqrt(diag(.vcov))
+              summ$Ttable[,3]<-summ$Ttable[,1]/summ$Ttable[,2]
+              summ$Ttable[,4]<- 2 * pt(abs(summ$Ttable[,3]),df=object$df.residual, lower.tail = FALSE)
             #dimnames(summ$Ttable) <- list(names(object$coefficients)[Qr$pivot[p1]], c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
-      }
+            }
+      
       summ$Ttable[idU,4]<-NA
       summ$Ttable<-summ$Ttable[-idV,] 
       summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]

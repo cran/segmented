@@ -23,8 +23,8 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
     #-----------
     in.psi<-function(LIM, PSI, ret.id=TRUE){
         #check if psi is inside the range
-        a<-PSI[1,]<=LIM[1,]
-        b<-PSI[1,]>=LIM[2,]
+        a<-PSI[1,]<LIM[1,]
+        b<-PSI[1,]>LIM[2,]
         is.ok<- !a & !b #TRUE se psi e' OK
         if(ret.id) return(is.ok)
         isOK<- all(is.ok) && all(!is.na(is.ok))
@@ -64,13 +64,13 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
     min.step<-opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha<-opz$alpha
-    limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha,1-alpha))
+    limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1], alpha[2]))
     
     digits<-opz$digits
     pow<-opz$pow
     nomiOK<-opz$nomiOK
     toll<-opz$toll
-    h<-opz$h
+    h <-opz$h
     conv.psi<-opz$conv.psi 
     gap<-opz$gap
     #stop.if.error<-opz$stop.if.error
@@ -81,6 +81,9 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
     id.psi.group<-opz$id.psi.group
     it.max<-old.it.max<-opz$it.max
     psi<-PSI[1,]
+    psi<-adj.psi(psi, limZ)
+    PSI<-matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
+    
     fc<-opz$fc
     names(psi)<-id.psi.group
     epsilon <- 10

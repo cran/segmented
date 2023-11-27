@@ -8,10 +8,10 @@
 }
 \usage{
 \method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, 
-    link=TRUE, res.col=1, rev.sgn=FALSE, const=0, shade=FALSE, 
+    link=TRUE, res.col=grey(.15, alpha = .4), rev.sgn=FALSE, const=NULL, shade=FALSE, 
     rug=!add, dens.rug=FALSE, dens.col = grey(0.8), transf=I, 
     isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, .coef=NULL, 
-    prev.trend=FALSE, smoos=NULL, ...)
+    prev.trend=FALSE, smoos=NULL, hide.zeros=FALSE, ...)
       }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,7 +29,9 @@
   \item{res.col}{when \code{res=TRUE} it means the color of the points representing the partial residuals.}
   \item{rev.sgn}{ when \code{TRUE} it is assumed that current \code{term} is `minus' the actual segmented variable,
     therefore the sign is reversed before plotting. This is useful when a null-constraint has been set on the last slope.}
-  \item{const}{ constant to add to each fitted segmented relationship (on the scale of the linear predictor) before plotting.}
+  \item{const}{ constant to add to each fitted segmented relationship (on the scale of the linear predictor) before plotting.
+  If the fit includes a segmented interaction term (obtained via \code{seg(..,by)} in the formula), the group-specific intercept is included. 
+  }
   \item{shade}{if \code{TRUE} and \code{conf.level>0} it produces shaded regions (in grey color) for the pointwise confidence 
   intervals embracing the fitted segmented line. }
   \item{rug}{when \code{TRUE} the covariate values are displayed as a rug plot
@@ -50,6 +52,9 @@
   \item{prev.trend}{logical. If \code{TRUE} dashed lines corresponding to the `previous' trends (i.e. the trends if the breakpoints would not have occurred) are also drawn.}
     \item{smoos}{
 logical, indicating if the residuals (provided that \code{res=TRUE}) will be drawn using a \emph{smoothed} scatterplot. If \code{NULL} (default) the smoothed scatterplot will be employed when the number of observation is larger than 10000.
+}
+    \item{hide.zeros}{
+logical, indicating if the residuals (provided that \code{res=TRUE}) corresponding to the covariate zero values should be deleted. Useful when the fit includes an interaction term in the formula, such as \code{seg(.., by=..)}, and the zeros in covariates indicate units in other groups.
 }
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
   can be vectors and are recycled if necessary, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and 

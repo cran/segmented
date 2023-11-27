@@ -37,8 +37,8 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     #--------------------
     in.psi<-function(LIM, PSI, ret.id=TRUE){
         #check if psi is inside the range
-        a<-PSI[1,]<=LIM[1,]
-        b<-PSI[1,]>=LIM[2,]
+        a<-PSI[1,]<LIM[1,]
+        b<-PSI[1,]>LIM[2,]
         is.ok<- !a & !b #TRUE se psi e' OK
         if(ret.id) return(is.ok)
         isOK<- all(is.ok) && all(!is.na(is.ok))
@@ -81,16 +81,17 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     min.step<-opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha<-opz$alpha
-    limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha,1-alpha))
+    limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2]))
     psi<-PSI[1,]
+    psi<-adj.psi(psi, limZ)
+    PSI<-matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
     id.psi.group<-opz$id.psi.group
     conv.psi<-opz$conv.psi 
-    h<-opz$h
     digits<-opz$digits
     pow<-opz$pow
     nomiOK<-opz$nomiOK
     toll<-opz$toll
-    h<-opz$h
+    hh<-opz$h
     gap<-opz$gap
     #fix.npsi<-opz$fix.npsi
     fix.npsi<-opz$stop.if.error
@@ -183,7 +184,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
         }
         
         psi.old<-psi
-        psi <- psi.old + gamma.c/beta.c
+        psi <- psi.old + hh*gamma.c/beta.c
         psi<- adj.psi(psi, rangeZ)
         #############################aggiusta la stima di psi (nel range.. dopo in limZ)
         #DIREZIONE

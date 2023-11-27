@@ -24,7 +24,7 @@
   \item{rev.sgn}{ should the signs of the breakpoint estimates be changed before plotting? see Details. }
     \item{.vcov}{ The \emph{full} covariance matrix of estimates. If unspecified (i.e. \code{NULL}), the covariance matrix is computed internally by \code{vcov(x)}.}
   \item{.coef}{ The regression parameter estimates. If unspecified (i.e. \code{NULL}), it is computed internally by \code{coef(x)}.}
-  \item{\dots}{ further arguments passed to \code{\link{segments}}, for instance `col' that 
+  \item{\dots}{ further arguments passed to \code{\link{arrows}}, for instance `col' that 
   can be a vector. }
 }
 \details{

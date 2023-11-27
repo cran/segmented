@@ -23,6 +23,7 @@ lines.segmented<-function(x, term, bottom=TRUE, shift=FALSE, conf.level=0.95, k=
   if(length(est.psi)>1) {
       y<- if(shift) y+seq(-h/2,h/2,length=length(est.psi)) else rep(y,length(est.psi))
       }
-  segments(lower.psi, y, upper.psi, y, ...)
+  #segments(lower.psi, y, upper.psi, y, ...)
+  arrows(lower.psi, y, upper.psi, y, code=3, angle=90, length=.07, ...)
   points(est.psi,y,type="p",pch=pch,col=colore)
   }

@@ -2,7 +2,8 @@
 \alias{vcov.segmented}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Variance-Covariance Matrix for a Fitted Segmented Model}
+Variance-Covariance Matrix for a Fitted Segmented Model
+}
 \description{
 Returns the variance-covariance matrix of the parameters (including breakpoints) of a
      fitted segmented model object.}
@@ -11,7 +12,7 @@ Returns the variance-covariance matrix of the parameters (including breakpoints)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{object}{a fitted model object of class "segmented", returned by any \code{segmented} method.}
+  \item{object}{a fitted model object of class "segmented", returned by any \code{segmented} method or \code{segreg}.}
   \item{var.diff}{logical. If \code{var.diff=TRUE} and there is a single segmented variable, the covariance 
   matrix is computed using a sandwich-type formula. See Details in \code{\link{summary.segmented}}.}
   \item{is}{logical. If \code{TRUE}, the \emph{asymptotic} covariance matrix based on the idea of induced smoothing is returned. If \code{is=TRUE}, \code{var.diff=FALSE} is set. 

@@ -48,8 +48,8 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
         o
     }
     in.psi <- function(LIM, PSI, ret.id = TRUE) {
-        a <- PSI[1, ] <= LIM[1, ]
-        b <- PSI[1, ] >= LIM[2, ]
+        a <- PSI[1, ] < LIM[1, ]
+        b <- PSI[1, ] > LIM[2, ]
         is.ok <- !a & !b
         if (ret.id) 
             return(is.ok)
@@ -92,17 +92,19 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
     min.step <- opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha <- opz$alpha
-    limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+    #limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+    limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
     psi <- PSI[1, ]
+    psi<-adj.psi(psi, limZ)
+    PSI<-matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
     npsi<- length(psi)
     id.psi.group <- opz$id.psi.group
     conv.psi <- opz$conv.psi
-    h <- opz$h
+    hh <- opz$h
     digits <- opz$digits
     pow <- opz$pow
     nomiOK <- opz$nomiOK
     toll <- opz$toll
-    h <- opz$h
     gap <- opz$gap
     fix.npsi <- opz$stop.if.error
     dev.new <- opz$dev0
@@ -197,7 +199,7 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
             }
         }
         psi.old <- psi
-        psi <- psi.old + gamma.c/beta.c
+        psi <- psi.old + hh*gamma.c/beta.c
         #aggiusta la stima di psi..
         psi<- adj.psi(psi, limZ)
         #browser()
