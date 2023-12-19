@@ -327,6 +327,10 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   DEN <- abs(Xtrue - PSI.mid)
   DEN <- apply(DEN, 2, function(.x) pmax(.x, sort(.x)[2]/2))  #pmax(.x, diff(range(.x))/1000)) 
   
+  #xx=Xtrue - PSI.mid
+  #ss=n^(-.8)
+  #den <- -xx+2*xx*pnorm(xx/ss)+2*ss*dnorm(xx/ss)     #.05*log(cosh((x-.5)/.05)))
+  
   V <- (1/(2 * DEN))
   colnames(V)<-nomiV
   U <- (Xtrue * V + 1/2)
@@ -345,6 +349,12 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   objF<-eval(objF, envir=mfExt)
   objF$offset<- obj0$offset
   objW<-objF
+  
+  #browser()
+  
+  #se1=predict.lm(objF, se.fit=TRUE)
+  #ff<-1.934+1.61*(x>.605)
+  #matplot(x, cbind(ff, ff-2*se$se.fit, ff+2*se$se.fit), type="l")
   
   #controllo se qualche coeff e' NA..
   isNAcoef<-any(is.na(objF$coefficients))

@@ -5,7 +5,7 @@
         #if(!"segmented"%in%class(x)) stop("a `segmented' object is requested")
         cat( "Call: " )
         print( x$call )
-        cat("\nMeaningful coefficients of the linear terms:\n")
+        cat("\nCoefficients of the linear terms:\n")
         
         #iV<- -match(x$nameUV[[2]],names(coef(x)))#iV<- -grep("psi.",names(coef(x)))#indices all but V
         iV<- -match(gsub("V", "psi", x$nameUV[[2]]),names(coef(x)))#iV<- -grep("psi.",names(coef(x)))#indices all but V

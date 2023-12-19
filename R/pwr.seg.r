@@ -1,4 +1,4 @@
-pwr.seg<-function(oseg, pow, n, z="1:n/n", psi, d, s, n.range=c(10,300), X=NULL, break.type=1, alpha=.01, round.n=TRUE, 
+pwr.seg<-function(oseg, pow, n, z="1:n/n", psi, d, s, n.range=c(10,300), X=NULL, break.type=c("break","jump"), alpha=.01, round.n=TRUE, 
                   alternative=c("two.sided","greater","less"), msg=TRUE, ci.pow=0){
   #===Power analysis in segmented regression==
   #Given the input values (z, psi, d..), this function returns n (when pow is provided) or pow (when n is provided)
@@ -65,6 +65,8 @@ pwr.seg<-function(oseg, pow, n, z="1:n/n", psi, d, s, n.range=c(10,300), X=NULL,
   #browser()
   x<-z
   alternative <- match.arg(alternative)
+  break.type <- match.arg(break.type)
+  break.type<-if(break.type=="break") 1 else 2
   if(!(break.type %in% 1:2)) stop(" 'break.type' should be 1 or 2")
   if(missing(oseg)){
       if(!is.character(x) && !missing(pow)) stop(" if the covariate is provided, 'pow' has to be missing ")

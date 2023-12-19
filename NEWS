@@ -5,6 +5,15 @@
 ****************************
 
 
+
+===============
+version 2.0-1 (2023-12-19)
+===============
+* change of values for argument 'break.type' in pscore.test(): now these are "break" or "jump" (were 1 or 2)
+* new arguments in plot.stepmented(), especially  conf.level to portray pointwise confidence intervals of the step regression function.
+* Bug fix: predict.segmented() did not work if the supplied dataframe included variables not in the model (thanks to A. Priulla and N. D'angelo for reporting); segreg() was not reporting the intercept name.
+
+
 ===============
 version 2.0-0 (2023-11-27)
 ===============

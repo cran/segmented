@@ -96,7 +96,8 @@ logical. If \code{TRUE} (default), the estimate covariance matrix is also comput
 
 An object of class "stepmented" is a list containing the components of the
 original object \code{obj} with additionally the followings:
-  \item{psi}{estimated break-points and relevant (approximate) standard errors}
+  \item{psi}{estimated break-points and relevant (approximate) standard errors (on the continuum)}
+  \item{psi.rounded}{the rounded estimated break-points (see Note, below)}
   \item{it}{number of iterations employed}
   \item{epsilon}{difference in the objective function when the algorithm stops}
   \item{model}{the model frame}
@@ -118,7 +119,7 @@ original object \code{obj} with additionally the followings:
 %}
 
 \note{
-The component \code{psi.rounded} of the fit object includes the rounded changepoint values which are usually taken as the final estimates. \code{print.stepmented} and \code{print.sumamry.stepmented}and \code{confint.stepmented} return the rounded values.
+The component \code{psi.rounded} of the fit object includes the rounded changepoint values which are usually taken as the final estimates. More specifically, each column of \code{psi.rounded} represents a changepoint and the corresponding rows are the range of the `optimal' interval. The first row, i.e. the lower bound of the interval, is taken as point estimate. \code{print.stepmented}, \code{print.summary.stepmented}, and \code{confint.stepmented} return the rounded (lower) value of the interval..
 
 Also:
 \enumerate{

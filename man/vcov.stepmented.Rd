@@ -5,11 +5,11 @@
 Variance-Covariance Matrix for a Fitted Segmented Model
 }
 \description{
-Returns the variance-covariance matrix of the parameters (including breakpoints) of a
+Returns the variance-covariance matrix of the parameters estimates (including breakpoints) of a
      fitted stepmented model object.
 }
 \usage{
-\method{vcov}{stepmented}(object, k=NULL, ...)
+\method{vcov}{stepmented}(object, k=NULL, return.X=FALSE, zero.cor=TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,14 +19,21 @@ a fitted model object of class "stepmented", returned by any \code{stepmented} m
   \item{k}{
 The power of \code{n} for the smooth approximation. Simulation evidence suggests \code{k} in [-1, -1/2]; with k=-1/2 providing somewhat 'conservative' standard errors especially at small sample sizes.
 }
-\item{\dots}{additional arguments. }
+\item{return.X}{
+If \code{TRUE} the (pseudo) design matrix is returned (into a list).
+}
+\item{zero.cor}{
+If \code{TRUE} the covariances between the jumpoints and the remaining linear coefficients are set to zero.
+}
+\item{\dots}{
+additional arguments. }
 }
 \details{
 The full covariance matrix is based on the smooth approximation 
 \deqn{I(x>\psi)\approx \Phi((x-\psi)/n^{k})} 
-via the sandwich formula using the empirical information matrix. \eqn{\Phi(\cdot)} is the standard Normal cdf, and \eqn{k} is the argument \code{k}. When \code{k=NULL} (default), it is computed via
+via the sandwich formula using the empirical information matrix and assuming \eqn{x \in [0,1]}. \eqn{\Phi(\cdot)} is the standard Normal cdf, and \eqn{k} is the argument \code{k}. When \code{k=NULL} (default), it is computed via
 \deqn{k=-(0.6 + 0.3 \ \log(snr) - (|\hat\psi-0.5|/n)^{1/2})}
- where \eqn{snr} is the signal-to-noise ratio corresponding to the estimated changepoint \eqn{\hat\psi} (in the range (0,1)). The above formula comes from extensive simulation study under different scenarios.
+ where \eqn{snr} is the signal-to-noise ratio corresponding to the estimated changepoint \eqn{\hat\psi} (in the range (0,1)). The above formula comes from extensive simulation studies under different scenarios.
 }
 \value{
 The full matrix of the estimated covariances between the parameter estimates, including 

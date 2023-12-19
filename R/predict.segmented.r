@@ -150,10 +150,13 @@ predict.segmented<-function(object, newdata, se.fit=FALSE, interval=c("none","co
   
   colnomi.noV <- setdiff(colnomi, nameV)
   X.noV <- X[, colnomi.noV]
-  
-  #browser()
   estcoef.noV<- estcoef[colnomi.noV]
-  #estcoef.noV<- estcoef[-match(nameV,names(estcoef), 0)]
+  
+  #ignora eventuali altre variabili contenute in newdata
+  nomiOK<- intersect(names(estcoef.noV), colnames(X.noV))
+  X.noV<- X.noV[, nomiOK, drop=FALSE]
+  estcoef.noV<-estcoef.noV[nomiOK]
+  
   mu <- eta<- drop(X.noV%*% estcoef.noV)
   
   #ATTENZIONE c'e' il problema dell'appaiamento dei nomi!!!

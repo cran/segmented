@@ -9,7 +9,7 @@ Given the appropriate input values, the function computes the power (sample size
 }
 \usage{
 pwr.seg(oseg, pow, n, z = "1:n/n", psi, d, s, n.range = c(10,300), 
-    X = NULL, break.type=1, alpha = 0.01, round.n = TRUE, 
+    X = NULL, break.type=c("break","jump"), alpha = 0.01, round.n = TRUE, 
     alternative = c("two.sided", "greater", "less"), msg = TRUE, ci.pow=0)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -43,7 +43,7 @@ specified range.
 The design matrix including additional linear variables in the regression equation. Default to \code{NULL} which means intercept and linear term for the segmented covariate.
 }
   \item{break.type}{
-Numerical, meaning the type of breakpoint. \code{break.type=1} means piecewise linear (segmented), \code{break.type=2} refers to piecewise constant. 
+Type of breakpoint. \code{break.type='break'} means piecewise linear (segmented), \code{break.type='jump'} refers to piecewise constant. 
 }
   \item{alpha}{
 The type-I error probability. Default to 0.01.

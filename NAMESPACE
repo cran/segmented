@@ -5,7 +5,7 @@ importFrom("grDevices", "grey","adjustcolor","colorRampPalette")
 importFrom("graphics", "abline", "axis", "box", "lines", "matlines",
              "matplot", "par", "plot", "points", "polygon", "segments","smoothScatter",
            "legend","mtext", "text", "rect", "arrows")
-importFrom("stats", "approx", "as.formula", "coef", "contrasts", "family",
+importFrom("stats", "spline", "approx", "as.formula", "coef", "contrasts", "family",
              "fitted", "formula", "gaussian", "glm.control", "glm.fit",
              "is.empty.model", "lm.wfit", "median", "model.frame",
              "model.matrix", "model.offset", "model.response",

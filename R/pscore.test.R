@@ -1,5 +1,6 @@
 pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
-                  values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, only.term=FALSE, break.type=1) { 
+                  values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, 
+                  only.term=FALSE, break.type=c("break","jump")) { 
   #-------------------------------------------------------------------------------
   test.Sc2<-function(y, z, xreg, sigma=NULL, values=NULL, fn="pmax(x-p,0)", df.t="Inf", alternative, w=NULL, offs=NULL, 
                      nbreaks=1, ties.ok=FALSE, only.term=FALSE){
@@ -143,8 +144,9 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
   }
   #----------------------------------------------------
   if(!inherits(obj, "lm")) stop("A '(g)lm', or 'segmented-(g)lm' model is requested")
-  if(!(break.type %in% 1:2)) stop(" 'break.type' should be 1 or 2")
-  fn=if(break.type==1) "pmax(x-p,0)" else "1*(x>p)"
+  break.type<-match.arg(break.type)
+  #if(!(break.type %in% 1:2)) stop(" 'break.type' should be 1 or 2")
+  fn=if(break.type=="break") "pmax(x-p,0)" else "1*(x>p)"
   ties.ok=FALSE
   if(missing(seg.Z)){
     if(inherits(obj, "segmented") && length(obj$nameUV$Z)==1) seg.Z<- as.formula(paste("~", obj$nameUV$Z ))
@@ -511,7 +513,11 @@ pscore.test <- function(obj, seg.Z, k = 10, alternative = c("two.sided", "less",
   }
   
   #browser()
-  msg.alt <- if(n.break==1) " breakpoint) " else " breakpoints) "
+  if(break.type=="break"){
+    msg.alt <- if(n.break==1) " breakpoint) " else " breakpoints) "
+  } else {
+    msg.alt <- if(n.break==1) " jumpoint) " else " jumpoints) "
+  }
   if(more.break) msg.alt <- paste(" additional", msg.alt,sep="")
   msg.alt <- paste(alternative,"   (",n.break , msg.alt , sep="")
   

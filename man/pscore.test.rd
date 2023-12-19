@@ -7,7 +7,7 @@
 \usage{
 pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"), 
     values=NULL, dispersion=NULL, df.t=NULL, more.break=FALSE, n.break=1, 
-    only.term=FALSE, break.type=1)
+    only.term=FALSE, break.type=c("break","jump"))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -25,7 +25,7 @@ pscore.test(obj, seg.Z, k = 10, alternative = c("two.sided", "less", "greater"),
   while \code{more.break=TRUE} tests for an \emph{additional} breakpoint(s) for the variable 'seg.Z'. Ignored when \code{obj} is not a segmented fit.}
   \item{n.break}{optional. Number of breakpoints postuled under the alternative hypothesis.}
   \item{only.term}{logical. If \code{TRUE}, only the pseudo covariate(s) relevant to the testing for the breakpoint is returned, and no test is computed.}
-\item{break.type}{The kind of breakpoint being tested. \code{1} is for piecewise-linear relationships, \code{2} means piecewise-constant, i.e. a step-function, relationships.}
+\item{break.type}{The kind of breakpoint being tested. \code{"break"} is for piecewise-linear relationships, \code{"jump"} means piecewise-constant, i.e. a step-function, relationships.}
 }
 \details{
   \code{pscore.test} tests for a non-zero difference-in-slope parameter of a segmented

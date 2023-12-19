@@ -1,4 +1,4 @@
-vcov.stepmented<-function(object, k=NULL, ...){
+vcov.stepmented<-function(object, k=NULL, return.X=FALSE, zero.cor=TRUE, ...){
   #farlo su scala logit???
   #k=-1/2.. conservativi
   #k=-2/3.. ok, ma forse troppo piccoli..
@@ -78,7 +78,7 @@ vcov.stepmented<-function(object, k=NULL, ...){
   #browser()
   #Xlin<-X[,setdiff(colnames(X),c(nomiU, nomiPsi))]
   #Hess<-optimHess(object$coefficients, fOb, Xlin=Xlin, Z=object$Z)
-  ff<-function(k, se.only=TRUE, wght=FALSE, only.lin=FALSE){
+  ff<-function(k, se.only=TRUE, wght=FALSE, only.lin=FALSE, return.X=FALSE){
     #browser()
     maxZ.list<-NULL
     for(i in 1:length(nomiU)){
@@ -103,6 +103,7 @@ vcov.stepmented<-function(object, k=NULL, ...){
       X0[, nomiPsi[i]] <- X[, nomiPsi[i]] <- -(object$coefficients[nomiU[i]]/ss)*dnorm((Z-psi)/ss)
       maxZ.list[[length(maxZ.list)+1]]<-maxZ-minZ
     }
+    if(return.X) return(list(X0,X))
     #X<-X[, -match(nomiPsi, colnames(X))]
     #grad<-crossprod(X, obj)
     if(!inherits(object, "lm")) stop(" A (g)lm object fit is requested")
@@ -164,11 +165,11 @@ vcov.stepmented<-function(object, k=NULL, ...){
   if(is.numeric(k)){
     if(length(k)==1){
       #if(!is.null(object$vcov) && k==-2/3) return(object$vcov)
-      V<-ff(k, se.only=FALSE)
+      V<-ff(k, se.only=FALSE,return.X=return.X)
       } else {
         seb<- summary(object)$sigma*sqrt(diag(solve(object$obj.ok$XtX))[nomiU])
         .o<-optimize(ff, c(k[1], k[2]))
-        V<-ff(.o$minimum, se.only=FALSE)
+        V<-ff(.o$minimum, se.only=FALSE, return.X=return.X)
         attr(V, "k")<-.o$minimum
       }
   } else {
@@ -176,10 +177,13 @@ vcov.stepmented<-function(object, k=NULL, ...){
     #seb<- summary(object)$sigma*sqrt(diag(solve(object$obj.ok$XtX))[nomiU])
     seb=0 #non serve in realta'...
     sigma= sqrt(sum(object$residuals^2)/object$df.residual)
-    V<-ff(1, se.only=FALSE, wght=TRUE)
+    V<-ff(1, se.only=FALSE, wght=TRUE, return.X=return.X)
   }
+  if(return.X) return(V)
   V0<-ff(1, only.lin=TRUE)
+  #browser()
   V[id.noV,id.noV]<-V0
+  if(zero.cor) V[nomiPsi, id.noV]<- V[id.noV, nomiPsi] <-0
   V 
 }
 

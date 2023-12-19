@@ -147,10 +147,12 @@ step.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL
       #      cat(paste("iter = ", spp, it,
       #                "  dev = ",sprintf('%8.5f',L1), #formatC(L1,width=8, digits=5,format="f"), #era format="fg"
       #n.intDev0<-nchar(strsplit(as.character(dev.values[2]),"\\.")[[1]][1])
+      unlpsi<- unlist(est.psi0)
+      Lp<-length(unlpsi)
       cat(paste("boot sample = ", sprintf("%2.0f",k),
                 "  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$SumSquares.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
-                "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
-                "  est.psi = ",paste(formatC(unlist(est.psi0),digits=5,format="f"), collapse="  "), #sprintf('%.2f',x)
+                "  n.psi = ",formatC(Lp,digits=0,format="f"), 
+                "  est.psi = ",paste(formatC(unlpsi[1:min(Lp,5)],digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
                 sep=""), "\n")
     }
     #conta i valori ss uguali.. cosi puoi fermarti prima..

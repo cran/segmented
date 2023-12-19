@@ -17,8 +17,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   \item{n.boot}{ number of bootstrap samples used in the bootstrap restarting algorithm. If 0 the standard algorithm,
     i.e. without bootstrap restart, is used. Default to 10 that appears to be sufficient in most of problems. However
     when multiple breakpoints have to be estimated it is suggested to increase \code{n.boot}, e.g. \code{n.boot=50}.}
-  \item{display}{ logical indicating if the value of the objective function should be printed (along with current breakpoint estimates)
-    at each iteration or at each bootstrap resample. If bootstrap restarting is employed, the values of objective and breakpoint estimates should not change at the last runs.}
+  \item{display}{ logical indicating if the value of the objective function should be printed along with current breakpoint estimates at each iteration or at each bootstrap resample (but no more than 5 breakpoints are printed). If bootstrap restarting is employed, the values of objective and breakpoint estimates should not change at the last runs.}
   \item{tol}{ positive convergence tolerance. }
   \item{it.max}{ integer giving the maximal number of iterations. }
   \item{fix.npsi}{logical (it replaces previous argument \code{stop.if.error}) If \code{TRUE} (default) the \emph{number} (and not location) of breakpoints is held fixed           throughout iterations. Otherwise a sort of `automatic' breakpoint selection is carried out, provided that several starting values are supplied for the breakpoints, 

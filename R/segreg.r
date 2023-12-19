@@ -396,7 +396,9 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       # X<- X[,-unlist(id.psList), drop=FALSE]
       #==========================================================================================================
       
-      X<- X[, !startsWith(colnames(X),"seg(")]
+      #browser()
+      
+      X<- X[, !startsWith(colnames(X),"seg("), drop=FALSE]
 
       idZ <- unlist(tapply(id.psi.group, id.psi.group, function(.x) c(TRUE, rep(FALSE, length(.x)-1))))
       Z.ok<-Z[, idZ, drop=FALSE]
@@ -521,6 +523,9 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         #nomiU <-nomiCoefU
         #nomiVxb<- nomiCoefPSI
       }
+      
+      #browser()
+      
       Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
       colnames(U)<- nomiU   #<- nomiOK
       colnames(Vxb)<-nomiVxb #<- sub("U","psi", nomiU)
@@ -544,6 +549,8 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         }
       }
 
+      #browser()
+      
       objV$fitted.values <- objU$fitted.values
       objV$residuals <- objU$residuals
       objV$coefficients <- objU$coefficients

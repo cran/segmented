@@ -9,8 +9,9 @@ Plot method for stepmented objects
   the fitted piecewise constant lines for the selected stepmented term.
 }
 \usage{
-\method{plot}{stepmented}(x, term, add = FALSE, res = TRUE, interc = TRUE, 
-    add.fx = FALSE, psi.lines = TRUE, link=FALSE, surf=FALSE, ...)
+\method{plot}{stepmented}(x, term, add = FALSE, res = TRUE, conf.level=0, interc = TRUE, 
+    add.fx = FALSE, psi.lines = TRUE, link=FALSE, surf=FALSE, zero.cor=TRUE, 
+                            heurs=TRUE, shade=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -28,6 +29,10 @@ when \code{TRUE} the fitted lines are added to the current device.
   \item{res}{
 when \code{TRUE} the fitted lines are plotted along with corresponding partial residuals.
 }
+  \item{conf.level}{
+the confidence level for the pointwise confidence intervals for the expected values.
+}
+
   \item{interc}{
 if \code{TRUE} the computed components include the model intercept (if it exists).
 }
@@ -43,6 +48,16 @@ if \code{FALSE} the fitted lines (and possibily the residuals) are reported on t
   \item{surf}{
 if the object fit \code{x} includes 2 stepmented covariates (x1 and x2, say) with relevant estimated breakpoints, \code{surf=TRUE} will draw on the plane x1-x2 the areas splitted according to the estimated breakpoints with corresponding estimated means superimposed.
 }
+  \item{zero.cor}{
+see \code{zero.cor} in \code{\link{vcov.stepmented}}; effective only if \code{conf.level>0}.
+}
+  \item{heurs}{
+logical; if \code{TRUE}, heuristic (usually somewhat conservative) confidence intervals are computed and plotted; effective only if \code{conf.level>0}. 
+}
+  \item{shade}{
+if \code{TRUE} the pointwise confidence intervals are portrayed via shaded area; effective only if \code{conf.level>0}.
+}
+
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
   can be vectors and are recycled if necessary, see the example below) for the fitted piecewise constant lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}, \code{res.col} is for the color).% \code{col.shade} for the shaded regions (provided that \code{shade=TRUE} and \code{conf.level>0}).
   }
@@ -61,9 +76,9 @@ None.
 \author{
 Vito M. R. Muggeo
 }
-%\note{
-%%  ~~further notes~~
-%}
+\note{
+Implementation of confidence intervals for the conditional means in stepmented regression is under develop; \code{conf.level>0} should be used with care, especially with multiple jumpoints.
+}
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
