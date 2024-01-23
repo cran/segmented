@@ -112,7 +112,9 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
     mio.init<-NULL
     mio.init.noV<-NULL
     if(!in.psi(limZ,PSI,FALSE))  stop("starting psi out of the range.. see 'alpha' in seg.control", call.=FALSE)
-    if(!far.psi(Z,PSI,id.psi.group,FALSE)) stop("psi values too close each other. Please change (decreases number of) starting values", call.=FALSE)
+    if(!far.psi(Z,PSI,id.psi.group,FALSE)) 
+      stop("psi starting values too close each other or at the boundaries. Please change them (e.g. set 'quant=TRUE' 
+          in seg.control()), or decrease their number.", call. = FALSE)
     n.psi1<-ncol(Z)
     #==============================================
     U <- ((Z-PSI)*(Z>PSI)) #pmax((Z - PSI), 0)^pow[1]

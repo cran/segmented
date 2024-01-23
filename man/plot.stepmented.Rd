@@ -77,7 +77,7 @@ None.
 Vito M. R. Muggeo
 }
 \note{
-Implementation of confidence intervals for the conditional means in stepmented regression is under develop; \code{conf.level>0} should be used with care, especially with multiple jumpoints.
+Implementation of confidence intervals for the conditional means in stepmented regression is under development; \code{conf.level>0} should be used with care, especially with multiple jumpoints.
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~

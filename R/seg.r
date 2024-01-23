@@ -1,5 +1,5 @@
 seg <-
-function(x, psi=NA, npsi=1, est=NA, R=NA, fixed.psi=NULL, by=NULL, f.x=I){
+function(x, npsi=1, psi=NA, est=NA, R=NA, fixed.psi=NULL, by=NULL, f.x=I){
 #------------
     #browser()
     r<-x

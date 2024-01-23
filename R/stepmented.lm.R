@@ -296,6 +296,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   if(n.boot<=0){
     obj<- step.lm.fit(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
   } else {
+    #browser()
     if("seed" %in% names(control)) set.seed(control$seed)
     obj<-step.lm.fit.boot(y, x.lin, Xtrue, PSI, ww, offs, opz, n.boot, break.boot=break.boot) #, size.boot=size.boot, random=random)
   }
@@ -472,6 +473,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
     }
   objF$psi<- objF$psi[,-1,drop=FALSE] #rimuovi la colonna Initial
   
+  #browser()
   
   if(var.psi){
     Cov <- vcov.stepmented(objF, k=NULL)

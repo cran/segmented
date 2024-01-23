@@ -5,7 +5,7 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
     U1 <- (Xtrue>PSI) #(Z - PSI) * (Z > PSI)
     #if (pow[1] != 1) U1 <- U1^pow[1]
-    obj1 <- try(mylm(cbind(X, U1), y), silent = TRUE)
+    obj1 <- try(mylm(cbind(X, U1), y, w), silent = TRUE)
     if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w), silent = TRUE)
     #if (class(obj1)[1] == "try-error") obj1 <- try(.lm.fit(cbind(X, U1), y), silent = TRUE)
     L1 <- if (class(obj1)[1] == "try-error") L0 + 10
@@ -147,6 +147,7 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     #aggiusta la stima di psi..
     psi1<- adj.psi(psi1, limZ) #limZ rangeZ??
     
+    #if(i==2) browser()
     #la f e' chiaramente a gradino per cui meglio dividere..
     a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww)
     a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww)
@@ -159,7 +160,7 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     #  M<-M*.3
     #}
     k.values[length(k.values) + 1] <- use.k <- a$minimum
-    L1<- a$objective
+    L1 <- a$objective
     
     #Aggiorna psi
     psi1 <- psi1*use.k + psi0* (1-use.k)

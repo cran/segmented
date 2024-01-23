@@ -5,6 +5,15 @@
 ****************************
 
 
+===============
+version 2.0-2 (2024-01-23)
+===============
+* In seg(), 'est' and 'psi' can be a list to set group specific constraints (when 'by' is specified)
+* Bug fix:
+ - predict.segmented() did not work when the supplied dataset had 1 row (thanks to Felipe Mattioni for reporting), and when the object fit included a factor, possibly coming from interaction term such as seg(x, by=g) (thanks to Conor McAloon and Dave Armstrong for reporting)
+ - segreg() did not work with contraints when 'by' was specified in seg() (thanks to Signe Marie Jensen for reporting)
+ - segmented.numeric() and stepmented.numeric() were ignoring their 'weights' argument.
+
 
 ===============
 version 2.0-1 (2023-12-19)
@@ -25,7 +34,7 @@ version 2.0-0 (2023-11-27)
   -- h=0 is now allowed to keep fixed the breakpoints by also setting n.boot=0 (as an alternative to 'it.max=0') 
 * new function model.matrix.segmented()
 * segmented.default() works with objects "svyglm" (thanks to Huifeng Jin for his input)
-* predict.segmented has been rewritten and is stabler.
+* predict.segmented() has been rewritten and is stabler.
 * changed some default values in plot.segmented() (for lines and residuals).
 
 

@@ -85,11 +85,8 @@ such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"
   could try each "segmented" method on the returned object by calling it explicitly (e.g. via \code{plot.segmented()} or \code{confint.segmented()} wherein the regression coefficients and relevant covariance matrix have to be specified, see \code{.coef} and \code{.vcov} in \code{plot.segmented()}, \code{confint.segmented()}, \code{slope()}). 
 }
 \value{
-  The returned object depends on the \code{last} component returned by \code{seg.control}.
-  If last=TRUE, the default, segmented returns an object of class "segmented" which inherits
-  from the class "lm" or "glm" depending on the class of \code{obj}. Otherwise a list is
-  returned, where the last component is the fitted model at the final iteration,
-  see \code{\link{seg.control}}. \cr
+segmented returns an object of class "segmented" which inherits
+  from the class of \code{obj}, for instance "lm" or "glm". \cr
 
 An object of class "segmented" is a list containing the components of the
 original object \code{obj} with additionally the followings:

@@ -96,6 +96,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     alpha <- opz$alpha
     limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
 
+    #browser()
+    
     psi <- PSI[1, ]
     psi<-adj.psi(psi, limZ)
     PSI<-matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
@@ -124,13 +126,14 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         XREG <- XREG[, sel.col.XREG, drop = FALSE]
     invXtX <- opz$invXtX
     Xty <- opz$Xty
+    
     #browser()
     if (!in.psi(limZ, PSI, FALSE)) 
         stop("starting psi out of the range.. see 'alpha' in seg.control.", 
             call. = FALSE)
     if (!far.psi(Z, PSI, id.psi.group, FALSE)) 
-        stop("psi values too close each other. Please change (decreases number of) starting values", 
-            call. = FALSE)
+        stop("psi starting values too close each other or at the boundaries. Please change them (e.g. set 'quant=TRUE' 
+          in seg.control()), or decrease their number.", call. = FALSE)
     n.psi1 <- ncol(Z)
     U <- ((Z - PSI) * (Z > PSI))
     if (pow[1] != 1) U <- U^pow[1]
@@ -142,12 +145,12 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     dev.values[length(dev.values) + 1] <- L0
     psi.values[[length(psi.values) + 1]] <- psi
     if (visual) {
-        cat(paste("iter = ", sprintf("%2.0f", 0), "  dev = ", 
-            sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), 
-                L0), "  k = ", sprintf("%2.0f", NA), "  n.psi = ", 
-            formatC(length(unlist(psi)), digits = 0, format = "f"), 
-            "  ini.psi = ", paste(formatC(unlist(psi), digits = 3, 
-                format = "f"), collapse = "  "), sep = ""), "\n")
+        cat(paste("iter = ", sprintf("%2.0f", 0), 
+                  "  dev = ",  sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), L0), 
+                  "  k = ", sprintf("%5.0f", NA), 
+                  "  n.psi = ", formatC(length(unlist(psi)), digits = 0, format = "f"), 
+                  "  ini.psi = ", paste(formatC(unlist(psi), digits = 3, format = "f"), collapse = "  "), 
+                  sep = ""), "\n")
     }
     id.warn <- FALSE
     id.psi.changed <- rep(FALSE, it.max)
@@ -203,6 +206,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         #aggiusta la stima di psi..
         #psi<- adj.psi(psi, rangeZ) 
         psi<- adj.psi(psi, limZ)
+        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         #browser()
         
         a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs)
@@ -216,7 +220,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         PSI <- matrix(psi, nrow=n, ncol = length(psi), byrow=TRUE)
         U1 <- (Z - PSI) * (Z > PSI)
         
-        
+        #if(it==3) browser()
         
         #if (pow[1] != 1) U1 <- U1^pow[1]
         #obj1 <- try(mylm(cbind(XREG, U1), y, w, offs), silent = TRUE)

@@ -29,7 +29,7 @@ extract.psi<-function(lista){
     		nrow=length(dev.values), byrow=TRUE)
     	if(!is.matrix(psi.values)) psi.values<-matrix(psi.values)
     	psi.ok<-psi.values[id.dev.ok,]
-    	r<-list(SumSquares.no.gap=dev.ok, psi=psi.ok)
+    	r<-list(dev.no.gap=dev.ok, psi=psi.ok)
     	r
 	}
 #-------------
@@ -81,7 +81,7 @@ extract.psi<-function(lista){
       k.psi.change<- 1
       alpha<-.1
       for(k in seq(n.boot)){
-        #if(k==5) browser()
+        #if(k==4) browser()
         ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
         n.boot.rev<- 3 #3 o 4?
         diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
@@ -157,7 +157,8 @@ extract.psi<-function(lista){
       all.selected.psi<-rbind(est.psi00,all.selected.psi)
       all.selected.ss<-c(ss00, all.selected.ss)
 
-
+#browser()
+      
       # SS.ok<-min(all.selected.ss)
       # id.accept<- ((abs(all.ss-SS.ok)/SS.ok )<= 0.05)
       # psi.mean<-apply(all.est.psi[id.accept,,drop=FALSE], 2, mean)

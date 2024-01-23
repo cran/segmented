@@ -8,7 +8,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
         psi.ok<- psi*h + psi.old*(1-h)
         PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
         U1 <- (Z - PSI) * (Z > PSI)
-        if (pow[1] != 1) U1 <- U1^pow[1]
+        #if (pow[1] != 1) U1 <- U1^pow[1]
         obj1 <- try(suppressWarnings(glm.fit(x = cbind(X, U1), y = y, offset = offs,
                                     weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)),
                                     silent = TRUE)
@@ -82,6 +82,9 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     rangeZ <- apply(Z, 2, range)
     alpha<-opz$alpha
     limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2]))
+    
+    #browser()
+    
     psi<-PSI[1,]
     psi<-adj.psi(psi, limZ)
     PSI<-matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
@@ -113,7 +116,9 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     #    Xty<-opz$Xty
     #===================
     if(!in.psi(limZ,PSI,FALSE))  stop("starting psi out of the range.. see 'alpha' in seg.control", call.=FALSE)
-    if(!far.psi(Z,PSI,id.psi.group,FALSE)) stop("psi values too close each other. Please change (decreases number of) starting values", call.=FALSE)
+    if(!far.psi(Z,PSI,id.psi.group,FALSE)) 
+      stop("psi starting values too close each other or at the boundaries. Please change them (e.g. set 'quant=TRUE' 
+          in seg.control()), or decrease their number.", call. = FALSE)
     n.psi1<-ncol(Z)
     #==============================================
     U <- ((Z-PSI)*(Z>PSI)) #pmax((Z - PSI), 0)^pow[1]
@@ -127,10 +132,11 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     dev.values[length(dev.values) + 1] <- L0 #modello con psi iniziali
     psi.values[[length(psi.values) + 1]] <- psi #psi iniziali
     #==============================================
+    #browser()
     if (visual) {
         cat(paste("iter = ", sprintf("%2.0f",0),
                   "  dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), L0), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
-                  "  k = ", sprintf("%2.0f", NA),
+                  "  k = ", sprintf("%5.0f", NA),
                   "  n.psi = ",formatC(length(unlist(psi)),digits=0,format="f"), 
                   "  ini.psi = ",paste(formatC(unlist(psi),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
                   sep=""), "\n")
@@ -185,7 +191,10 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
         
         psi.old<-psi
         psi <- psi.old + hh*gamma.c/beta.c
-        psi<- adj.psi(psi, rangeZ)
+        psi<- adj.psi(psi, rangeZ) #limZ or rangeZ???
+        
+        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
+        
         #############################aggiusta la stima di psi (nel range.. dopo in limZ)
         #DIREZIONE
         a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs) #DUBBIO: Ma fam, eta0, L0 e maxit.glm devo passarli come argom,enti o li trova?
@@ -227,13 +236,13 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
         #         break}
         # } #end while L0-L1
         
-        
+        #if(it==3) browser()
         
         if (visual) {
             flush.console()
             cat(paste("iter = ", sprintf("%2.0f",it),
                       "  dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), L1), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
-                      "  k = ", sprintf("%2.0f", use.k),
+                      "  k = ", sprintf("%2.3f", use.k),
                       "  n.psi = ",formatC(length(unlist(psi)),digits=0,format="f"), 
                       "  est.psi = ",paste(formatC(unlist(psi),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
                       sep=""), "\n")

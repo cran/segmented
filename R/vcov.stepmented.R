@@ -66,7 +66,7 @@ vcov.stepmented<-function(object, k=NULL, return.X=FALSE, zero.cor=TRUE, ...){
   # }
   
  
-  X0<-X<-model.matrix(object) #qr.X(object$qr) piu efficiente?
+  X0<-X<-model.matrix.stepmented(object) #qr.X(object$qr) piu efficiente?
   p=ncol(X)
   n=nrow(X)
   nomiZ<- object$nameUV$Z

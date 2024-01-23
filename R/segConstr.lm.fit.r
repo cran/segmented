@@ -5,7 +5,14 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
         psi.ok<- psi*h + psi.old*(1-h)
         PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
         U1 <- (Z - PSI) * (Z > PSI)
-        if (pow[1] != 1) U1 <- U1^pow[1]
+        
+        for(i in 1:length(RList)){#trasforma le U
+          UList[[i]]<- cbind(Zseg[,i], U1[, id.psi.group==i])%*%invA.RList[[i]] #
+          #nomiUList[[i]]<- rep(i, ncol(UList[[i]]) )
+        }
+        U1<-do.call(cbind, UList) #la matrice del disegno sara' cbind(X, U1)
+
+        #if (pow[1] != 1) U1 <- U1^pow[1]
         obj1 <- try(mylm(cbind(X, U1), y, w, offs), silent = TRUE)
         if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w, offs), silent = TRUE)
         L1 <- if (class(obj1)[1] == "try-error") L0 + 10
@@ -97,13 +104,14 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
     invA.RList<-lapply(1:length(RList), function(i) invAList[[i]]%*% RList[[i]])
     nomiUList<- lapply(1:length(RList), function(i)rep(i, ncol(RList[[i]])))
 
-    
-    
     n <- length(y)
     min.step <- opz$min.step
     rangeZ <- apply(Z, 2, range)
-    alpha <- opz$alpha
-    limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+    alpha <- opz$alpha #ha gia' 2 componenti! 
+    limZ <- apply(Z, 2, quantile, names = FALSE, probs = alpha) #c(alpha, 1 - alpha))
+    
+    #browser()
+    
     psi <- PSI[1, ]
     id.psi.group <- opz$id.psi.group
     conv.psi <- opz$conv.psi
@@ -137,8 +145,18 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
         stop("psi values too close each other. Please change (decreases number of) starting values", 
             call. = FALSE)
     n.psi1 <- ncol(Z)
+    
+    Zseg <- XREG[,opz$nomiSeg,drop=FALSE] #
+    XREG <- XREG[, -match(opz$nomiSeg, colnames(XREG)),drop=FALSE]
+    
     U <- ((Z - PSI) * (Z > PSI))
-    if (pow[1] != 1) U <- U^pow[1]
+    #if (pow[1] != 1) U <- U^pow[1]
+    
+    for(i in 1:length(RList)){#trasforma le U
+      UList[[i]]<- cbind(Zseg[,i], U[, id.psi.group==i])%*%invA.RList[[i]] #
+      #nomiUList[[i]]<- rep(i, ncol(UList[[i]]) )
+    }
+    U<-do.call(cbind, UList) #la matrice del disegno sara' cbind(X, U)
     obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
     if (class(obj0)[1] == "try-error") obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
     L0 <- sum(obj0$residuals^2 * w)
@@ -146,6 +164,7 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
     dev.values[length(dev.values) + 1] <- opz$dev0
     dev.values[length(dev.values) + 1] <- L0
     psi.values[[length(psi.values) + 1]] <- psi
+    #browser()
     if (visual) {
         cat(paste("iter = ", sprintf("%2.0f", 0), "  dev = ", 
             sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), 
@@ -158,8 +177,7 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
     id.psi.changed <- rep(FALSE, it.max)
     #============================================== inizio ciclo
     #browser()
-    Zseg <- XREG[,opz$nomiSeg,drop=FALSE]
-    XREG <- XREG[, -match(opz$nomiSeg, colnames(XREG)),drop=FALSE]
+    #Zseg (a differenza di Z) ha una colonna per ogni variabile segmented, indipendentemente dal n.psi
     while (abs(epsilon) > toll) {
         it <- it + 1
         n.psi0 <- n.psi1
@@ -172,8 +190,12 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
             if (class(obj0)[1] == "try-error") 
                 obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
             L0 <- sum(obj0$residuals^2 * w)
+        } else {
+          #V <- dpmax(Z, PSI, pow = pow[2])
+          V <- (Z>PSI)
+          U <- (Z - PSI) * V
+          V <- -V
         }
-        V <- dpmax(Z, PSI, pow = pow[2])
         
         for(i in 1:length(RList)){#trasforma le U
           UList[[i]]<- cbind(Zseg[,i], U[, id.psi.group==i])%*%invA.RList[[i]] #
@@ -219,6 +241,7 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
         psi <- psi.old + hh*gamma.c/beta.c
         #aggiusta la stima di psi..
         psi<- adj.psi(psi, rangeZ)
+        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         #browser()
         
         a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs)
@@ -239,13 +262,10 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
 
         if (visual) {
             flush.console()
-            cat(paste("iter = ", sprintf("%2.0f", it), "  dev = ", 
-                sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), 
-                  L1), "  k = ", sprintf("%2.3f", use.k), "  n.psi = ", 
-                formatC(length(unlist(psi)), digits = 0, format = "f"), 
-                "  est.psi = ", paste(formatC(unlist(psi), digits = 3, 
-                  format = "f"), collapse = "  "), sep = ""), 
-                "\n")
+            cat(paste("iter = ", sprintf("%2.0f", it), 
+                "  dev = ", sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), L1), 
+                "  k = ", sprintf("%2.3f", use.k), "  n.psi = ", formatC(length(unlist(psi)), digits = 0, format = "f"), 
+                "  est.psi = ", paste(formatC(unlist(psi), digits = 3, format = "f"), collapse = "  "), sep = ""), "\n")
         }
         epsilon <- if (conv.psi) 
             max(abs((psi - psi.old)/psi.old))
@@ -265,8 +285,7 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
                 PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), 
                   ncol = length(psi))
                 id.psi.changed[it] <- TRUE
-            }
-            else {
+            } else {
                 Z <- Z[, id.psi.ok, drop = FALSE]
                 PSI <- PSI[, id.psi.ok, drop = FALSE]
                 rangeZ <- rangeZ[, id.psi.ok, drop = FALSE]

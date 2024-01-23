@@ -70,9 +70,14 @@ such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"
 \item{var.psi}{
 logical. If \code{TRUE} (default), the estimate covariance matrix is also computed via \code{\link{vcov.stepmented}}, thus the breakpoint standard errors are also included in the \code{psi} component of the returned object.
 }
-  \item{weights}{
+\item{weights}{
   possible weights to include in the estimation process (only for \code{stepmented.numeric}).
   }
+%\item{only.mean}{
+%  logical (only for \code{stepmented.numeric}). If \code{FALSE}, changepoints will be estimated even for the dispersion (variance) model. The number of changepoints to estimate in the two sub-models can be specified via \code{npsi} which can be a vector wherein
+%  \code{npsi[1]} refers to the mean model and \code{npsi[2]} to the variance model. If \code{npsi} is scalar, the same number of changepoints is estimated in the two submodels.
+ % }
+
 }
 \details{
   Given a linear regression model (usually of class "lm" or "glm"), stepmented tries to estimate
@@ -88,11 +93,8 @@ logical. If \code{TRUE} (default), the estimate covariance matrix is also comput
 
 }
 \value{
-  The returned object depends on the \code{last} component returned by \code{seg.control}.
-  If last=TRUE, the default, stepmented returns an object of class "stepmented" which inherits
-  from the class "lm" or "glm" depending on the class of \code{obj}. Otherwise a list is
-  returned, where the last component is the fitted model at the final iteration,
-  see \code{\link{seg.control}}. \cr
+  The returned object is of class "stepmented" which inherits
+  from the class "lm" or "glm" depending on the class of \code{obj}. When \code{only.mean=FALSE}, it is a list having two 'stepmented' fits (for the mean and for the dispersion submodels). \cr
 
 An object of class "stepmented" is a list containing the components of the
 original object \code{obj} with additionally the followings:

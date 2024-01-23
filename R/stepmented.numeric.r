@@ -1,12 +1,74 @@
 stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.control(), keep.class=FALSE, 
                                var.psi=TRUE, ..., 
                                pertV=0, centerX=FALSE, adjX=NULL, weights=NULL) {
+  #, only.mean=TRUE
   #pertV come calcolare la variabile V=1/(2*abs(Xtrue-PSI)? i psi devono essere diversi dalle x_i 
   #   utilizzare i psi stimati che tipcamente sono diversi? (perV=0)
   #   oppure i psi.mid che sicuramente sono (o meglio dovrebbero essere)  tra due x_i...
   
   
   # ---------
+  only.mean=TRUE
+  if(!only.mean){
+    if(!missing(psi)) warning("If only.mean=FALSE, 'psi' is ignored. Use 'npsi'.")
+    if(missing(npsi)) npsi=1
+    if(length(npsi)==1) npsi=c(npsi,npsi)
+    #o <- stepVar(y=obj, npsi=c(1,1), itmax=10, display=TRUE, control=control, ...)
+    #return(o)
+    npsiM=npsi[1]
+    npsiV=npsi[2]
+    itmax=20
+    display=control$visual
+    control$visual<-FALSE
+    y<-obj
+    x <- 1:length(y)#/length(y)
+    psiM<-(min(x)+ diff(range(x))*(1:npsiM)/(npsiM+1))
+    psiV<-(min(x)+ diff(range(x))*(1:npsiV)/(npsiV+1))
+    if(npsiM>0)  {
+      oM <- stepmented.numeric(y, psi=psiM, control=control)
+      } else {
+        oM<- lm(y~1)
+        psiM.r<-psiM<-NA
+      }
+    ly <- log(oM$residuals^2)
+    coefM<-matrix(NA, itmax,npsiM*2+1)
+    coefV<-matrix(NA, itmax,npsiV*2+1)
+    #o0<-lm(ly~1)
+    assign("ly", ly, envir=parent.frame())
+    #browser()
+    for (i in 1:itmax){
+      #if(i==3) browser()
+      coefM[i,]<-oM$coefficients
+      assign("ly", ly, envir=parent.frame())
+      oV <- stepmented.numeric(ly, npsi = npsiV, control=control)
+      #oV <- stepmented.lm(o0, psi = psiV, control=control)
+      psiV <- oV$psi[,"Est."]
+      psiV.r <- oV$psi.rounded[1,]
+      coefV[i,]<-oV$coefficients
+      ww <- 1 / exp(oV$fitted.values) 
+      #o <- lm(y ~ 1, weights = ww)
+      #browser()
+      if(npsiM>0){
+        psiM<- oM$psi[,"Est."]
+        oM <- stepmented.numeric(y, psi = psiM, weights=ww, control=control) #var.psi=FALSE
+        psiM <- oM$psi[,"Est."]
+        psiM.r<- oM$psi.rounded[1,]
+      }
+      #if(display) cat("iteration:", i, " psi:", oV$psi.rounded[1,], "  est:", round(oV$obj.ok$coefficients[1:min(3,length(oV$obj.ok$coefficients))],3),"\n")
+
+      if(display) cat("it:", i, " psi(mean):", psiM.r, "  psi(dispersion):", psiV.r, "\n")
+      #est:", round(oV$obj.ok$coefficients[1:min(3,length(oV$obj.ok$coefficients))],3),"\n")
+      
+      ly.old<-ly
+      ly <- log(oM$residuals^2)
+      #if(i==5) browser()
+      if(sum( (ly-ly.old)/ly.old)^2<=.0001) break  
+    }
+    #browser()
+    r<-list(fitMean=oM, fitDisp=oV, coefIter=cbind(coefM,NA,coefV))
+    return(r)
+    
+  }
   mylm<-function(x,y,w=1){
     x1<-x*sqrt(w)
     y1<-y*sqrt(w)
@@ -70,16 +132,14 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
     adjX<- if(min.x>=1000) TRUE else FALSE
   } 
   if(adjX) x<- x - min.x
-  
-    
-  
+
   if(missing(psi)){
     if(missing(npsi)) npsi<-1 #stop(" psi or npsi have to be provided ")
     psi<- seq(min(x), max(x), l=npsi+2)[-c(1, npsi+2)] #psi[[i]]<-(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))
   } else {
     npsi<-length(psi)
   }
-  initial.psi<-psi
+  initial.psi<- psi
   n<-length(y)
   a<- npsi
   n.Seg<-1
@@ -134,6 +194,8 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
     for(i in 1:ncol(U)) mfExt[nomiU[i]]<-mf[nomiU[i]]<-U[,i]
     Fo <- update.formula(formula(obj), as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
     obj <- update(obj, formula = Fo, evaluate=FALSE, data=mfExt) #data = mf, 
+    
+    if(!is.null(weights)) obj <- update(obj, weights=weights) 
     if(!is.null(obj[["subset"]])) obj[["subset"]]<-NULL
     obj<-eval(obj, envir=mfExt)
     #if (model) obj$model <-mf  #obj$model <- data.frame(as.list(KK))
@@ -283,7 +345,7 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   Fo <- update.formula(Fo0, as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
   mfExt <- data.frame(1, U, Vxb)
   colnames(mfExt)<-c("(Intercept)", nnomi)
-  objF <- lm(Fo, data = mfExt)
+  objF <- lm(Fo, weights=weights, data = mfExt)
   
   #browser()
   
@@ -410,7 +472,9 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   U <- (Xtrue > PSI.mid)
   colnames(U)<-nomiU
   X <- cbind(x.lin,U)
-  objF$obj.ok<-mylm(X, y, w=ww) #coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b))
+  #browser()
+  if(is.null(weights)) weights=1
+  objF$obj.ok<-mylm(X, y, w=weights) #coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b))
   objF$objW<- objW
   objF$fitted.values<-objF$obj.ok$fitted.values
   objF$residuals<- objF$obj.ok$residuals
@@ -432,6 +496,9 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   objF$id.warn <- id.warn
   #objF$rho<-rho
   objF$psi<- objF$psi[,-1,drop=FALSE] #rimuovi la colonna Initial
+  
+  #browser()
+  
   if(var.psi){
     Cov <- vcov.stepmented(objF, k=NULL)
     id <- match(nomiVxb, names(coef(objF)))

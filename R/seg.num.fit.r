@@ -1,14 +1,14 @@
 seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
     #browser()
     useExp.k = TRUE
-    search.min<-function(h, psi, psi.old, X, y) {
+    search.min<-function(h, psi, psi.old, X, y, w) {
         psi.ok<- psi*h + psi.old*(1-h)
         PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
         U1 <- (Z - PSI) * (Z > PSI)
-        obj1 <- try(mylm(cbind(X, U1), y), silent = TRUE)
-        if (class(obj1)[1] == "try-error") obj1 <- try(.lm.fit(x=cbind(X, U1), y), silent = TRUE)
+        obj1 <- try(mylm(cbind(X, U1), y, w), silent = TRUE)
+        if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(x=cbind(X, U1), y, w), silent = TRUE)
         L1 <- if (class(obj1)[1] == "try-error") L0 + 10
-        else sum(obj1$residuals^2)
+        else sum(w*obj1$residuals^2)
         L1
     }
     est.k <- function(x1, y1, L0) {
@@ -25,11 +25,13 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
             -(x > y)
         else -pow * ((x - y) * (x > y))^(pow - 1)
     }
-    mylm <- function(x, y) {
-        b <- drop(solve(crossprod(x), crossprod(x, y)))
-        fit <- drop(tcrossprod(x, t(b)))
-        r <- y - fit
-        o <- list(coefficients = b, fitted.values = fit, residuals = r, 
+    mylm <- function(x, y, w=1) {
+      x1<-x*sqrt(w)
+      y1<-y*sqrt(w)
+      b <- drop(solve(crossprod(x1), crossprod(x1, y1)))
+      fit <- drop(tcrossprod(x, t(b)))
+      r <- y - fit
+      o <- list(coefficients = b, fitted.values = fit, residuals = r, 
             df.residual = length(y) - length(b))
         o
     }
@@ -128,8 +130,8 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
         stop("starting psi out of the range.. see 'alpha' in seg.control.", 
             call. = FALSE)
     if (!far.psi(Z, PSI, id.psi.group, FALSE)) 
-        stop("psi values too close each other. Please change (decreases number of) starting values", 
-            call. = FALSE)
+      stop("psi starting values too close each other or at the boundaries. Please change them (e.g. set 'quant=TRUE' 
+          in seg.control()), or decrease their number.", call. = FALSE)
     n.psi1 <- ncol(Z)
     U <- ((Z - PSI) * (Z > PSI))
     obj0 <-list(residuals=rep(1,3))
@@ -170,7 +172,7 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
         #colnames(X)[2:ncol(X)] <- nomiUV
             
         
-        obj <- lm.fit(x = X, y = y) #puoi usare .lm.fit(), ma i coeff non stimati non sono NA ma zero! vedi seg.lm in cumSeg.. 
+        obj <- lm.wfit(x = X, y = y, w=w) #puoi usare .lm.fit(), ma i coeff non stimati non sono NA ma zero! vedi seg.lm in cumSeg.. 
         beta.c <-  obj$coefficients[idU] #coef(obj)[paste("U", 1:ncol(U), sep = "")]
         gamma.c <- obj$coefficients[idV] # coef(obj)[paste("V", 1:ncol(V), sep = "")]
         if (any(is.na(c(beta.c, gamma.c)))) {
@@ -204,7 +206,7 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
         psi<- adj.psi(psi, limZ)
         #browser()
         
-        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y)
+        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w)
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
         #L1.k[length(L1.k) + 1] <- L1<- a$objective
@@ -282,8 +284,15 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
     colnames(U) <- paste("U", 1:ncol(U), sep = "")
     V <- -(Z > PSI)
     colnames(V) <- paste("V", 1:ncol(V), sep = "")
-    obj <- .lm.fit(x = cbind(XREG, U), y = y)
-    L1 <- sum(obj$residuals^2)
+    
+    if(opz$id.weights){
+      obj <- lm.wfit(x = cbind(XREG, U), y = y, w=w)
+      L1 <- sum(w*obj$residuals^2)
+    } else {
+      obj <- .lm.fit(x = cbind(XREG, U), y = y)
+      L1 <- sum(obj$residuals^2)
+    }
+    
     #}
     #else {
     #    obj <- obj1

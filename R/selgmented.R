@@ -194,6 +194,7 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
   } #fine sel1()
   #=====================================================================
   BIC<-function(obj, a=1){
+    #Se a=1 questo e' il BIC classico (a meno di una costante)
     n <-length(obj$residuals)
     r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*(log(n)^a) #- 1
     r
@@ -451,6 +452,8 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
       r$selection.psi <- list(bic.values=bic.values, npsi=n.psi.ok)
       return(r)
     } #end aic/bic..
+    ######=============================================================================================
+    ##===============================================================================================
     alpha.adj<-alpha/Kmax
     p1<- if(type=="score")  pscore.test(olm, seg.Z, n.break=2)$p.value else davies.test(olm)$p.value
     p1.label<-"p-value '0 vs 2' "

@@ -5,10 +5,10 @@ step.lm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
     PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
     U1 <- (Xtrue>PSI) #(Z - PSI) * (Z > PSI)
     #if (pow[1] != 1) U1 <- U1^pow[1]
-    obj1 <- try(mylm(cbind(X, U1), y, ww, offs), silent = TRUE)
-    if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, ww, offs), silent = TRUE)
+    obj1 <- try(mylm(cbind(X, U1), y, w, offs), silent = TRUE)
+    if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w, offs), silent = TRUE)
     L1 <- if (class(obj1)[1] == "try-error") L0 + 10
-    else sum(obj1$residuals[1:n.ok]^2 * ww[1:n.ok])
+    else sum(obj1$residuals[1:n.ok]^2 * w[1:n.ok])
     #r<-sum(obj1$residuals^2 * w)
     L1
   }
@@ -77,6 +77,8 @@ step.lm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
   #==================
   n.ok <- if(!is.null(opz$n.ok)) opz$n.ok else n
   #==================
+  
+  #browser()
   
   plin<-ncol(x.lin)
   epsilon<-10
@@ -151,15 +153,13 @@ step.lm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
     
     #obj<-try(mylm(XREG,y,w=ww,offs=offs), silent = TRUE)
     #if(class(obj)[1]=="try-error")
-    
-    
-    
-    obj <- lm.wfit(y = y, x = XREG, offset = offs, w=ww )
+
+    obj <- lm.wfit(y = y, x = XREG, offset = offs, w=ww)
     #b <- obj$coef[(2:(sum(k) + 1))]
     #g <- obj$coef[((sum(k) + 2):(2 * sum(k) + 1))]
     
     idZ<-(plin+1):(plin+ncol(Z))
-    idW<-(plin+ncol(Z)+1): ( plin+ncol(Z)+ncol(W))
+    idW<-(plin+ncol(Z)+1): (plin+ncol(Z)+ncol(W))
     b<- obj$coef[idZ]
     g<- obj$coef[idW]
     
@@ -169,15 +169,13 @@ step.lm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
     psi1 <- -g/b
     #aggiusta la stima di psi..
     
-    #browser()
+    #if(i==2) browser()
     
     psi1<- adj.psi(psi1, limZ)
     
     #la f e' chiaramente a gradino per cui meglio dividere..
     a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, n.ok=n.ok)
     a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, n.ok=n.ok)
-    
-    
     
     a<-if(a0$objective<=a1$objective) a0 else a1
     

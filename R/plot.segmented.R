@@ -45,7 +45,8 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
   if ((inherits(x, what = "glm", which = FALSE) && linkinv) || res) {
         if(!(identical(transf, I) || identical(transf, "I"))) {transf<-I; warning("'transf' set to I with 'res=TRUE' and/or 'link=FALSE'.")}
   }
-  if (missing(term)) {
+
+  if(missing(term)) {
         if (length(x$nameUV$Z) > 1) {
             stop("please, specify `term'")
           } else {
@@ -130,14 +131,21 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     
     #xvalues <-  if(all(c("segmented", "Arima") %in% class(x))) x$Z[,1] else  model.matrix(x)[,term] #x$model[, term]
 
+    #browser()
+    
     if(inherits(x,"Arima")){
       xvalues <-x$Z[,1]
     } else {
       M <- model.matrix.segmented(x)
-      xvalues <- if(term %in% colnames(M)) M[,term] else x$model[,term]
+      if(term %in% colnames(M)) {
+        xvalues <- M[,term]
+      } else {
+        #forse e' in x$model[,term]
+        id.segTerm<-which(sapply(names(x$nameUV$formulaSeg), function(.x) startsWith(term,.x)))
+        xvalues <- model.matrix(x$nameUV$formulaSeg[[id.segTerm]], data=x$model)[,term]
+      }
     }
      
-    
     if (rev.sgn) {
         val <- -val
         xvalues <- -xvalues

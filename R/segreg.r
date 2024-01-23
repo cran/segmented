@@ -137,6 +137,8 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       } else {stop("error in the design matrix")}#matrix(, NROW(Y), 0L)
     attrContr<-attr(X, "contrasts")
     n<-nrow(X)
+    
+    
     #browser()
     #===========================================================================
     #se NON ci sono termini ps
@@ -170,12 +172,19 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     l<-lapply(testo.ps,function(xx)with(mf,eval(parse(text=xx),envir=data)))
     nomiPS <-unlist(sapply(l,function(xx)attr(xx,"nomeX")))
     psiList <-lapply(l,function(xx)attr(xx,"psi"))
-    npsiList <-unlist(sapply(l,function(xx) attr(xx,"npsi")))
-    estList <- lapply(l,function(xx) attr(xx,"est"))
     
     #browser()
     
-    if(!all(sapply(estList,check.estPsi))) stop(" 'est' is misspecified in one or more seg() term")
+    #npsiList <-unlist(sapply(l,function(xx) attr(xx,"npsi")))
+    npsiList <- lapply(l,function(xx) attr(xx,"npsi"))
+    estList <- lapply(l,function(xx) attr(xx,"est"))
+    if(length(setdiff(drop(unlist(sapply(estList, function(.x){if(any(is.na(.x))) 0 else unique(.x)}))), c(0,1)))>0) stop(" 'est' should include 0's and 1's only")
+    
+    if(length(intersect(nomiCoefUNPEN, nomiPS))>0) stop("any segmented variable included as linear term too?")
+    
+    #browser()
+    
+    #if(!all(sapply(estList,check.estPsi))) stop(" 'est' is misspecified in one or more seg() term")
 
     
     RList <- lapply(l,function(xx) attr(xx,"R"))
@@ -185,8 +194,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     nomiBy <- unlist(sapply(l,function(xx) attr(xx,"nomeBy")))
     levelsBy <- lapply(l,function(xx) attr(xx,"levelsBy"))
     
-    
-    
+    if(all(sapply(levelsBy, is.null)) && (length(npsiList)!=length(nomiPS))) stop(" 'npsi' is not correctly specified")
     
     rangeSmooth<-mVariabili<-NULL
 		#se ci sono termini ps()+ps(..,by) il nome delle variabili smooth vengono cambiati per aggiungere la variabile by
@@ -203,12 +211,12 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
 		nomiPS.ps<-unlist(lapply(paste(nomiPS.ps, nomiBy, sep=":"), function(.x) sub(":NULL", "", .x)))
 		nomiPS.ps.list<-as.list(nomiPS.ps) #serve lista
 
-		
-		
+
 		for(j in id.ps) mVariabili[length(mVariabili)+1]<-mf[j]
     B<- Bfix <- nomiPS.ps.int.list<-vector(length=length(mVariabili) , "list")
     #BFixed<-BB<-Bderiv
-
+    #browser()
+    
     for(j in 1:length(mVariabili)) {
       if(nomiBy[j]=="NULL"){ # se usuale termine seg()
         nomiBy.j <- NULL
@@ -244,20 +252,17 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         }
       } 
     } #end for(j in 1:length(mVariabili))
-    #browser()  
-      #nomiCateg <- drop(unlist(sapply(levelsBy, function(.x) if(is.null(.x)) NA else .x)))
-      #nomiInterCateg <- paste(nomiPS.ps, nomiCateg, sep="")
-      #nomiInterCateg <- gsub("[)]", "", gsub("seg[(]", "", nomiInterCateg))
-
-      #se e' stato passato un termine seg(x, by) in cui allora B e' un alista di liste e se l'argomento 'psi' e' anche una lista 
-      #(perche' il n. dei break) e' diverso tra i gruppi), allora  psiList sara' pure una lista di liste. 
-      #Quindi bisogna eliminarle e riportarle nella lista principale B..
-      #rep() funziona anche con le liste!!!!
-      
+    
       repl<-pmax(sapply(B,length)*sapply(B,is.list),1)
-      npsiList <- rep(npsiList, repl)
+      for(i in 1:length(npsiList)){
+        if(length(npsiList[[i]])==1) {
+          npsiList[[i]] <- rep(npsiList[[i]], repl[i])
+          if(!is.list(estList[[i]]) && !is.null(levelsBy[[i]])) estList[[i]] <- rep(estList[i], repl[i])
+        }
+      }      
+      npsiList <- unlist(npsiList)
+      
       if(!any(sapply(psiList,is.list))) psiList <- rep(psiList, repl)
-
       if(!any(sapply(estList,is.list))) estList <- rep(estList, repl)
       if(!any(sapply(RList,is.list))) RList <- rep(RList, repl)
       
@@ -293,11 +298,48 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         #penMatrixList[[id.vc+nc]]<-NULL
       }
       
-      #browser()
-      id.contrR <- rep(NA, length(B))
+      #if(!all(sapply(estList,check.estPsi))) stop(" 'est' is misspecified in one or more seg() term")
       
+      nomiTerminiSEG<-nomiCoefPSI <-NULL
+      nomiPS.ps.unlist.seg <- unlist(nomiPS.ps.list)
+      nomiPS.ps.unlist <- sub("[)]", "", sub("seg[(]", "",nomiPS.ps.unlist.seg ))
+      names(psiList)<- nomiPS.ps.unlist 
+      for(i in 1:length(B)) {
+        #nomiCoefPSI[[i]]<- paste(paste("psi",1:length(psiList[[i]]), sep=""), nomiPS.ps.unlist[i], sep=".") ##oppure sep=".psi"
+        nomiTerminiSEG[[i]]<-rep(nomiPS.ps.unlist[i], length(psiList[[i]]))
+      }
+      #nomiCoefU<-lapply(nomiCoefPSI, function(.x) sub("psi","U",.x )) 
+      #nomiCoefZ<-lapply(nomiCoefPSI, function(.x) sub("psi","Z",.x ))
+      nomiSeg<- unique(unlist(nomiTerminiSEG))
+      
+      
+      #browser()
+      
+      #FINALMENTE (speriamo..:-))
+      #nomiCoefZ, nomiCoefpsi, nomiCoefU sono liste con nomi che includono sia le possibili interazioni, sia il n. dei breakpoints
+      #Anche nomiTerminiSEG e' della stessa dimensione ma i nomi ignorano il n.dei breakpoints (questa serve per rangeZ)
+      
+      #browser()
+      
+      #nomiSeg
+      
+      #npsiList
+      #psiList
+      #estList
+      #RList
+      
+      # if(is.null(names(estList))) {
+      #   names(estList)<-nomiSeg
+      # } else {
+      #   if(any(sapply(names(estList), function(.x).x==""))) stop(" 'estList' is only partially named. 
+      #                                                            Or all or no name allowed.")
+      # }
+      
+      npsiList1<-id.contrR <- rep(NA, length(B))
       for(j in 1:length(B)){
-        K<- npsiList[j]
+        #K<- npsiList[j]
+        K <- if(!is.na(npsiList[nomiSeg[j]])) npsiList[nomiSeg[j]] else npsiList[j]
+        npsiList1[j]<- K
         if(any(is.na(psiList[[j]]))){ 
           if(control$quant) {
             psiList[[j]]<- quantile(B[[j]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
@@ -305,68 +347,51 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             psiList[[j]]<- (min(B[[j]])+ diff(range(B[[j]]))*(1:K)/(K+1))
           }
         } else {
-          npsiList[j]<-length(psiList[[j]])
+          K<-npsiList1[j]<-length(psiList[[j]])
         }
-        
         if(!is.null(fixpsiList[[j]])) {
           Bfix[[j]]<- sapply(sort(fixpsiList[[j]]), function(.x) (B[[j]]-.x)*(B[[j]]>.x))
           colnames(Bfix[[j]])<- paste("U", 1:length(fixpsiList[[j]]),".fixed.",nomiPS.orig[j], sep="")
         }
       #se per qualche termine ci sono le matrici dei vincoli sulle slope
-      if(!any(is.na(RList[[j]]))){
-            RList[[j]] <- RList[[j]]
-            id.contrR[j] <-TRUE
+        j.ok=match(nomiSeg[j], names(RList), nomatch=0)
+        j.ok <-if(j.ok>0) j.ok else j 
+        if(!any(is.na(RList[[j.ok]]))){
+          RList[[j]] <- RList[[j.ok]]
+          id.contrR[j] <-TRUE
           } else {
-            if(!any(is.na(estList[[j]]))){
-              if(length(estList[[j]])!=(npsiList[j]+1)) stop("length(est) is not compatible with n.psi")
+            j.ok=match(nomiSeg[j], names(estList), nomatch=0)
+            j.ok <-if(j.ok>0) j.ok else j
+            if(!any(is.na(estList[[j.ok]]))){
+              if(length(estList[[j.ok]])!=(K+1)) stop("length(est) is not compatible with n.psi")
               #browser()
-              RList[[j]]<-diag(npsiList[j]+1)[,estList[[j]]==1,drop=FALSE]
+              RList[[j]]<-diag(K+1)[,estList[[j.ok]]==1,drop=FALSE]
               id.contrR[j] <-TRUE
             } else {
-              RList[[j]]<-diag(npsiList[j]+1)
+              RList[[j]]<-diag(K+1)
               id.contrR[j] <-FALSE
-          }
+            }
           }
       }
       
-      #browser()
-      
-      nomiTerminiSEG<-nomiCoefPSI <-NULL
-      nomiPS.ps.unlist.seg <- unlist(nomiPS.ps.list)
-      nomiPS.ps.unlist <- sub("[)]", "", sub("seg[(]", "",nomiPS.ps.unlist.seg ))
-      names(psiList)<- nomiPS.ps.unlist 
+      #NB: Poiche' ora psiList include i veri numeri dei psi, i codici vanno rilanciati
       for(i in 1:length(B)) {
         nomiCoefPSI[[i]]<- paste(paste("psi",1:length(psiList[[i]]), sep=""), nomiPS.ps.unlist[i], sep=".") ##oppure sep=".psi"
         nomiTerminiSEG[[i]]<-rep(nomiPS.ps.unlist[i], length(psiList[[i]]))
       }
       nomiCoefU<-lapply(nomiCoefPSI, function(.x) sub("psi","U",.x )) 
       nomiCoefZ<-lapply(nomiCoefPSI, function(.x) sub("psi","Z",.x ))
-      
-      #FINALMENTE (speriamo..:-))
-      #nomiCoefZ, nomiCoefpsi, nomiCoefU sono liste connomi che includono sia le possibili interazioni, sia il n. dei breakpoints
-      #Anche nomiTerminiSEG e' della stessa dimensione ma i nomi ignorano il n.dei breakpoints (questa serve per rangeZ)
-      
-      
-      #nomiCoefPEN <- unlist(nomiCoefPEN)
-      #nomiCoefPEN<- gsub("[)]", "", gsub("seg[(]", "", nomiCoefPEN))
-      #nomiOK<- 
-       # paste("U",unlist(sapply(psiList,function(.x) 1:length(.x))), ".",  rep(nomiPS.orig, sapply(psiList,length)),sep="")
-      
-      #nomiOK<- 
-       # paste("U",unlist(sapply(psiList,function(.x) 1:length(.x))), ".",  paste(nomiPS, unlist(levelsBy), sep=""),sep="")
-      
+
+
       id.psi.group <- rep(1:length(psiList), sapply(psiList,length))
       #browser()
       
-      Z<- lapply(1:length(B), function(.x) matrix(B[[.x]], nrow=n, ncol=npsiList[[.x]]))
+      Z<- lapply(1:length(B), function(.x) matrix(B[[.x]], nrow=n, ncol=npsiList1[[.x]]))
       Z<- do.call(cbind,Z)
       colnames(Z) <- unlist(nomiCoefZ)
       
-      #colnames(Z) <- rep(nomiPS.orig, sapply(psiList, length))
-
       #nomiPS, nomiPS.By, nomiPS.orig, nomiPS.ps, nomiPS.ps.list, nomiCateg, nomiInterCateg, nomiCoefPEN
-      
-      
+
       #nomiPS: "x", "z" (vettore)
       #nomiPS.orig: come "nomiPS"
       
@@ -379,34 +404,19 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       #nomiPS.ps.list "seg(x)", "seg(z)" (lista) [lista con by: "seg(x):g1" "seg(x):g2" "seg(x):g3" ..]
       #nomiInterCateg: "x:g1" "x:g2" "x:g3" ..
       
-      #browser()
-      
       #========================================================================================================
-      #Non ricordo a cosa dovessero servire i seguenti. Se servono a rimuovere le variabili da X, allora 
-      #puoi eliminarli e usare startsWith() (vedi sotto)
-      # id.psList<-NULL
-      # for(i in 1:length(id.ps)){
-      #   #id.psList[[i]]<- id.ps[i]+ seq(0, pmax(length(levelsBy[[i]])-1,0))
-      #   id.psList[[i]]<- if(is.null(levelsBy[[i]])) id.ps[i] else c(id.ps[i],id.ps[i]+1)
-      #   #id.psList[[ length(id.psList)+1]]<-if(is.null(levelsBy[[i]])) id.ps[i] else id.ps[i]+((1:length(levelsBy[[i]]))-1)#+(id.ps[i]-1)
-      # }
-      # if(length(id.ps)>1){
-      #   for(i in 2:length(id.ps)) id.psList[[i]] <- id.psList[[i]] + (length(id.psList[[i-1]])-1)
-      # }
-      # X<- X[,-unlist(id.psList), drop=FALSE]
-      #==========================================================================================================
-      
-      #browser()
-      
+
       X<- X[, !startsWith(colnames(X),"seg("), drop=FALSE]
 
       idZ <- unlist(tapply(id.psi.group, id.psi.group, function(.x) c(TRUE, rep(FALSE, length(.x)-1))))
       Z.ok<-Z[, idZ, drop=FALSE]
       colnames(Z.ok) <- nomiPS.ps.unlist
-      X<-cbind(X, Z.ok)
+      X<-cbind(X, Z.ok) #include anche i termini lineari delle variabili segmented
       #colnames(Z)<- unlist(nomiCoefPEN)
       initial <- unlist(psiList)
       PSI <- matrix(initial, n, length(initial), byrow = TRUE)
+      
+      #browser()
       
       #NB la matrie del disegno X include in nomi "seg(x)" e non va bene perche' poi da problemi con i 
       #nomi dei coef dell'oggetto.. Quindi bisogna sostituire questi nomi!!!
@@ -434,7 +444,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=var(Y)*(n-1),visual=visual,it.max=it.max,nomiOK=unlist(nomiCoefU),
                 fam=family, eta0=NULL, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
                 conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,
-                pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=unique(unlist(nomiTerminiSEG)))   
+                pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg)
       #browser()
       
       if(any(id.contrR)){
@@ -481,6 +491,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         class0<-c("glm","lm")
         }
       }
+      
       
       
       
@@ -570,6 +581,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       if(stop.if.error)  ris.psi[,1]<-initial
       
       
+      all.seg.form<-NULL
       mf1<-mf[1]
       for(i in 2:ncol(mf)) {
         if(i %in% id.ps){
@@ -582,9 +594,12 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
               m<-data.frame(mf[[i]][,1])
               colnames(m) <- l$nomeX
             }
+            all.seg.form[[length(all.seg.form)+1]]<-as.formula(
+              paste("~0+", l$nomeX, "*", l$nomeBy, "-", l$nomeX))
           } else {
             m <-  data.frame(mf[[i]])
             colnames(m) <- l$nomeX
+            all.seg.form[[length(all.seg.form)+1]]<- as.formula(paste("~", l$nomeX))
           }
         } else {
           m <-  mf[i]
@@ -592,10 +607,16 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
           mf1<-cbind(mf1, m)
       }
       
+      #browser()
+      
       #costruisci la formulaLin.. Attenzione non tiene conto di eventuali vincoli sulle pendenze.
       splitFo <- strsplit(as.character(formula),"[+]")
-      allX.lin<-paste(c(splitFo[[3]][-grep("seg[(]", splitFo[[3]])], nomiPS.orig), collapse="+")
+      allX.lin<-paste(c(splitFo[[3]][-grep("seg[(]", splitFo[[3]])], unique(nomiPS.orig)), collapse="+")
       formulaLin <- as.formula(paste(splitFo[[2]], splitFo[[1]], allX.lin))
+      
+      #browser()
+      
+      names(all.seg.form)<-nomiPS
       
       #names(mf) <- nomi.mf
       objV$terms <- mt
@@ -608,7 +629,13 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       objV$contrasts <- attrContr  
       objV$xlevels <- .xlivelli 
       objV$call<-call
-      if (model) objV$model <- mf1
+      #browser()
+      if (model) {
+        if(any(!sapply(levelsBy,is.null)) && any(id.contrR)) {
+          mf1<- cbind(mf1, Z.ok)
+        }
+        objV$model <- mf1
+      }
       objV$na.action <- attr(mf, "na.action")
       objV$psi <- ris.psi
       objV$id.warn <- id.warn
@@ -618,8 +645,13 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       objV$constr <- obj$constr
       objV$psi.history <-  psi.values  
       #browser()
-      
-      nomiPS.orig<-paste(nomiPS, unlist(levelsBy), sep="")
+      nomiPS.orig<-NULL
+      for(i in 1:length(nomiPS)){
+        nomiPS.orig[[i]]<-if(is.null(levelsBy[[i]])) nomiPS[i] else paste(nomiPS[i], unlist(levelsBy[[i]]), sep="") 
+      }
+      nomiPS.orig <- unlist(nomiPS.orig)
+        
+      #nomiPS.orig<-paste(nomiPS, unlist(levelsBy), sep="")
       
       names(fixpsiList) <- nomiPS.orig
       psi.list<-vector("list", length=length(unique(nomiPS.orig)))
@@ -631,10 +663,11 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       for(i in names(psi.list)){
         psi.list[[i]]<-psi[names(psi)==i]
       }
-
       objV$indexU<-build.all.psi(psi.list, fixpsiList)
       #browser()
       objV$nameUV <- list(U = drop(nomiU), V = rownames(ris.psi), Z = nomiPS.orig) #nomiPS.orig??
+      objV$nameUV$formulaSeg<- all.seg.form
+      objV$nameUV$formulaSegAllTerms<- paste("~", paste(sapply(all.seg.form, function(.x) strsplit(paste(.x), "~"))[2,],collapse="+"))
       objV$formulaLin<- formulaLin
       objV$id.psi.group<- id.psi.group
       objV$psi[,"Initial"]<-NA

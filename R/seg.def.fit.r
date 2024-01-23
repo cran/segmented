@@ -135,8 +135,8 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
     if (!in.psi(limZ, PSI, FALSE)) 
         stop("starting psi out of the range", call. = FALSE)
     if (!far.psi(Z, PSI, id.psi.group, FALSE)) 
-        stop("psi values too close each other. Please change (decreases number of) starting values", 
-            call. = FALSE)
+      stop("psi starting values too close each other or at the boundaries. Please change them (e.g. set 'quant=TRUE' 
+          in seg.control()), or decrease their number.", call. = FALSE)
     n.psi1 <- ncol(Z)
     if (is.null(opz$constr)) 
         opz$constr <- 0

@@ -47,7 +47,7 @@ predict.segmented<-function(object, newdata, se.fit=FALSE, interval=c("none","co
     nameU<-obj.seg$nameUV$U[f.U(obj.seg$nameUV$U,x.name)]
     nameV<-obj.seg$nameUV$V[f.U(obj.seg$nameUV$V,x.name)] #grep(x.name, obj.seg$nameUV$V, value = TRUE)
     
-    #browser()
+    
     if(is.null(obj.seg$constr)){
       diffSlope<-estcoef[nameU]
     } else {
@@ -90,48 +90,91 @@ predict.segmented<-function(object, newdata, se.fit=FALSE, interval=c("none","co
     return(newd)
   }
   estcoef <- if(is.null(.coef)) coef(object) else .coef
+  if(is.null(names(estcoef))) stop("the coef estimates should be named")
   nLin<- length(setdiff(names(coef(object)), c(object$nameUV$U,object$nameUV$V)))
   nSeg<- length(object$nameUV$Z)
   type<-match.arg(type)
   interval<-match.arg(interval)
+  
+  
   #browser()
+  
   if(inherits(object, "glm") && object$family$family!="gaussian" && interval=="prediction") 
     stop("prediction intervals are not allowed with non-gaussian glm")
   nameU<-object$nameUV$U
   nameV<-object$nameUV$V
   nameZ<-object$nameUV$Z
   
-  
+  #browser()
   
   if(missing(newdata)){
     X <- model.matrix(object)
   } else {
     #browser()
-    nomiLin <- setdiff(all.vars(formula(object))[-1], c(object$nameUV$U,object$nameUV$V))
+    #nomiLin <- setdiff(all.vars(formula(object))[-1], c(object$nameUV$U,object$nameUV$V))
+    nomiLin <- setdiff(all.vars(as.formula(paste("~",paste(formula(object))[3]))), c(object$nameUV$U,object$nameUV$V))
     if(any(is.na(match(nomiLin, names(newdata))))) stop(" 'newdata' should includes all variables")
     #devi trasformare la variabili segmented attraverso dummy.matrix()
     #browser()
     n<-nrow(newdata)
     r<-NULL
+    if(length(object$call$obj)>0){ #se l'ogg e' stato ottenuto da segmented.*
+      # Fo<- formula(delete.response(terms(formula(eval(object$call$obj)))))
+      # idSeg<- object$nameUV$Z %in% all.vars(Fo)
+      # if(any(!idSeg)){
+      #   Fo<- update.formula(Fo, as.formula(paste("~.+", paste(object$nameUV$Z[!idSeg], collapse="+"))))
+      # }
+      
+      #nomiTerms, a differenza di nomiLin, include eventuali poly(w,2)
+      nomiTerms<-setdiff(attr(terms(formula(object)),"term.labels"),c(object$nameUV$U,object$nameUV$V))
+      idSeg<- object$nameUV$Z %in% nomiLin #potresti mettere anche "nomiTerms"
+      if(any(!idSeg)){
+        nomiTerms <- c(nomiTerms, object$nameUV$Z[!idSeg])
+      }
+      
+      Fo<-as.formula(paste("~.+", paste(nomiTerms, collapse="+")))
+      
+      M<-model.matrix(Fo, data=newdata,
+              contrasts=object$contrasts, xlev = object$xlevels)
+      
+    } else { #se l'ogg e' stato ottenuto da segreg
+      Fo<-as.formula(object$nameUV$formulaSegAllTerms)
+      if(any(all.vars(Fo)%in%names(object$xlevels))){
+        M<-model.matrix(Fo, data=newdata, 
+                      contrasts = object$contrasts, xlev=object$xlevels)
+      } else {
+        M<-model.matrix(Fo, data=newdata)
+      }
+      
+      #nomiLin<- all.vars(object$formulaLin)[-1] #non funziona se la rispo e' cbind(y,n-y)
+      nomiLin <- all.vars(as.formula(paste("~",paste(object$formulaLin)[3])))
+      
+      if(any(!nomiLin%in%all.vars(Fo))){
+        #nomiLinOK<- nomiLin[!nomiLin%in%all.vars(Fo)]
+        terminLin<-attr(terms(object$formulaLin),"term.labels")[!nomiLin%in%all.vars(Fo)]
+        Fo <- as.formula(paste("~.-1+",paste(terminLin,collapse="+")))
+        #Fo <- update.formula(Fo, as.formula(paste("~.+",paste(terminLin,collapse="+"))))
+        M1<-model.matrix(Fo, data=newdata, 
+                contrasts = object$contrasts, xlev=object$xlevels)
+        M<-cbind(M, M1) #[,nomiLinOK,drop=FALSE])
+      }
+
+    }
+    
     for(i in 1:length(nameZ)){
-      x.values<-newdata[[nameZ[i]]]
+      x.values <- M[,nameZ[i]] 
       DM<-dummy.matrix(x.values, nameZ[i], object)
-      #dummy.matrix() non restituisce i nomi.. quindi devi aggiungerli
-      #nomiV.i<- grep(nameZ[i], object$nameUV$V, value = TRUE)
-      #nomiU.i<- sub("psi","U", nomiV.i)
-      #nomiOK <- c(nomiU.i,nomiV.i)
-      #colnames(DM)<- if(nameZ[i]%in%colnames(DM)) c(nameZ[i])
       r[[i]]<-DM
     }
-    newd.ok<-data.frame(matrix(unlist(r), nrow=n, byrow = FALSE))
-    names(newd.ok)<- unlist(sapply(r, colnames))
-    idZ<-match(nameZ, names( newdata))
-    X<-data.matrix(cbind(newdata[,-idZ, drop=FALSE], newd.ok)) 
+    
+    #browser()
+    X <-data.matrix(matrix(unlist(r), nrow=n, byrow = FALSE))
+    colnames(X)<- unlist(sapply(r, colnames))
+    X<-cbind(M,X)
+    X<-X[,unique(colnames(X)),drop=FALSE]
     if("(Intercept)" %in% names(estcoef)) X<-cbind("(Intercept)"=1,X)
   }
-  
-  #browser()
-  colnomi<- colnames(X)
+
 
   if(!is.null(object$constr)){
     for(i in 1:length(nameZ)){
@@ -142,38 +185,42 @@ predict.segmented<-function(object, newdata, se.fit=FALSE, interval=c("none","co
                            paste("U",1:(length(coef.new)-1),".",object$nameUV$Z[i],sep="" ))
         estcoef<-append(estcoef[-idU.i], coef.new, after=idU.i[1]-1)
     }
-  } else {
-    for(i in 1:length(nameZ)){
-      if(!nameZ[i]%in%names(estcoef)) colnomi<-setdiff(colnomi, nameZ[i])
-    }
   }
+  X<-X[,names(estcoef),drop=FALSE]
+
+  if(length(setdiff(colnames(X),names(estcoef)))>0) stop("error in the names (of the supplied newdata)")
+  
+  #browser()
+  colnomi<- colnames(X)
   
   colnomi.noV <- setdiff(colnomi, nameV)
-  X.noV <- X[, colnomi.noV]
+  X.noV <- X[, colnomi.noV, drop=FALSE]
   estcoef.noV<- estcoef[colnomi.noV]
-  
+
   #ignora eventuali altre variabili contenute in newdata
-  nomiOK<- intersect(names(estcoef.noV), colnames(X.noV))
-  X.noV<- X.noV[, nomiOK, drop=FALSE]
-  estcoef.noV<-estcoef.noV[nomiOK]
+  #nomiOK<- intersect(names(estcoef.noV), colnames(X.noV))
+  #X.noV<- X.noV[, nomiOK, drop=FALSE]
+  #estcoef.noV<-estcoef.noV[nomiOK]
   
   mu <- eta<- drop(X.noV%*% estcoef.noV)
   
   #ATTENZIONE c'e' il problema dell'appaiamento dei nomi!!!
   #il problema e' che estcoef non ha sempre nomi!! 
 
-  X <- X[,c(colnomi.noV, nameV)]
+  X <- X[,c(colnomi.noV, nameV),drop=FALSE]
 
   if(inherits(object, "glm") && type=="response") {
     mu<-object$family$linkinv(mu) 
   }
   #browser()
   if(interval!="none" || se.fit){
+    V <- vcov(object) 
     if(!is.null(object$constr)){
-      B <- do.call(blockdiag, list(diag(nLin), do.call(blockdiag, (object$constr$invA.RList)), diag(length(nameV))))
-      V <- B %*% vcov(object) %*% t(B)
+      B=if(nLin>0) append(list(diag(nLin)), object$constr$invA.RList, 1) else object$constr$invA.RList
+      B=append(B, list(diag(length(nameV))), 2)
+      B= do.call(blockdiag, B)
+      V <- B %*% V %*% t(B)
     } else {
-      V <- vcov(object) 
       X <- X[,colnames(V)]
     }
     se <- sqrt(rowSums((X %*% V) * X))

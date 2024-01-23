@@ -37,6 +37,8 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
       #limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha,1-alpha))
       limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
       
+      #browser()
+      
       if(!is.list(o0)) {
         o0<- suppressWarnings(seg.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))
         o0<-extract.psi(o0)
@@ -67,6 +69,7 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
       Z.orig<-Z
 #      if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")
       count.random<-0
+      alpha<-.1
       for(k in seq(n.boot)){
         ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
         n.boot.rev<- 3 #3 o 4?
@@ -74,7 +77,8 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
         #if(length(na.omit(diff(all.selected.ss[1:n.boot.rev])))==(n.boot.rev-1) && all(round(diff(all.selected.ss[1:n.boot.rev]),6)==0)){
         if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
           qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
-          qpsi<-ifelse(abs(qpsi-.5)<.1,.8,qpsi)
+          qpsi<-ifelse(abs(qpsi-.5)<.1,alpha,qpsi)
+          alpha<- 1-alpha
           est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
         }
           PSI <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
@@ -95,7 +99,7 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
           PSI <- matrix(rep(est.psi.boot, rep(nrow(Z), length(est.psi.boot))), ncol = length(est.psi.boot))
           opz$h<-max(opz$h*.9, .2)
           opz$it.max<-opz$it.max+1
-          o<-try(suppressWarnings(seg.glm.fit(y, XREG, Z.orig, PSI, w, offs, opz)), silent=TRUE)
+          o<-try(suppressWarnings(seg.glm.fit(y, XREG, Z.orig, PSI, w, offs, opz, return.all.sol=TRUE)), silent=TRUE)
           if(!is.list(o) && random){
             est.psi00<-est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
             PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))

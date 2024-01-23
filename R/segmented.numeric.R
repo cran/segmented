@@ -82,11 +82,13 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
   orig.call<-NULL
   dev0<- n*var(y) #sum(mylm(x.lin, y, ww)$residuals^2*ww)
   rangeZ <- apply(Z, 2, range)
-  if(is.null(weights)) weights<-rep(1,n)
-  
+  if(is.null(weights)) {
+    id.weights <- FALSE
+    weights<-rep(1,n)
+  } else {
+    id.weights <- TRUE
+  }
 
-
-  
     fc<- min(max(abs(control$fc),.8),1)       
     min.step<-control$min.step
     
@@ -135,7 +137,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
-        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc)
+        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc, id.weights=id.weights)
     if(n.boot<=0){
     #obj<- if(sparse) seg.num.spar.fit(y, XREG, Z, PSI, weights,  opz) else seg.num.fit(y, XREG, Z, PSI, weights,  opz)
       obj<- seg.num.fit(y, XREG, Z, PSI, weights,  opz)
@@ -211,7 +213,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     #se c'e' un "y[-1]", la seguente linea modifica il nome in "y"..
     Fo <- update.formula(Fo0, as.formula(paste(paste(all.vars(Fo0)[1]),"~.+", paste(nnomi, collapse = "+"))))
     #mf <-  eval(mf, parent.frame()) #forse NON serve.. mf c'e'..
-    objF <-lm(Fo, data=mf)
+    objF <-lm(Fo, data=mf, weights=weights)
     #browser()
     
     isNAcoef<-any(is.na(objF$coefficients))
@@ -224,7 +226,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
         warning("some estimate is NA: too many breakpoints? 'var(hat.psi)' cannot be computed \n ..returning a 'lm' model", call. = FALSE)
         Fo <- update.formula(Fo0, as.formula(paste(".~.+", paste(nomiU, collapse = "+"))))
         #objF <- update(obj0, formula = Fo,  evaluate=TRUE, data = mf)
-        objF <-lm(Fo, data=mf)
+        objF <-lm(Fo, weights=weights, data=mf)
         names(psi)<-nomiVxb
         objF$psi<-psi
         return(objF)      

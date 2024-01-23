@@ -353,6 +353,9 @@ mfExt <-eval(mfExt, parent.frame())
         return(obj0)
         }
     
+    #browser()
+    
+    
     if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK

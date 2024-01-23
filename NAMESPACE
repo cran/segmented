@@ -16,7 +16,7 @@ importFrom("stats", "spline", "approx", "as.formula", "coef", "contrasts", "fami
              "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", 
              "terms","is.ts", "tsp", "AIC",".lm.fit","var",
 	           "asOneSidedFormula", "logLik","plogis", ".getXlevels", 
-             "cov2cor", "glm", "uniroot")
+             "cov2cor", "glm", "uniroot","delete.response")
 
 importFrom("utils", "flush.console", "capture.output")
 
@@ -35,7 +35,7 @@ export(stepmented, stepmented.lm, stepmented.glm, stepmented.ts, stepmented.nume
        step.lm.fit, step.glm.fit, step.ts.fit, step.num.fit, 
        step.lm.fit.boot, step.glm.fit.boot, step.ts.fit.boot, step.num.fit.boot,
        summary.stepmented, print.summary.stepmented, print.stepmented,
-       plot.stepmented, vcov.stepmented)
+       plot.stepmented, vcov.stepmented, model.matrix.stepmented)
 
 
 S3method(segmented,default)

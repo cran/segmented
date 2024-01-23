@@ -43,7 +43,7 @@ extract.psi<-function(lista){
       rangeZ <- apply(Z, 2, range) #serve sempre
       
       alpha <- opz$alpha
-      limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, alpha[2]))
+      limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
       
       if(!is.list(o0)) {
           o0<- suppressWarnings(segConstr.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))
@@ -81,7 +81,7 @@ extract.psi<-function(lista){
       k.psi.change<- 1
       alpha<-.1
       for(k in seq(n.boot)){
-        #if(k==5) browser()
+        #if(k==4) browser()
         ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
         n.boot.rev<- 3 #3 o 4?
         diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
@@ -153,6 +153,8 @@ extract.psi<-function(lista){
         }
         #id.uguali<-(round(diff(all.selected.ss[c(k-1,k-2)]),6)==0)+id.uguali      
         } #end n.boot
+
+      
 
       all.selected.psi<-rbind(est.psi00,all.selected.psi)
       all.selected.ss<-c(ss00, all.selected.ss)
