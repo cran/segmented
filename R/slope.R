@@ -200,8 +200,14 @@
             
           } else {
             covv <- if(is.null(.vcov)) vcov(ogg, ...) else .vcov 
-            estcoef<- if(is.null(.coef)) coef(ogg) else .coef
-            
+            if(is.null(.coef)) {
+              estcoef<- coef(ogg) 
+              if(is.null(estcoef)) estcoef <- ogg$coef
+              if(is.null(estcoef)) stop("No coeffs in the fit? Please use '.coef'")
+            } else {
+              estcoef<- .coef
+            }
+            #browser()
             if(length(estcoef)==0) stop("No coefficient in the object fit?")
     
             if(!all(dim(covv)==c(length(estcoef), length(estcoef)))) stop("dimension of cov matrix and estimated coeffs do not match", call. = FALSE)
@@ -220,7 +226,7 @@
             nomi<-names(estcoef)
             index<-vector(mode = "list", length = length(nomeZ))
             for(i in 1:length(nomeZ)) {
-              index[[i]]<- match(c(nomeZ[i],ogg$nameUV$U[grep(nomeZ[i], ogg$nameUV$U)]), names(coef(ogg)),0)
+              index[[i]]<- match(c(nomeZ[i],ogg$nameUV$U[grep(nomeZ[i], ogg$nameUV$U)]), names(estcoef),0)
               n.psi.est.i <- length(ogg$nameUV$V[grep(nomeZ[i], ogg$nameUV$V)])
               if(length(ogg$indexU[[nomeZ[i]]])!=n.psi.est.i){ #se ci sono anche psi fissi
                 if(!is.null(ogg$constr)){

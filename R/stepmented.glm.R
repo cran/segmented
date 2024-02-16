@@ -1,5 +1,5 @@
 stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, 
-                           control=seg.control(), keep.class=FALSE, var.psi=TRUE, ...) {
+                           control=seg.control(), keep.class=FALSE, var.psi=FALSE, ...) {
   # ---------
   toMatrix<-function(.x, ki){
     # ripete ogni .x[,j] ki[j] volte
@@ -24,6 +24,7 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   break.boot<- control$break.boot +2 
   seed<- control$seed
   fix.npsi<-control$fix.npsi
+  h<- control$h
   #-----------
   
   if(!(inherits(obj,"glm") || is.vector(obj) || is.ts(obj))) stop("obj should be a 'glm' fit, a 'vector' or 'ts' object")
@@ -31,7 +32,7 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   if(is.vector(obj) || is.ts(obj)){
     #if(is.matrix(obj) && ncol(obj)>1) stop("if matrix 'obj' should have 1 column")
     #obj<-drop(obj)
-    if(!missing(seg.Z) && length(all.vars(seg.Z))>1) stop(" multiple seg.Z allowed only with lm models")
+    if(!missing(seg.Z) && length(all.vars(seg.Z))>1) stop(" multiple seg.Z allowed only with (g)lm models")
     Fo0<-as.formula(paste(deparse(substitute(obj))," ~ 1", sep=""))
     y.only.vector<-TRUE
     
@@ -193,7 +194,7 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
       psi <- list(as.numeric(psi))
       names(psi)<-name.Z
     }
-    if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) || is.null(names(psi))) stop("'psi' has to be *named* list")
+    if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) || is.null(names(psi))) stop("'psi' or 'npsi' have to be *named* when there are multiple stepmented variables")
     id.nomiZpsi <- match(names(Z), names(psi))
     if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi))) stop("Length or names of 'seg.Z' and 'psi' do not match")
     nome <- names(psi)[id.nomiZpsi]
@@ -309,9 +310,9 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
   
   opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ,
-            fam=fam, maxit.glm=maxit.glm,
-            #nomiOK=nomiOK, id.psi.group=id.psi.group, visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
-            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii) #, npsii=npsii, P=P)
+            fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, h=h,
+            #nomiOK=nomiOK,  visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
+            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii, seed=control$seed)
   
   # #################################################################################
   # #### jump.fit(y, XREG=x.lin, Z=Xtrue, PSI, w=ww, offs, opz, return.all.sol=FALSE)
@@ -319,14 +320,17 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   if(n.boot<=0){
     obj<- step.glm.fit(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
   } else {
-    if("seed" %in% names(control)) set.seed(control$seed)
-    obj<-step.glm.fit.boot(y, x.lin, Xtrue, PSI, ww, offs, opz, n.boot, break.boot=break.boot) #, size.boot=size.boot, random=random)
+    #if("seed" %in% names(control)) set.seed(control$seed)
+    obj<-step.glm.fit.boot(y, x.lin, Xtrue, PSI, ww, offs, opz, n.boot, break.boot=break.boot) 
+    seed <- control$seed
   }
   # if(!is.list(obj)){
   #   warning("No breakpoint estimated", call. = FALSE)
   #   return(obj0)
   # }
 
+  #browser()
+  
   id.warn<-obj$id.warn
   it<-obj$it
   psi<-obj$psi
@@ -501,7 +505,7 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   objF$it <- it 
   objF$epsilon <- obj$epsilon
   objF$id.warn <- id.warn
-  
+  if(n.boot>0) objF$seed <- seed
   #browser()
   
   #class(objF) <- if(y.only.vector) "stepmented" else c("stepmented", class(obj0))
@@ -543,7 +547,6 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
     objF$psi[,"St.Err"]<-sqrt(vv)
     objF$vcov<- Cov
   }
-  
   class(objF) <- c("stepmented", class(objF))
   return(objF)
 }

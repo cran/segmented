@@ -1,7 +1,8 @@
 step.ts.fit<-function(y, x.lin, Xtrue, PSI, opz, return.all.sol=FALSE){  
   #----------------------
-  search.min<-function(h, psi, psi.old, X, y) {
+  search.min<-function(h, psi, psi.old, X, y, id.fix.psi=NULL) {
     psi.ok<- psi*h + psi.old*(1-h)
+    psi.ok[id.fix.psi]<- psi.old[id.fix.psi]
     PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
     U1 <- (Xtrue>PSI) #(Z - PSI) * (Z > PSI)
     #if (pow[1] != 1) U1 <- U1^pow[1]
@@ -86,6 +87,19 @@ step.ts.fit<-function(y, x.lin, Xtrue, PSI, opz, return.all.sol=FALSE){
   #obj0 <- .lm.fit(x=XREG, y=y) #try(mylm(XREG, y), silent = TRUE) 
   #L0 <- sum(obj0$residuals^2) #*ww
   
+  if(it.max==0){
+    obj <- lm.wfit(x = cbind(x.lin, Xtrue>PSI), y = y)
+    L1 <- sum(obj$residuals^2)
+    obj$epsilon <- epsilon
+    idZ<-(plin+1):(plin+ncol(PSI))
+    b<- obj$coef[idZ]
+    obj <- list(obj = obj, psi = PSI[1,], psi.values = psi.values, 
+                rangeZ = rangeZ, beta.c=b, epsilon = epsilon,  
+                SumSquares.no.gap = L1,  
+                id.warn = TRUE)
+    return(obj)
+  }
+  
   L0<- dev0*.8
   
   n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
@@ -149,25 +163,54 @@ step.ts.fit<-function(y, x.lin, Xtrue, PSI, opz, return.all.sol=FALSE){
       if(return.all.sol) return(list(dev.values, psi.values)) else stop("breakpoint estimate too close or at the boundary causing NA estimates.. too many breakpoints being estimated?", call.=FALSE)
     }
     psi1 <- -g/b
-    #aggiusta la stima di psi..
+    psi1<- psi0+ h*(psi1-psi0)
     psi1<- adj.psi(psi1, limZ) #limZ rangeZ
-    
+    psi1<-unlist(tapply(psi1, opz$id.psi.group, sort), use.names =FALSE)
     #la f e' chiaramente a gradino per cui meglio dividere..
     a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y)
     a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y)
     a<-if(a0$objective<=a1$objective) a0 else a1
     
-    #M<-1
-    #while(L1>L0){
-    #  a<-optimize(search.min, c(0,M), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
-    #  L1<- a$objective
-    #  M<-M*.3
-    #}
-    k.values[length(k.values) + 1] <- use.k <- a$minimum
-    L1<- a$objective
+    if(a$objective<L0){
+      k.values[length(k.values) + 1] <- use.k <- a$minimum
+      L1<- a$objective
+    } else {
+      k.values[length(k.values) + 1] <- use.k <- 0
+      L1<- L0  
+    }
     
-    #Aggiorna psi
-    psi1 <- psi1*use.k + psi0* (1-use.k)
+    if(use.k<=.01){
+      k.List<-j.List<-NULL
+      for(j in 1:length(psi1)){
+        a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, id.fix.psi=j)
+        a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, id.fix.psi=j)
+        a <-if(a0$objective<=a1$objective) a0 else a1
+        if(a$objective<L1){
+          j.List[[j]]<-setdiff(1:length(psi1),j) #indici di psi che devono cambiare..
+          k.List[[j]]<-a$minimum
+        } else {
+          j.List[[j]]<-NA
+          k.List[[j]]<-NA
+          
+        }
+      }
+      id.to.be.changed<- unique(unlist(j.List[!sapply(k.List, is.na)]))
+      if(!is.null(id.to.be.changed)){
+        use.k<-rep(0,length(psi1))
+        use.k[id.to.be.changed] <-mean(unlist(k.List[!sapply(k.List, is.na)]))
+        psi1 <- psi1*use.k + psi0* (1-use.k)
+        use.k<-mean(use.k)
+        L1=search.min(1, psi=psi1, psi.old=psi0, X=x.lin, y=y)
+      } else {
+        psi1<-psi0
+      }
+    } else {
+      psi1 <- psi1*use.k + psi0* (1-use.k)
+    }
+    
+    
+    
+    
     if (!is.null(digits)) psi1 <- round(psi1, digits)
     #PSI1 <- matrix(psi1, n, npsi, byrow = TRUE)
     #XREG1 <- cbind(x.lin, Xtrue>PSI1)

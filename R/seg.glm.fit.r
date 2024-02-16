@@ -77,14 +77,11 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     fam<-opz$fam
     maxit.glm<-opz$maxit.glm
     #--------------
-    n<-length(y)
+    n<- if(is.matrix(y)) nrow(y) else length(y)
     min.step<-opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha<-opz$alpha
     limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2]))
-    
-    #browser()
-    
     psi<-PSI[1,]
     psi<-adj.psi(psi, limZ)
     PSI<-matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
@@ -115,7 +112,8 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     #    invXtX<- opz$invXtX
     #    Xty<-opz$Xty
     #===================
-    if(!in.psi(limZ,PSI,FALSE))  stop("starting psi out of the range.. see 'alpha' in seg.control", call.=FALSE)
+    
+    if(!in.psi(limZ, PSI,FALSE))  stop("starting psi out of the range.. see 'alpha' in seg.control", call.=FALSE)
     if(!far.psi(Z,PSI,id.psi.group,FALSE)) 
       stop("psi starting values too close each other or at the boundaries. Please change them (e.g. set 'quant=TRUE' 
           in seg.control()), or decrease their number.", call. = FALSE)
@@ -127,6 +125,25 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
                                      weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0))
     eta0<- obj0$linear.predictors
     L0<- obj0$dev
+    
+    
+    if(it.max==0){
+      colnames(U) <- paste("U", 1:ncol(U), sep = "")
+      V <- -(Z > PSI)
+      colnames(V) <- paste("V", 1:ncol(V), sep = "")
+      obj <- obj0 #lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
+      L1 <- L0
+      obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
+      #names(obj$coefficients) <- names.coef
+      obj$epsilon <- epsilon
+      obj$it <- it
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, 
+                  U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
+                  dev.no.gap = L1, id.psi.group = id.psi.group, 
+                  id.warn = TRUE)
+      return(obj)
+    }
+    
     n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
     dev.values[length(dev.values) + 1] <- opz$dev0 #del modello iniziale (senza psi)
     dev.values[length(dev.values) + 1] <- L0 #modello con psi iniziali
@@ -191,7 +208,7 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
         
         psi.old<-psi
         psi <- psi.old + hh*gamma.c/beta.c
-        psi<- adj.psi(psi, rangeZ) #limZ or rangeZ???
+        psi<- adj.psi(psi, limZ) #limZ or rangeZ???
         
         psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         

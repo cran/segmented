@@ -161,6 +161,27 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
         stop("The first fit with U variables does not work..", 
             call. = FALSE)
     L0 <- eval(parse(text = fn.obj), list(x = obj0))
+    
+    
+    if(it.max==0){
+      colnames(U) <- paste("U", 1:ncol(U), sep = "")
+      V <- -(Z > PSI)
+      colnames(V) <- paste("V", 1:ncol(V), sep = "")
+      obj <- obj0 #lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
+      L1 <- L0 #sum(obj$residuals^2 * w)
+      obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
+      #names(obj$coefficients) <- names.coef
+      obj$epsilon <- epsilon
+      obj$it <- it
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, 
+                  U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
+                  SumSquares.no.gap = L1, id.psi.group = id.psi.group, 
+                  id.warn = TRUE, nomiV = nomiV, nomiU = nomiU, mfExt = mfExt, 
+                  mydesign=mydesign)
+      return(obj)
+    }
+    
+
     n.intDev0 <- nchar(strsplit(as.character(L0), "\\.")[[1]][1])
     dev.values[length(dev.values) + 1] <- opz$dev0
     dev.values[length(dev.values) + 1] <- L0
@@ -235,7 +256,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
         L1<- a$objective
         psi <- psi*use.k + psi.old* (1-use.k)
         psi<- adj.psi(psi, limZ)
-        
+        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         if (!is.null(digits)) psi <- round(psi, digits)
         #PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
         PSI <- matrix(psi, ncol=length(psi), nrow=n, byrow = TRUE)

@@ -1,5 +1,5 @@
 stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.control(), 
-                          keep.class=FALSE, var.psi=TRUE, ...) {
+                          keep.class=FALSE, var.psi=FALSE, ...) {
   # ---------
   mylm<-function(x,y,w=1,offs=0){
     x1<-x*sqrt(w)
@@ -35,6 +35,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   break.boot<- control$break.boot + 2 
   seed<- control$seed
   fix.npsi<-control$fix.npsi
+  h<-control$h
   #-----------
   #browser()
   
@@ -128,6 +129,8 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
     mfExt<-eval(mfExt, parent.frame())
     
     #mf <- mfExt
+    #browser()
+    if(nrow(mf)!=nrow(mfExt)) stop("missing values in any stepmented covariate?")
     
     
     ww <- as.vector(model.weights(mf))
@@ -163,7 +166,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
       psi <- list(as.numeric(psi))
       names(psi)<-name.Z
     }
-    if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) || is.null(names(psi))) stop("'psi' has to be *named* list")
+    if (!is.list(Z) || !is.list(psi) || is.null(names(Z)) || is.null(names(psi))) stop("'psi' or 'npsi' have to be *named* when there are multiple stepmented variables")
     id.nomiZpsi <- match(names(Z), names(psi))
     if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi))) stop("Length or names of 'seg.Z' and 'psi' do not match")
     nome <- names(psi)[id.nomiZpsi]
@@ -287,8 +290,9 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
   
   opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ,
-            #nomiOK=nomiOK, id.psi.group=id.psi.group, visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
-            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii) #, npsii=npsii, P=P)
+            id.psi.group=id.psi.group, h=h,
+            #nomiOK=nomiOK, , visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
+            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii, seed=control$seed)
   
   # #################################################################################
   # #### jump.fit(y, XREG=x.lin, Z=Xtrue, PSI, w=ww, offs, opz, return.all.sol=FALSE)
@@ -297,8 +301,9 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
     obj<- step.lm.fit(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
   } else {
     #browser()
-    if("seed" %in% names(control)) set.seed(control$seed)
-    obj<-step.lm.fit.boot(y, x.lin, Xtrue, PSI, ww, offs, opz, n.boot, break.boot=break.boot) #, size.boot=size.boot, random=random)
+    #if("seed" %in% names(control)) set.seed(control$seed)
+    obj<-step.lm.fit.boot(y, x.lin, Xtrue, PSI, ww, offs, opz, n.boot, break.boot=break.boot) 
+    seed<- obj$seed
   }
   # if(!is.list(obj)){
   #   warning("No breakpoint estimated", call. = FALSE)
@@ -339,6 +344,8 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   Vxb <- -V  #* rep(-beta.c, each = nrow(V))
   nomiVxb <- gsub("V", "psi", nomiV)
   nnomi <- c(nomiU, nomiVxb)
+  #browser()
+  
   for(i in 1:ncol(U)) {
       mfExt[nomiU[i]]<-mf[nomiU[i]] <- U[,i]
       mfExt[nomiVxb[i]]<-mf[nomiVxb[i]] <- Vxb[,i]
@@ -442,38 +449,32 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   objF$it <- it 
   objF$epsilon <- obj$epsilon
   objF$id.warn <- id.warn
+  if(n.boot>0) objF$seed <- seed
   class(objF) <- c("stepmented", class(obj0))
-  #browser()
-  #Un effetto aggiuntivo..
-    Z.in.obj<-intersect(all.vars(Fo0), all.vars(seg.Z))
-    if(length(Z.in.obj)>0){
-      tt<-terms(Fo0)#, specials=Z.in.obj)
-      #id<-match(Z.in.obj, all.vars(Fo0))-1 #1 e' per la risposta..
-      
-      id<-match(Z.in.obj, intersect(all.vars(Fo0), names(mf)))-1
-      
-      nome<-attr(tt,"term.labels")[id]
-      Fo.ok<-as.formula(paste("~0", nome, sep="+"))
-      f.x<-matrix(NA, 150, ncol(objF$Z[,Z.in.obj,drop=FALSE])) #prima era nrow(objF$Z) invece che 100
-      for(j in 1:length(Z.in.obj)){
-        #browser()
-        #dd<-data.frame(objF$Z[,j])
-        idPsi <- nomiVxb[endsWith(nomiVxb, paste(".", Z.in.obj[j], sep = ""))]
-        psi <- coef(objF)[idPsi]
-        #dd<-data.frame(sort(c(psi, seq(min(objF$Z[,j]), max(objF$Z[,j]), l=nrow(f.x)))))
-        
-        dd<-data.frame(seq(min(objF$Z[,Z.in.obj[j]]), max(objF$Z[,Z.in.obj[j]]), l=nrow(f.x)))
-        names(dd)<- Z.in.obj[j]
-        M<-model.matrix(Fo.ok, data=dd)
-        #M<-M[seq(ceiling(length(psi)/2),by=1,l=nrow(f.x)),,drop=FALSE]
-        f.x[,j]<-M%*% coef(objF)[colnames(M)]
-      }
-      colnames(f.x)<-Z.in.obj
-      objF$f.x<-f.x
-    }
-  objF$psi<- objF$psi[,-1,drop=FALSE] #rimuovi la colonna Initial
   
-  #browser()
+  #Un effetto aggiuntivo..
+  Z.in.obj<-intersect(all.vars(Fo0), all.vars(seg.Z))
+  if(length(Z.in.obj)>0){
+    tt<-terms(Fo0)#, specials=Z.in.obj)
+    #id<-match(Z.in.obj, all.vars(Fo0))-1 #1 e' per la risposta..
+    id<-match(Z.in.obj, intersect(all.vars(Fo0), names(mf)))-1
+      
+    nome<-attr(tt,"term.labels")[id]
+    Fo.ok<-as.formula(paste("~0", nome, sep="+"))
+    f.x<-matrix(NA, 150, ncol(objF$Z[,Z.in.obj,drop=FALSE])) #prima era nrow(objF$Z) invece che 100
+    for(j in 1:length(Z.in.obj)){
+      idPsi <- nomiVxb[endsWith(nomiVxb, paste(".", Z.in.obj[j], sep = ""))]
+      psi <- coef(objF)[idPsi]
+      dd<-data.frame(seq(min(objF$Z[,Z.in.obj[j]]), max(objF$Z[,Z.in.obj[j]]), l=nrow(f.x)))
+      names(dd)<- Z.in.obj[j]
+      M<-model.matrix(Fo.ok, data=dd)
+      f.x[,j]<-M%*% coef(objF)[colnames(M)]
+    }
+    colnames(f.x)<-Z.in.obj
+    objF$f.x<-f.x
+  }
+  
+  objF$psi<- objF$psi[,-1,drop=FALSE] #rimuovi la colonna Initial
   
   if(var.psi){
     Cov <- vcov.stepmented(objF, k=NULL)
@@ -483,8 +484,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
     objF$vcov<- Cov
   }
   #Cov[nomiVxb, ]<- Cov[, nomiVxb] <- 0
-  
-  
+
   # var.Tay<-function(est1,est2,v1,v2,v12){
   #   r<- est1/est2
   #   vv<-(v1+v2*r^2-2*r*v12)/est2^2
@@ -506,6 +506,5 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   # }
   # names(varPsi) <- nomiVxb
 
-  
   return(objF)
 }

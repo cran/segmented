@@ -117,7 +117,6 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     digits <- control$digits
     toll <- control$toll
     if (toll < 0)  stop("Negative tolerance ('tol' in seg.control()) is meaningless", call. = FALSE)
-    visual <- control$visual
     stop.if.error <- fix.npsi <- control$fix.npsi
     break.boot=control$break.boot
     n.boot <- control$n.boot
@@ -126,23 +125,25 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     random <- control$random
     pow <- control$pow
     conv.psi <- control$conv.psi
-    visualBoot <- FALSE
-    if (n.boot > 0) {
-        if (!is.null(control$seed)) {
-            set.seed(control$seed)
-            employed.Random.seed <- control$seed
-        }
-        else {
-            employed.Random.seed <- eval(parse(text = paste(sample(0:9, 
-                size = 6), collapse = "")))
-            set.seed(employed.Random.seed)
-        }
-        if (visual) {
-            visual <- FALSE
-            visualBoot <- TRUE
-        }
-        if (!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
-    }
+    visual <- control$visual
+    visualBoot<-FALSE
+    if(visual && n.boot>0) {visual<-FALSE; visualBoot<-TRUE}
+    # if (n.boot > 0) {
+    #     if (!is.null(control$seed)) {
+    #         set.seed(control$seed)
+    #         employed.Random.seed <- control$seed
+    #     }
+    #     else {
+    #         employed.Random.seed <- eval(parse(text = paste(sample(0:9, 
+    #             size = 6), collapse = "")))
+    #         set.seed(employed.Random.seed)
+    #     }
+    #     if (visual) {
+    #         visual <- FALSE
+    #         visualBoot <- TRUE
+    #     }
+    #     if (!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
+    # }
     last <- control$last
     K <- control$K
     h <- control$h
@@ -358,7 +359,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
         dev0 = dev0, visual = visual, it.max = it.max, nomiOK = nomiOK, 
         id.psi.group = id.psi.group, gap = gap, visualBoot = visualBoot, 
         pow = pow, digits = digits, conv.psi = conv.psi, alpha = alpha, 
-        fix.npsi = fix.npsi, min.step = min.step)
+        fix.npsi = fix.npsi, min.step = min.step, seed=control$seed)
     opz$call.ok <- call.ok
     opz$call.noV <- call.noV
     opz$formula.orig <- formula(obj)
@@ -370,10 +371,10 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     opz <- c(opz, ...)
     if (n.boot <= 0) {
         obj <- seg.def.fit(obj, Z, PSI, mfExt, opz)
-    }
-    else {
+    } else {
         obj <- seg.def.fit.boot(obj, Z, PSI, mfExt, opz, n.boot = n.boot, 
             size.boot = size.boot, random = random, break.boot=break.boot)
+        seed<- obj$seed
     }
     
     if (!is.list(obj)) {
@@ -569,12 +570,13 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     }
     else {
         vv <- Cov[nomiVxb, nomiVxb, drop=FALSE]
+        vv<-sqrt(diag(vv))
     }
     ris.psi <- matrix(NA, length(psi), 3)
     colnames(ris.psi) <- c("Initial", "Est.", "St.Err")
     rownames(ris.psi) <- nomiVxb
     ris.psi[, 2] <- psi
-    ris.psi[, 3] <- sqrt(diag(vv))
+    ris.psi[, 3] <- vv
     a <- tapply(id.psi.group, id.psi.group, length)
     a.ok <- NULL
     for (j in name.Z) {
@@ -610,10 +612,8 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     objF$indexU<-build.all.psi(psi.list, fixed.psi)
     ##############
     if (model) objF$model <- mf
-    if (n.boot > 0) 
-        objF$seed <- employed.Random.seed
-    if (keep.class) 
-        class(objF) <- c("segmented", class(obj0))
+    if (n.boot > 0) objF$seed <- seed
+    if (keep.class) class(objF) <- c("segmented", class(obj0))
     objF$psi[,"Initial"]<-NA
     list.obj[[length(list.obj) + 1]] <- objF
     class(list.obj) <- "segmented"

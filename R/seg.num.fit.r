@@ -136,6 +136,25 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
     U <- ((Z - PSI) * (Z > PSI))
     obj0 <-list(residuals=rep(1,3))
     L0 <- var(y)*n #sum(obj0$residuals^2)
+    
+    
+    if(it.max==0){
+      colnames(U) <- paste("U", 1:ncol(U), sep = "")
+      V <- -(Z > PSI)
+      colnames(V) <- paste("V", 1:ncol(V), sep = "")
+      obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w)
+      L1 <- sum(obj$residuals^2 * w)
+      obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
+      #names(obj$coefficients) <- names.coef
+      obj$epsilon <- epsilon
+      obj$it <- it
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, 
+                  U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
+                  SumSquares.no.gap = L1, id.psi.group = id.psi.group, 
+                  id.warn = TRUE, idU=seq_along(psi)+ncol(XREG), idV=NULL)
+      return(obj)
+    }
+
     n.intDev0 <- nchar(strsplit(as.character(L0), "\\.")[[1]][1])
     dev.values[length(dev.values) + 1] <- opz$dev0
     dev.values[length(dev.values) + 1] <- L0
@@ -204,7 +223,11 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
         psi <- psi.old + hh*gamma.c/beta.c
         #aggiusta la stima di psi..
         psi<- adj.psi(psi, limZ)
+        
         #browser()
+        
+        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
+        
         
         a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w)
         k.values[length(k.values) + 1] <- use.k <- a$minimum

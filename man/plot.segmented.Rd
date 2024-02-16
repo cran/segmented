@@ -11,13 +11,13 @@
     link=TRUE, res.col=grey(.15, alpha = .4), rev.sgn=FALSE, const=NULL, shade=FALSE, 
     rug=!add, dens.rug=FALSE, dens.col = grey(0.8), transf=I, 
     isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, .coef=NULL, 
-    prev.trend=FALSE, smoos=NULL, hide.zeros=FALSE, ...)
+    prev.trend=FALSE, smoos=NULL, hide.zeros=FALSE, leg="topleft", psi.lines=FALSE, ...)
       }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{ a fitted \code{segmented} object. }
-  \item{term}{ the segmented variable having the piece-wise relationship to be plotted.
-      If there is a single segmented variable in the fitted model \code{x}, \code{term} can be omitted.}
+  \item{term}{Numerical or character to indicate the segmented variable having the piece-wise relationship to be plotted. If there is a single segmented variable in the fitted model \code{x}, \code{term} can be omitted.
+  If vector, multiple segmented lines will be drawn on the same plot.}
   \item{add}{ when \code{TRUE} the fitted lines are added to the current device.}
   \item{res}{ when \code{TRUE} the fitted lines are plotted along with corresponding partial residuals.
       See Details.}
@@ -56,6 +56,13 @@ logical, indicating if the residuals (provided that \code{res=TRUE}) will be dra
     \item{hide.zeros}{
 logical, indicating if the residuals (provided that \code{res=TRUE}) corresponding to the covariate zero values should be deleted. Useful when the fit includes an interaction term in the formula, such as \code{seg(.., by=..)}, and the zeros in covariates indicate units in other groups.
 }
+    \item{leg}{
+If the plot refers to segmented relationships in groups, i.e. \code{term} has been specified as a vector, a legend is placed at the specified \code{leg} position. Put \code{NA} not to draw the legend.
+}
+  \item{psi.lines}{
+if \code{TRUE} vertical lines corresponding to the estimated breakpoints are also drawn. Ignored if \code{term} is not a vector.
+}
+
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
   can be vectors and are recycled if necessary, see the example below) for the fitted piecewise lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and 
   `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}, \code{res.col} is for the color); \code{col.shade} for the shaded regions (provided that \code{shade=TRUE} and \code{conf.level>0}).
@@ -64,15 +71,11 @@ logical, indicating if the residuals (provided that \code{res=TRUE}) correspondi
 \details{
   Produces (or adds to the current device) the fitted segmented relationship between the
   response and the selected \code{term}. If the fitted model includes just a single `segmented' variable,
-  \code{term} may be omitted. 
-  %Due to the parameterization of the segmented terms, sometimes
-  %the fitted lines may not appear to join at the estimated breakpoints. If this is the case, the apparent
-  %`gap' would indicate some lack-of-fit. However, since version 0.2-9.0, the gap coefficients are set to zero by default 
-  %(see argument \code{gap} in in \code{\link{seg.control}}). 
+  \code{term} may be omitted. \cr 
   The partial residuals are computed as `fitted + residuals', where `fitted' are the fitted values of the
   segmented relationship relevant to the covariate specified in \code{term}. 
   Notice that for GLMs the residuals are the response residuals if \code{link=FALSE} and
-  the working residuals if \code{link=TRUE}. %weighted by the IWLS weights  [fino alla versione 0.5-2.0 i workRes were weighted by the IWLS weights]
+  the working residuals if \code{link=TRUE}.\cr %weighted by the IWLS weights  [fino alla versione 0.5-2.0 i workRes were weighted by the IWLS weights]
   }
 \value{
 None.
@@ -80,7 +83,9 @@ None.
 %\references{ }
 \author{ Vito M. R. Muggeo }
 \note{ For models with offset, partial residuals on the response scale are not defined. Thus \code{plot.segmented} does not work 
-when \code{link=FALSE}, \code{res=TRUE}, and the fitted model includes an offset.}
+when \code{link=FALSE}, \code{res=TRUE}, and the fitted model includes an offset.\cr
+When \code{term} is a vector and multiple segmented relationships are being drawn on the same plot, \code{col} and \code{res.col} can be vectors. Also \code{pch}, \code{cex}, \code{lty}, and \code{lwd} can be vectors, if specified.
+}
 %
 % ~Make other sections like Warning with \section{Warning }{....} ~
 %}

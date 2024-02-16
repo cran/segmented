@@ -6,7 +6,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         #PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
         PSI <- matrix(psi.ok, nrow=n, ncol = length(psi.ok), byrow=TRUE)
         U1 <- (Z - PSI) * (Z > PSI)
-        if (pow[1] != 1) U1 <- U1^pow[1]
+        #if (pow[1] != 1) U1 <- U1^pow[1]
         obj1 <- try(mylm(cbind(X, U1), y, w, offs), silent = TRUE)
         if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w, offs), silent = TRUE)
         L1 <- if (class(obj1)[1] == "try-error") L0 + 10
@@ -137,6 +137,26 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     n.psi1 <- ncol(Z)
     U <- ((Z - PSI) * (Z > PSI))
     if (pow[1] != 1) U <- U^pow[1]
+    
+    if(it.max==0){
+      colnames(U) <- paste("U", 1:ncol(U), sep = "")
+      V <- -(Z > PSI)
+      colnames(V) <- paste("V", 1:ncol(V), sep = "")
+      obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
+      L1 <- sum(obj$residuals^2 * w)
+      obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
+      #names(obj$coefficients) <- names.coef
+      obj$epsilon <- epsilon
+      obj$it <- it
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, 
+                U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
+                SumSquares.no.gap = L1, id.psi.group = id.psi.group, 
+                id.warn = TRUE)
+      return(obj)
+    }
+    
+    
+
     obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
     if (class(obj0)[1] == "try-error") obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
     L0 <- sum(obj0$residuals^2 * w)
@@ -174,6 +194,9 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U", 
             1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
         obj <- lm.wfit(x = X, y = y, w = w, offset = offs)
+        
+        #browser()
+        
         beta.c <- coef(obj)[paste("U", 1:ncol(U), sep = "")]
         gamma.c <- coef(obj)[paste("V", 1:ncol(V), sep = "")]
         if (any(is.na(c(beta.c, gamma.c)))) {
@@ -206,8 +229,9 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         #aggiusta la stima di psi..
         #psi<- adj.psi(psi, rangeZ) 
         psi<- adj.psi(psi, limZ)
-        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         #browser()
+        
+        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         
         a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs)
         k.values[length(k.values) + 1] <- use.k <- a$minimum

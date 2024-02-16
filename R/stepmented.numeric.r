@@ -1,5 +1,5 @@
 stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.control(), keep.class=FALSE, 
-                               var.psi=TRUE, ..., 
+                               var.psi=FALSE, ..., 
                                pertV=0, centerX=FALSE, adjX=NULL, weights=NULL) {
   #, only.mean=TRUE
   #pertV come calcolare la variabile V=1/(2*abs(Xtrue-PSI)? i psi devono essere diversi dalle x_i 
@@ -102,6 +102,7 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   break.boot<- control$break.boot +2
   seed<- control$seed
   fix.npsi<-control$fix.npsi
+  h<-control$h
   #-----------
   
   #browser()
@@ -111,7 +112,7 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   #if(is.vector(obj) || is.ts(obj)){
   #if(is.matrix(obj) && ncol(obj)>1) stop("if matrix 'obj' should have 1 column")
   #obj<-drop(obj)
-  if(!missing(seg.Z) && length(all.vars(seg.Z))>1) stop(" multiple seg.Z allowed only with lm models")
+  if(!missing(seg.Z) && length(all.vars(seg.Z))>1) stop(" multiple seg.Z allowed only with (g)lm models")
   Fo0<-as.formula(paste(deparse(substitute(obj))," ~ 1", sep=""))
   y.only.vector <- TRUE
   
@@ -186,6 +187,8 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   #browser()
   
   if(it.max == 0) {
+    mfExt<- data.frame(y, Z)
+    names(mfExt)<-c(all.vars(Fo0), name.Z)
     ripetizioni<-unlist(tapply(nomiZ, nomiZ, function(.x)1:length(.x)))
     U <- (Xtrue>PSI)
     colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
@@ -217,8 +220,10 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
   
   opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ,
-            #nomiOK=nomiOK, id.psi.group=id.psi.group, visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
-            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii) #, npsii=npsii, P=P)
+            id.psi.group=id.psi.group,h=h,
+            #nomiOK=nomiOK,  visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
+            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii,
+            seed=control$seed)
   
   # #################################################################################
   # #### jump.fit(y, XREG=x.lin, Z=Xtrue, PSI, w=ww, offs, opz, return.all.sol=FALSE)
@@ -229,15 +234,17 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
     if(n.boot<=0){
       obj<- step.ts.fit(y, x.lin, Xtrue, PSI, opz, return.all.sol=FALSE)
     } else {
-      if("seed" %in% names(control)) set.seed(control$seed)
-      obj<-step.ts.fit.boot(y, x.lin, Xtrue, PSI, opz, n.boot, break.boot=break.boot) #, size.boot=size.boot, random=random)
+      #if("seed" %in% names(control)) set.seed(control$seed)
+      obj<-step.ts.fit.boot(y, x.lin, Xtrue, PSI, opz, n.boot, break.boot=break.boot) 
+      seed <- obj$seed
     }
   } else {
     if(n.boot<=0){
       obj<- step.num.fit(y, x.lin, Xtrue, PSI, weights, opz, return.all.sol=FALSE)
     } else {
-      if("seed" %in% names(control)) set.seed(control$seed)
-      obj<-step.num.fit.boot(y, x.lin, Xtrue, PSI, weights, opz, n.boot, break.boot=break.boot) #, size.boot=size.boot, random=random)
+      #if("seed" %in% names(control)) set.seed(control$seed)
+      obj<-step.num.fit.boot(y, x.lin, Xtrue, PSI, weights, opz, n.boot, break.boot=break.boot) 
+      seed <- obj$seed
     }
   }
   # if(!is.list(obj)){
@@ -496,7 +503,7 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   objF$id.warn <- id.warn
   #objF$rho<-rho
   objF$psi<- objF$psi[,-1,drop=FALSE] #rimuovi la colonna Initial
-  
+  if(n.boot>0) objF$seed <- seed
   #browser()
   
   if(var.psi){

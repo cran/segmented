@@ -4,8 +4,12 @@ lines.stepmented<-function(x, term, bottom=TRUE, shift=FALSE, conf.level=0.95, k
     if(length(x$nameUV$Z)>1 ) {
       stop("please, specify `term'")
     } else {
-        term<-x$nameUV$Z}
-    }
+      term<- x$nameUV$Z  
+        }
+  } else {
+    if(is.numeric(term)) term<-x$nameUV$Z[term] 
+  }
+  if(!term%in%x$nameUV$Z) stop(" unknown 'term' ")
   ss<-list(...)
   metodo<- if(!is.null(ss$method)) ss$method else "delta"
   colore<- if(is.null(ss$col)) 2 else ss$col
@@ -13,6 +17,7 @@ lines.stepmented<-function(x, term, bottom=TRUE, shift=FALSE, conf.level=0.95, k
   h<-(usr[4]-usr[3])/abs(k)
   y<- if(bottom) usr[3]+h else usr[4]-h
   m<- confint.stepmented(object=x,parm=term,level=conf.level,digits=15,method=metodo,.vcov=NULL, .coef=NULL)
+  #browser()
   #m<-r[[term]]
   #FORSE non e' necessaria
   #if(rev.sgn) m<- -m

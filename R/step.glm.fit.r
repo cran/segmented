@@ -1,7 +1,8 @@
 step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE){  
   #----------------------
-  search.min<-function(h, psi, psi.old, X, y, w, offs) {
+  search.min<-function(h, psi, psi.old, X, y, w, offs, id.fix.psi=NULL) {
     psi.ok<- psi*h + psi.old*(1-h)
+    psi.ok[id.fix.psi]<- psi.old[id.fix.psi]
     PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
     U1 <- (Xtrue>PSI) #(Z - PSI) * (Z > PSI)
     #if (pow[1] != 1) U1 <- U1^pow[1]
@@ -48,7 +49,7 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
   min.step<- opz$min.step #=.0001
   conv.psi<-opz$conv.psi #=FALSE
   alpha<-opz$alpha
-  limZ <- apply(Xtrue, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+  limZ <- apply(Xtrue, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
   
   fix.npsi<-opz$fix.npsi
   agg<-opz$agg
@@ -82,6 +83,21 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
   eta0<- obj0$linear.predictors
   L0<- obj0$dev
 
+  if(it.max==0){
+    obj <- obj0
+    L1 <- L0 
+    obj$epsilon <- epsilon
+    idZ<-(plin+1):(plin+ncol(PSI))
+    b<- obj$coef[idZ]
+    obj <- list(obj = obj, psi = PSI[1,], psi.values = psi.values, 
+                rangeZ = rangeZ, beta.c=b, epsilon = epsilon,  
+                SumSquares.no.gap = L1,  
+                id.warn = TRUE)
+    return(obj)
+  }
+  
+
+  
   n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
   dev.values[length(dev.values) + 1] <- dev0#opz$dev0 #del modello iniziale (senza psi)
   dev.values[length(dev.values) + 1] <- L0 #modello con psi iniziali
@@ -148,26 +164,62 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
     if(any(is.na(c(b, g)))){
       if(return.all.sol) return(list(dev.values, psi.values)) else stop("breakpoint estimate too close or at the boundary causing NA estimates.. too many breakpoints being estimated?", call.=FALSE)
     }
+    
     psi1 <- -g/b
+    psi1<- psi0+ opz$h*(psi1-psi0)
     #aggiusta la stima di psi..
     psi1<- adj.psi(psi1, limZ)
+    psi1<-unlist(tapply(psi1, opz$id.psi.group, sort), use.names =FALSE)
     
+    #if(i==1) browser()
     #la f e' chiaramente a gradino per cui meglio dividere..
-    a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
-    a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
-    a<-if(a0$objective<=a1$objective) a0 else a1
+     a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
+     a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
+     a <-if(a0$objective<=a1$objective) a0 else a1
+     
+     #a0<-optimize(search.min, c(0,.33), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
+     #a1<-optimize(search.min, c(.33,.66), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
+     #a2<-optimize(search.min, c(.66,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
+     #a<-if(a2$objective<=a$objective) a2 else a
     
-    #M<-1
-    #while(L1>L0){
-    #  a<-optimize(search.min, c(0,M), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
-    #  L1<- a$objective
-    #  M<-M*.3
-    #}
-    k.values[length(k.values) + 1] <- use.k <- a$minimum
-    L1<- a$objective
-    
-    #Aggiorna psi
-    psi1 <- psi1*use.k + psi0* (1-use.k)
+    if(a$objective<L0){
+      k.values[length(k.values) + 1] <- use.k <- a$minimum
+      L1<- a$objective
+    } else {
+      k.values[length(k.values) + 1] <- use.k <- 0
+      L1<- L0  
+    }
+     
+    if(use.k<=.01){
+      k.List<-j.List<-NULL
+     for(j in 1:length(psi1)){
+       a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, id.fix.psi=j)
+       a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, id.fix.psi=j)
+       a <-if(a0$objective<=a1$objective) a0 else a1
+       if(a$objective<L1){
+         j.List[[j]]<-setdiff(1:length(psi1),j) #indici di psi che devono cambiare..
+         k.List[[j]]<-a$minimum
+       } else {
+         j.List[[j]]<-NA
+         k.List[[j]]<-NA
+         
+       }
+     }
+      id.to.be.changed<- unique(unlist(j.List[!sapply(k.List, is.na)]))
+      if(!is.null(id.to.be.changed)){
+        use.k<-rep(0,length(psi1))
+        use.k[id.to.be.changed] <-mean(unlist(k.List[!sapply(k.List, is.na)]))
+        psi1 <- psi1*use.k + psi0* (1-use.k)
+        use.k<-mean(use.k)
+        L1=search.min(1, psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
+      } else {
+        psi1<-psi0
+      }
+    } else {
+      psi1 <- psi1*use.k + psi0* (1-use.k)
+    }
+     
+
     if (!is.null(digits)) psi1 <- round(psi1, digits)
     #PSI1 <- matrix(psi1, n, npsi, byrow = TRUE)
     #XREG1 <- cbind(x.lin, Xtrue>PSI1)
@@ -203,7 +255,10 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
     psi0<-psi1
   } #end while_it
   
+  #browser()
+  
   #ATTENZIONE .. Assume che obj sia stato stimato sempre!
-  obj<-list(obj=obj, psi=psi1, psi.values=psi.values, rangeZ=rangeZ, SumSquares.no.gap=L1, beta.c=b, it=i, epsilon=epsilon, id.warn=id.warn) 
+  obj<-list(obj=obj, psi=psi1, psi.values=psi.values, rangeZ=rangeZ, SumSquares.no.gap=L1, 
+            beta.c=b, it=i, epsilon=epsilon, id.warn=id.warn) 
   return(obj)
 } #end jump.fit

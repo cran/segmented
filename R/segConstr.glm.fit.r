@@ -144,6 +144,26 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
                                      weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0))
     eta0<- obj0$linear.predictors
     L0<- obj0$dev
+    
+    if(it.max==0){
+      colnames(U) <- paste("U", 1:ncol(U), sep = "")
+      V <- -(Z > PSI)
+      colnames(V) <- paste("V", 1:ncol(V), sep = "")
+      obj <- obj0
+      L1 <- L0
+      obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
+      #names(obj$coefficients) <- names.coef
+      obj$epsilon <- epsilon
+      obj$it <- it
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, X=XREG,
+                  U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
+                  dev.no.gap = L1, id.psi.group = id.psi.group, 
+                  id.warn = TRUE,
+                  constr=list(RList=RList, invAList=invAList, invA.RList=invA.RList, nomiUList =nomiUList)
+                  )
+      return(obj)
+    }
+
     n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
     dev.values[length(dev.values) + 1] <- opz$dev0 #del modello iniziale (senza psi)
     dev.values[length(dev.values) + 1] <- L0 #modello con psi iniziali
@@ -226,7 +246,7 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
         psi.old <- psi
         psi <- psi.old + hh*gamma.c/beta.c
         #aggiusta la stima di psi..
-        psi<- adj.psi(psi, rangeZ)
+        psi<- adj.psi(psi, limZ)
         psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         #browser()
         

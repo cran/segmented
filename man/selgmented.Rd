@@ -9,7 +9,7 @@ This function selects (and estimates) the number of breakpoints of the segmented
 }
 \usage{
 selgmented(olm, seg.Z, Kmax=2, type = c("score", "bic", "davies", "aic"), 
-  alpha = 0.05, control = seg.control(), refit = FALSE, stop.if = 6, 
+  alpha = 0.05, control = seg.control(), refit = FALSE, stop.if = 5, 
   return.fit = TRUE, bonferroni = FALSE, msg = TRUE, plot.ic = FALSE, th = NULL, 
   G = 1, check.dslope = TRUE)
 }
@@ -37,7 +37,7 @@ See \code{\link{seg.control}}.
 If \code{TRUE}, the final selected model is re-fitted using arguments in \code{control}, typically with bootstrap restarting. Set \code{refit=FALSE} to speed up computation (and possibly accepting near-optimal estimates). It is always \code{TRUE} if \code{type='score'} or \code{type='davies'}.
 }
   \item{stop.if}{
-An integer. If, when trying an increasing number of breakpoints, there occur consecutively \code{stop.if} fits with  higher AIC/BIC values, the search is interrupted. Set a large number, \code{stop.if=100} say, if you want to assess the fits for all values \code{0, 1, 2, ..., Kmax}. Ignored if \code{type='score'} or \code{type='davies'}.
+An integer. If, when trying models with an increasing (when \code{G=1}) or decreasing (when \code{G>1}) number of breakpoints, \code{stop.if} consecutive fits exhibit higher AIC/BIC values, the search is interrupted. Set a large number, larger then \code{Kmax} say, if you want to assess the fits for all breakpoints \code{0, 1, 2, ..., Kmax}. Ignored if \code{type='score'} or \code{type='davies'}.
 }
   \item{return.fit}{
 If \code{TRUE}, the fitted model (with the number of breakpoints selected according to \code{type}) is returned.
@@ -49,31 +49,41 @@ If \code{TRUE}, the fitted model (with the number of breakpoints selected accord
 If \code{FALSE} the final fit is returned silently with the selected number of breakpoints, otherwise the messages about the selection procedure (i.e. the BIC values), and possible warnings are also printed.
 }
   \item{plot.ic}{
-If \code{TRUE} the information criterion values with respect to the number of breakpoints are plotted. Ignored if \code{type='score'} or \code{type='davies'}. Note that if \code{check.dslope=TRUE}, the final number of breakpoints could differ from the one selected by the BIC/AIC (leading to an inconsistent plot of the information criterion).   
+If \code{TRUE} the information criterion values with respect to the number of breakpoints are plotted. Ignored if \code{type='score'} or \code{type='davies'} or \code{G>1}. Note that if \code{check.dslope=TRUE}, the final number of breakpoints could differ from the one selected by the BIC/AIC leading to an inconsistent plot of the information criterion, see Note below.   
 }
   \item{th}{
-When a large number of breakpoints is being tested, it could happen that 2 estimated breakpoints are too close each other, and only one can be retained. Thus if the difference between two breakpoints is less or equal to \code{th}, one (the first) breakpoint is removed. Of course, \code{th} depends on the \code{x} scale: Integers, like 5 or 10, are appropriate if the covariate is the observation index. Default (\code{NULL}) means \code{th=diff(range(x))/100}. Ignored if \code{type='score'} or \code{type='davies'}.
+When a large number of breakpoints is being tested, it could happen that 2 estimated breakpoints are too close each other, and only one can be retained. Thus if the difference between two breakpoints is less or equal to \code{th}, one (the first) breakpoint is removed. Of course, \code{th} depends on the \code{x} scale: Integers, like 5 or 10, are appropriate if the covariate is the observation index. Default (\code{NULL}) means \code{th=diff(range(x))/100}. Set \code{th=0} if you are willing to consider even breakpoints very clode each other. Ignored if \code{type='score'} or \code{type='davies'}.
 }
   \item{G}{
 Number of sub-intervals to consider to search for the breakpoints when \code{type='bic'} or \code{'aic'}. See Details.
 }
   \item{check.dslope}{
-Logical. Effective only if \code{type='bic'} or \code{'aic'}. After breakpoint selection performed by BIC/AIC, should the \eqn{t}{t} values of the slope differences be checked? Simulation evidence suggests that such strategy leads to better results. See Details.
+Logical. Effective only if \code{type='bic'} or \code{'aic'}. After the optimal number of breakpoints has been selected (via AIC/BIC), should the \eqn{t}{t} values of the slope differences be checked? If \code{TRUE}, the breakpoints corresponding to slope differences with a 'low' \eqn{t}{t} values will be removed. Note the model is re-fitted at each removal and a new check is performed. Simulation evidence suggests that such strategy leads to better results. See Details.
 }
 %  \item{a}{
 %An additional tuning parameter for the BIC. \eqn{a=1}{a=1} provides the classical BIC.
 %}
 }
 \details{
-The function uses properly the functions \code{segmented}, \code{pscore.test} or \code{davies.test} to select the 'optimal' number of breakpoints \code{0,1,...,Kmax}. If \code{type='bic'} or \code{'aic'}, the procedure stops if the last \code{stop.if} fits have increasing values of the information criterion. Moreover, if a breakpoint is too close to other, actually less then \code{th}, is removed. Finally, if \code{check.dslope=TRUE}, breakpoints whose corresponding slope difference estimate is `small' (i.e. \eqn{p}-value larger then \code{alpha} or \code{alpha/Kmax}) are also removed.  When \eqn{G>1}{G>1} the dataset is split into \eqn{G}{G} groups, and the search is carried out separately within each group. This approach is fruitful when there are many breakpoints not evenly spaced in the covariate range and/or concentrated in some sub-intervals. \code{G=3} or \code{4} is recommended based on simulation evidence. 
+The function uses properly the functions \code{segmented}, \code{pscore.test} or \code{davies.test} to select the 'optimal' number of breakpoints \code{0,1,...,Kmax}. If \code{type='bic'} or \code{'aic'}, the procedure stops if the last \code{stop.if} fits have increasing values of the information criterion. Moreover, a breakpoint is removed if too close to other, actually if the difference between two consecutive estimates is less then \code{th}. Finally, if \code{check.dslope=TRUE}, breakpoints whose corresponding slope difference estimate is `small' (i.e. \eqn{p}-value larger then \code{alpha} or \code{alpha/Kmax}) are also removed. 
+
+When \eqn{G>1}{G>1} the dataset is split into \eqn{G}{G} groups, and the search is carried out separately within each group. This approach is fruitful when there are many breakpoints not evenly spaced in the covariate range and/or concentrated in some sub-intervals. \code{G=3} or \code{4} is recommended based on simulation evidence. 
 
 Note \code{Kmax} is always tacitely reduced in order to have at least 1 residual df in the model with \code{Kmax} changepoints. Namely, if \eqn{n=20}, the maximal segmented model has \code{2*(Kmax + 1)} parameters, and therefore the largest \code{Kmax} allowed is 8.
 
 When \code{type='score'} or \code{'davies'}, the function also returns the 'overall p-value' coming from combing the single p-values using the Fisher method. The pooled p-value, however, does not affect the final result which depends on the single p-values only. 
 
 }
+
+\note{
+If \code{check.dslope=TRUE}, there is no guarantee that the final model has the lowest AIC/BIC. Namely the model with the best A/BIC could have `non-significant' slope differences which will be removed (with the corresponding breakpoints) by the final model. Hence the possible plot (obtained via \code{plot.ic=TRUE}) could be misleading. See Example 1 below.   
+}
+
 \value{
-The returned object depends on argument \code{return.fit}. If \code{FALSE}, the returned object is a list with some information on the compared models (i.e. the BIC values), otherwise a classical \code{'segmented'} object with the component \code{selection.psi} including the aforementioned information. See \code{\link{segmented}} for details.
+The returned object depends on argument \code{return.fit}. If \code{FALSE}, the returned object is a list with some information on the compared models (i.e. the BIC values), otherwise a classical \code{'segmented'} object (see \code{\link{segmented}} for details) with the component \code{selection.psi} including the A/BIC values and\cr
+ - if \code{refit=TRUE}, \code{psi.no.refit} that represents the breakpoint values before the last fit (with boot restarting)\cr
+ - if \code{G>1}, \code{cutvalues} including the cutoffs values used to split the data.
+
 %%  \item{comp1 }{Description of 'comp1'}
 %%  \item{comp2 }{Description of 'comp2'}
 %% ...
@@ -85,9 +95,6 @@ https://www.researchgate.net/publication/343737604
 \author{
 Vito M. R. Muggeo
 }
-%\note{
-%If \code{Kmax} is set high with respect to the actual number of 
-%}
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
@@ -109,7 +116,7 @@ os <-selgmented(out.lm, type="bic", Kmax=3) #BIC-based selection
 
 \dontrun{
 ########################################
-#Selecting a large number of breakpoints
+#Example 1: selecting a large number of breakpoints
 
 b <- c(-1,rep(c(1.5,-1.5),l=15))
 psi <- seq(.1,.9,l=15)
@@ -126,12 +133,14 @@ o<-selgmented(y, Kmax=20, type='bic', plot.ic=TRUE, check.dslope = FALSE)
 plot(o, res=TRUE, col=2, lwd=3)
 points(o)
 # select via the BIC + check on the slope differences (default)
-o1 <-selgmented(y, Kmax=20, type='bic') #check.dslope = TRUE by default
+o1 <-selgmented(y, Kmax=20, type='bic', plot.ic=TRUE) #check.dslope = TRUE by default
+#note the plot of BIC is misleading.. But the number of psi is correct 
 plot(o1, add=TRUE, col=3)
 points(o1, col=3, pch=3)
 
 ##################################################
-#a large number of breakpoints not evenly spaced.  
+#Example 2: a large number of breakpoints not evenly spaced.  
+
 b <- c(-1,rep(c(2,-2),l=10))
 psi <- seq(.5,.9,l=10)
 n <- 2000

@@ -20,10 +20,10 @@ a fitted model object of class "stepmented", returned by any \code{stepmented} m
 The power of \code{n} for the smooth approximation. Simulation evidence suggests \code{k} in [-1, -1/2]; with k=-1/2 providing somewhat 'conservative' standard errors especially at small sample sizes.
 }
 \item{return.X}{
-If \code{TRUE} the (pseudo) design matrix is returned (into a list).
+If \code{TRUE}, the (pseudo) design matrix is returned (into a list).
 }
 \item{zero.cor}{
-If \code{TRUE} the covariances between the jumpoints and the remaining linear coefficients are set to zero.
+If \code{TRUE}, the covariances between the jumpoints and the remaining linear coefficients are set to zero.
 }
 \item{\dots}{
 additional arguments. }

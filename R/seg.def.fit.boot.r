@@ -3,25 +3,47 @@ seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, j
 #random se TRUE prende valori random quando e' errore: comunque devi modificare qualcosa (magari con it.max)
 #     per fare restituire la dev in corrispondenza del punto psi-random
 #nonParm. se TRUE implemneta il case resampling. Quello semiparam dipende dal non-errore di
-extract.psi<-function(lista){
+      extract.psi<-function(lista){
 #serve per estrarre il miglior psi..
-  dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
-  psi.values<-lista[[2]][-1] #remove the 1st one (NA)
-  dev.ok<-min(dev.values)
-    	id.dev.ok<-which.min(dev.values)
-    	if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values),
-    		nrow=length(dev.values), byrow=TRUE)
-    	if(!is.matrix(psi.values)) psi.values<-matrix(psi.values)
-    	psi.ok<-psi.values[id.dev.ok,]
-    	r<-list(SumSquares.no.gap=dev.ok, psi=psi.ok)
-    	r
-	}
+          dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
+          psi.values<-lista[[2]][-1] #remove the 1st one (NA)
+          dev.ok<-min(dev.values)
+    	    id.dev.ok<-which.min(dev.values)
+    	    if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values),
+    		        nrow=length(dev.values), byrow=TRUE)
+    	    if(!is.matrix(psi.values)) psi.values<-matrix(psi.values)
+    	    psi.ok<-psi.values[id.dev.ok,]
+    	    r<-list(SumSquares.no.gap=dev.ok, psi=psi.ok)
+    	    r
+      }
 #-------------
+      #browser()
+      if(is.null(opz$seed)){
+        if(!is.null(obj$y)) {
+          mY <- mean(obj$y)
+          } else {
+            mY <- if(!is.null(obj$residuals)) mean(obj$residuals) else as.numeric(logLik(obj))
+          }
+        vv <- strsplit(paste(strsplit(paste(mY),"\\.")[[1]], collapse=""),"")[[1]]
+        vv<-vv[vv!="0"]
+        vv=na.omit(vv[1:5])
+        seed <-eval(parse(text=paste(vv, collapse="")))
+        set.seed(seed)
+      } else {
+        if(is.na(opz$seed)) {
+          seed <-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+          set.seed(seed)
+        } else {
+          seed <-opz$seed
+          set.seed(opz$seed)
+        }
+      }  
+      
       visualBoot<-opz$visualBoot
       opz.boot<-opz
       opz.boot$pow=c(1,1) #c(1.1,1.2)
       opz1<-opz
-      opz1$it.max <-1
+      opz1$it.max <-0
       n<-nrow(mfExt)
       o0<-try(suppressWarnings(seg.def.fit(obj, Z, PSI, mfExt, opz)), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
@@ -130,11 +152,13 @@ extract.psi<-function(lista){
       ris<-list(all.selected.psi=drop(all.selected.psi),all.selected.ss=all.selected.ss, all.psi=all.est.psi, all.ss=all.ss)
 
       if(is.null(o0$obj)){
-          PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-            o0 <- try(suppressWarnings(seg.def.fit(obj, Z, PSI1, mfExt, opz1)), silent=TRUE)
+        PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+        o0 <- try(suppressWarnings(seg.def.fit(obj, Z, PSI1, mfExt, opz1)), silent=TRUE)
+        warning("The final fit can be unreliable (possibly mispecified segmented relationship)", call.=FALSE, immediate.=TRUE)
       }
       if(!is.list(o0)) return(0)
       o0$boot.restart<-ris
-      rm(.Random.seed, envir=globalenv())
+      o0$seed<-seed
+      #rm(.Random.seed, envir=globalenv())
       return(o0)
       }

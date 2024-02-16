@@ -7,9 +7,14 @@
         print( x$call )
         cat("\nCoefficients of the linear terms:\n")
         #print(x$coef[(1:(length(x$coef)-length(x$psi[,2])))])
-        iV<- -match(x$nameUV[[2]],names(coef(x)))#iV<- -grep("psi.",names(coef(x)))#indices all but V
+        .coef <- coef(x)
+        if(is.null(.coef)) .coef<- x$coef
+        if(is.null(.coef)) stop(" No coefficients in the fit object?")
+        iV<- -match(x$nameUV$V,names(.coef))#iV<- -grep("psi.",names(coef(x)))#indices all but V
+        
+
         #print(x$coef[iV])
-        print.default(format(x$coef[iV], digits = digits), print.gap = 2, quote = FALSE)
+        print.default(format(.coef[iV], digits = digits), print.gap = 2, quote = FALSE)
         cat("\n")
         cat("Estimated Break-Point(s):\n")
         a<-as.vector(x$psi[,"Est."])

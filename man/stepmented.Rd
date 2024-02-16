@@ -18,20 +18,20 @@ stepmented relationships in regression models
 }
 \usage{
 stepmented(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), 
-   keep.class=FALSE, var.psi=TRUE, ...)
+   keep.class=FALSE, var.psi=FALSE, ...)
 %\method{stepmented}{default}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model = TRUE, keep.class=FALSE, ...)
 \method{stepmented}{lm}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
-   keep.class=FALSE, var.psi=TRUE, ...)
+   keep.class=FALSE, var.psi=FALSE, ...)
 
 \method{stepmented}{glm}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
-    keep.class=FALSE, var.psi=TRUE, ...)
+    keep.class=FALSE, var.psi=FALSE, ...)
 
 \method{stepmented}{numeric}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
-    keep.class=FALSE, var.psi=TRUE, ..., 
+    keep.class=FALSE, var.psi=FALSE, ..., 
     pertV=0, centerX=FALSE, adjX=NULL, weights=NULL)
 
 \method{stepmented}{ts}(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
-    keep.class=FALSE, var.psi=TRUE, ..., 
+    keep.class=FALSE, var.psi=FALSE, ..., 
     pertV=0, centerX=FALSE, adjX=NULL)
 
 
@@ -68,7 +68,7 @@ such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"
   Only for \code{stepmented.ts} and \code{stepmented.numeric}. If the response vector leads to covariate with large values (such as years for ts objects), \code{adjX=TRUE} will shift the covariate to have a zero origin. Default is \code{NULL} which means \code{TRUE} if the minimum of covariate is 1000 or larger.
 }
 \item{var.psi}{
-logical. If \code{TRUE} (default), the estimate covariance matrix is also computed via \code{\link{vcov.stepmented}}, thus the breakpoint standard errors are also included in the \code{psi} component of the returned object.
+logical. If \code{TRUE}, the estimate covariance matrix is also computed via \code{\link{vcov.stepmented}}, thus the breakpoint standard errors are also included in the \code{psi} component of the returned object. Default is \code{FALSE}, as computing the estimate covariance matrix is somewhat time-consuming when the sample size is large. 
 }
 \item{weights}{
   possible weights to include in the estimation process (only for \code{stepmented.numeric}).
@@ -121,17 +121,21 @@ original object \code{obj} with additionally the followings:
 %}
 
 \note{
-The component \code{psi.rounded} of the fit object includes the rounded changepoint values which are usually taken as the final estimates. More specifically, each column of \code{psi.rounded} represents a changepoint and the corresponding rows are the range of the `optimal' interval. The first row, i.e. the lower bound of the interval, is taken as point estimate. \code{print.stepmented}, \code{print.summary.stepmented}, and \code{confint.stepmented} return the rounded (lower) value of the interval..
+The component \code{psi.rounded} of the fit object includes the rounded changepoint values which are usually taken as the final estimates. More specifically, each column of \code{psi.rounded} represents a changepoint and the corresponding rows are the range of the `optimal' interval. The first row, i.e. the lower bound of the interval, is taken as point estimate. \code{print.stepmented}, \code{print.summary.stepmented}, and \code{confint.stepmented} return the rounded (lower) value of the interval.
 
 Also:
 \enumerate{
 
 \item The algorithm will start if the \code{it.max} argument returned by \code{seg.control}
   is greater than zero. If \code{it.max=0} \code{stepmented} will estimate a new linear model with
- break-point(s) fixed at the values reported in \code{psi}.
+ break-point(s) fixed at the starting values reported in \code{psi}. Alternatively, it is also possible to set \code{h=0} in \code{seg.control()}. In this case, bootstrap restarting is unncessary, then to have changepoints at \code{mypsi} type \cr
  
+ \code{stepmented(.., psi=mypsi, control=seg.control(h=0, n.boot=0, it.max=1))}
+
+
 \item In the returned fit object, `U.' is put before the name of the stepmented 
 variable to indicate the difference in the mean levels. \code{\link{slope}} can be used to compute the actual mean levels corresponding to the different intervals.
+
 
 \item Currently methods specific to the class \code{"stepmented"} are
     \itemize{
@@ -185,6 +189,13 @@ o<-stepmented(glm(y~1,family=poisson))
 plot(o, res=TRUE)
 
 \dontrun{
+
+## Example using the (well-known) Nile dataset
+data(Nile)
+plot(Nile)
+os<- stepmented(Nile)
+plot(os, add=TRUE)
+
 
 ### Example with (binary) GLM (example from the package stepR)
 set.seed(1234)

@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Confidence intervals for breakpoints in stepmented regression}
 \description{
-  Computes confidence intervals for the breakpoints in a fitted `stepmented' model.
+  Computes confidence intervals for the changepoints (or jumpoints) in a fitted `stepmented' model.
 }
 \usage{
 \method{confint}{stepmented}(object, parm, level=0.95, method=c("delta", "score", "gradient"), %var.diff=FALSE, 
@@ -16,7 +16,7 @@
   \item{parm}{the stepmented variable of interest. If missing the first stepmented variable in \code{object} is considered. }
   \item{level}{the confidence level required, default to 0.95.}
   \item{method}{which confidence interval should be computed. One of \code{"delta"}, \code{"score"}, or \code{"gradient"}. Can be abbreviated. Currently only \code{"delta"} allowed.}
-  \item{round}{logical. Should the values (estimates and lower/upper limits) rounded to the smallest integer?}
+  \item{round}{logical. Should the values (estimates and lower/upper limits) rounded to the smallest observed value?}
   \item{cheb}{logical. If \code{TRUE}, the confidence limits are computed using the Chebyshev inequality which yields conservative confidence intervals but it is 'robust' to the non-normality of the changepoint sampling distribution. 
   }
   %\item{var.diff}{logical. If \code{method="delta"},  and there is a single segmented variable, \code{var.diff=TRUE} leads     to standard errors based on sandwich-type formula of the covariance matrix. See Details in \code{\link{summary.segmented}}.}
@@ -30,7 +30,7 @@
   }
 }
 \details{
-  \code{confint.stepmented} computes confidence limits for the changepoints. Currently the only option is to compute the covariance matrix and to build 
+  \code{confint.stepmented} computes confidence limits for the changepoints. Currently the only option is \code{'delta'}, i.e. to compute the approximate covariance matrix via a smoothg approximation (see \code{\link{vcov.stepmented}}) and to build the limits using the standard Normal quantiles. Note that, the limits are rounded to the lowest observed value, thus the resulting confidence interval might not be symmetric if the stepmented covariate has not equispaced values. 
   }
 \value{
     A matrix including point estimate and confidence limits of the breakpoint(s) for the

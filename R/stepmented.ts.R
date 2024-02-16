@@ -1,5 +1,5 @@
 stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.control(), keep.class=FALSE, 
-                          var.psi=TRUE, ..., pertV=0, centerX=FALSE, adjX=NULL) {
+                          var.psi=FALSE, ..., pertV=0, centerX=FALSE, adjX=NULL) {
   #pertV come calcolare la variabile V=1/(2*abs(Xtrue-PSI)? i psi devono essere diversi dalle x_i 
   #   utilizzare i psi stimati che tipcamente sono diversi? (perV=0)
   #   oppure i psi.mid che sicuramente sono (o meglio dovrebbero essere)  tra due x_i...
@@ -37,6 +37,7 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   break.boot<- control$break.boot + 2
   seed<- control$seed
   fix.npsi<-control$fix.npsi
+  h<-control$h
   #-----------
   #if(!(is.vector(obj) || is.ts(obj))) stop("obj should be a 'lm' fit, a 'vector' or 'ts' object")
   
@@ -61,7 +62,6 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
         name.Z <- all.vars(seg.Z)
         adjX <- FALSE
   }
-  
   min.x<- min(x)
   if(is.null(adjX)) {
     adjX<- if(min.x>=1000) TRUE else FALSE
@@ -119,6 +119,8 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   #browser()
   
   if(it.max == 0) {
+    mfExt<-data.frame(y, Z)
+    names(mfExt) <- c(all.vars(Fo0), name.Z)
     ripetizioni<-unlist(tapply(nomiZ, nomiZ, function(.x)1:length(.x)))
     U <- (Xtrue>PSI)
     colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
@@ -147,8 +149,10 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
   
   opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ,
-            #nomiOK=nomiOK, id.psi.group=id.psi.group, visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
-            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii) #, npsii=npsii, P=P)
+            id.psi.group=id.psi.group,h=h,
+            #nomiOK=nomiOK,  visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
+            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii,
+            seed=control$seed)
   
   # #################################################################################
   # #### jump.fit(y, XREG=x.lin, Z=Xtrue, PSI, w=ww, offs, opz, return.all.sol=FALSE)
@@ -157,8 +161,9 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   if(n.boot<=0){
     obj<- step.ts.fit(y, x.lin, Xtrue, PSI, opz, return.all.sol=FALSE)
   } else {
-    if("seed" %in% names(control)) set.seed(control$seed)
-    obj<-step.ts.fit.boot(y, x.lin, Xtrue, PSI, opz, n.boot, break.boot=break.boot) #, size.boot=size.boot, random=random)
+    #if("seed" %in% names(control)) set.seed(control$seed)
+    obj<-step.ts.fit.boot(y, x.lin, Xtrue, PSI, opz, n.boot, break.boot=break.boot)
+    seed <- obj$seed
   }
   # if(!is.list(obj)){
   #   warning("No breakpoint estimated", call. = FALSE)
@@ -354,6 +359,7 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   objF$nameUV <- list(U = drop(nomiU), V = nomiV, Z = name.Z) #Z = name.Z
   objF$rangeZ<-obj$rangeZ
   objF$Z <- Z[,unique(name.Z),drop=FALSE]
+  if(n.boot>0) objF$seed <- seed
   if(adjX) {
     objF$Z <- objF$Z + min.x
     objF$rangeZ<- objF$rangeZ + min.x

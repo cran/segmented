@@ -15,9 +15,13 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
     }
     nomiU <- object$nameUV$U
     nomiV <- object$nameUV$V
-    idU<-match(nomiU,names(coef(object)[!is.na(coef(object))]))
-    idV<-match(nomiV,names(coef(object)[!is.na(coef(object))]))
-    beta.c<- coef(object)[nomiU]
+    .coef <- coef(object)
+    if(is.null(.coef)) .coef<- object$coef
+    if(is.null(.coef)) stop(" No coefficients in the fit object?")
+    
+    idU<-match(nomiU,names(.coef[!is.na(.coef)]))
+    idV<-match(nomiV,names(.coef[!is.na(.coef)]))
+    beta.c<- .coef[nomiU]
     #per metodo default.. ma serve????
     #browser()
     if(all(is.na(object[["psi"]][,"St.Err"]))) {

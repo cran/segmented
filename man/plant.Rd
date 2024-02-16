@@ -32,13 +32,15 @@ data(plant)
 
 lattice::xyplot(y~time,groups=group,auto.key=list(space="right"), data=plant)
 
-o<-segreg(y~ group+seg(time, by=group, npsi=2), data=plant)
+o<-segreg(y~ 0+group+seg(time, by=group, npsi=2), data=plant)
 summary(o)
 
-with(plant, plot(time, y))
-plot(o, 1, add=TRUE)
-plot(o, 2, add=TRUE, col=3)
-plot(o, 3, add=TRUE, col=4)
+par(mfrow=c(1,2))
+plot(y~time, data=plant)
+plot(o, term=1:3, add=TRUE, leg=NA, psi.lines=TRUE) #add the lines to the current plot
+
+plot(o, term=1:3, col=3:5, res.col=3:5, res=TRUE, leg="bottomright")
+
 }
 }
 \keyword{datasets}

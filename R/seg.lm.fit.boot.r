@@ -33,11 +33,41 @@ extract.psi<-function(lista){
     	r
 	}
 #-------------
-      visualBoot<-opz$visualBoot
+  if(is.null(opz$seed)){
+    mY <- mean(y)
+    vv <- strsplit(paste(strsplit(paste(mY),"\\.")[[1]], collapse=""),"")[[1]]
+    vv<-vv[vv!="0"]
+    vv=na.omit(vv[1:5])
+    seed <-eval(parse(text=paste(vv, collapse="")))
+    set.seed(seed)
+  } else {
+    if(is.na(opz$seed)) {
+      seed <-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+      set.seed(seed)
+    } else {
+      seed <-opz$seed
+      set.seed(opz$seed)
+    }
+  }  
+
+    
+  # if(!is.null(opz$seed)) {
+  # } else {
+  #   mY <- mean(y)
+  #   vv <- strsplit(paste(strsplit(paste(mY),"\\.")[[1]], collapse=""),"")[[1]]
+  #   vv<-vv[vv!="0"]
+  #   vv=na.omit(vv[1:5])
+  #   seed <-eval(parse(text=paste(vv, collapse="")))
+  #   #seed <-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+  #   set.seed(seed)
+  # }
+  # 
+
+    visualBoot<-opz$visualBoot
       opz.boot<-opz
       opz.boot$pow=c(1,1) #c(1.1,1.2)
       opz1<-opz
-      opz1$it.max <-1
+      opz1$it.max <-0
       n<-length(y)
       o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
@@ -157,6 +187,8 @@ extract.psi<-function(lista){
         #id.uguali<-(round(diff(all.selected.ss[c(k-1,k-2)]),6)==0)+id.uguali      
         } #end n.boot
 
+      #browser()
+      
       all.selected.psi<-rbind(est.psi00,all.selected.psi)
       all.selected.ss<-c(ss00, all.selected.ss)
 
@@ -165,9 +197,11 @@ extract.psi<-function(lista){
       if(is.null(o0$obj)){
           PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
           o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1)), silent=TRUE)
+          warning("The final fit can be unreliable (possibly mispecified segmented relationship)", call.=FALSE, immediate.=TRUE)
       }
       if(!is.list(o0)) return(0) #NOn e' meglio che restituisca un errore?
-      o0$boot.restart<-ris
-      rm(.Random.seed, envir=globalenv())
+      o0$boot.restart <- ris
+      o0$seed<-seed
+      #rm(.Random.seed, envir=globalenv())
       return(o0)
       }

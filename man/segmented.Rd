@@ -38,7 +38,7 @@ segmented(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{obj}{ standard `linear' model of class "lm", "glm" or "Arima". Since version 0.5.0-0 any regression 
-    fit may be supplied (see 'Details'). \code{obj} could include any covariate, and if there is also the variable specified in \code{seg.Z}, then all the slopes of the fitted segmented relationship will be estimated. If \code{obj} misses the segmented variable, then the 1st (the leftmost) slope is assumed to be zero. Since version 1.5.0, \code{obj} can be a simple numeric or \code{ts} object, see examples below.}
+    fit may be supplied (see 'Details'). \code{obj} could include any covariate, and if there is also the variable specified in \code{seg.Z}, then all the slopes of the fitted segmented relationship will be estimated. If \code{obj} misses the segmented variable, then the 1st (the leftmost) slope is assumed to be zero. Since version 1.5.0, \code{obj} can be a simple numeric or \code{ts} object (fitted via \code{segmented.numeric}) but with only a single segmented variables, see examples below.}
 \item{seg.Z}{ the segmented variables(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, 
 such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. Also, variable names formed by \verb{U} or \verb{V} only (with or without numbers) are not permitted.}
 \item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. 
@@ -117,7 +117,10 @@ original object \code{obj} with additionally the followings:
 \enumerate{
 \item The algorithm will start if the \code{it.max} argument returned by \code{seg.control}
   is greater than zero. If \code{it.max=0} \code{segmented} will estimate a new linear model with
- break-point(s) fixed at the values reported in \code{psi}.
+ break-point(s) fixed at the values reported in \code{psi}.Alternatively, it is also possible to set \code{h=0} in \code{seg.control()}. In this case, bootstrap restarting is unncessary, then to have breakpoints at \code{mypsi} type \cr
+ 
+ \code{segmented(.., psi=mypsi, control=seg.control(h=0, n.boot=0, it.max=1))}
+
  
 \item In the returned fit object, `U.' is put before the name of the segmented 
 variable to mean the difference-in-slopes coefficient.
@@ -156,7 +159,7 @@ Muggeo, V.M.R. (2008) Segmented: an R package to fit regression
 \author{ Vito M. R. Muggeo, \email{vito.muggeo@unipa.it} }
 
 
-\seealso{ \code{\link{segmented.lme}} for random changepoints (segmented mixed) models. }
+\seealso{ \code{\link{segmented.glm}} for segmented GLM and \code{\link{segreg}} to fit the models via a formula interface. \code{\link{segmented.lme}} fits random changepoints (segmented mixed) models. }
 
 \examples{
 
@@ -205,6 +208,7 @@ o1<-update(o,seg.Z=~x+z,psi=list(x=c(30,60),z=.3))
 
 #automatic procedure to estimate breakpoints in the covariate x (starting from K quantiles)
 # Hint: increases number of iterations. Notice: bootstrap restart is not allowed!
+# However see ?selgmented for a better approach
 #o<-segmented.lm(out.lm,seg.Z=~x+z,psi=list(x=NA,z=.3), 
 #    control=seg.control(fix.npsi=FALSE, n.boot=0, tol=1e-7, it.max = 50, K=5, display=TRUE))
 
@@ -221,7 +225,8 @@ draw.history(o, "z")
 # A simple segmented model with continuous responses and no linear covariates
 # No need to fit the starting lm model:
 segmented(yy, npsi=2) #NOTE: subsetting the vector works ( segmented(yy[-1],..) ) 
-#if seg.Z is unspecified, the segmented variable is taken as 1:n/n 
+#only a single segmented covariate is allowed in seg.Z, and if seg.Z is unspecified, 
+#   the segmented variable is taken as 1:n/n 
 
 
 # An example using the Arima method:

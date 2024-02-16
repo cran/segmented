@@ -40,12 +40,31 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
   #-------------
   #obj<- jump.fit(y, XREG=x.lin, Z=Xtrue, PSI, w=ww, offs, opz, return.all.sol=FALSE)
   #--------------
+  if(is.null(opz$seed)){
+    mY <- mean(y)
+    vv <- strsplit(paste(strsplit(paste(mY),"\\.")[[1]], collapse=""),"")[[1]]
+    vv<-vv[vv!="0"]
+    vv=na.omit(vv[1:5])
+    seed <-eval(parse(text=paste(vv, collapse="")))
+    set.seed(seed)
+  } else {
+    if(is.na(opz$seed)) {
+      seed <-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+      set.seed(seed)
+    } else {
+      seed <-opz$seed
+      set.seed(opz$seed)
+    }
+  }  
+  
+  
+  
   visualBoot<-opz$display
   opz$display<-FALSE
   opz.boot<-opz
   opz.boot$pow=c(1,1) #c(1.1,1.2)
   opz1<-opz
-  opz1$it.max <-1
+  opz1$it.max <-0
   n<-length(y)
   o0<-try(suppressWarnings(step.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)), silent=TRUE)
   alpha<-opz$alpha
@@ -189,9 +208,11 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
   if(is.null(o0$obj)){
     PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
     o0 <- try(step.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
+    warning("The final fit can be unreliable (possibly mispecified segmented relationship)", call.=FALSE, immediate.=TRUE)
   }
   if(!is.list(o0)) return(0)
   o0$boot.restart<-ris
-  rm(.Random.seed, envir=globalenv())
+  o0$seed <- seed
+  #rm(.Random.seed, envir=globalenv())
   return(o0)
 }

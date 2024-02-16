@@ -37,8 +37,6 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     digits<-control$digits
     toll <- control$toll
     if(toll<0) stop("Negative tolerance ('tol' in seg.control()) is meaningless", call. = FALSE)
-    visual <- control$visual
-    
     stop.if.error<-control$stop.if.error
     fix.npsi<-fix.npsi<-control$fix.npsi
     if(!is.null(stop.if.error)) {#if the old "stop.if.error" has been used..
@@ -54,18 +52,22 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     random<-control$random
     pow<-control$pow
     conv.psi<-control$conv.psi
+    visual <- control$visual
     visualBoot<-FALSE
-    if(n.boot>0){
-      if(!is.null(control$seed)) {
-        set.seed(control$seed)
-        employed.Random.seed<-control$seed
-      } else {
-        employed.Random.seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
-        set.seed(employed.Random.seed)
-      }
-      if(visual) {visual<-FALSE; visualBoot<-TRUE}# warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
-      #        if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
-    }
+    if(visual && n.boot>0) {visual<-FALSE; visualBoot<-TRUE}
+    
+    
+    # if(n.boot>0){
+    #   if(!is.null(control$seed)) {
+    #     set.seed(control$seed)
+    #     employed.Random.seed<-control$seed
+    #   } else {
+    #     employed.Random.seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+    #     set.seed(employed.Random.seed)
+    #   }
+    #   if(visual) {visual<-FALSE; visualBoot<-TRUE}# warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
+    #   #        if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
+    # }
     last <- control$last
     K<-control$K
     h<-control$h
@@ -194,6 +196,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     nomiBy <- unlist(sapply(l,function(xx) attr(xx,"nomeBy")))
     levelsBy <- lapply(l,function(xx) attr(xx,"levelsBy"))
     
+    #browser()
     if(all(sapply(levelsBy, is.null)) && (length(npsiList)!=length(nomiPS))) stop(" 'npsi' is not correctly specified")
     
     rangeSmooth<-mVariabili<-NULL
@@ -215,7 +218,9 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
 		for(j in id.ps) mVariabili[length(mVariabili)+1]<-mf[j]
     B<- Bfix <- nomiPS.ps.int.list<-vector(length=length(mVariabili) , "list")
     #BFixed<-BB<-Bderiv
-    #browser()
+    
+    
+    
     
     for(j in 1:length(mVariabili)) {
       if(nomiBy[j]=="NULL"){ # se usuale termine seg()
@@ -225,7 +230,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         #for(jj in c("nomeX", "psi", "npsi", "f.x", "nomeBy")) attr(variabileSmooth,jj)<-NULL
         B[[j]]<- variabileSmooth
         rangeSmooth[[j]] <- range(variabileSmooth)
-        
+        nomiPS.ps.int.list[[j]]<- nomiPS[j]
         
       } else { #se ci sono termini by
         if(is.null(levelsBy[[j]])){ #se e' vc con variabile continua
@@ -253,25 +258,28 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       } 
     } #end for(j in 1:length(mVariabili))
     
-      repl<-pmax(sapply(B,length)*sapply(B,is.list),1)
-      for(i in 1:length(npsiList)){
-        if(length(npsiList[[i]])==1) {
-          npsiList[[i]] <- rep(npsiList[[i]], repl[i])
-          if(!is.list(estList[[i]]) && !is.null(levelsBy[[i]])) estList[[i]] <- rep(estList[i], repl[i])
-        }
-      }      
-      npsiList <- unlist(npsiList)
+    #browser()
+    
+    repl<-pmax(sapply(B,length)*sapply(B,is.list),1)
+    for(i in 1:length(npsiList)){
+      if(length(npsiList[[i]])==1) {
+        npsiList[[i]] <- rep(npsiList[[i]], repl[i])
+        if(!is.list(estList[[i]]) && !is.null(levelsBy[[i]])) estList[[i]] <- rep(estList[i], repl[i])
+      }
+      if(length(nomiPS.ps.int.list[[i]])!=length(npsiList[[i]])) stop(paste(" 'npsi' (its length) is not correctly specified in the seg term:",i))
+      if(!is.null(names(npsiList[[i]]))){
+        if(length(setdiff(nomiPS.ps.int.list[[i]], names(npsiList[[i]])))!=0) stop(paste(" 'npsi' (its names) is not correctly specified in the seg term:",i))
+      }
+    }
+    npsiList <- unlist(npsiList)
       
-      if(!any(sapply(psiList,is.list))) psiList <- rep(psiList, repl)
-      if(!any(sapply(estList,is.list))) estList <- rep(estList, repl)
-      if(!any(sapply(RList,is.list))) RList <- rep(RList, repl)
-      
-      
-      nomiPS.orig <- rep(nomiPS.orig, repl)
-      Bfix <- rep(Bfix, repl)
-      fixpsiList<- rep(fixpsiList, repl)
-      
-      while(any(sapply(B,is.list))){
+    if(!any(sapply(psiList,is.list))) psiList <- rep(psiList, repl)
+    if(!any(sapply(estList,is.list))) estList <- rep(estList, repl)
+    if(!any(sapply(RList,is.list))) RList <- rep(RList, repl)
+    nomiPS.orig <- rep(nomiPS.orig, repl)
+    Bfix <- rep(Bfix, repl)
+    fixpsiList<- rep(fixpsiList, repl)
+    while(any(sapply(B,is.list))){
         id.vc<-which((sapply(B, is.list)))[1]
         nc<-length(B[[id.vc]])
         B<-append(B, B[[id.vc]], after = id.vc-1)
@@ -296,33 +304,31 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         #se la lista contiene solo NULL, non funziona...
         #penMatrixList <- append(penMatrixList, penMatrixList[[id.vc]], after = id.vc-1)
         #penMatrixList[[id.vc+nc]]<-NULL
-      }
+    }
+    
       
       #if(!all(sapply(estList,check.estPsi))) stop(" 'est' is misspecified in one or more seg() term")
       
-      nomiTerminiSEG<-nomiCoefPSI <-NULL
-      nomiPS.ps.unlist.seg <- unlist(nomiPS.ps.list)
-      nomiPS.ps.unlist <- sub("[)]", "", sub("seg[(]", "",nomiPS.ps.unlist.seg ))
-      names(psiList)<- nomiPS.ps.unlist 
-      for(i in 1:length(B)) {
+    nomiTerminiSEG<-nomiCoefPSI <-NULL
+    nomiPS.ps.unlist.seg <- unlist(nomiPS.ps.list)
+    nomiPS.ps.unlist <- sub("[)]", "", sub("seg[(]", "",nomiPS.ps.unlist.seg ))
+    names(psiList)<- nomiPS.ps.unlist 
+    for(i in 1:length(B)) {
         #nomiCoefPSI[[i]]<- paste(paste("psi",1:length(psiList[[i]]), sep=""), nomiPS.ps.unlist[i], sep=".") ##oppure sep=".psi"
         nomiTerminiSEG[[i]]<-rep(nomiPS.ps.unlist[i], length(psiList[[i]]))
-      }
-      #nomiCoefU<-lapply(nomiCoefPSI, function(.x) sub("psi","U",.x )) 
+    }
+    #nomiCoefU<-lapply(nomiCoefPSI, function(.x) sub("psi","U",.x )) 
       #nomiCoefZ<-lapply(nomiCoefPSI, function(.x) sub("psi","Z",.x ))
-      nomiSeg<- unique(unlist(nomiTerminiSEG))
+    nomiSeg<- unique(unlist(nomiTerminiSEG))
       
       
-      #browser()
+    #browser()
       
       #FINALMENTE (speriamo..:-))
       #nomiCoefZ, nomiCoefpsi, nomiCoefU sono liste con nomi che includono sia le possibili interazioni, sia il n. dei breakpoints
       #Anche nomiTerminiSEG e' della stessa dimensione ma i nomi ignorano il n.dei breakpoints (questa serve per rangeZ)
       
-      #browser()
-      
       #nomiSeg
-      
       #npsiList
       #psiList
       #estList
@@ -335,8 +341,12 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       #                                                            Or all or no name allowed.")
       # }
       
-      npsiList1<-id.contrR <- rep(NA, length(B))
-      for(j in 1:length(B)){
+    #browser()
+      
+    if(any(sapply(estList, is.list))) stop(" One or more 'est' components misspecified")
+    
+    npsiList1<-id.contrR <- rep(NA, length(B))
+    for(j in 1:length(B)){
         #K<- npsiList[j]
         K <- if(!is.na(npsiList[nomiSeg[j]])) npsiList[nomiSeg[j]] else npsiList[j]
         npsiList1[j]<- K
@@ -354,6 +364,8 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
           colnames(Bfix[[j]])<- paste("U", 1:length(fixpsiList[[j]]),".fixed.",nomiPS.orig[j], sep="")
         }
       #se per qualche termine ci sono le matrici dei vincoli sulle slope
+        #browser()
+        
         j.ok=match(nomiSeg[j], names(RList), nomatch=0)
         j.ok <-if(j.ok>0) j.ok else j 
         if(!any(is.na(RList[[j.ok]]))){
@@ -363,7 +375,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             j.ok=match(nomiSeg[j], names(estList), nomatch=0)
             j.ok <-if(j.ok>0) j.ok else j
             if(!any(is.na(estList[[j.ok]]))){
-              if(length(estList[[j.ok]])!=(K+1)) stop("length(est) is not compatible with n.psi")
+              if(length(estList[[j.ok]])!=(K+1)) stop(" 'est' is not compatible with 'n.psi' ")
               #browser()
               RList[[j]]<-diag(K+1)[,estList[[j.ok]]==1,drop=FALSE]
               id.contrR[j] <-TRUE
@@ -372,7 +384,8 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
               id.contrR[j] <-FALSE
             }
           }
-      }
+    }
+    
       
       #NB: Poiche' ora psiList include i veri numeri dei psi, i codici vanno rilanciati
       for(i in 1:length(B)) {
@@ -444,7 +457,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=var(Y)*(n-1),visual=visual,it.max=it.max,nomiOK=unlist(nomiCoefU),
                 fam=family, eta0=NULL, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
                 conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,
-                pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg)
+                pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg, seed=control$seed)
       #browser()
       
       if(any(id.contrR)){
@@ -455,6 +468,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             obj <- segConstr.lm.fit.boot(Y, X, Z, PSI, weights, offs, opz, 
                                  n.boot = n.boot, size.boot = size.boot, random = random, 
                                  break.boot = break.boot)
+            seed<- obj$seed
           }
           class0<- "lm"
           if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
@@ -465,6 +479,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             obj <-segConstr.glm.fit.boot(Y, X, Z, PSI, weights, offs, opz, 
                                    n.boot=n.boot, size.boot=size.boot, random=random, 
                                    break.boot=break.boot)
+            seed<- obj$seed
           }
           class0<-c("glm","lm")
           }
@@ -477,6 +492,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
               obj <- seg.lm.fit.boot(Y, X, Z, PSI, weights, offs, opz, 
                                n.boot = n.boot, size.boot = size.boot, random = random, 
                                break.boot = break.boot)
+              seed<- obj$seed
           }
           class0<-"lm"
           if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
@@ -487,12 +503,13 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             obj <-seg.glm.fit.boot(Y, X, Z, PSI, weights, offs, opz, 
                                 n.boot=n.boot, size.boot=size.boot, random=random, 
                                 break.boot=break.boot)
+            seed<- obj$seed
         }
         class0<-c("glm","lm")
         }
       }
       
-      
+      #browser()
       
       
       if(!is.list(obj)){
@@ -671,6 +688,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       objV$formulaLin<- formulaLin
       objV$id.psi.group<- id.psi.group
       objV$psi[,"Initial"]<-NA
+      if(n.boot>0) objV$seed <- seed
       class(objV)<-c("segmented", class0)
       objV
     

@@ -2,7 +2,7 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
                             psi.lines = TRUE, link = FALSE, surf=FALSE, zero.cor=TRUE, 
                             heurs=TRUE, shade=FALSE, ...) {
   #=============================
-  plot2step<-function(object, res, interc, psi.lines, arg){
+  plot2step<-function(object, res, interc, psi.lines, arg, add){
     nomiZ<- object$nameUV$Z
     if(length(nomiZ)!=2) stop("surf=TRUE is allowed only with 2 stepmented covariates")
     nomiV<- object$nameUV$V
@@ -25,13 +25,16 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
     #browser()
     if(is.null(arg$xlim)) arg$xlim<-object$rangeZ[,nomiZ[1]]
     if(is.null(arg$ylim)) arg$ylim<-object$rangeZ[,nomiZ[2]]
-    plot(1, xlab=nomiZ[1], ylab=nomiZ[2], xaxt="n", yaxt="n", ylim=arg$ylim, xlim=arg$xlim, xaxs="i", yaxs="i")
     
     #browser()
-    axis(2, at= round( x$rangeZ[, nomiZ[2]]+c(diff(x$rangeZ[, nomiZ[2]])/100,0), 3) , cex.axis=.7)
-    axis(2, at= round(c(estpsi2), 3), cex.axis=.7, las=2)
-    axis(1, at= round(c(estpsi1, object$rangeZ[, nomiZ[1]]), 3), cex.axis=.7)
     
+    if(!add){
+      plot(1, xlab=nomiZ[1], ylab=nomiZ[2], xaxt="n", yaxt="n", ylim=arg$ylim, xlim=arg$xlim, xaxs="i", yaxs="i")
+      axis(2, at= round( x$rangeZ[, nomiZ[2]]+c(diff(x$rangeZ[, nomiZ[2]])/100,0), 3) , cex.axis=.7)
+      axis(2, at= round(c(estpsi2), 3), cex.axis=.7, las=2)
+      axis(1, at= round(c(estpsi1, object$rangeZ[, nomiZ[1]]), 3), cex.axis=.7)
+    }
+
     xvalues<-sort(c(par()$usr[1:2], estpsi1))
     yvalues<-sort(c(par()$usr[3:4], estpsi2))
     
@@ -43,6 +46,7 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
       A=cbind(rep(xvalues[j],length(yvalues)-1), yvalues[-length(yvalues)])
       B=cbind(rep(xvalues[j+1],length(yvalues)-1), yvalues[-1])
       cc=if(arg$col==1) grey(fit01[,j], alpha=.75) else fcol(fit01[,j], range(fit01)) 
+      if(add) cc<-adjustcolor(cc, alpha.f=.5)
       rect(A[,1],A[,2],B[,1],B[,2], col=cc, border=NA)
     }
     
@@ -53,13 +57,14 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
     E<-expand.grid(yy,xx)
     
     #browser()
-    
+    if(!add){
     if(res) {
       r<-object$residuals+object$fitted.values
       r<- (r-min(r))/diff(range(r))
       r<-arg$cex/2+ (arg$cex*3-arg$cex/2)*r 
       points(object$Z, pch=arg$pch, col=adjustcolor(arg$res.col,.5), cex=r)
       #points(object$Z, pch=arg$pch, cex=arg$cex, col=adjustcolor(arg$res.col,.5))
+    }
     }
     
     if(psi.lines) abline(v=estpsi1, h=estpsi2, lty=arg$lty)
@@ -243,7 +248,7 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
 
   if(surf){
     if(length(x$nameUV$Z)!=2) stop(" 'surf=TRUE' works only with 2 stepmented terms")
-    plot2step(x, res=res, interc=interc, psi.lines=psi.lines, arg=arg)
+    plot2step(x, res=res, interc=interc, psi.lines=psi.lines, arg=arg, add=add)
     return(invisible(NULL))
   }
   
@@ -254,6 +259,8 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
       term <- x$nameUV$Z
     }
   } else {
+    if(is.numeric(term)) term <- x$nameUV$Z[term]
+    if(length(term)>=2) stop(" 'term' should be a scalar")
     dterm <- deparse(substitute(term))
     if (dterm %in% x$nameUV$Z)
       term <- dterm

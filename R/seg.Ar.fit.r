@@ -1,6 +1,25 @@
 seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
 #-----------------
-    useExp.k=TRUE
+  search.min<-function(h, psi, psi.old, XREG) {
+    psi.ok<- psi*h + psi.old*(1-h)
+    PSI <- matrix(psi.ok, nrow=n, ncol = length(psi.ok), byrow=TRUE)
+    U1 <- (Z - PSI) * (Z > PSI)
+    X<-cbind(XREG, U1)
+    #if (pow[1] != 1) U1 <- U1^pow[1]
+    obj1 <- suppressWarnings(try(eval(call.noV), silent=TRUE))
+    if (class(obj1)[1] == "try-error") obj1 <- suppressWarnings(try(eval(call.noV.noinit), silent=TRUE))
+    L1 <- if (class(obj1)[1] == "try-error") L0 + 10
+    else (-obj1$loglik)
+    L1
+  }
+    
+    
+    # call.ok    #la call con U e V
+    # call.ok.noinit
+    # call.noV
+    # call.noV.noinit
+    
+  useExp.k=TRUE
     #-----------------
     est.k<-function(x1,y1,L0){
         ax<-log(x1)
@@ -96,6 +115,7 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
     psi.values <-list()
     psi.values[[length(psi.values) + 1]] <- NA
     
+    #browser()
     
     nomiU<- opz$nomiU
     nomiV<- opz$nomiV
@@ -123,6 +143,29 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
     obj0 <- suppressWarnings(try(eval(call.noV.noinit), silent=TRUE))
     if(class(obj0)[1]=="try-error")  stop("The first fit with U variables does not work..", call.=FALSE)#obj0 <- suppressWarnings(eval(call.noV.noinit)) ##a volte con i valori iniziali arima() )non converge!! Quindi provo senza init
     L0<- -obj0$loglik
+    
+    
+    
+    if(it.max==0){
+      colnames(U) <- paste("U", 1:ncol(U), sep = "")
+      V <- -(Z > PSI)
+      colnames(V) <- paste("V", 1:ncol(V), sep = "")
+      obj <- obj0 #lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
+      L1 <- L0
+      obj$coef <- c(obj$coef, rep(0, ncol(V)))
+      #names(obj$coefficients) <- names.coef
+      obj$epsilon <- epsilon
+      obj$it <- it
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, 
+                  U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
+                  SumSquares.no.gap = L1, id.psi.group = id.psi.group, 
+                  id.warn = TRUE)
+      return(obj)
+    }
+    
+
+    
+    
     n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
     dev.values[length(dev.values) + 1] <- opz$dev0 #del modello iniziale (senza psi)
     dev.values[length(dev.values) + 1] <- L0 #modello con psi iniziali
@@ -180,44 +223,22 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
             }
         }
         psi.old<-psi
-        psi <- psi.old + gamma.c/beta.c
+        psi <- psi.old + h*gamma.c/beta.c #+h*gamma.c/beta.c
+        psi<- adj.psi(psi, limZ)
+        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
+        
+        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, XREG=XREG)
+        k.values[length(k.values) + 1] <- use.k <- a$minimum
+        L1<- a$objective
+        #L1.k[length(L1.k) + 1] <- L1<- a$objective
+        psi <- psi*use.k + psi.old* (1-use.k)
         psi<- adj.psi(psi, limZ)
         
         if(!is.null(digits)) psi<-round(psi, digits)
         PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
-        
         #--modello con il nuovo psi
         U<-(Z-PSI)*(Z>PSI) #in seg.(g)lm.fit l'ho chiamata U..
-        if(pow[1]!=1) U<-U^pow[1]
-        #call.noV$init<-quote(coef(...........))
-        obj1 <- suppressWarnings(try(eval(call.noV), silent=TRUE))
-        if(class(obj1)[1]=="try-error")  obj1 <- suppressWarnings(eval(call.noV.noinit))
-        L1<- if(class(obj1)[1]=="try-error") L0+10 else -obj1$loglik
-        use.k<-k<-1
-        L1.k<-NULL
-        L1.k[length(L1.k)+1]<-L1
-        
-        while(L1>L0){
-            k<-k+1
-            use.k <- if(useExp.k) 2^(k-1) else k
-            #     if(k>=4){
-            #        xx<-1:k
-            #        use.k<-est.k(xx, -L1.k[1:k],-L0)
-            #      }
-            psi <- psi.old + (gamma.c/beta.c)/(use.k*h)
-            #psi <- psi.old[id.psi.ok] + (gamma.c[id.psi.ok]/beta.c[id.psi.ok])/(use.k*h)
-            if(!is.null(digits)) psi<-round(psi, digits)
-            PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
-            #qui o si aggiusta psi per farlo rientrare nei limiti, o si elimina, oppure se obj1 sotto non funziona semplicemente continua..
-            U<-(Z-PSI)*(Z>PSI)
-            if(pow[1]!=1) U<-U^pow[1]
-            obj1 <- suppressWarnings(try(eval(call.noV), silent=TRUE))
-            L1<- if(class(obj1)[1]=="try-error") L0+10 else -obj1$loglik
-            L1.k[length(L1.k)+1]<-L1
-            if(1/(use.k*h)<min.step){
-                #        #        #warning("step halving too small") 
-                break}
-        } #end while L0-L1
+        #if(pow[1]!=1) U<-U^pow[1]
         
         if (visual) {
             flush.console()
@@ -285,11 +306,13 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
 
     names.coef<-names(coef(obj)) #names(obj$coefficients) #obj e' quello vecchio che include U1,.. V1,...
     
-    PSI.old<-PSI
+    #browser()
+    
+    #PSI.old<-PSI
     PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
     
     #U e V possono essere cambiati (rimozione/ordinamento psi.. ) per cui si deve ricalcolare il tutto, altrimenti sarebbe uguale a U1 e obj1
-    if(sd(PSI-PSI.old)>0 || id.psi.changed[length(id.psi.changed)]){
+    #if(sd(PSI-PSI.old)>0 || id.psi.changed[length(id.psi.changed)]){
         U <- (Z-PSI)*(Z>PSI)
         colnames(U)<-paste("U", 1:ncol(U), sep = "")
         V <- -(Z>PSI)
@@ -298,9 +321,9 @@ seg.Ar.fit<-function(obj, XREG, Z, PSI, opz, return.all.sol=FALSE){
         #rownames(X) <- NULL
         obj <- suppressWarnings(try(eval(call.noV), silent=TRUE))
         L1<- -obj$loglik
-    } else {
-        obj<-obj1
-    }
+    #} else {
+     #   obj<-obj1
+    #}
     obj$coef<-c(obj$coef, rep(0,ncol(V)))
     names(obj$coef)<-names.coef
     obj$epsilon <- epsilon

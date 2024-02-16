@@ -16,13 +16,13 @@ seg(x, npsi = 1, psi = NA, est = NA, R = NA, fixed.psi = NULL, by = NULL, f.x = 
 The segmented (numeric) covariate
 }
   \item{npsi}{
-The number of breakpoints to estimate. Default to \code{npsi=1}. If \code{by} has been specified, the same \code{npsi} applies to all categories of the factor \code{by}; otherwise it can be vector, wherein the entries represent  the number of breakpoints of the segmented relationships within the categories of \code{by}. The \code{npsi} starting values are computed according the specification of \code{quant} in \code{\link{seg.control}}.
+The number of breakpoints to estimate. Default to \code{npsi=1}. If \code{by} has been specified, the same \code{npsi} applies to all categories of the factor \code{by}; otherwise it can be vector, wherein the entries represent  the number of breakpoints of the segmented relationships within the categories of \code{by}. If \code{npsi} is specified as a vector, the corresponding \code{est} should be a list. The \code{npsi} starting values are computed according the specification of \code{quant} in \code{\link{seg.control}}.
 }
   \item{psi}{
 Numerical vector indicating possible starting value(s) for the breakpoint(s). When provided, \code{psi} overwrites \code{npsi}. If \code{by} has been specified, \code{psi} can be a list, wherein the components represent  the starting values of the segmented relationships within the categories of \code{by}.
 }
   \item{est}{
-Possible vector (of length equal to \code{npsi+1}) of 0's and 1's to indicate whether the slopes have to be estimated or fixed to zero. \code{NA}, the default, means all ones, namely every slope is estimated. Consecutive zeroes are not allowed. If \code{by} has been specified, the same \code{est} applies to all categories of the factor \code{by}; otherwise \code{est} can be a list, wherein the components represent the slope constraints of the segmented relationships within the categories of \code{by}.
+Possible vector (of length equal to \code{npsi+1}) of 0's and 1's to indicate whether the slopes have to be estimated or fixed to zero. \code{NA}, the default, means all ones, namely every slope is estimated. Consecutive zeroes are not allowed. If \code{by} has been specified, the same \code{est} applies to all categories of the factor \code{by}; otherwise \code{est} can be a list, wherein the components represent the slope constraints of the segmented relationships within the categories of \code{by}. Note that, when a grouping variable has been specified in \code{by}, \code{npsi} can be specified as a vector, and \code{est} should be a list.
 }
   \item{R}{
 Matrix to constrain the slopes. If provided, it overwrites the matrix (which is built internally) coming from the specification of \code{est}.

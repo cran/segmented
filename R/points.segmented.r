@@ -1,7 +1,7 @@
 points.segmented <-function(x, term, interc=TRUE, link=TRUE, 
     rev.sgn=FALSE, transf=I, .vcov=NULL, .coef=NULL, const=0, v=TRUE, ...){
 #--------------
-        f.U<-function(nomiU, term=NULL){
+      f.U<-function(nomiU, term=NULL){
         #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
         #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
             k<-length(nomiU)
@@ -17,9 +17,15 @@ points.segmented <-function(x, term, interc=TRUE, link=TRUE,
         }
 #-------------
       if(missing(term)){
-          if(length(x$nameUV$Z)>1 ) {stop("please, specify `term'")}
-               else {term<-x$nameUV$Z}
-               }
+        if(length(x$nameUV$Z)>1 ){
+          stop("please, specify `term'")
+          } else {
+            term<-x$nameUV$Z
+          }
+        } else {
+          term<- if(is.numeric(term)) x$nameUV$Z[term] else term
+        }
+      if(!term%in%x$nameUV$Z) stop("unknown 'term' ")
       opz<-list(...)
       if(is.null(opz$col)) opz$col <- 2
       if(is.null(opz$lty)) opz$lty <- 3

@@ -9,7 +9,7 @@
 \usage{
 seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     K = 10, quant = FALSE, maxit.glm = 25, h = 1.25, break.boot=5, size.boot=NULL, 
-    jt=FALSE, nonParam=TRUE, random=TRUE, seed=12345, fn.obj=NULL, digits=NULL, 
+    jt=FALSE, nonParam=TRUE, random=TRUE, seed=NULL, fn.obj=NULL, digits=NULL, 
     conv.psi=FALSE, alpha = NULL, min.step=.0001, fc=.95)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -44,11 +44,8 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   if \code{TRUE}, when the algorithm fails to obtain a solution, random values are employed to obtain candidate values.
   }
   \item{seed}{
-  The seed to be passed on to \code{set.seed()} when \code{n.boot>0}. Set to \code{NULL} to use a random seed. 
-  Fixing the seed can be useful to replicate
-  the results when the bootstrap restart algorithm is employed. The segmented fit includes \code{seed} representing 
-  the integer vector saved just before the bootstrap resampling. Re-use it if you want to replicate the bootstrap
-  restarting algorithm with the \emph{same} samples.
+  The seed to be passed on to \code{set.seed()} when \code{n.boot>0}. If \code{NULL}, a seed depending on the response values is generated and used. Otherwise it can be a numerical value or, if \code{NA}, a random value is generated. 
+  Fixing the seed can be useful to replicate \emph{exactly} the results when the bootstrap restart algorithm is employed. Whichever choice, the segmented fit includes the component \code{seed} representing the value saved just before the bootstrap resampling. Re-use it if you want to replicate the bootstrap restarting algorithm with the \emph{same} re-samples.
   }
   \item{fn.obj}{
   A \emph{character string} to be used (optionally) only when \code{segmented.default} is used. It represents the function 
@@ -61,7 +58,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
   }
   \item{conv.psi}{optional. Should convergence of iterative procedure to be assessed on changes of breakpoint estimates or changes in the objective? Default to FALSE.
   }
-  \item{alpha}{optional numerical values. The breakpoints are estimated within the quantiles \code{alpha[1]} and \code{alpha[2]} of the relevant covariate. If a single value is provided, it is assumed \code{alpha} and \code{1-alpha}. Defaults to \code{NULL} which means \code{alpha=max(.05, 1/n)}. Note: Proving \code{alpha=c(mean(x<=a),mean(x<=b))} means to constrain the breakpoint estimates within \eqn{[a,b]}{[a,b]}.
+  \item{alpha}{optional numerical values. The breakpoints are estimated within the quantiles \code{alpha[1]} and \code{alpha[2]} of the relevant covariate. If a single value is provided, it is assumed \code{alpha} and \code{1-alpha}. Defaults to \code{NULL} which means \code{alpha=max(.05, 1/n)}. Note: Providing \code{alpha=c(mean(x<=a),mean(x<=b))} means to constrain the breakpoint estimates within \eqn{[a,b]}{[a,b]}.
   }
   \item{min.step}{optional. The minimum step size to break the iterative algorithm. Default to 0.0001.}
 %  \item{stop.if.error}{ same than \code{fix.npsi}. \emph{This argument will be removed in next releases}, %and replaced by 
@@ -77,16 +74,15 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
 
   When the starting value for the breakpoints is set to \code{NA} for any segmented variable specified
   in \code{seg.Z}, \code{K} values (quantiles or equally-spaced) are selected as starting values for the breakpoints. 
-  In this case, it may be useful to set also \code{fix.npsi=FALSE} to automate the procedure, see Muggeo and Adelfio (2011).
-  The maximum number of iterations (\code{it.max}) should be also increased when the `automatic' procedure is used.
+  %In this case, it may be useful to set also \code{fix.npsi=FALSE} to automate the procedure, see Muggeo and Adelfio (2011).
+  %The maximum number of iterations (\code{it.max}) should be also increased when the `automatic' procedure is used.
 
 %  If \code{last=TRUE}, the object resulting from \code{segmented.lm} (or \code{segmented.glm}) is a
 %  list of fitted GLM; the i-th model is the segmented model with the values of the breakpoints at the i-th %iteration. 
 
   Since version 0.2-9.0 \code{segmented} implements the bootstrap restarting algorithm described in Wood (2001).
   The bootstrap restarting is expected to escape the local optima of the objective function when the
-  segmented relationship is flat. Notice bootstrap restart runs \code{n.boot} iterations regardless of 
-  \code{tol} that only affects convergence within the inner loop.
+  segmented relationship is noisy and the loglikelihood can be flat. Notice bootstrap restart runs \code{n.boot} iterations regardless of \code{tol} that only affects convergence within the inner loop.
 }
 \value{
   A list with the arguments as components.

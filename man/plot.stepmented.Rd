@@ -98,9 +98,12 @@ plot(os,"z", add.fx=TRUE, psi.lines=FALSE )
 lines(os, "z")
 
 #display the 'surface'
-par(mfrow=c(1,2))
+par(mfrow=c(1,3))
 plot(os, surf=TRUE, col=1, res.col=2)
 plot(os, surf=TRUE, lty=2)
+plot(x,z)
+plot(os, surf=TRUE, add=TRUE, col=4, res=FALSE)
+
 }
 
 }

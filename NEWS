@@ -1,8 +1,19 @@
+
 ****************************
 *                          *
 *   Changes in segmented   *
 *                          *
 ****************************
+
+
+
+===============
+version 2.0-3 (2024-02-16)
+===============
+* Some improvements in selgmented() to select the number of breakpoints
+* Dataset globTempAnom included in the package
+* In plot.segmented() argument 'term' can be a vector to draw multiple fitted segmented relationships on the same plot
+* In points.segmented() argument 'term' can be numeric
 
 
 ===============
@@ -50,7 +61,7 @@ version 1.6-4 (2023-04-14)
 version 1.6-3 (2023-03-20)
 ===============
 * selgmented was not always returning information about the number of selected breakpoints (thanks to Alba Serrat for reporting)
-* slope() did not work on segmented.lme fits. (thanks to Luiz F. Silva Magnago for reporting; the error was introduced accidentaly by version 1.6-2)
+* slope() did not work on segmented.lme fits. (thanks to Luiz F. Silva Magnago for reporting; the error was introduced accidentally by version 1.6-2)
 
 
 ===============

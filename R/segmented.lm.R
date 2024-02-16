@@ -65,7 +65,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     digits<-control$digits
     toll <- control$toll
     if(toll<0) stop("Negative tolerance ('tol' in seg.control()) is meaningless", call. = FALSE)
-    visual <- control$visual
+    
     
     stop.if.error<-control$stop.if.error
     fix.npsi<-fix.npsi<-control$fix.npsi
@@ -82,18 +82,20 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     random<-control$random
     pow<-control$pow
     conv.psi<-control$conv.psi
+    visual <- control$visual
     visualBoot<-FALSE
-    if(n.boot>0){
-        if(!is.null(control$seed)) {
-            set.seed(control$seed)
-            employed.Random.seed<-control$seed
-              } else {
-            employed.Random.seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
-            set.seed(employed.Random.seed)
-              }
-        if(visual) {visual<-FALSE; visualBoot<-TRUE}# warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
-#        if(!stop.if.error) stop("Bootstrap restart only with a fixed number of breakpoints")
-     }
+    if(visual && n.boot>0) {visual<-FALSE; visualBoot<-TRUE}
+    # if(n.boot>0){
+    #     if(!is.null(control$seed)) {
+    #         set.seed(control$seed)
+    #         employed.Random.seed<-control$seed
+    #           } else {
+    #         employed.Random.seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+    #         set.seed(employed.Random.seed)
+    #           }
+    #     if(visual) {visual<-FALSE; visualBoot<-TRUE}# warning("`display' set to FALSE with bootstrap restart", call.=FALSE)}
+    # }
+    
     last <- control$last
     K<-control$K
     h<-control$h
@@ -342,11 +344,12 @@ mfExt <-eval(mfExt, parent.frame())
     if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
-        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc)
+        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc, seed=control$seed)
     if(n.boot<=0){
     obj<-seg.lm.fit(y,XREG,Z,PSI,weights,offs,opz)
     } else {
-    obj<-seg.lm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot) #jt, nonParam
+    obj<-seg.lm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot)
+    seed<- obj$seed
       }
     if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)
@@ -480,8 +483,9 @@ mfExt <-eval(mfExt, parent.frame())
     objF$id.warn <- id.warn
     objF$orig.call<-orig.call
     objF$indexU<-build.all.psi(psi.list, fixed.psi)
+    #browser()
     if(model)  objF$model <- mf #objF$mframe <- data.frame(as.list(KK))
-    if(n.boot>0) objF$seed<-employed.Random.seed
+    if(n.boot>0) objF$seed <- seed
     class(objF) <- c("segmented", class(obj0))
     objF$psi[,"Initial"]<-NA
     list.obj[[length(list.obj) + 1]] <- objF

@@ -157,6 +157,24 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
       #nomiUList[[i]]<- rep(i, ncol(UList[[i]]) )
     }
     U<-do.call(cbind, UList) #la matrice del disegno sara' cbind(X, U)
+    
+    if(it.max==0){
+      colnames(U) <- paste("U", 1:ncol(U), sep = "")
+      V <- -(Z > PSI)
+      colnames(V) <- paste("V", 1:ncol(V), sep = "")
+      obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
+      L1 <- sum(obj$residuals^2 * w)
+      obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
+      #names(obj$coefficients) <- names.coef
+      obj$epsilon <- epsilon
+      obj$it <- it
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, X=XREG, 
+                  U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
+                  SumSquares.no.gap = L1, id.psi.group = id.psi.group, 
+                  id.warn = TRUE, constr=list(RList=RList, invAList=invAList, invA.RList=invA.RList, nomiUList =nomiUList))
+      return(obj)
+    }
+    
     obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
     if (class(obj0)[1] == "try-error") obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
     L0 <- sum(obj0$residuals^2 * w)
@@ -240,7 +258,7 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
         psi.old <- psi
         psi <- psi.old + hh*gamma.c/beta.c
         #aggiusta la stima di psi..
-        psi<- adj.psi(psi, rangeZ)
+        psi<- adj.psi(psi, limZ)
         psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         #browser()
         
