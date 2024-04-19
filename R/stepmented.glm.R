@@ -13,11 +13,11 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   agg<- 1-control$fc
   maxit.glm <- control$maxit.glm
   it.max<- control$it.max 
-  tol<-  control$tol
+  tol<-  control$toll
   display<- control$visual 
   digits <- control$digits 
-  min.step <- control$min.step
-  conv.psi <- control$conv.psi 
+  #min.step <- control$min.step
+  #conv.psi <- control$conv.psi 
   alpha <- control$alpha
   fix.npsi <- control$fix.npsi 
   n.boot <- control$n.boot 
@@ -67,7 +67,7 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
     orig.call<-NULL
     fam<- list(...)$family
     if(!(class(fam)[1]=="family" && is.list(fam))) stop(" family in ... should be specified like 'gaussian()'")
-    dev0<-100
+    dev0<-1e+6
     ####################################################
   } else { #se obj e' un glm
     y.only.vector <- FALSE
@@ -183,7 +183,7 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
     XREGseg<-XREG[,id.n.Seg,drop=FALSE]
     XREG <- XREG[, match(c("(Intercept)", namesXREG0),colnames(XREG), nomatch = 0), drop = FALSE]
     XREG<-XREG[,unique(colnames(XREG)), drop=FALSE]
-    n <- nrow(XREG)
+    #n <- nrow(XREG)
     
     #browser()
 
@@ -308,12 +308,12 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2)) ) stop("starting psi out of the admissible range")
   if(is.null(alpha)) alpha<- max(.05, 1/length(y))
   if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
-  
-  opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ,
-            fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, h=h,
-            #nomiOK=nomiOK,  visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
-            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii, seed=control$seed)
-  
+  eta0 <- if(is.null(control$eta)) obj$linear.predictors else control$eta
+  opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ, usestepreg=FALSE,
+            fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, h=h, eta0=eta0,
+            #nomiOK=nomiOK,  visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, conv.psi=conv.psi,  min.step=min.step,
+            alpha=alpha, fix.npsi=fix.npsi, npsii=npsii, seed=control$seed, fit.psi0=control$fit.psi0)
+  opz$Nboot <- 0
   # #################################################################################
   # #### jump.fit(y, XREG=x.lin, Z=Xtrue, PSI, w=ww, offs, opz, return.all.sol=FALSE)
   # #################################################################################
@@ -482,6 +482,10 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   X <- cbind(x.lin,U)
   #objF$obj.ok<-mylm(X, y, w=ww, offs=offs) #coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b))
   objF$obj.ok<-glm.fit(X, y, weights =ww, offset =offs, family=fam) #, control = glm.control(maxit = maxit.glm), etastart = eta0)
+  
+  #browser()
+  objF$obj.ok$invXtX <- chol2inv(qr.R(objF$obj.ok$qr))
+  
   objF$objW<- objW
   objF$fitted.values<-objF$obj.ok$fitted.values
   objF$residuals<- objF$obj.ok$residuals

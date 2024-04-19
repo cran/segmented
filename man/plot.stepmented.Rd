@@ -10,8 +10,9 @@ Plot method for stepmented objects
 }
 \usage{
 \method{plot}{stepmented}(x, term, add = FALSE, res = TRUE, conf.level=0, interc = TRUE, 
-    add.fx = FALSE, psi.lines = TRUE, link=FALSE, surf=FALSE, zero.cor=TRUE, 
-                            heurs=TRUE, shade=FALSE, ...)
+      add.fx = FALSE, psi.lines = TRUE, link=FALSE, surf=FALSE, zero.cor=TRUE, 
+      heurs=TRUE, shade=FALSE, se.type=c("cdf","abs","none"), 
+      k=NULL, .vcov=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -57,7 +58,15 @@ logical; if \code{TRUE}, heuristic (usually somewhat conservative) confidence in
   \item{shade}{
 if \code{TRUE} the pointwise confidence intervals are portrayed via shaded area; effective only if \code{conf.level>0}.
 }
-
+  \item{se.type}{
+which standard errors should be computed? see \code{type} in \code{\link{vcov.stepmented}}; effective only if \code{conf.level>0}.
+}
+  \item{k}{
+The value to be passed to \code{vcov.stepmented} to computed the standard errors.
+}
+  \item{.vcov}{
+The estimate var-covariance matrix; if \code{NULL}, it is computed internally by \code{\link{vcov.stepmented}}.
+}
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
   can be vectors and are recycled if necessary, see the example below) for the fitted piecewise constant lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}, \code{res.col} is for the color).% \code{col.shade} for the shaded regions (provided that \code{shade=TRUE} and \code{conf.level>0}).
   }

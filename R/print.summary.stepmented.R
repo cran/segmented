@@ -10,7 +10,7 @@ function(x, short = x$short, var.diff = x$var.diff,
     est.psi[,1]<-x$psi.rounded[1,]
 
     rownames(est.psi)<-rownames(x$psi)
-    print(round(est.psi,3)) #era "signif(,4)"
+    print(round(est.psi,4)) #era "signif(,4)"
     if(!is.null(attr(x$psi.rounded,"break.dates"))) {
       cat("\ncorrisponding dates: ", attr(x$psi.rounded,"break.dates"),"\n")
       #cat(" ", attr(o$psi.rounded,"break.dates"),"\n")
@@ -34,24 +34,23 @@ function(x, short = x$short, var.diff = x$var.diff,
         } else {
         printCoefmat(x$Ttable, digits = digits, signif.stars = signif.stars,na.print = "NA", ...)
         }
-        
+      }
+    if("summary.lm"%in%class(x)){ #for lm
+      if(var.diff){
+        for(i in 1:length(x$sigma.new)){
+          cat("\nResidual standard error ",i,":", format(signif(x$sigma.new[i], 
+              digits)), "on", x$df.new[i], "degrees of freedom")}
+        cat("\n")
+        } else {
+          cat("\nResidual standard error:", format(signif(x$sigma, digits)), "on", x$df[2], "degrees of freedom\n")
         }
-if("summary.lm"%in%class(x)){ #for lm
-    if(var.diff){
-    for(i in 1:length(x$sigma.new)){
-    cat("\nResidual standard error ",i,":", format(signif(x$sigma.new[i], 
-        digits)), "on", x$df.new[i], "degrees of freedom")}
-    cat("\n")    
-    } else {
-    cat("\nResidual standard error:", format(signif(x$sigma, 
-        digits)), "on", x$df[2], "degrees of freedom\n")}
-    if (!is.null(x$fstatistic)) {
+      if (!is.null(x$fstatistic)) {
         cat("Multiple R-Squared:", formatC(x$r.squared, digits = digits))
-        cat(",  Adjusted R-squared:", formatC(x$adj.r.squared, 
-            digits = digits), "\n")}
-        }
-if("summary.glm"%in%class(x)){ #for glm
-    cat("\n(Dispersion parameter for ", x$family$family, " family taken to be ", 
+        cat(",  Adjusted R-squared:", formatC(x$adj.r.squared, digits = digits), "\n")
+      }
+    }
+    if("summary.glm"%in%class(x)){ #for glm
+      cat("\n(Dispersion parameter for ", x$family$family, " family taken to be ", 
         format(x$dispersion), ")\n\n", apply(cbind(paste(format.default(c("Null", 
             "Residual"), width = 8, flag = ""), "deviance:"), 
             format(unlist(x[c("null.deviance", "deviance")]), 

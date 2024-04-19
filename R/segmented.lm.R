@@ -59,7 +59,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
 
 
     fc<- min(max(abs(control$fc),.8),1)       
-    min.step<-control$min.step
+    #min.step<-control$min.step
     alpha<-control$alpha
     it.max <- old.it.max<- control$it.max
     digits<-control$digits
@@ -81,7 +81,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     gap<-control$gap
     random<-control$random
     pow<-control$pow
-    conv.psi<-control$conv.psi
+    #conv.psi<-control$conv.psi
     visual <- control$visual
     visualBoot<-FALSE
     if(visual && n.boot>0) {visual<-FALSE; visualBoot<-TRUE}
@@ -328,11 +328,12 @@ mfExt <-eval(mfExt, parent.frame())
     #XREG <- model.matrix(obj) creata sopra
     #o <- model.offset(objframe)
     #w <- model.weights(objframe)
+    id.noOW <- if(is.null(weights) && is.null(offs)) TRUE else FALSE
     if (is.null(weights)) weights <- rep(1, n)
     if (is.null(offs)) offs <- rep(0, n)
     initial <- psi
     obj0 <- obj
-    dev0<-sum(obj$residuals^2)
+    dev0<-sum(weights*obj$residuals^2)
     list.obj <- list(obj)
 #    psi.values <- NULL
     nomiOK<-nomiU
@@ -342,23 +343,22 @@ mfExt <-eval(mfExt, parent.frame())
     #browser()
     if(is.null(alpha)) alpha<- max(.05, 1/length(y))
     if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
-    opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
-        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
-        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc, seed=control$seed)
+    opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max, usesegreg=FALSE, tol.opt=control$tol.opt,
+        nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, #conv.psi=conv.psi, 
+        alpha=alpha, fix.npsi=fix.npsi, fc=fc, seed=control$seed, fit.psi0=control$fit.psi0, min.n=control$min.n)
     if(n.boot<=0){
     obj<-seg.lm.fit(y,XREG,Z,PSI,weights,offs,opz)
     } else {
     obj<-seg.lm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot)
-    seed<- obj$seed
+    #seed<- obj$seed
       }
     if(!is.list(obj)){
-        warning("No breakpoint estimated", call. = FALSE)
-        return(obj0)
-        }
+      warning("Estimation failed. Too many breakpoints? Returning a lm fit..", call. = FALSE)
+      return(obj0)
+    }
+    seed<- obj$seed
     
     #browser()
-    
-    
     if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK
@@ -375,10 +375,13 @@ mfExt <-eval(mfExt, parent.frame())
     V<-obj$V
     id.warn<-obj$id.warn
     rangeZ<-obj$rangeZ
+    idU<-obj$idU
+    idV<- max(idU)+(1:ncol(V))
     obj<-obj$obj
     k<-length(psi)
-    beta.c<-coef(obj)[paste("U", 1:ncol(U), sep = "")]
-    #psi.values[[length(psi.values) + 1]] <- psi #non c'e' bisogno!
+    beta.c<-coef(obj)[idU]
+    #beta.c<-coef(obj)[paste("U", 1:ncol(U), sep = "")]
+    
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
 
     #se usi una procedura automatica devi cambiare ripetizioni, nomiU e nomiV, e quindi:
@@ -431,18 +434,21 @@ mfExt <-eval(mfExt, parent.frame())
         return(objF)      
         }
     }
+    
     #browser()
-    if(!gap){
+    #if(!gap){
       names.coef<-names(objF$coefficients)
       #questi codici funzionano e si basano sull'assunzioni che le U e le V siano ordinate..
-      names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi  
-      objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce tutti i coef (gli ultimi sono 0)  
-      #objF$coefficients<-obj$coefficients
-      #names(objF$coefficients)<-names.coef
+      #names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi
+      #names(obj$coefficients)[match(c(nomiU, nomiVxb), names(coef(obj)))]<- nnomi
+      #names(obj$coefficients)[c(idU,idV)]<- nnomi
+      #objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce tutti i coef (gli ultimi sono 0)  
+      objF$coefficients<-obj$coefficients
+      names(objF$coefficients)<-names.coef
       objF$fitted.values<-obj$fitted.values
       objF$residuals<-obj$residuals
       #objF$qr<-obj$qr #NON credo..
-    }
+    #}
     Cov <- vcov(objF) 
     id <- match(nomiVxb, names(coef(objF)))
     vv <- if (length(id) == 1) Cov[id, id] else diag(Cov[id, id])

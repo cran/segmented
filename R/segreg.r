@@ -447,6 +447,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       #X[,nomiPS.orig] <- Z[, unique(colnames(Z)), drop=FALSE]
       #nomiCoefPEN include i nomi le interazioni con i livelli (nel caso vc) e anche del numero dei psi
       #[1] "U1.x" "U2.x" "U1.z"
+      id.noOW <- if(is.null(weights) && is.null(offs)) TRUE else FALSE 
       if(is.null(weights)) weights<-rep(1,n)
       if(is.null(offs)) offs<-rep(0,n)
 
@@ -454,10 +455,10 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       if(is.null(alpha)) alpha<- max(.05, 1/length(Y))
       if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
       #browser()
-      opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=var(Y)*(n-1),visual=visual,it.max=it.max,nomiOK=unlist(nomiCoefU),
+      opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,L0=NULL,visual=visual,it.max=it.max,nomiOK=unlist(nomiCoefU), usesegreg=TRUE,
                 fam=family, eta0=NULL, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
-                conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,
-                pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg, seed=control$seed)
+                conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, tol.opt=control$tol.opt,
+                pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg, seed=control$seed, min.n=control$min.n)
       #browser()
       
       if(any(id.contrR)){
@@ -468,7 +469,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             obj <- segConstr.lm.fit.boot(Y, X, Z, PSI, weights, offs, opz, 
                                  n.boot = n.boot, size.boot = size.boot, random = random, 
                                  break.boot = break.boot)
-            seed<- obj$seed
+  #          seed<- obj$seed
           }
           class0<- "lm"
           if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
@@ -479,7 +480,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             obj <-segConstr.glm.fit.boot(Y, X, Z, PSI, weights, offs, opz, 
                                    n.boot=n.boot, size.boot=size.boot, random=random, 
                                    break.boot=break.boot)
-            seed<- obj$seed
+ #           seed<- obj$seed
           }
           class0<-c("glm","lm")
           }
@@ -492,7 +493,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
               obj <- seg.lm.fit.boot(Y, X, Z, PSI, weights, offs, opz, 
                                n.boot = n.boot, size.boot = size.boot, random = random, 
                                break.boot = break.boot)
-              seed<- obj$seed
+#              seed<- obj$seed
           }
           class0<-"lm"
           if(obj$obj$df.residual==0) warning("no residual degrees of freedom (other warnings expected)", call.=FALSE)
@@ -503,14 +504,27 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             obj <-seg.glm.fit.boot(Y, X, Z, PSI, weights, offs, opz, 
                                 n.boot=n.boot, size.boot=size.boot, random=random, 
                                 break.boot=break.boot)
-            seed<- obj$seed
+   #         seed<- obj$seed
         }
         class0<-c("glm","lm")
         }
       }
       
-      #browser()
-      
+      if(!is.list(obj)){
+        warning("Estimation failed. Too many breakpoints? Returning a (g)lm fit..", call. = FALSE)
+        
+        if(fitter0=="lm"){
+          obj0 <- if(id.noOW) lm.fit(x = X, y = Y) else lm.wfit(x = X, y = Y, w = weights, offset = offs)
+          class(obj0)<-"lm"
+          } else {
+            obj0 <- try(suppressWarnings(glm.fit(X, y = Y, offset = offs,
+                                               weights = weights, family = opz$fam #control = glm.control(maxit = maxit.glm), 
+                                               )), silent = TRUE)
+            class(obj0)<-c("glm", "lm")
+          }
+        return(obj0)
+      }
+      seed<- obj$seed
       
       if(!is.list(obj)){
         warning("No breakpoint estimated", call. = FALSE)
@@ -530,8 +544,8 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       id.warn <- obj$id.warn
       k <- length(psi)
       objU <- obj$obj
-      beta.c <- coef(objU)[paste("U", 1:ncol(U), sep = "")]
-      
+      #beta.c <- coef(objU)[paste("U", 1:ncol(U), sep = "")]
+      beta.c <- coef(objU)[obj$idU]
       #browser()
       
       if(any(id.contrR)) {
@@ -559,7 +573,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       colnames(Vxb)<-nomiVxb #<- sub("U","psi", nomiU)
       se.psi<-rep(NA,k)
       if(fitter0=="lm"){
-        objV <- lm.wfit(x = cbind(X, U, Vxb), y = Y, w = weights, offset = offs)
+        objV <- if(id.noOW) lm.fit(x = cbind(X, U, Vxb), y = Y) else lm.wfit(x = cbind(X, U, Vxb), y = Y, w = weights, offset = offs)
         if(var.psi) {
           s2 <- sum(weights*objU$residuals^2)/objV$df.residual
           R <- chol2inv(objV$qr$qr)
@@ -567,8 +581,12 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         }
       } else {
         objV <- try(suppressWarnings(glm.fit(cbind(X, U, Vxb), y = Y, offset = offs,
-                                           weights = weights, family = opz$fam, control = glm.control(maxit = maxit.glm), 
+                                           weights = weights, family = opz$fam, #control = glm.control(maxit = maxit.glm), 
                                            etastart = objU$linear.predictors)), silent = TRUE)
+        objV$linear.predictors<-objU$linear.predictors
+        objV$deviance<-objU$deviance
+        objV$aic<-objU$aic + 2*ncol(PSI) #k
+        objV$weights<-objU$weights
         if(var.psi) {
           R <- chol2inv(objV$qr$qr)
           s2 <- 1
@@ -577,14 +595,14 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         }
       }
 
-      #browser()
-      
+#      browser()
       objV$fitted.values <- objU$fitted.values
       objV$residuals <- objU$residuals
+      names.coef<-names(objV$coefficients)
       objV$coefficients <- objU$coefficients
       pLin<- ncol(X)
       if(pLin>=1) {
-        names(objV$coefficients) <- c(names(objV$coefficients)[1:pLin], c(nomiU, nomiVxb))
+        names(objV$coefficients) <- c(names.coef[1:pLin], c(nomiU, nomiVxb))
       } else {
         names(objV$coefficients) <- c(nomiU, nomiVxb)
       }
@@ -637,10 +655,6 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       
       #names(mf) <- nomi.mf
       objV$terms <- mt
-      #obj$y<- if(y) Y else NULL
-      
-      #if(!y) fit$y <- NULL
-      #restituire offset?? 
       objV$y<-Y
       if(x) objV$x <- X
       objV$contrasts <- attrContr  

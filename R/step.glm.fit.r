@@ -7,9 +7,10 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
     U1 <- (Xtrue>PSI) #(Z - PSI) * (Z > PSI)
     #if (pow[1] != 1) U1 <- U1^pow[1]
     obj1 <- try(suppressWarnings(glm.fit(x = cbind(X, U1), y = y, offset = offs,
-                                         weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)),
-                silent = TRUE)
+                      weights = w, family = fam, control = glm.control(maxit = maxit.glm1[i]), etastart = eta0)),
+                      silent = TRUE)
     L1 <- if (class(obj1)[1] == "try-error") L0 + 10 else obj1$dev
+    attr(L1, "eta") <- obj1$linear.predictor
     L1
   }
   toMatrix<-function(.x, ki){
@@ -37,14 +38,14 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
   }
   #------------
   #-----------
-  eta0<-opz$eta0
+  
   fam<-opz$fam
   maxit.glm<-opz$maxit.glm
   #--------------
   tol<-opz$toll
   display<-opz$display
   it.max<-opz$it.max
-  dev0<-opz$dev0
+  #dev0<-opz$dev0
   useExp.k<-opz$useExp.k
   min.step<- opz$min.step #=.0001
   conv.psi<-opz$conv.psi #=FALSE
@@ -78,14 +79,10 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
   #PSI0<- matrix(psi0, n, npsi, byrow = TRUE)
   XREG <- cbind(x.lin, Xtrue>PSI)
 
-  obj0 <- suppressWarnings(glm.fit(x = XREG, y = y, offset = offs,
-                                   weights = ww, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0))
-  eta0<- obj0$linear.predictors
-  L0<- obj0$dev
-
   if(it.max==0){
-    obj <- obj0
-    L1 <- L0 
+    obj <- suppressWarnings(glm.fit(x = XREG, y = y, offset = offs,
+                                    weights = ww, family = fam))
+    L1 <- obj$dev 
     obj$epsilon <- epsilon
     idZ<-(plin+1):(plin+ncol(PSI))
     b<- obj$coef[idZ]
@@ -94,15 +91,39 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
                 SumSquares.no.gap = L1,  
                 id.warn = TRUE)
     return(obj)
+  } 
+  
+  if(!opz$usestepreg){
+    dev.values[length(dev.values) + 1] <- opz$dev0 #modello senza psi 
+    psi.values[[length(psi.values) + 1]] <- NA #nessun psi 
   }
   
+  if(is.null(opz$fit.psi0)){
+    obj <- suppressWarnings(glm.fit(x = XREG, y = y, offset = offs,
+                                    weights = ww, family = fam, etastart=opz$eta0))
+    L0 <- obj$dev
+    eta0 <- obj$linear.predictors
+  } else {
+    L0   <- opz$fit.psi0$L0
+    eta0 <- opz$fit.psi0$eta0
+  }
+    
 
-  
   n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
-  dev.values[length(dev.values) + 1] <- dev0#opz$dev0 #del modello iniziale (senza psi)
+  #dev.values[length(dev.values) + 1] <- dev0#opz$dev0 #del modello iniziale (senza psi)
   dev.values[length(dev.values) + 1] <- L0 #modello con psi iniziali
   psi0<-PSI[1,]
   psi.values[[length(psi.values) + 1]] <- psi0 #psi iniziali
+  
+  if(is.null(maxit.glm)){
+    Nboot <- if(is.null(opz$Nboot)) 0 else opz$Nboot
+    maxit.glm1 <- rep(1:it.max + Nboot, 1:it.max+1) #2*rep(1:it.max, 1:it.max)
+    maxit.glm1 <- pmin(maxit.glm1, 25)
+  } else {
+    maxit.glm1 <- rep(maxit.glm, it.max)
+  }
+  
+  
   #==============================================
   if (display) {
     unlpsi<- unlist(psi0)
@@ -121,8 +142,13 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
   up <-  apply(Xtrue[,unique(colnames(Xtrue)),drop=FALSE], 2, max)
   
   
-  L1<-L0+10  
+  L1<-L0+10
+  tolOp<-if(is.null(opz$tol.opt)) seq(.001, .Machine$double.eps^0.25, l=it.max) else rep(opz$tol.opt, it.max)
   #==============================================
+  
+  idZ<-(plin+1):(plin+ncol(PSI))
+  idW<-(plin+ncol(PSI)+1): ( plin+2*ncol(PSI))
+  
   while (abs(epsilon) > tol) {
     i <- i + 1
     #if(i==1) browser()
@@ -130,9 +156,11 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
     for (p in 1:P) {
       psis <- sort(psi0[pos[[p]]])
       gruppi <- cut(xx[,p], breaks = c(low[p] - 0.1, psis, up[p]), labels = FALSE)
+      if(any(is.na(gruppi))) stop(paste("too many breaks for step term #", p, "?"), call.=TRUE)
       points <- c(low[p], psis, up[p])
       right <- c(low[p], points[2:(npsii[p] + 1)] + agg[pos[[p]]][order(psi0[pos[[p]]])] * (points[3:(npsii[p] + 2)] - points[2:(npsii[p] + 1)]), NA)
       left <- c(NA, points[2:(npsii[p] + 1)] - agg[pos[[p]]][order(psi0[pos[[p]]])] * (points[2:(npsii[p] + 1)] - points[1:npsii[p]]), up[p])
+      #if(any(is.na(left))| any(is.na(right))) stop(paste("too many breaks for step term #", p, "?"), call.=TRUE)
       for (j in 1:(npsii[p] + 1)) {
         xx.j <- xx[,p][gruppi == j]
         xx[,p][gruppi == j] <- right[j] + (xx.j - points[j]) * 
@@ -152,12 +180,12 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
     #b <- obj$coef[(2:(sum(k) + 1))]
     #g <- obj$coef[((sum(k) + 2):(2 * sum(k) + 1))]
     obj <- suppressWarnings(glm.fit(x = XREG, y = y, offset = offs,
-                                     weights = ww, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)) 
+                                     weights = ww, family = fam, control = glm.control(maxit = maxit.glm1[i]), etastart = eta0)) 
       
       
     
-    idZ<-(plin+1):(plin+ncol(Z))
-    idW<-(plin+ncol(Z)+1): ( plin+ncol(Z)+ncol(W))
+    #idZ<-(plin+1):(plin+ncol(Z))
+    #idW<-(plin+ncol(Z)+1): ( plin+ncol(Z)+ncol(W))
     b<- obj$coef[idZ]
     g<- obj$coef[idW]
     
@@ -173,9 +201,11 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
     
     #if(i==1) browser()
     #la f e' chiaramente a gradino per cui meglio dividere..
-     a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
-     a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
+     a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, tol=tolOp[i])
+     a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, tol=tolOp[i])
      a <-if(a0$objective<=a1$objective) a0 else a1
+     
+     
      
      #a0<-optimize(search.min, c(0,.33), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
      #a1<-optimize(search.min, c(.33,.66), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs)
@@ -185,6 +215,7 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
     if(a$objective<L0){
       k.values[length(k.values) + 1] <- use.k <- a$minimum
       L1<- a$objective
+      eta0<- attr(a$objective, "eta")
     } else {
       k.values[length(k.values) + 1] <- use.k <- 0
       L1<- L0  
@@ -193,8 +224,8 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
     if(use.k<=.01){
       k.List<-j.List<-NULL
      for(j in 1:length(psi1)){
-       a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, id.fix.psi=j)
-       a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, id.fix.psi=j)
+       a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, id.fix.psi=j, tol=tolOp[i])
+       a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, offs=offs, id.fix.psi=j, tol=tolOp[i])
        a <-if(a0$objective<=a1$objective) a0 else a1
        if(a$objective<L1){
          j.List[[j]]<-setdiff(1:length(psi1),j) #indici di psi che devono cambiare..
@@ -241,7 +272,7 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
                 sep=""), "\n")
     }
     
-    epsilon <- if(conv.psi) max(abs((psi1 -psi0)/psi0)) else (L0 - L1)/(abs(L0) + 0.1) 
+    epsilon <- (L0 - L1)/(abs(L0) + 0.1) 
     L0<-L1
     
     k.values[length(k.values)+1]<-use.k
@@ -256,9 +287,12 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
   } #end while_it
   
   #browser()
+  psi1 <-unlist(tapply(psi1, opz$id.psi.group, sort))
+  PSI<- matrix(psi1, n, npsi, byrow = TRUE)
+  U <- 1*(Xtrue>PSI)
   
   #ATTENZIONE .. Assume che obj sia stato stimato sempre!
   obj<-list(obj=obj, psi=psi1, psi.values=psi.values, rangeZ=rangeZ, SumSquares.no.gap=L1, 
-            beta.c=b, it=i, epsilon=epsilon, id.warn=id.warn) 
+            beta.c=b, it=i, epsilon=epsilon, id.warn=id.warn, U=U, eta0=eta0) 
   return(obj)
 } #end jump.fit

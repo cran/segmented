@@ -19,7 +19,8 @@ draw.history<-function(obj,term,...){
       if(missing(term)){
           if(length(obj$nameUV$Z)>1 ) {stop("please, specify `term'")}
                else {term<-obj$nameUV$Z}
-               }
+      }
+       #browser() 
       opz<-list(...)
       range.ok<-obj$rangeZ[,term]
       id.ok<- f.U(rownames(obj$psi), term)
@@ -31,6 +32,7 @@ draw.history<-function(obj,term,...){
       if(is.null(opz$ylab)) opz$ylab<-paste("breakpoint ","(",term,")",sep="")
       if(is.null(opz$type)) opz$type<-"o"
       opz$xaxt<-"n"
+      #browser()
       if(is.null(obj$seed)) { #NO boot
         if(all(diff(sapply(obj$psi.history, length)[-1])==0)){ #non-autom (elemento [1] e' NA)
             A<-t(matrix(unlist(obj$psi.history)[-1],nrow=nrow(obj$psi),byrow=FALSE))

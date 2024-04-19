@@ -1,10 +1,18 @@
-
 ****************************
 *                          *
 *   Changes in segmented   *
 *                          *
 ****************************
 
+
+
+
+===============
+version 2.0-4 (2024-04-19)
+===============
+* Some improvements in the fitter functions for segmented and stepmented fits to gain efficiency
+* A small change in the segmented.* methods: the possible estimated breakpoints at the boundary or too close each other are slightly outdistanced to avoid puzzly results (null or very large st.errs). See min.nj in seg.control()
+* Bug fix: confint.stepmented() did not work if the supplied fit had variable names including dots (thanks to Matti Lehtonen for reporting); segmented crashed when options(outDec=",") was set (thanks to Andras Kosztolanyi for reporting); selgmented() was ignoring return.fit=FALSE when 0 breakpoints were selected (thanks to Marc Laurencelle for reporting); vcov.stepmented() did not work correctly for glm fits.
 
 
 ===============
@@ -29,8 +37,8 @@ version 2.0-2 (2024-01-23)
 ===============
 version 2.0-1 (2023-12-19)
 ===============
-* change of values for argument 'break.type' in pscore.test(): now these are "break" or "jump" (were 1 or 2)
-* new arguments in plot.stepmented(), especially  conf.level to portray pointwise confidence intervals of the step regression function.
+* Change of values for argument 'break.type' in pscore.test(): now these are "break" or "jump" (were 1 or 2)
+* New arguments in plot.stepmented(), especially  'conf.level' to portray pointwise confidence intervals of the step regression function.
 * Bug fix: predict.segmented() did not work if the supplied dataframe included variables not in the model (thanks to A. Priulla and N. D'angelo for reporting); segreg() was not reporting the intercept name.
 
 

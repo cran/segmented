@@ -8,9 +8,10 @@
 }
 \usage{
 seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
-    K = 10, quant = FALSE, maxit.glm = 25, h = 1.25, break.boot=5, size.boot=NULL, 
+    K = 10, quant = FALSE, maxit.glm = NULL, h = 1.25, break.boot=5, size.boot=NULL, 
     jt=FALSE, nonParam=TRUE, random=TRUE, seed=NULL, fn.obj=NULL, digits=NULL, 
-    conv.psi=FALSE, alpha = NULL, min.step=.0001, fc=.95)
+    alpha = NULL, fc=.95, check.next=TRUE, tol.opt=NULL, fit.psi0=NULL, eta=NULL, 
+    min.nj=2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,7 +28,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     }
   \item{quant}{logical, indicating how the starting values should be selected. If \code{FALSE} equally-spaced 
   values are used, otherwise the quantiles. Ignored when \code{psi} is different from \code{NA}.} 
-  \item{maxit.glm}{ integer giving the maximum number of inner IWLS iterations (see details). }
+  \item{maxit.glm}{ integer giving the maximum number of inner IWLS iterations (see details). If \code{NULL}, the number is low in the first iterations and then increases as th eprocess goes on. Ignored for segmented lm fits }
   \item{h}{ positive factor modifying the increments in breakpoint updates during
     the estimation process (see details). }
   \item{break.boot}{
@@ -56,17 +57,27 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     }
   \item{digits}{optional. If specified it means the desidered number of decimal points of the breakpoint to be used during the iterative algorithm.
   }
-  \item{conv.psi}{optional. Should convergence of iterative procedure to be assessed on changes of breakpoint estimates or changes in the objective? Default to FALSE.
-  }
+%  \item{conv.psi}{optional. Should convergence of iterative procedure to be assessed on changes of breakpoint estimates or changes in the %objective? Default to FALSE.
+%  }
   \item{alpha}{optional numerical values. The breakpoints are estimated within the quantiles \code{alpha[1]} and \code{alpha[2]} of the relevant covariate. If a single value is provided, it is assumed \code{alpha} and \code{1-alpha}. Defaults to \code{NULL} which means \code{alpha=max(.05, 1/n)}. Note: Providing \code{alpha=c(mean(x<=a),mean(x<=b))} means to constrain the breakpoint estimates within \eqn{[a,b]}{[a,b]}.
   }
-  \item{min.step}{optional. The minimum step size to break the iterative algorithm. Default to 0.0001.}
+%  \item{min.step}{optional. The minimum step size to break the iterative algorithm. Default to 0.0001.}
 %  \item{stop.if.error}{ same than \code{fix.npsi}. \emph{This argument will be removed in next releases}, %and replaced by 
 %  \code{fix.npsi}.
 % If provided, and different from \code{NULL}, it overwrites \code{fix.npsi}
 %  }
-  \item{fc}{A proportionality factor (\eqn{\le 1}{<= 1}) to adjust the breakpoint estimates \emph{if} these come close to the boundary or too close each other. For instance, if \code{psi} turns up close to the maximum, it will be changed to \code{psi*fc} or to \code{psi/fc} if close to the minimum. This is useful to get finite point estimate and standard errors for each slope paramete.}
-}
+  \item{fc}{A proportionality factor (\eqn{\le 1}{<= 1}) to adjust the breakpoint estimates \emph{if} these come close to the boundary or too close each other. For instance, if \code{psi} turns up close to the maximum, it will be changed to \code{psi*fc} or to \code{psi/fc} if close to the minimum. This is useful to get finite point estimate and standard errors for each slope paramete.
+  }
+  \item{check.next}{logical, effective only for stepmented fit. If \code{TRUE} the solutions next to the current one are also investigated.
+  }
+  \item{tol.opt}{Numerical value to be passed to \code{tol} in \code{\link{optimize}}.
+  }
+  \item{fit.psi0}{Possible list including preliminary values.
+  }
+  \item{eta}{Only for segmented/stepmented fits: starting values to be passed to \code{etastart} in \code{\link{glm.fit}}.
+  }
+  \item{min.nj}{How many observations (at least) should be in the covariate intervals induced by the breakpoints?}
+  }
 \details{
   Fitting a `segmented' GLM model is attained via fitting iteratively standard GLMs. The number of (outer) 
   iterations is governed by \code{it.max}, while the (maximum) number of (inner) iterations to fit the GLM at 

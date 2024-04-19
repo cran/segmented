@@ -1,7 +1,7 @@
 \name{confint.stepmented}
 \alias{confint.stepmented}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ Confidence intervals for breakpoints in stepmented regression}
+\title{ Confidence intervals for jumpoints in stepmented regression}
 \description{
   Computes confidence intervals for the changepoints (or jumpoints) in a fitted `stepmented' model.
 }
@@ -30,7 +30,7 @@
   }
 }
 \details{
-  \code{confint.stepmented} computes confidence limits for the changepoints. Currently the only option is \code{'delta'}, i.e. to compute the approximate covariance matrix via a smoothg approximation (see \code{\link{vcov.stepmented}}) and to build the limits using the standard Normal quantiles. Note that, the limits are rounded to the lowest observed value, thus the resulting confidence interval might not be symmetric if the stepmented covariate has not equispaced values. 
+  \code{confint.stepmented} computes confidence limits for the changepoints. Currently the only option is \code{'delta'}, i.e. to compute the approximate covariance matrix via a smoothing approximation (see \code{\link{vcov.stepmented}}) and to build the limits using the standard Normal quantiles. Note that, the limits are rounded to the lowest observed value, thus the resulting confidence interval might not be symmetric if the stepmented covariate has not equispaced values. 
   }
 \value{
     A matrix including point estimate and confidence limits of the breakpoint(s) for the
@@ -55,11 +55,11 @@ confidence intervals. }
 set.seed(10)
 x<-1:100
 z<-runif(100)
-y<-2+1.5*pmax(x-35,0)-1.5*pmax(x-70,0)+10*pmax(z-.5,0)+rnorm(100,0,2)
-out.lm<-lm(y~x)
-o<-segmented(out.lm,seg.Z=~x+z,psi=list(x=c(30,60),z=.4))
-confint(o) #delta CI for the 1st variable 
-confint(o, "x", method="score") #also method="g"
+y<-2+2.5*(x>45)-1.5*(x>70)+z+rnorm(100)
+o<-stepmented(y, npsi=2)
+
+confint(o) #round=TRUE is default
+confint(o, round=FALSE)  
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

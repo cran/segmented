@@ -9,7 +9,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
     b<-drop(solve(XtX,crossprod(x1,y1)))
     fit<-drop(tcrossprod(x,t(b)))
     r<-y-fit
-    o<-list(coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b), XtX=XtX, w=w)
+    o<-list(coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b), invXtX=solve(XtX), w=w)
     o
   }
   #-----------
@@ -24,11 +24,11 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   #-----------
   agg<- 1-control$fc
   it.max<- control$it.max 
-  tol<-  control$tol
+  tol<-  control$toll
   display<- control$visual 
   digits <- control$digits 
   min.step <- control$min.step
-  conv.psi <- control$conv.psi 
+  #conv.psi <- control$conv.psi 
   alpha <- control$alpha
   fix.npsi <- control$fix.npsi 
   n.boot <- control$n.boot 
@@ -39,7 +39,8 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   #-----------
   #browser()
   
-  if(!(inherits(obj,"lm") || is.vector(obj) || is.ts(obj))) stop("obj should be a 'lm' fit, a 'vector' or 'ts' object")
+  #if(!(inherits(obj,"lm") || is.vector(obj) || is.ts(obj))) stop("obj should be a 'lm' fit, a 'vector' or 'ts' object")
+  if(!inherits(obj,"lm")) stop("obj should be a 'lm' fit")
   
     y.only.vector <- FALSE
     Fo0 <- formula(obj) 
@@ -233,7 +234,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
     nomiV <- paste(nomiV, nomiZ, sep = ".")
     initial <- psi
     obj0 <- obj
-    dev0 <-sum(obj$residuals^2)
+    dev0 <-sum(ww*obj$residuals^2)
     list.obj <- list(obj)
     nomiOK<-nomiU
   
@@ -254,7 +255,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   P<-n.Seg
   npsii<-a
   npsi<- sum(npsii)
-  Xtrue<-Z
+  #Xtrue<-Z
   #psi0 <- unlist(psi)
   #PSI<- matrix(psi0, n, npsi, byrow=TRUE)
   #if(ncol(x)!=P) stop("errore")
@@ -263,7 +264,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   #browser()
   
   if(it.max == 0) {
-    U <- (Xtrue>PSI)
+    U <- (Z>PSI)
     colnames(U) <- paste(ripetizioni, nomiZ, sep = ".")
     nomiU <- paste("U", colnames(U), sep = "")
     #for (i in 1:ncol(U)) assign(nomiU[i], U[, i], envir = KK)
@@ -283,26 +284,29 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   }
   
   
-  c1 <- apply((Xtrue <= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo <)
-  c2 <- apply((Xtrue >= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo >)
+  c1 <- apply((Z <= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo <)
+  c2 <- apply((Z >= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo >)
   if(sum(c1 + c2) != 0 || is.na(sum(c1 + c2)) ) stop("starting psi out of the admissible range")
   if(is.null(alpha)) alpha<- max(.05, 1/length(y))
   if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
   
-  opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ,
+  #browser()
+  
+  opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ, usestepreg=FALSE,
             id.psi.group=id.psi.group, h=h,
-            #nomiOK=nomiOK, , visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
-            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii, seed=control$seed)
+            #nomiOK=nomiOK, , visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, conv.psi=conv.psi, 
+            alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii, 
+            seed=control$seed, fit.psi0=control$fit.psi0)
   
   # #################################################################################
   # #### jump.fit(y, XREG=x.lin, Z=Xtrue, PSI, w=ww, offs, opz, return.all.sol=FALSE)
   # #################################################################################
   if(n.boot<=0){
-    obj<- step.lm.fit(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
+    obj<- step.lm.fit(y, x.lin, Z, PSI, ww, offs, opz, return.all.sol=FALSE)
   } else {
     #browser()
     #if("seed" %in% names(control)) set.seed(control$seed)
-    obj<-step.lm.fit.boot(y, x.lin, Xtrue, PSI, ww, offs, opz, n.boot, break.boot=break.boot) 
+    obj<-step.lm.fit.boot(y, x.lin, Z, PSI, ww, offs, opz, n.boot, break.boot=break.boot) 
     seed<- obj$seed
   }
   # if(!is.list(obj)){
@@ -316,8 +320,10 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   psi<-obj$psi
   psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
   #i beta.c corripondono ai psi NON ordinati!!!
-  beta.c<- obj$beta.c
-  beta.c<-unlist(tapply(psi, id.psi.group, function(.x)beta.c[order(.x)]))
+  #
+  ##Nelle funzioni step i beta.c NON servono. Righe sotto commentate l'8/3/24
+  #beta.c<- obj$beta.c
+  #beta.c<-unlist(tapply(psi, id.psi.group, function(.x)beta.c[order(.x)]))
   #unlist(lapply(unique(id.psi.group), function(.x) beta.c[id.psi.group==.x][order(psi[id.psi.group==.x])]))
   psi<-unlist(tapply(psi, id.psi.group, sort)) 
   Z0<-apply(Z,2,sort)
@@ -330,7 +336,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   PSI.mid<- matrix(psi, n, npsi, byrow = TRUE)
   
   #bisogna evitare che una qualche x_i sia uguale a psi, altrimenti la costruzione di V-> INF
-  DEN <- abs(Xtrue - PSI.mid)
+  DEN <- abs(Z - PSI.mid)
   DEN <- apply(DEN, 2, function(.x) pmax(.x, sort(.x)[2]/2))  #pmax(.x, diff(range(.x))/1000)) 
   
   #xx=Xtrue - PSI.mid
@@ -339,7 +345,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   
   V <- (1/(2 * DEN))
   colnames(V)<-nomiV
-  U <- (Xtrue * V + 1/2)
+  U <- (Z * V + 1/2)
   colnames(U)<-nomiU
   Vxb <- -V  #* rep(-beta.c, each = nrow(V))
   nomiVxb <- gsub("V", "psi", nomiV)
@@ -383,7 +389,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
         idNA.psi <- match(nameNA.psi, nomiVxb)
         nomiVxb <- setdiff(nomiVxb, nameNA.psi)
         nomiU <- setdiff(nomiU, nameNA.U)
-        Xtrue <- Xtrue[, -idNA.psi, drop = FALSE]
+        Z <- Z[, -idNA.psi, drop = FALSE]
         PSI.mid<- PSI.mid[, -idNA.psi, drop = FALSE]
         id.psi.group <- id.psi.group[-idNA.psi]
         psi <- psi[-idNA.psi]
@@ -399,7 +405,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   #browser()
   
   
-  ris.psi<-matrix(NA,length(psi),3)
+  ris.psi<-matrix(NA,length(psi), 3)
   colnames(ris.psi) <- c("Initial", "Est.", "St.Err")
   rownames(ris.psi) <- nomiVxb
   ris.psi[,2]<-psi
@@ -431,9 +437,9 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   objF$psi.rounded <- psi.rounded
   #objW<-objF
   #stima il modello "vero" (non-working)
-  U<- (Xtrue > PSI.mid)
+  U<- (Z > PSI.mid)
   colnames(U)<-nomiU
-  X <- cbind(x.lin,U)
+  X <- cbind(x.lin, U)
   objF$objW<- objW
   objF$obj.ok<-mylm(X, y, w=ww, offs=offs) #coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b))
   objF$fitted.values<-objF$obj.ok$fitted.values
@@ -464,7 +470,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
     f.x<-matrix(NA, 150, ncol(objF$Z[,Z.in.obj,drop=FALSE])) #prima era nrow(objF$Z) invece che 100
     for(j in 1:length(Z.in.obj)){
       idPsi <- nomiVxb[endsWith(nomiVxb, paste(".", Z.in.obj[j], sep = ""))]
-      psi <- coef(objF)[idPsi]
+      #psi <- coef(objF)[idPsi]
       dd<-data.frame(seq(min(objF$Z[,Z.in.obj[j]]), max(objF$Z[,Z.in.obj[j]]), l=nrow(f.x)))
       names(dd)<- Z.in.obj[j]
       M<-model.matrix(Fo.ok, data=dd)

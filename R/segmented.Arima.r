@@ -236,7 +236,9 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     
     opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,dev0=dev0,visual=visual,it.max=it.max,
               nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,
-              conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc, seed=control$seed)
+              conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc, 
+              seed=control$seed, tol.opt=control$tol.opt, pLin=length(obj$coef), min.n=control$min.n) 
+    #pLin sono i termini lineari gia' nel modello (interc, ar, termini in xreg..)
     
     opz$call.ok<-call.ok
     opz$call.noV<-call.noV

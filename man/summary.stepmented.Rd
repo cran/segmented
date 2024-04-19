@@ -28,7 +28,7 @@
   %\item{x}{a \code{summary.stepmented} object produced by \code{summary.stepmented()}.}
   \item{digits}{controls number of digits printed in output.}
   \item{signif.stars}{logical, should stars be printed on summary tables of coefficients?}
-  \item{\dots}{ further arguments. }
+  \item{\dots}{ further arguments, notably \code{type} to be passed to \code{vcov.stepmented} to compute the standard errors. See \code{\link{vcov.stepmented}}. }
 }
 \details{
   If \code{short=TRUE} only coefficients of the stepmented relationships are printed.
@@ -58,6 +58,8 @@ A list (similar to one returned by \code{stepmented.lm} or \code{stepmented.glm}
 }
 %\references{ ~put references to the literature/web site here ~ }
 \author{ Vito M.R. Muggeo }
+
+\section{Warning }{If \code{type} is not specified in \code{...} (which means \code{type="standard"}), no standard error will be computed (and returned) for the jumpoint. } 
 
 \seealso{ \code{\link{pscore.test}}}
 

@@ -172,10 +172,14 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
   
     #xvalues <-  if(all(c("segmented", "Arima") %in% class(x))) x$Z[,1] else  model.matrix(x)[,term] #x$model[, term]
   
+    #browser()
     if(inherits(x,"Arima")){
       xvalues <-x$Z[,1]
     } else {
       M <- model.matrix.segmented(x)
+      #il 18/4/24 mi sono accorto che con ogg ottenuti da segmented.* con leftmost pendenza nulla non funzionava
+      #perche' model.matrix.segmented non restituiva la variabile (non inserita nel modello (g)lm di partenza..)
+      if(!term %in% colnames(M) && term%in%names(x$model)) M<-cbind(M, x$model[,term,drop=FALSE] )
       if(term %in% colnames(M)) {
         xvalues <- M[,term]
         } else {

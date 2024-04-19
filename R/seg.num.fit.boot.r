@@ -20,23 +20,43 @@ seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL,
 #      }
 #--------
       extract.psi<-function(lista){
-#serve per estrarre il miglior psi..
-    	dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
-    	psi.values<-lista[[2]][-1] #remove the 1st one (NA)
-    	dev.ok<-min(dev.values)
-    	id.dev.ok<-which.min(dev.values)
-    	if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values),
-    		nrow=length(dev.values), byrow=TRUE)
-    	if(!is.matrix(psi.values)) psi.values<-matrix(psi.values)
-    	psi.ok<-psi.values[id.dev.ok,]
-    	r<-list(SumSquares.no.gap=dev.ok, psi=psi.ok)
-    	r
-	}
+        #serve per estrarre il miglior psi..
+        dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
+    	  psi.values<-lista[[2]][-1] #remove the 1st one (NA)
+    	  dev.ok<-min(dev.values)
+    	  id.dev.ok<-which.min(dev.values)
+    	  if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values), nrow=length(dev.values), byrow=TRUE)
+    	  if(!is.matrix(psi.values)) psi.values<-matrix(psi.values)
+    	  psi.ok<-psi.values[id.dev.ok,]
+    	  r<-list(SumSquares.no.gap=dev.ok, psi=psi.ok)
+    	  r
+      }
+#-------------
+      # extract.psi<-function(lista){
+      #   #serve per estrarre il miglior psi..
+      #   dev.values<-lista[[1]]
+      #   psi.values<-lista[[2]]
+      #   if(any(is.na(psi.values[[1]]))) {#se la 1 componente e' NA (fino alla versione 2.0-3 era cosi'... perche' in dev.values c'erano 
+      #     #  anche i valori relativi al modello senza psi.. )
+      #     dev.values<-dev.values[-1] #remove the 1st one referring to model without psi
+      #     psi.values<-psi.values[-1]
+      #   }
+      #   dev.ok<-min(dev.values)
+      #   id.dev.ok<-which.min(dev.values)
+      #   if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values),
+      #                                               nrow=length(dev.values), byrow=TRUE)
+      #   if(!is.matrix(psi.values)) psi.values<-matrix(psi.values)
+      #   psi.ok<-psi.values[id.dev.ok,]
+      #   r<-list(SumSquares.no.gap=dev.ok, psi=psi.ok)
+      #   r
+      # }
+      
 #-------------
       #seg.num.fit<-if(sparse) seg.num.spar.fit else seg.num.fit 
       if(is.null(opz$seed)){
         mY <- mean(y)
-        vv <- strsplit(paste(strsplit(paste(mY),"\\.")[[1]], collapse=""),"")[[1]]
+        sepDec<-if(options()$OutDec==".") "\\." else "\\,"
+        vv <- strsplit(paste(strsplit(paste(mY), sepDec)[[1]], collapse=""),"")[[1]]
         vv<-vv[vv!="0"]
         vv=na.omit(vv[1:5])
         seed <-eval(parse(text=paste(vv, collapse="")))
@@ -78,7 +98,7 @@ seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL,
           if(!nonParam) stop("the first fit failed and I cannot extract fitted values for the semipar boot")
           if(random) {
             est.psi00<-est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
-            PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+            PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
             o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI1, w, opz1)), silent=TRUE)
             ss00<-o0$SumSquares.no.gap
           } else {
@@ -113,7 +133,7 @@ seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL,
         }
         
         #}
-        PSI <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+        PSI <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
         if(jt) Z<-apply(Z.orig,2,jitter)
         if(nonParam){
               id<-sample(n, size=size.boot, replace=TRUE)
@@ -132,13 +152,13 @@ seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL,
         ### se est.psi.boot non e' cambiato (e puoi vederlo da all.est.psi.boot), allora cambialo!
         
         
-        PSI <- matrix(rep(est.psi.boot, rep(nrow(Z), length(est.psi.boot))), ncol = length(est.psi.boot))
-        opz$h<-max(opz$h*.9, .2)
+        PSI <- matrix(est.psi.boot, n, ncol = length(est.psi.boot), byrow=TRUE)
+        #opz$h<-max(opz$h*.9, .2)
         opz$it.max<-opz$it.max+1
         o<-try(suppressWarnings(seg.num.fit(y, XREG, Z.orig, PSI, w, opz, return.all.sol=TRUE)), silent=TRUE)
         if(!is.list(o) && random){
                 est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
-                PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+                PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow = TRUE)
                 o<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI1, w, opz1)), silent=TRUE)
                 count.random<-count.random+1
         }
@@ -185,15 +205,55 @@ seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL,
       # PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
       # o0<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
 
-      
-
       ris<-list(all.selected.psi=drop(all.selected.psi),all.selected.ss=all.selected.ss, all.psi=all.est.psi, all.ss=all.ss)
-
+      
       if(is.null(o0$obj)){
-          PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
-          o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI1, w, opz1)), silent=TRUE)
-          warning("The final fit can be unreliable (possibly mispecified segmented relationship)", call.=FALSE, immediate.=TRUE)
+        #quando vengono restituiti psi troppo vicini e l'SE non si puo' calcolare, possiamo distanziarli..
+        #Pero' il processo deve essere esteso nel caso in cui ci sono 3 psi vicini..
+        min.n <- opz$min.n-1
+        npsi <- tapply(opz$id.psi.group, opz$id.psi.group, length)
+        nomiAll <- colnames(rangeZ) #rep(opz$nomiSeg, npsi)
+        nomiSeg <- unique(nomiAll)
+        newPsi<-vector("list", length(npsi) )
+        for(.j in 1:length(npsi)){
+          psi.j <- sort(est.psi0[opz$id.psi.group==.j])
+          id  <- nomiSeg[.j]==nomiAll
+          Z.ok <- unique(Z[, id, drop=FALSE][,1])
+          m.j <- min(limZ[1,id])
+          M.j <- max(limZ[2,id])
+          h=1/1.05
+          id.while<-tabulate(cut(Z.ok, c(m.j-10, psi.j, M.j+10), labels=FALSE))<=min.n
+          while(any(id.while)){
+            h<-h*1.05
+            ll <- min(diff(sort(unique(Z.ok))))*h
+            M <- matrix(c(m.j, rep(psi.j, each=2), M.j), ncol=2, byrow=TRUE)
+            Delta <- diff(c(m.j, psi.j, M.j))
+            #id.row <- which.min(Delta)
+            id.row <- which(id.while)
+            id.row <- id.row[which.min(Delta[id.row])]
+            if(id.row<length(Delta)){ #increnmta psi se il "problema" NON riguarda l'ultimo psi
+              psi.j[id.row]<- psi.j[id.row] + abs(min(Delta)-ll)/2
+            } else { #.. altrimenti riducilo
+              psi.j[length(psi.j)]<- psi.j[length(psi.j)] - abs(min(Delta)-ll)/2
+            }
+            id.while<-tabulate(cut(Z.ok, c(m.j-10, psi.j, M.j+10), labels=FALSE))<=min.n
+          }
+          newPsi[[.j]]<-psi.j
+        } #end .j
+        est.psi0 <- unlist(newPsi)
+        PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
+        o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI1, w, opz1)), silent=TRUE)
+        warning("Breakpoint estimates have been outdistanced to allow finite estimates and st.errs", call.=FALSE, immediate.=TRUE)
+        #warning(" 'The final fit (if returned) could be unreliable. Reduce no. of psi or try to increase 'break.boot'", call.=FALSE, immediate.=TRUE)
+        #warning("'Convergence' is suspect: the final fit could be unreliable. Try to re-run by increasing 'break.boot'", call.=FALSE, immediate.=TRUE)
       }
+      
+      
+      # if(is.null(o0$obj)){
+      #     PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
+      #     o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI1, w, opz1)), silent=TRUE)
+      #     warning("The final fit can be unreliable (possibly mispecified segmented relationship)", call.=FALSE, immediate.=TRUE)
+      # }
       if(!is.list(o0)) return(0)
       o0$boot.restart<-ris
       o0$seed <- seed

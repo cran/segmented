@@ -1,19 +1,36 @@
 step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){  
   #----------------------
-  search.min<-function(h, psi, psi.old, X, y, w, id.fix.psi=NULL) {
+  
+  #----------------------
+  search.minWO<-function(h, psi, psi.old, X, y, w, id.fix.psi=NULL) {
     psi.ok<- psi*h + psi.old*(1-h)
     psi.ok[id.fix.psi]<- psi.old[id.fix.psi]
-    PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
+    PSI <- matrix(psi.ok, n, ncol = length(psi.ok), byrow=TRUE)
     U1 <- (Xtrue>PSI) #(Z - PSI) * (Z > PSI)
     #if (pow[1] != 1) U1 <- U1^pow[1]
-    obj1 <- try(mylm(cbind(X, U1), y, w), silent = TRUE)
-    if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w), silent = TRUE)
+    obj1 <- try(mylmWO(cbind(X, U1), y, w), silent = TRUE)
+    #if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w), silent = TRUE)
     #if (class(obj1)[1] == "try-error") obj1 <- try(.lm.fit(cbind(X, U1), y), silent = TRUE)
-    L1 <- if (class(obj1)[1] == "try-error") L0 + 10
-    else sum(w*obj1$residuals^2)
+    L1 <- if (class(obj1)[1] == "try-error") L0 + 10 else obj1$L0
     #r<-sum(obj1$residuals^2 * w)
     L1
   }
+  search.min<-function(h, psi, psi.old, X, y, w, id.fix.psi=NULL) {
+    psi.ok<- psi*h + psi.old*(1-h)
+    psi.ok[id.fix.psi]<- psi.old[id.fix.psi]
+    PSI <- matrix(psi.ok, n, ncol = length(psi.ok), byrow=TRUE)
+    U1 <- (Xtrue>PSI) #(Z - PSI) * (Z > PSI)
+    #if (pow[1] != 1) U1 <- U1^pow[1]
+    obj1 <- try(mylm(cbind(X, U1), y, w), silent = TRUE)
+    #if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w), silent = TRUE)
+    #if (class(obj1)[1] == "try-error") obj1 <- try(.lm.fit(cbind(X, U1), y), silent = TRUE)
+    L1 <- if (class(obj1)[1] == "try-error") L0 + 10 else obj1$L0
+    #r<-sum(obj1$residuals^2 * w)
+    L1
+  }
+  ### -----
+  isZero <- function(v) sapply(v, function(.x) identical(.x,0))
+  ###------
   toMatrix<-function(.x, ki){
     # ripete ogni .x[,j] ki[j] volte
     if(ncol(.x)!=length(ki)) stop("It should be ncol(.x)==length(ki)")
@@ -23,7 +40,9 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     do.call(cbind, M)
   }
   ### -----
-  mylm <-function(x,y,w=1){ #,w=1,offs=0 in step.st.fit() non ci sovrebbero essere w e offs
+  isZero <- function(v) sapply(v, function(.x) identical(.x,0))
+  ###------
+  mylmWO <-function(x,y,w=1){ #,w=1,offs=0 in step.st.fit() non ci sovrebbero essere w e offs
     x1<-x*sqrt(w)
     #y<-y-offs
     y1<-y*sqrt(w)
@@ -35,11 +54,36 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     #b<-solve(crossprod(x),crossprod(x,y))
     #browser()
     #fit<- drop(tcrossprod(x,t(b)))
-    fit<- drop(tcrossprod(b,x))
+    fit<- drop(x%*%b)
     r<-y-fit
-    o<-list(coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b))
+    o<-list(coefficients=b,fitted.values=fit,residuals=r, L0=sum(w*r^2), df.residual=length(y)-length(b))
     o
   }
+  mylm <-function(x,y,w=1){ #,w=1,offs=0 in step.st.fit() non ci sovrebbero essere w e offs
+    #o<-.lm.fit(y=y,x=x)
+    #b<-o$coefficients
+    #fit<- o$fitted.values
+    #r<-o$residuals
+    b<-drop(solve(crossprod(x),crossprod(x,y))) #.lm.fit(x=x1, y=y1) #lm.wfit(x, y, w) #CHI E' PIU' VELOCE?
+    #browser()
+    #fit<- drop(tcrossprod(x,t(b)))
+    fit<- drop(x%*%b)
+    #fit<- drop(tcrossprod(b,x))
+    r<-y-fit
+    o<-list(coefficients=b,fitted.values=fit,residuals=r, L0=sum(r^2), df.residual=length(y)-length(b))
+    o
+  }
+  #-----------
+  if(var(ww)<=0){
+    fitter<-function(x, y, w) .lm.fit(x=x, y=y) #list(coefficients=drop(solve(crossprod(x), crossprod(x, y))))
+    mylmOK <- mylm
+    search.minOK <- search.min
+  } else {
+    fitter<-function(x, y, w) .lm.fit(x=sqrt(w)*x, y=sqrt(w)*y)
+    mylmOK <- mylmWO
+    search.minOK <- search.minWO
+  }
+  ##----------
   #-----------
   adj.psi <- function(psii, LIM) {
     pmin(pmax(LIM[1, ], psii), LIM[2, ])
@@ -80,7 +124,7 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
   k.values<-dev.values<- NULL
   psi.values <-list()
   psi.values[[length(psi.values) + 1]] <- NA
-  
+  dev.values[length(dev.values) + 1] <- opz$dev0 #modello senza psi 
   
   if(it.max==0){
     obj <- lm.wfit(x = cbind(x.lin, Xtrue>PSI), y = y, w = ww)
@@ -98,10 +142,9 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
   #PSI0<- matrix(psi0, n, npsi, byrow = TRUE)
   #XREG <- cbind(x.lin, Xtrue>PSI)
   #obj0 <- try(mylm(XREG, y), silent = TRUE) 
-  #L0<- sum(obj0$residuals^2) #*ww
-  L0<- dev0*.8 #e' inutil efar stimare un modello per avere L0 (che eserve solo se display=TRUE). Lo stesso in step.ts.fit
+  
+  L0<- mylmOK(cbind(x.lin, Xtrue>PSI), y, ww)$L0 # valore con psi iniziale
   n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
-  dev.values[length(dev.values) + 1] <- dev0#opz$dev0 #del modello iniziale (senza psi)
   dev.values[length(dev.values) + 1] <- L0 #modello con psi iniziali
   psi0<-PSI[1,]
   psi.values[[length(psi.values) + 1]] <- psi0 #psi iniziali
@@ -122,6 +165,10 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
   up <- apply(Xtrue, 2, max)
 
   L1<-L0+10  
+  tolOp<-if(is.null(opz$tol.opt)) seq(.001, .Machine$double.eps^0.25, l=it.max) else rep(opz$tol.opt, it.max)
+  idZ<-(plin+1):(plin+ncol(PSI))
+  idW<-(plin+ncol(PSI)+1): ( plin+2*ncol(PSI))
+  
   #==============================================
   while (abs(epsilon) > tol) {
     i <- i + 1
@@ -130,6 +177,7 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     for (p in 1:P) {
       psis <- sort(psi0[pos[[p]]])
       gruppi <- cut(xx[,p], breaks = c(low[p] - 0.1, psis, up[p]), labels = FALSE)
+      if(any(is.na(gruppi))) stop(paste("too many breaks for step term #", p, "?"), call.=TRUE)
       points <- c(low[p], psis, up[p])
       right <- c(low[p], points[2:(npsii[p] + 1)] + agg[pos[[p]]][order(psi0[pos[[p]]])] * (points[3:(npsii[p] + 2)] - points[2:(npsii[p] + 1)]), NA)
       left <- c(NA, points[2:(npsii[p] + 1)] - agg[pos[[p]]][order(psi0[pos[[p]]])] * (points[2:(npsii[p] + 1)] - points[1:npsii[p]]), up[p])
@@ -146,17 +194,16 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     Z <- (XX * W + 1/2)
     XREG <- cbind(x.lin, Z, W)
     
-    obj <- lm.wfit(y = y, x = XREG, w=ww)
+    obj <- fitter(y = y, x = XREG, w=ww)
     
     #b <- obj$coef[(2:(sum(k) + 1))]
     #g <- obj$coef[((sum(k) + 2):(2 * sum(k) + 1))]
     
-    idZ<-(plin+1):(plin+ncol(Z))
-    idW<-(plin+ncol(Z)+1): ( plin+ncol(Z)+ncol(W))
     b<- obj$coef[idZ]
     g<- obj$coef[idW]
     
-    if(any(is.na(c(b, g)))){
+    #if(any(is.na(c(b, g)))){
+    if(any(isZero(c(b, g)))) {
       if(return.all.sol) return(list(dev.values, psi.values)) else stop("breakpoint estimate too close or at the boundary causing NA estimates.. too many breakpoints being estimated?", call.=FALSE)
     }
     psi1 <- -g/b
@@ -166,8 +213,8 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     
     #if(i==2) browser()
     #la f e' chiaramente a gradino per cui meglio dividere..
-    a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww)
-    a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww)
+    a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, tol=tolOp[i])
+    a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, tol=tolOp[i])
     a<-if(a0$objective<=a1$objective) a0 else a1
     
     #M<-1
@@ -186,8 +233,8 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     if(use.k<=.01){
       k.List<-j.List<-NULL
       for(j in 1:length(psi1)){
-        a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, id.fix.psi=j)
-        a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, id.fix.psi=j)
+        a0<-optimize(search.min, c(0,.5), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, id.fix.psi=j, tol=tolOp[i])
+        a1<-optimize(search.min, c(.5,1), psi=psi1, psi.old=psi0, X=x.lin, y=y, w=ww, id.fix.psi=j, tol=tolOp[i])
         a <-if(a0$objective<=a1$objective) a0 else a1
         if(a$objective<L1){
           j.List[[j]]<-setdiff(1:length(psi1),j) #indici di psi che devono cambiare..
@@ -248,9 +295,12 @@ step.num.fit<-function(y, x.lin, Xtrue, PSI, ww, opz, return.all.sol=FALSE){
     }
     psi0<-psi1
   } #end while_it
+  psi1 <-unlist(tapply(psi1, opz$id.psi.group, sort))
+  PSI<- matrix(psi1, n, npsi, byrow = TRUE)
+  U <- 1*(Xtrue>PSI)
   
   #ATTENZIONE .. Assume che obj sia stato stimato sempre!
   obj<-list(obj=obj, psi=psi1, psi.values=psi.values, rangeZ=rangeZ, SumSquares.no.gap=L1, 
-            beta.c=b, it=i, epsilon=epsilon, id.warn=id.warn) 
+            beta.c=b, it=i, epsilon=epsilon, id.warn=id.warn, U=U) 
   return(obj)
 } #end jump.fit

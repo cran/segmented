@@ -58,7 +58,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     fc<- min(max(abs(control$fc),.8),1)
     maxit.glm <- control$maxit.glm
     it.max <- old.it.max<- control$it.max
-    min.step<-control$min.step
+    #min.step<-control$min.step
     alpha<-control$alpha
     digits<-control$digits
     toll <- control$toll
@@ -94,7 +94,8 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     # }
     last <- control$last
     K<-control$K
-    h<-min(abs(control$h),1)
+    #h<-min(abs(control$h),1)
+    h<- control$h
     if(h<1) it.max<-it.max+round(it.max/2)
     orig.call<-Call<-mf<-obj$call
     orig.call$formula<-mf$formula<-formula(obj) #per consentire lm(y~.)
@@ -274,10 +275,11 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     nomiOK<-nomiU
     if(is.null(alpha)) alpha<- max(.05, 1/length(y))
     if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
-    opz<-list(toll=toll, h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max, nomiOK=nomiOK,
-        fam=fam, eta0=obj$linear.predictors, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
-        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step,
-        pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, seed=control$seed)   
+    eta0<- if(is.null(control$eta)) obj$linear.predictors else control$eta
+    opz<-list(toll=toll, h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max, nomiOK=nomiOK, usesegreg=FALSE,
+        fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap, tol.opt=control$tol.opt,
+        conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi,eta0=eta0, # min.step=min.step,
+        pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, seed=control$seed, fit.psi0=control$fit.psi0, min.n=control$min.n)   
 
     #browser()
     
@@ -285,12 +287,16 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
       obj<-seg.glm.fit(y, XREG, Z, PSI, weights, offs, opz)
     } else {
       obj<-seg.glm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot) #jt, nonParam
-      seed<- obj$seed
+      
     }
     if(!is.list(obj)){
-        warning("No breakpoint estimated", call. = FALSE)
+        warning("Estimation failed. Too many breakpoints? Returning a glm fit..", call. = FALSE)
         return(obj0)
-        }
+    }
+    seed<- obj$seed
+    
+    #browser()
+    
     id.psi.group<-obj$id.psi.group
     nomiOK<-obj$nomiOK
     nomiFINALI<-unique(sub("U[1-9]*[0-9].", "", nomiOK)) #nomi originali delle variabili con breakpoint stimati!
@@ -313,8 +319,10 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
 #        if(any(table(sumV)<=1) && stop.if.error) stop("only 1 datum in an interval: breakpoint(s) at the boundary or too close each other")
 #         }
     rangeZ<-obj$rangeZ 
-    obj<-obj$obj
-    beta.c <- coef(obj)[paste("U", 1:ncol(U), sep = "")]
+    idU<-obj$idU
+    obj <- obj$obj
+    beta.c<- obj$coefficients[idU]
+    #beta.c <- coef(obj)[paste("U", 1:ncol(U), sep = "")]
     Vxb <- V %*% diag(beta.c, ncol = length(beta.c))
 
     #psi.values[[length(psi.values) + 1]] <- psi #in LM e' commentata..
@@ -363,7 +371,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     if(is.matrix(y)&& (fam$family=="binomial" || fam$family=="quasibinomial")){
               mfExt<-cbind(mfExt[[1]], mfExt[,-1])
     }
-    objF <- update(obj0, formula = Fo, data = mfExt, evaluate=FALSE)
+    objF <- update(obj0, formula = Fo, data = mfExt, family=obj0$family, evaluate=FALSE)
     if(!is.null(objF[["subset"]])) objF[["subset"]]<-NULL
     objF<-eval(objF, envir=mfExt)
     #C'e' un problema..controlla obj (ha due "(Intercepts)" - bhu.. al 27/03/14 non mi sembra!
@@ -391,17 +399,21 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
 #------>>>
 #------>>>
 #------>>>
-    if(!gap){
+    #browser()
+    
+    #if(!gap){
         names.coef<-names(objF$coefficients)
-        names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi  
-        objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce gli 0 
+        #names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi  
+        #objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce gli 0 
+        objF$coefficients<-obj$coefficients
+        names(objF$coefficients) <- names.coef
         objF$fitted.values<-obj$fitted.values
         objF$linear.predictors<-obj$linear.predictors
         objF$residuals<-obj$residuals
         objF$deviance<-obj$deviance
         objF$aic<-obj$aic + 2*ncol(Z) #k
         objF$weights<-obj$weights
-    }
+    #}
     
     Cov <- vcov(objF)
     id <- match(nomiVxb, names(coef(objF)))
@@ -431,6 +443,8 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     objF$psi.history <- psi.values
     objF$psi <- ris.psi
     objF$it <- (it - 1)
+    #browser()
+    
     objF$epsilon <- obj$epsilon
     objF$call <- match.call()
     objF$nameUV <- list(U = drop(nomiU), V = rownames(ris.psi), Z = nomiFINALI) #Z = name.Z

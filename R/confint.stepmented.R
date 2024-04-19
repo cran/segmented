@@ -13,7 +13,7 @@
   }
 
   if(length(nomeZ)>1) {
-    warning("There are multiple segmented terms. The first is taken", call.=FALSE, immediate. = TRUE)  
+    warning("There are multiple stepmented terms. The first is taken", call.=FALSE, immediate. = TRUE)  
     nomeZ<-nomeZ[1]
   }
 
@@ -22,7 +22,7 @@
   nomiU<- object$nameUV$U
   nomiPsi <- gsub("V","psi", nomiV)
   
-  Cov<-vcov.stepmented(object,...)
+  Cov<-vcov.stepmented(object, type="cdf", ...)
   id <- match(nomiPsi, names(coef(object)))
   vv <- if (length(id) == 1) Cov[id, id] else diag(Cov[id, id])
   
@@ -46,11 +46,19 @@
   sup<-pmin(psi +z*se, object$rangeZ[2,])
   
   #ripeti i nomi delle variabili stepmented tante volte quanti sono i psi..
-  nomiZripetuti<- sub("\\.", "", sub("psi[1-9].","", nomiPsi))
+  #nomiZripetuti<- sub("\\.", "", sub("psi[1-9].","", nomiPsi))
+  #Il 19/2/ email di Matti Lehtonen che fa notare che con la linea di sopra venivano eliminati i "." dai nomi delle variabili..
+  #Era stata messa nell'eventualita' che qualche variabile avesse >10 breakpoints
+  #I codici di sotto sono consentiti fino a 99 changepoints per variabile 
+
+  nomiZripetuti <- sub("psi[1-9]*[0-9].","", nomiPsi)
+  #nomiZripetuti <- sub("psi[1-9].", "", nomiZripetuti)
+#browser()
+
   if(round){
-    inf.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[, nomiZripetuti[j]]<inf[j])+c(0,1),nomiZripetuti[j]])
-    sup.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[, nomiZripetuti[j]]<sup[j])+c(0,1),nomiZripetuti[j]])
-    r<-cbind(object$psi.rounded[1,], inf.rounded[1,], sup.rounded[1,])
+    inf.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[, nomiZripetuti[j]]<inf[j])+0,nomiZripetuti[j]])
+    sup.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[, nomiZripetuti[j]]<sup[j])+0,nomiZripetuti[j]])
+    r<-cbind(object$psi.rounded[1,], inf.rounded, sup.rounded)
   } else {
     r<-cbind(psi, inf, sup)
   }

@@ -24,7 +24,8 @@ seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, j
           } else {
             mY <- if(!is.null(obj$residuals)) mean(obj$residuals) else as.numeric(logLik(obj))
           }
-        vv <- strsplit(paste(strsplit(paste(mY),"\\.")[[1]], collapse=""),"")[[1]]
+        sepDec<-if(options()$OutDec==".") "\\." else "\\,"
+        vv <- strsplit(paste(strsplit(paste(mY), sepDec)[[1]], collapse=""),"")[[1]]
         vv<-vv[vv!="0"]
         vv=na.omit(vv[1:5])
         seed <-eval(parse(text=paste(vv, collapse="")))
@@ -82,6 +83,7 @@ seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, j
       Z.orig<-Z
 #      if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")
       count.random<-0
+      alpha <- .1
       for(k in seq(n.boot)){
         ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
         n.boot.rev<- 3 #3 o 4?
@@ -90,6 +92,7 @@ seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, j
         if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
           qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
           qpsi<-ifelse(abs(qpsi-.5)<.1,.8,qpsi)
+          alpha <- 1 - alpha
           est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
         }
         
@@ -110,13 +113,13 @@ seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, j
             } else {
             est.psi.boot<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
             }
-            PSI <- matrix(rep(est.psi.boot, rep(nrow(Z), length(est.psi.boot))), ncol = length(est.psi.boot))
-            opz$h<-max(opz$h*.9, .2)
+            PSI <- matrix(est.psi.boot, n, ncol = length(est.psi.boot), byrow=TRUE)
+            #opz$h<-max(opz$h*.9, .2)
             opz$it.max<-opz$it.max+1
             o <- try(seg.def.fit(obj, Z.orig, PSI, mfExt, opz, return.all.sol=TRUE), silent=TRUE)
             if(!is.list(o) && random){
                 est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
-                PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+                PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
             o <- try(suppressWarnings(seg.def.fit(obj, Z, PSI1, mfExt, opz1)), silent=TRUE)
                 count.random<-count.random+1
               }
@@ -152,10 +155,51 @@ seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, j
       ris<-list(all.selected.psi=drop(all.selected.psi),all.selected.ss=all.selected.ss, all.psi=all.est.psi, all.ss=all.ss)
 
       if(is.null(o0$obj)){
-        PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+        #quando vengono restituiti psi troppo vicini e l'SE non si puo' calcolare, possiamo distanziarli..
+        #Pero' il processo deve essere esteso nel caso in cui ci sono 3 psi vicini..
+        min.n <- opz$min.n-1
+        npsi <- tapply(opz$id.psi.group, opz$id.psi.group, length)
+        nomiAll <- colnames(rangeZ) #rep(opz$nomiSeg, npsi)
+        nomiSeg <- unique(nomiAll)
+        newPsi<-vector("list", length(npsi) )
+        for(.j in 1:length(npsi)){
+          psi.j <- sort(est.psi0[opz$id.psi.group==.j])
+          id  <- nomiSeg[.j]==nomiAll
+          Z.ok <- unique(Z[, id, drop=FALSE][,1])
+          m.j <- min(limZ[1,id])
+          M.j <- max(limZ[2,id])
+          h=1/1.05
+          id.while<-tabulate(cut(Z.ok, c(m.j-10, psi.j, M.j+10), labels=FALSE))<=min.n
+          while(any(id.while)){
+            h<-h*1.05
+            ll <- min(diff(sort(unique(Z.ok))))*h
+            M <- matrix(c(m.j, rep(psi.j, each=2), M.j), ncol=2, byrow=TRUE)
+            Delta <- diff(c(m.j, psi.j, M.j))
+            #id.row <- which.min(Delta)
+            id.row <- which(id.while)
+            id.row <- id.row[which.min(Delta[id.row])]
+            if(id.row<length(Delta)){ #increnmta psi se il "problema" NON riguarda l'ultimo psi
+              psi.j[id.row]<- psi.j[id.row] + abs(min(Delta)-ll)/2
+            } else { #.. altrimenti riducilo
+              psi.j[length(psi.j)]<- psi.j[length(psi.j)] - abs(min(Delta)-ll)/2
+            }
+            id.while<-tabulate(cut(Z.ok, c(m.j-10, psi.j, M.j+10), labels=FALSE))<=min.n
+          }
+          newPsi[[.j]]<-psi.j
+        } #end .j
+        est.psi0 <- unlist(newPsi)
+        PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
         o0 <- try(suppressWarnings(seg.def.fit(obj, Z, PSI1, mfExt, opz1)), silent=TRUE)
-        warning("The final fit can be unreliable (possibly mispecified segmented relationship)", call.=FALSE, immediate.=TRUE)
+        warning("Breakpoint estimates have been outdistanced to allow finite estimates and st.errs", call.=FALSE, immediate.=TRUE)
+        #warning(" 'The final fit (if returned) could be unreliable. Reduce no. of psi or try to increase 'break.boot'", call.=FALSE, immediate.=TRUE)
+        #warning("'Convergence' is suspect: the final fit could be unreliable. Try to re-run by increasing 'break.boot'", call.=FALSE, immediate.=TRUE)
       }
+      
+      # if(is.null(o0$obj)){
+      #   PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
+      #   o0 <- try(suppressWarnings(seg.def.fit(obj, Z, PSI1, mfExt, opz1)), silent=TRUE)
+      #   warning("The final fit can be unreliable (possibly mispecified segmented relationship)", call.=FALSE, immediate.=TRUE)
+      # }
       if(!is.list(o0)) return(0)
       o0$boot.restart<-ris
       o0$seed<-seed

@@ -7,9 +7,14 @@
         print( x$call )
         cat("\nCoefficients of the linear terms:\n")
         
+        #browser()
+        
         #iV<- -match(x$nameUV[[2]],names(coef(x)))#iV<- -grep("psi.",names(coef(x)))#indices all but V
-        iV<- -match(gsub("V", "psi", x$nameUV[[2]]),names(coef(x)))#iV<- -grep("psi.",names(coef(x)))#indices all but V
-        print.default(format(x$coef[iV], digits = digits), print.gap = 2, quote = FALSE)
+        nomiPsi <- gsub("V", "psi", x$nameUV$V)
+        coeff <- coef(x)
+        iV<- -match(nomiPsi,names(coeff))#iV<- -grep("psi.",names(coef(x)))#indices all but V
+        coeff <- if(any(is.na(coeff[iV]))) coeff else coeff[iV]  
+        print.default(format(coeff, digits = digits), print.gap = 2, quote = FALSE)
         cat("\n")
         cat("Estimated Jump-Point(s):\n")
         #a<-as.vector(x$psi[,"Est."]) 

@@ -324,6 +324,11 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
     call.ok <- update(obj, Fo, evaluate = FALSE, data = mfExt)
     call.noV <- update(obj, Fo.noV, evaluate = FALSE, data = mfExt)
     
+    
+    if(class(obj)[1] == "rq") { #inherits(obj, "rq")
+      call.noV$tau <- call.ok$tau <- obj$tau
+    }
+    
     #browser()
     
     if (inherits(obj, "svyglm")){
@@ -359,7 +364,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
         dev0 = dev0, visual = visual, it.max = it.max, nomiOK = nomiOK, 
         id.psi.group = id.psi.group, gap = gap, visualBoot = visualBoot, 
         pow = pow, digits = digits, conv.psi = conv.psi, alpha = alpha, 
-        fix.npsi = fix.npsi, min.step = min.step, seed=control$seed)
+        fix.npsi = fix.npsi, min.step = min.step, seed=control$seed, min.n=control$min.n)
     opz$call.ok <- call.ok
     opz$call.noV <- call.noV
     opz$formula.orig <- formula(obj)

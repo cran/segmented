@@ -30,10 +30,10 @@ draw.history(obj, term, ...)
 \examples{
 data(stagnant)
 os<-segmented(lm(y~x,data=stagnant),seg.Z=~x,psi=-.8)
-draw.history(os) #diagnostics with boot restarting
+# draw.history(os) #diagnostics with boot restarting
 
 os<-segmented(lm(y~x,data=stagnant),seg.Z=~x,psi=-.8, control=seg.control(n.boot=0))
-draw.history(os) #diagnostics without boot restarting
+# draw.history(os) #diagnostics without boot restarting
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

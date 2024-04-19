@@ -69,16 +69,25 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
     return(r)
     
   }
-  mylm<-function(x,y,w=1){
+  mylm.W<-function(x,y,w=1){
     x1<-x*sqrt(w)
     y1<-y*sqrt(w)
     XtX <- crossprod(x1)
     b<-drop(solve(XtX,crossprod(x1,y1)))
     fit<-drop(tcrossprod(x,t(b)))
     r<-y-fit
-    o<-list(coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b), XtX=XtX)
+    o<-list(coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b), invXtX=solve(XtX), L0=sum(w*r^2))
     o
   }
+  mylm.noW<-function(x,y,w=1){
+    XtX <- crossprod(x)
+    b<-drop(solve(XtX,crossprod(x,y)))
+    fit<-drop(x%*%b) #tcrossprod(x,t(b)))
+    r<-y-fit
+    o<-list(coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b), invXtX=solve(XtX), L0=sum(r^2))
+    o
+  }
+  mylm<- if(is.null(weights)) mylm.noW else mylm.W 
   #-----------
   toMatrix<-function(.x, ki){
     # ripete ogni .x[,j] ki[j] volte
@@ -91,7 +100,7 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   #-----------
   agg<- 1-control$fc
   it.max<- control$it.max 
-  tol<-  control$tol
+  tol<-  control$toll
   display<- control$visual 
   digits <- control$digits 
   min.step <- control$min.step
@@ -165,8 +174,9 @@ stepmented.numeric <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=se
   #x<- Z
   x.lin <-XREG
   #if(is.vector(x)) x<-as.matrix(x)
-  dev0<- n*var(y) #sum(mylm(x.lin, y, ww)$residuals^2*ww)
-  dev0<- if(!display) var(y)*n else sum(mylm(x.lin, y)$residuals^2)
+  #dev0<- n*var(y) #sum(mylm(x.lin, y, ww)$residuals^2*ww)
+  #dev0<- if(!display) var(y)*n else sum(mylm(x.lin, y)$residuals^2)
+  dev0 <- if(is.null(weights)) var(y)*(n-1) else sum(weights*(y-weighted.mean(y, weights))^2)
   rangeZ <- apply(Z, 2, range)
   
   #browser()

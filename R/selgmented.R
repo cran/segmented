@@ -14,7 +14,7 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
   #mettere l'opzione di gdl=n.changepoint e poi (df*log(n))^alpha dove alpha=1.01 (vedi...)
   #sel1() si usa per G>1
   #===
-  if(stop.if<=0) stop("stop.if should be an integer (at least 4, probably)")
+  if(stop.if<=0) stop("'stop.if' should be an integer (at least 4, probably)")
   stop.if<-ceiling(stop.if)
   f<-function(x, soglia){
     #restituisce l'indice del vettore x t.c. il valore e' il piu' piccolo 
@@ -358,12 +358,9 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
   }
   m1 <-min(Z)
   m2 <-max(Z)
-  
-  
-  
+
   if(is.null(th)) th <- diff(range(Z))/100
-  
-  
+
   if(G==1){  
     build.mf<-function(o, data=NULL){
       #returns the dataframe including the possibly untransformed variables,
@@ -397,7 +394,6 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
       
       npsi<-1:Kmax
       startpsi<-vector("list", length(npsi))  
-      
       conv<-bic.values<- rep(NA, length(npsi))
       
       if(!is.null(olm$call$data)) assign(paste(olm$call$data), eval(olm$call$data, envir=parent.frame() ))
@@ -520,7 +516,6 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
               startpsi[[i]] <- sort(c(startpsi[[i-1]], psi0))
               npsiVeri[length(npsiVeri)+1]<- length(startpsi[[i-1]])
             }
-
           }
           #if(i==8) browser()
           #un controllo su bic values.. fermarsi SE gli ultimi K sono NA oppure sono crescenti!!
@@ -528,9 +523,10 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
           #ind1 e' se gli ultimi modelli non sono arrivati a convergenza per cui il bic e' stato aumentato di 1 rispetto al precedente..
           #poiche' ci possono essere piu' bic per uno stesso numero di break, ne devi considerare solo uno (il minimo)
           #altrimenti -se i bic per uno stesso numero di break sono decrescenti- la valutazione del bic crescente e' sballata
+          #if(i==5) browser()
           bicValuesTest<-tapply(na.omit(c(bicM0,bic.values)), npsiVeri, min)
           ind1<-(i>=stop.if && all(diff(rev(na.omit(bicValuesTest)))[1:3]==-1))
-          ind2<-(i>=stop.if&& length(bicValuesTest)>=stop.if && all(rev(na.omit(diff(bicValuesTest)))[1:stop.if]>0))
+          ind2<-(i>=stop.if&& length(bicValuesTest)>stop.if && all(rev(na.omit(diff(bicValuesTest)))[1:stop.if]>0))
           if(ind1 || ind2) {earlyStop<-TRUE;break}
         } #end in for(2 in Kmax)
       
@@ -542,9 +538,6 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
       } else { #se Kmax=1
         earlyStop<-FALSE
       }
-      #A questo punto, poiche' il bic e' semp
-      #browser()
-      
       #npsiVeri <-sapply(ris, function(.x) if(is.list(.x))nrow(.x$psi) else NA ) #[1:i]
       #npsiVeri <- npsiVeri[!is.na(npsiVeri)]
 
@@ -561,6 +554,8 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
       names(bic.values)<-npsiVeri
       n.psi.ok<- npsiVeri[which.min(bic.values)]
 
+      #browser()
+      
       if(n.psi.ok==0){
         m<-matrix(NA,1,1, dimnames=list(NULL, "Est."))
         olm$selection.psi<- list(bic.values=bic.values, npsi=n.psi.ok)
@@ -571,7 +566,7 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
           print(bic.values)
           cat(paste("\nNo. of selected breakpoints: ", n.psi.ok, " \n"))
         }
-        return(olm)
+        if(return.fit) return(olm) else return(list(bic.values=bic.values, npsi=n.psi.ok))
       }
       
       #browser()

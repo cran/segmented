@@ -13,28 +13,28 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
       U1<-do.call(cbind, UList) #la matrice del disegno sara' cbind(X, U1)
       
       obj1 <- try(suppressWarnings(glm.fit(x = cbind(X, U1), y = y, offset = offs,
-                weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)),
+                weights = w, family = fam, control = glm.control(maxit = maxit.glm1[it]), etastart = eta0)),
                 silent = TRUE)
       L1 <- if (class(obj1)[1] == "try-error") L0 + 10 else obj1$dev
       L1
     }
-    est.k<-function(x1,y1,L0){
-      ax<-log(x1)
-      .x<-cbind(1,ax,ax^2)
-      b<-drop(solve(crossprod(.x),crossprod(.x,y1)))
-      const<-b[1]-L0
-      DD<-sqrt(b[2]^2-4*const*b[3])
-      kk<-exp((-b[2]+ DD) /(2*b[3]))
-      return(round(kk))
-      
-      #  ff<-function(xx) b[1]+b[2]*xx + b[3]*xx^2+ L0
-      #  a<-uniroot(ff, c(log(x[4]), 3.4))
-    }
-    dpmax <- function(x, y, pow = 1) {
-        if (pow == 1) 
-            -(x > y)
-        else -pow * ((x - y) * (x > y))^(pow - 1)
-    }
+    # est.k<-function(x1,y1,L0){
+    #   ax<-log(x1)
+    #   .x<-cbind(1,ax,ax^2)
+    #   b<-drop(solve(crossprod(.x),crossprod(.x,y1)))
+    #   const<-b[1]-L0
+    #   DD<-sqrt(b[2]^2-4*const*b[3])
+    #   kk<-exp((-b[2]+ DD) /(2*b[3]))
+    #   return(round(kk))
+    #   
+    #   #  ff<-function(xx) b[1]+b[2]*xx + b[3]*xx^2+ L0
+    #   #  a<-uniroot(ff, c(log(x[4]), 3.4))
+    # }
+    # dpmax <- function(x, y, pow = 1) {
+    #     if (pow == 1) 
+    #         -(x > y)
+    #     else -pow * ((x - y) * (x > y))^(pow - 1)
+    # }
     in.psi <- function(LIM, PSI, ret.id = TRUE) {
         a <- PSI[1, ] <= LIM[1, ]
         b <- PSI[1, ] >= LIM[2, ]
@@ -112,7 +112,7 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
     epsilon <- 10
     k.values<-dev.values<- NULL
     psi.values <-list()
-    psi.values[[length(psi.values) + 1]] <- NA
+    #psi.values[[length(psi.values) + 1]] <- NA
     #id.psi.ok<-rep(TRUE, length(psi))
     sel.col.XREG<-unique(sapply(colnames(XREG), function(x)match(x,colnames(XREG))))
     if(is.numeric(sel.col.XREG)) XREG<-XREG[,sel.col.XREG,drop=FALSE] #elimina le ripetizioni, ad es. le due intercette..
@@ -141,7 +141,7 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
     U<-do.call(cbind, UList) #la matrice del disegno sara' cbind(X, U)
     
     obj0 <- suppressWarnings(glm.fit(x = cbind(XREG, U), y = y, offset = offs,
-                                     weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0))
+                                     weights = w, family = fam, control = glm.control(maxit = 3), etastart = eta0))
     eta0<- obj0$linear.predictors
     L0<- obj0$dev
     
@@ -155,7 +155,7 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
       #names(obj$coefficients) <- names.coef
       obj$epsilon <- epsilon
       obj$it <- it
-      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, X=XREG,
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, X=XREG, idU=ncol(XREG)+1:(ncol(U)),
                   U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
                   dev.no.gap = L1, id.psi.group = id.psi.group, 
                   id.warn = TRUE,
@@ -164,8 +164,17 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
       return(obj)
     }
 
+    if(is.null(maxit.glm)){
+      Nboot <- if(is.null(opz$Nboot)) 0 else opz$Nboot
+      maxit.glm1 <- rep(1:it.max + Nboot, 1:it.max+1) #2*rep(1:it.max, 1:it.max)
+      maxit.glm1 <- pmin(maxit.glm1, 25)
+    } else {
+      maxit.glm1 <- rep(maxit.glm, it.max)
+    }
+    
+    
     n.intDev0<-nchar(strsplit(as.character(L0),"\\.")[[1]][1])
-    dev.values[length(dev.values) + 1] <- opz$dev0 #del modello iniziale (senza psi)
+    #dev.values[length(dev.values) + 1] <- opz$dev0 #del modello iniziale (senza psi)
     dev.values[length(dev.values) + 1] <- L0 #modello con psi iniziali
     psi.values[[length(psi.values) + 1]] <- psi #psi iniziali
 
@@ -183,15 +192,17 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
     #browser()
     #Zseg <- XREG[,opz$nomiSeg,drop=FALSE]
     #XREG <- XREG[, -match(opz$nomiSeg, colnames(XREG)),drop=FALSE]
+    tolOp<-if(is.null(opz$tol.opt)) seq(.001, .Machine$double.eps^0.25, l=it.max) else rep(opz$tol.opt, it.max)
+    idU=ncol(XREG)+1:(ncol(U))
     while (abs(epsilon) > toll) {
       it<-it+1
       n.psi0 <- n.psi1
       n.psi1 <- ncol(Z)
       if(n.psi1!=n.psi0){
         U <- ((Z-PSI)*(Z>PSI)) #pmax((Z - PSI), 0)^pow[1]
-        if(pow[1]!=1) U<-U^pow[1]
+        #if(pow[1]!=1) U<-U^pow[1]
         obj0 <- suppressWarnings(glm.fit(x = cbind(XREG, U), y = y, offset = offs,
-                                         weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0))
+                                         weights = w, family = fam, control = glm.control(maxit = maxit.glm1[it]), etastart = eta0))
         eta0<-obj0$linear.predictors
         L0< - obj0$dev
       } else {
@@ -208,13 +219,13 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
         U<-do.call(cbind, UList)
 
         X <- cbind(XREG, U, V)
-        rownames(X) <- NULL
+        #rownames(X) <- NULL
         #colnames(X)[(ncol(XREG) + 1):ncol(U)] <- paste("U", 
          #   1:ncol(U), sep = "") #, paste("V", 1:ncol(V), sep = ""))
         obj <- suppressWarnings(glm.fit(X, y, offset = offs, weights = w, family = fam, 
-                                        control = glm.control(maxit = maxit.glm), etastart = eta0))
+                                        control = glm.control(maxit = maxit.glm1[it]), etastart = eta0))
         eta0<-obj$linear.predictors
-        beta.c <- coef(obj)[ncol(XREG)+(1:ncol(U))]
+        beta.c <- obj$coefficients[idU] #        #beta.c <- coef(obj)[ncol(XREG)+(1:ncol(U))]
         coefUList <- lapply(1:length(RList), function(i) (invA.RList[[i]]%*%beta.c[unlist(nomiUList)==i])[-1])
         beta.c <- unlist(coefUList)
 
@@ -250,18 +261,16 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
         psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         #browser()
         
-        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs)
+        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs, tol=tolOp[it])
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
         #L1.k[length(L1.k) + 1] <- L1<- a$objective
         psi <- psi*use.k + psi.old* (1-use.k)
         psi<- adj.psi(psi, limZ)
         if (!is.null(digits)) psi <- round(psi, digits)
-        PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
+        PSI <- matrix(psi, n, ncol = length(psi), byrow=TRUE)
         U1 <- (Z - PSI) * (Z > PSI)
-        
-        
-        
+
         #if (pow[1] != 1) U1 <- U1^pow[1]
         #obj1 <- try(mylm(cbind(XREG, U1), y, w, offs), silent = TRUE)
         #if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(XREG, U1), y, w, offs), silent = TRUE)
@@ -275,9 +284,7 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
                     "  est.psi = ",paste(formatC(unlist(psi),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
                     sep=""), "\n")
         }
-        epsilon <- if (conv.psi) 
-            max(abs((psi - psi.old)/psi.old))
-        else (L0 - L1)/(abs(L0) + 0.1)
+        epsilon <- (L0 - L1)/(abs(L0) + 0.1)
         L0 <- L1
         U <- U1
         k.values[length(k.values) + 1] <- use.k
@@ -288,10 +295,8 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
         id.psi.ok <- id.psi.in & id.psi.far
         if (!all(id.psi.ok)) {
             if (fix.npsi) {
-                psi <- psi * ifelse(id.psi.far, 1, attr(id.psi.far, 
-                  "factor"))
-                PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), 
-                  ncol = length(psi))
+                psi <- psi * ifelse(id.psi.far, 1, attr(id.psi.far, "factor"))
+                PSI <- matrix(psi, n, ncol = length(psi), byrow=TRUE)
                 id.psi.changed[it] <- TRUE
             }
             else {
@@ -329,7 +334,7 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
     names(psi) <- id.psi.group
     names.coef <- names(obj$coefficients)
     #PSI.old <- PSI
-    PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
+    PSI <- matrix(psi, n, ncol = length(psi), byrow=TRUE)
     #if (sd(PSI - PSI.old) > 0 || id.psi.changed[length(id.psi.changed)]) {
     #browser()
     V <- -(Z > PSI)
@@ -344,7 +349,7 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
 
     colnames(U) <- paste("U", 1:ncol(U), sep = "")
     obj <- try(suppressWarnings(glm.fit(cbind(XREG, U), y = y, offset = offs,
-                                        weights = w, family = fam, control = glm.control(maxit = maxit.glm), etastart = eta0)), 
+                                        weights = w, family = fam, control = glm.control(maxit = maxit.glm1[it]), etastart = eta0)), 
                silent = TRUE)
     L1<- obj$dev    
     #browser()
@@ -352,7 +357,7 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
     #names(obj$coefficients) <- names.coef
     obj$epsilon <- epsilon
     obj$it <- it
-    obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, X=XREG,
+    obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, X=XREG, idU=ncol(XREG)+1:(ncol(U)),
         U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
         #SumSquares.no.gap = L1, 
         dev.no.gap=L1,

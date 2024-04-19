@@ -8,7 +8,7 @@ Design matrix for stepmented fits
 This function builds the model matrix for \code{stepmented} fits.
 }
 \usage{
-\method{model.matrix}{stepmented}(object, k=NULL, apprx=c("cdf","abs"), ...)
+\method{model.matrix}{stepmented}(object, type=c("cdf","abs","none"), k=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -16,17 +16,17 @@ This function builds the model matrix for \code{stepmented} fits.
 A stepmented fit
 }
   \item{k}{
-The (negative) exponent of the sample size to approximate the absolute value; see \code{\link{vcov.stepmented}}
+The (negative) exponent of the sample size to approximate the absolute value; see \code{\link{vcov.stepmented}} for details.
 }
-  \item{apprx}{
-The approximation of the absolute value.
+  \item{type}{
+The approximation for the indicator function/absolute value. If \code{"none"}, the simple matrix with the original indicator values is returned. \code{type='abs'} is not yet allowed.  
 }
   \item{\dots}{
 additional arguments
 }
 }
 \details{
-\code{model.matrix.stepmented}
+If \code{type="none"}, \code{model.matrix.stepmented} return the design matrix including the indicator function values and ignoring the psi terms.
 }
 \value{
 The design matrix for a stepmented regression model with the specified formula and data

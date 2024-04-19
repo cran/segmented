@@ -22,15 +22,19 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
       #v<-try(vcov(object), silent=TRUE)
       #if(class(v)!="try-error") v<-sqrt(diag(v))
       return(summ)
-      }
+    }
+    #browser()
+    
+    VAR <- if(!is.null(.vcov)) .vcov else vcov(object,...)
+    se <- sqrt(diag(VAR))
+    object$psi[,"St.Err"] <- se[nomiPsi] 
+    
     if("lm"%in%class(object) && !"glm"%in%class(object)){
-      summ <- c(summary.lm(object, ...), object["psi"])
+      summ <- c(suppressWarnings(summary.lm(object, ...)), object["psi"])
       summ$Ttable <-summ$coefficients
-      
-      summ$Ttable[,"Std. Error"] <- sqrt(diag(vcov(object)))
+      summ$Ttable[,"Std. Error"] <- se[rownames(summ$coefficients)]
       summ$Ttable[,"t value"] <- summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"] 
       summ$Ttable[,"Pr(>|t|)"] <- 2*pt(abs(summ$Ttable[,"t value"]), df=object$df.residual, lower.tail = FALSE) # summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"]
-      
       #browser()
       
       if(var.diff){
@@ -57,35 +61,33 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
         dimnames(summ$Ttable) <- list(names(object$coefficients)[Qr$pivot[p1]],
               c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
       }
-      if(!is.null(.vcov)){
-            summ$Ttable[,2]<-sqrt(diag(.vcov))
-            summ$Ttable[,3]<-summ$Ttable[,1]/summ$Ttable[,2]
-            summ$Ttable[,4]<- 2 * pt(abs(summ$Ttable[,3]),df=object$df.residual, lower.tail = FALSE)
-      }
-          summ$Ttable[idU,4]<-NA
-          summ$Ttable<-summ$Ttable[-idV,] 
-          summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]
-          summ$n.boot<-length(na.omit(object$psi.history$all.ss))
-
-          summ$var.diff<-var.diff
-          summ$short<-short
-          summ$psi.rounded <- object$psi.rounded
-          class(summ) <- c("summary.stepmented", "summary.lm")
-          return(summ)
+      summ$Ttable[idU,4]<-NA
+      if(all(!is.na(idV))) summ$Ttable<-summ$Ttable[-idV,] 
+      summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]
+      summ$n.boot<-length(na.omit(object$psi.history$all.ss))
+      summ$var.diff<-var.diff
+      summ$short<-short
+      summ$psi.rounded <- object$psi.rounded
+      class(summ) <- c("summary.stepmented", "summary.lm")
+      return(summ)
     }
     if(inherits(object, "glm")){
-      summ <- c(summary.glm(object, ...), object["psi"])
-      summ$Ttable<-summ$coefficients[-idV,]
-      #cat("HAi modiifcato il calcolo degli SE comesta fatto sopra per 'lm'? \n")
+      summ <- c(suppressWarnings(summary.glm(object, ...)), object["psi"])
+      summ$Ttable <-summ$coefficients
+      summ$Ttable[,"Std. Error"] <- se[rownames(summ$coefficients)]
+      summ$Ttable[,"z value"] <- summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"] 
+      summ$Ttable[,"Pr(>|z|)"] <- 2*pnorm(abs(summ$Ttable[,"z value"]), lower.tail = FALSE) # summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"]
       summ$Ttable[idU,4]<-NA
+      if(all(!is.na(idV))) summ$Ttable<-summ$Ttable[-idV,] 
       summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]
       summ$n.boot<-length(na.omit(object$psi.history$all.ss))
       summ$short<-short
       summ$psi.rounded <- object$psi.rounded
       class(summ) <- c("summary.stepmented", "summary.glm")
       return(summ)
-      }
+    }
     if("Arima"%in%class(object)){
+      stop("stepmented arima model not allowed")
       #da controllare
       coeff<-object$coef
       v<-sqrt(diag(object$var.coef))

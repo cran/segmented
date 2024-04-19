@@ -11,7 +11,7 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
     b <- drop(solve(XtX,crossprod(x,y)))
     fit <- drop(tcrossprod(b,x))
     r<-y-fit
-    o<-list(coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b), XtX=XtX)
+    o<-list(coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b), invXtX=solve(XtX), L0=sum(r^2))
     o
   }
   #-----------
@@ -26,11 +26,13 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   #-----------
   agg<- 1-control$fc
   it.max<- control$it.max 
-  tol<-  control$tol
+  tol<-  control$toll
+  #browser()
+  
   display<- control$visual 
   digits <- control$digits 
-  min.step <- control$min.step
-  conv.psi <- control$conv.psi 
+  #min.step <- control$min.step
+  #conv.psi <- control$conv.psi 
   alpha <- control$alpha
   fix.npsi <- control$fix.npsi 
   n.boot <- control$n.boot 
@@ -98,7 +100,9 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   #x<- Z
   x.lin <-XREG
   #if(is.vector(x)) x<-as.matrix(x)
-  dev0<- if(!display) var(y)*n else sum(mylm(x.lin, y)$residuals^2)
+  #dev0<- if(!display) var(y)*n else sum(mylm(x.lin, y)$residuals^2)
+  #non ci sono altre esplicative, per cui il modello nullo e' sempre con interc.
+  dev0 <- var(y)*(n-1) #mylm(x.lin, y)$L0
   rangeZ <- apply(Z, 2, range)
   
   #browser()
@@ -150,8 +154,8 @@ stepmented.ts <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   
   opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ,
             id.psi.group=id.psi.group,h=h,
-            #nomiOK=nomiOK,  visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, 
-            conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii,
+            #nomiOK=nomiOK,  visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, conv.psi=conv.psi,min.step=min.step,
+             alpha=alpha, fix.npsi=fix.npsi,  npsii=npsii,
             seed=control$seed)
   
   # #################################################################################

@@ -16,7 +16,7 @@ importFrom("stats", "spline", "approx", "as.formula", "coef", "contrasts", "fami
              "complete.cases","sd","qchisq","pchisq","BIC","get_all_vars", "optimize", 
              "terms","is.ts", "tsp", "AIC",".lm.fit","var",
 	           "asOneSidedFormula", "logLik","plogis", ".getXlevels", 
-             "cov2cor", "glm", "uniroot","delete.response")
+             "cov2cor", "glm", "uniroot","delete.response","weighted.mean")
 
 importFrom("utils", "flush.console", "capture.output")
 
@@ -54,6 +54,7 @@ S3method(vcov,segmented)
 S3method(predict,segmented)
 S3method(points,segmented)
 S3method(coef,segmented)
+S3method(model.matrix,segmented)
 
 S3method(print, segmented.lme)
 S3method(summary, segmented.lme)
@@ -76,3 +77,4 @@ S3method(summary,stepmented)
 S3method(print, summary.stepmented)
 S3method(confint,stepmented)
 S3method(lines,stepmented)
+S3method(model.matrix,stepmented)

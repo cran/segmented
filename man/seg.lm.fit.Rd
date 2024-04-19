@@ -57,13 +57,13 @@ seg.num.fit.boot(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL, jt=FALSE,
     
 segConstr.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
 
-segConstr.lm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, jt=FALSE,
-    nonParam=TRUE, random=FALSE, break.boot=n.boot)
+segConstr.lm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, 
+    jt=FALSE, nonParam=TRUE, random=FALSE, break.boot=n.boot)
 
 segConstr.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
 
-segConstr.glm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, jt=FALSE,
-    nonParam=TRUE, random=FALSE, break.boot=n.boot)
+segConstr.glm.fit.boot(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=NULL, 
+    jt=FALSE, nonParam=TRUE, random=FALSE, break.boot=n.boot)
 
 }
 %- maybe also 'usage' for other objects documented here.

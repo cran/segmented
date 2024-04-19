@@ -26,23 +26,30 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
   #--------
   extract.psi<-function(lista){
     #serve per estrarre il miglior psi..
-    dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
-    psi.values<-lista[[2]][-1] #remove the 1st one (NA)
+    dev.values<-lista[[1]]
+    psi.values<-lista[[2]]
+    if(any(is.na(psi.values[[1]]))) {#se la 1 componente e' NA (fino alla versione 2.0-3 era cosi'... perche' in dev.values c'erano 
+      #  anche i valori relativi al modello senza psi.. )
+      dev.values<-dev.values[-1] #remove the 1st one referring to model without psi
+      psi.values<-psi.values[-1]
+    }
     dev.ok<-min(dev.values)
     id.dev.ok<-which.min(dev.values)
-    if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values),
-                                                nrow=length(dev.values), byrow=TRUE)
+    if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values), nrow=length(dev.values), byrow=TRUE)
     if(!is.matrix(psi.values)) psi.values<-matrix(psi.values)
     psi.ok<-psi.values[id.dev.ok,]
     r<-list(SumSquares.no.gap=dev.ok, psi=psi.ok)
     r
   }
+  
+  
   #-------------
   #obj<- jump.fit(y, XREG=x.lin, Z=Xtrue, PSI, w=ww, offs, opz, return.all.sol=FALSE)
   #--------------
   if(is.null(opz$seed)){
     mY <- mean(y)
-    vv <- strsplit(paste(strsplit(paste(mY),"\\.")[[1]], collapse=""),"")[[1]]
+    sepDec<-if(options()$OutDec==".") "\\." else "\\,"
+    vv <- strsplit(paste(strsplit(paste(mY), sepDec)[[1]], collapse=""),"")[[1]]
     vv<-vv[vv!="0"]
     vv=na.omit(vv[1:5])
     seed <-eval(parse(text=paste(vv, collapse="")))
@@ -57,19 +64,22 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
     }
   }  
   
-  
+  #browser()
   
   visualBoot<-opz$display
   opz$display<-FALSE
-  opz.boot<-opz
-  opz.boot$pow=c(1,1) #c(1.1,1.2)
+  #opz.boot<-opz
+  #opz.boot$pow=c(1,1) #c(1.1,1.2)
   opz1<-opz
   opz1$it.max <-0
   n<-length(y)
-  o0<-try(suppressWarnings(step.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)), silent=TRUE)
+  opz0 <- opz
+  opz0$agg <- .2
   alpha<-opz$alpha
-  limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+  limZ <- apply(Z, 2, quantile, names = FALSE, probs = alpha)
   rangeZ <- apply(Z, 2, range) #serve sempre
+  o0<-try(suppressWarnings(step.lm.fit(y, XREG, Z, PSI, w, offs, opz0, return.all.sol=FALSE)), silent=TRUE)
+  #browser()
   if(!is.list(o0)) {
     o0<- suppressWarnings(step.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))
     o0<-extract.psi(o0)
@@ -84,7 +94,7 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
     if(!nonParam) stop("the first fit failed and I cannot extract fitted values for the semipar boot")
     if(random) {
       est.psi00<-est.psi0<-apply(rangeZ,2,function(r)runif(1,r[1],r[2]))
-      PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+      PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
       o0<-try(suppressWarnings(step.lm.fit(y, XREG, Z, PSI1, w, offs, opz1)), silent=TRUE)
       ss00<-o0$SumSquares.no.gap
     } else {
@@ -93,7 +103,7 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
     }
   }
   
-  n.intDev0<-nchar(strsplit(as.character(ss00),"\\.")[[1]][1])
+  n.intDev0<-nchar(strsplit(as.character(ss00),options()$OutDec)[[1]][1])
   
   all.est.psi.boot<-all.selected.psi<-all.est.psi<-matrix(NA, nrow=n.boot, ncol=length(est.psi0))
   all.ss<-all.selected.ss<-rep(NA, n.boot)
@@ -107,7 +117,6 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
   corr=1.2
   #browser()
   for(k in seq(n.boot)){
-    #browser()
     ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
     n.boot.rev<- 3 #3 o 4?
     diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
@@ -130,41 +139,49 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
       ##est.psi0<- jitter(est.psi0, amount=min(diff(est.psi0))) 
     }
     
-    PSI <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+    PSI <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
     if(jt) Z<-apply(Z.orig,2,jitter)
     if(nonParam){
       id<-sample(n, size=size.boot, replace=TRUE)
       o.boot<-try(suppressWarnings(step.lm.fit(y[id], XREG[id,,drop=FALSE], Z[id,,drop=FALSE], PSI[id,,drop=FALSE],
-                                            w[id], offs[id], opz.boot)), silent=TRUE)
+                                            w[id], offs[id], opz)), silent=TRUE)
     } else {
       yy<-fitted.ok+sample(residuals(o0),size=n, replace=TRUE)
-      o.boot<-try(suppressWarnings(step.lm.fit(yy, XREG, Z.orig, PSI, weights, offs, opz.boot)), silent=TRUE)
+      o.boot<-try(suppressWarnings(step.lm.fit(yy, XREG, Z.orig, PSI, weights, offs, opz)), silent=TRUE)
     }
     if(is.list(o.boot)){
       all.est.psi.boot[k,]<-est.psi.boot<-o.boot$psi
     } else {
       est.psi.boot<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
     }
-    PSI <- matrix(rep(est.psi.boot, rep(nrow(Z), length(est.psi.boot))), ncol = length(est.psi.boot))
+    PSI <- matrix(est.psi.boot, n, ncol = length(est.psi.boot), byrow=TRUE)
     #opz$h<-max(opz$h*.9, .2)
     opz$it.max<-opz$it.max+1
     opz$agg<-agg.values[k]
+    
+    opz$Nboot <- k
+    
     o <-try(suppressWarnings(step.lm.fit(y, XREG, Z.orig, PSI, w, offs, opz, return.all.sol=TRUE)), silent=TRUE)
     if(!is.list(o) && random){
       est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
-      PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+      PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
       o <-try(suppressWarnings(step.lm.fit(y, XREG, Z, PSI1, w, offs, opz1)), silent=TRUE)
       count.random<-count.random+1
     }
     #se il modello e' stato stimato controlla se la soluzione e' migliore..
+    #browser()
+    
     if(is.list(o)){
-      if(!"coefficients"%in%names(o$obj)) o<-extract.psi(o)
-      all.est.psi[k,]<-o$psi
-      all.ss[k]<-o$SumSquares.no.gap
-      if(o$SumSquares.no.gap<=ifelse(is.list(o0), o0$SumSquares.no.gap, 10^12)) o0<-o
-      est.psi0<-o0$psi
-      all.selected.psi[k,] <- est.psi0
-      all.selected.ss[k]<-o0$SumSquares.no.gap #min(c(o$SumSquares.no.gap, o0$SumSquares.no.gap))
+      if(!"coefficients"%in%names(o$obj)) o<-suppressWarnings(try(extract.psi(o), silent=TRUE))
+      #if(class(o)!="try-error"){
+      if(!inherits(o, "try-error")){
+        all.est.psi[k,]<-o$psi
+        all.ss[k]<-o$SumSquares.no.gap
+        if(o$SumSquares.no.gap<=ifelse(is.list(o0), o0$SumSquares.no.gap, 10^12)) o0<-o
+        est.psi0<-o0$psi
+        all.selected.psi[k,] <- est.psi0
+        all.selected.ss[k]<-o0$SumSquares.no.gap 
+      }
     }
     
     
@@ -201,12 +218,12 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
   # PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
   # o0<-try(seg.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
   
-  
+ 
   
   ris<-list(all.selected.psi=drop(all.selected.psi),all.selected.ss=all.selected.ss, all.psi=all.est.psi, all.ss=all.ss)
   
   if(is.null(o0$obj)){
-    PSI1 <- matrix(rep(est.psi0, rep(nrow(Z), length(est.psi0))), ncol = length(est.psi0))
+    PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
     o0 <- try(step.lm.fit(y, XREG, Z, PSI1, w, offs, opz1), silent=TRUE)
     warning("The final fit can be unreliable (possibly mispecified segmented relationship)", call.=FALSE, immediate.=TRUE)
   }

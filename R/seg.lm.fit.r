@@ -1,18 +1,32 @@
 seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE) 
 {
     useExp.k = TRUE
-    search.min<-function(h, psi, psi.old, X, y, w, offs) {
+    search.minWO<-function(h, psi, psi.old, X, y, w, offs) {
         psi.ok<- psi*h + psi.old*(1-h)
         #PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
         PSI <- matrix(psi.ok, nrow=n, ncol = length(psi.ok), byrow=TRUE)
         U1 <- (Z - PSI) * (Z > PSI)
         #if (pow[1] != 1) U1 <- U1^pow[1]
-        obj1 <- try(mylm(cbind(X, U1), y, w, offs), silent = TRUE)
-        if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w, offs), silent = TRUE)
-        L1 <- if (class(obj1)[1] == "try-error") L0 + 10
-        else sum(obj1$residuals^2 * w)
+        obj1 <- try(mylmWO(cbind(X, U1), y, w, offs), silent = TRUE)
+        #if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w, offs), silent = TRUE)
+        L1 <- if (class(obj1)[1] == "try-error") L0 + 10 else obj1$L0
+        #else sum(obj1$residuals^2 * w)
         L1
     }
+    #---------------------------------
+    search.min<-function(h, psi, psi.old, X, y, w, offs) {
+      psi.ok<- psi*h + psi.old*(1-h)
+      #PSI <- matrix(rep(psi.ok, rep(n, length(psi.ok))), ncol = length(psi.ok))
+      PSI <- matrix(psi.ok, nrow=n, ncol = length(psi.ok), byrow=TRUE)
+      U1 <- (Z - PSI) * (Z > PSI)
+      #if (pow[1] != 1) U1 <- U1^pow[1]
+      obj1 <- try(mylm(cbind(X, U1), y), silent = TRUE)
+      #if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(X, U1), y, w, offs), silent = TRUE)
+      L1 <- if (class(obj1)[1] == "try-error") L0 + 10 else obj1$L0
+      #else sum(obj1$residuals^2)
+      L1
+    }
+    #---------------------------------
     est.k <- function(x1, y1, L0) {
         ax <- log(x1)
         .x <- cbind(1, ax, ax^2)
@@ -22,36 +36,75 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         kk <- exp((-b[2] + DD)/(2 * b[3]))
         return(round(kk))
     }
-    dpmax <- function(x, y, pow = 1) {
-        if (pow == 1) 
-            -(x > y)
-        else -pow * ((x - y) * (x > y))^(pow - 1)
-    }
-    mylm <- function(x, y, w, offs = rep(0, length(y))) {
-        x1 <- x * sqrt(w)
-        y <- y - offs
-        y1 <- y * sqrt(w)
-        b <- drop(solve(crossprod(x1), crossprod(x1, y1)))
-        fit <- drop(tcrossprod(x, t(b)))
-        r <- y - fit
-        o <- list(coefficients = b, fitted.values = fit, residuals = r, 
+    # dpmax <- function(x, y, pow = 1) {
+    #     if (pow == 1) 
+    #         -(x > y)
+    #     else -pow * ((x - y) * (x > y))^(pow - 1)
+    # }
+    
+    mylmWO <- function(x, y, w, offs = 0) {
+      sw <- sqrt(w)  
+      x1 <- x * sw
+      y <- y - offs
+      y1 <- y * sw
+      b <- drop(solve(crossprod(x1), crossprod(x1, y1)))
+      fit <- x%*%b #drop(tcrossprod(x, t(b)))
+      r <- y - fit
+      o <- list(coefficients = b, fitted.values = fit, residuals = r, L0=sum(w*r^2),
             df.residual = length(y) - length(b))
-        o
+      o
     }
-    mylmADD <- function(invXtX, X, v, Xty, y) {
-        vtv <- sum(v^2)
-        Xtv <- crossprod(X, v)
-        m <- invXtX %*% Xtv
-        d <- drop(1/(vtv - t(Xtv) %*% m))
-        r <- -d * m
-        invF <- invXtX + d * tcrossprod(m)
-        newINV <- rbind(cbind(invF, r), c(t(r), d))
-        b <- crossprod(newINV, c(Xty, sum(v * y)))
-        fit <- tcrossprod(cbind(X, v), t(b))
-        r <- y - fit
-        o <- list(coefficients = b, fitted.values = fit, residuals = r)
-        o
+    #----------------------------
+    mylm <- function(x, y, w, offs) {
+      b <- drop(solve(crossprod(x), crossprod(x, y)))
+      fit <- x%*%b #
+      r <- y - fit
+      o <- list(coefficients = b, fitted.values = fit, residuals = r, L0=sum(r^2),
+                df.residual = length(y) - length(b))
+      o
     }
+    id.w.offs<- var(offs)<=0 && var(w)<=0
+    if(id.w.offs){
+      fitter<-function(x, y, w, offs) .lm.fit(x=x, y=y) #list(coefficients=drop(solve(crossprod(x), crossprod(x, y))))
+      mylmOK <- mylm
+      search.minOK <- search.min
+      #final.fitter<- function(x,y,w,offs) lm.fit(x,y)
+    } else {
+      fitter<-function(x, y, w, offs) .lm.fit(x=sqrt(w)*x, y=sqrt(w)*(y-offs))
+      mylmOK <- mylmWO
+      search.minOK <- search.minWO
+      #final.fitter<- function(x,y,w,offs) lm.wfit(x,y,w,offs)
+    }
+    
+    
+    # isZero<-function (x, neps = 1, eps = .Machine$double.eps, ...) {
+    #   if (is.character(eps)) {
+    #     eps <- match.arg(eps, choices = c("double.eps", "single.eps"))
+    #     if (eps == "double.eps") {
+    #       eps <- .Machine$double.eps
+    #     }
+    #     else if (eps == "single.eps") {
+    #       eps <- sqrt(.Machine$double.eps)
+    #     }
+    #   }
+    #   (abs(x) < neps * eps)
+    # }
+    isZero <- function(v) sapply(v, function(.x) identical(.x,0))
+    
+    # mylmADD <- function(invXtX, X, v, Xty, y) {
+    #     vtv <- sum(v^2)
+    #     Xtv <- crossprod(X, v)
+    #     m <- invXtX %*% Xtv
+    #     d <- drop(1/(vtv - t(Xtv) %*% m))
+    #     r <- -d * m
+    #     invF <- invXtX + d * tcrossprod(m)
+    #     newINV <- rbind(cbind(invF, r), c(t(r), d))
+    #     b <- crossprod(newINV, c(Xty, sum(v * y)))
+    #     fit <- tcrossprod(cbind(X, v), t(b))
+    #     r <- y - fit
+    #     o <- list(coefficients = b, fitted.values = fit, residuals = r)
+    #     o
+    # }
     in.psi <- function(LIM, PSI, ret.id = TRUE) {
         a <- PSI[1, ] < LIM[1, ]
         b <- PSI[1, ] > LIM[2, ]
@@ -65,24 +118,20 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         nSeg <- length(unique(id.psi.group))
         npsij <- tapply(id.psi.group, id.psi.group, length)
         nj <- sapply(unique(id.psi.group), function(.x) {
-            tabulate(rowSums((Z > PSI)[, id.psi.group == .x, 
-                drop = FALSE]) + 1)
-        }, simplify = FALSE)
+                  tabulate(rowSums((Z > PSI)[, id.psi.group == .x, drop = FALSE]) + 1)
+                      }, simplify = FALSE)
         ff <- id.far.ok <- vector("list", length = nSeg)
         for (i in 1:nSeg) {
-            if (length(nj[[i]]) != npsij[i] + 1) 
-                nj[[i]] <- tabulate(rowSums((Z >= PSI)[, id.psi.group == 
-                  i, drop = FALSE]) + 1)
+            if(length(nj[[i]]) != npsij[i] + 1) nj[[i]] <- tabulate(rowSums((Z >= PSI)[, id.psi.group == i, drop = FALSE]) + 1)
             id.ok <- (nj[[i]] >= 2)
-            id.far.ok[[i]] <- id.ok[-length(id.ok)] & id.ok[-1]
+            id.far.ok[[i]] <- id.ok[-length(id.ok)] #& id.ok[-1] #consideriamo solo le ni precedenti
             ff[[i]] <- ifelse(diff(nj[[i]]) > 0, 1/fc, fc)
         }
         id.far.ok <- unlist(id.far.ok)
         ff <- unlist(ff)
         if (!ret.id) {
             return(all(id.far.ok))
-        }
-        else {
+        } else {
             attr(id.far.ok, "factor") <- ff
             return(id.far.ok)
         }
@@ -91,7 +140,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         pmin(pmax(LIM[1, ], psii), LIM[2, ])
     }
     n <- length(y)
-    min.step <- opz$min.step
+    #min.step <- opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha <- opz$alpha
     limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
@@ -119,7 +168,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     epsilon <- 10
     k.values <- dev.values <- NULL
     psi.values <- list()
-    psi.values[[length(psi.values) + 1]] <- NA
+    #psi.values[[length(psi.values) + 1]] <- NA
     sel.col.XREG <- unique(sapply(colnames(XREG), function(x) match(x, 
         colnames(XREG))))
     if (is.numeric(sel.col.XREG)) 
@@ -134,9 +183,11 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     if (!far.psi(Z, PSI, id.psi.group, FALSE)) 
         stop("psi starting values too close each other or at the boundaries. Please change them (e.g. set 'quant=TRUE' 
           in seg.control()), or decrease their number.", call. = FALSE)
-    n.psi1 <- ncol(Z)
-    U <- ((Z - PSI) * (Z > PSI))
-    if (pow[1] != 1) U <- U^pow[1]
+    n.psi<- n.psi1 <- ncol(Z)
+    V <- (Z > PSI)
+    U <- (Z - PSI) * V
+    V<- -V
+    #if (pow[1] != 1) U <- U^pow[1]
     
     if(it.max==0){
       colnames(U) <- paste("U", 1:ncol(U), sep = "")
@@ -148,20 +199,29 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
       #names(obj$coefficients) <- names.coef
       obj$epsilon <- epsilon
       obj$it <- it
-      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, 
+      obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, idU=ncol(XREG)+1:(length(psi)),
                 U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
                 SumSquares.no.gap = L1, id.psi.group = id.psi.group, 
                 id.warn = TRUE)
       return(obj)
     }
     
+    if(!opz$usesegreg){
+      dev.values[length(dev.values) + 1] <- opz$dev0 #modello senza psi 
+      psi.values[[length(psi.values) + 1]] <- NA #nessun psi 
+    }
     
+    if(is.null(opz$fit.psi0)){
+      obj0 <- try(mylmOK(cbind(XREG, U), y, w, offs), silent = TRUE)
+      #if (class(obj0)[1] == "try-error") obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
+      L0 <- sum(obj0$residuals^2 * w)
+      } else {
+        L0   <- opz$fit.psi0$L0
+      }
 
-    obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
-    if (class(obj0)[1] == "try-error") obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
-    L0 <- sum(obj0$residuals^2 * w)
     n.intDev0 <- nchar(strsplit(as.character(L0), "\\.")[[1]][1])
-    dev.values[length(dev.values) + 1] <- opz$dev0
+    
+    
     dev.values[length(dev.values) + 1] <- L0
     psi.values[[length(psi.values) + 1]] <- psi
     if (visual) {
@@ -174,40 +234,45 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     }
     id.warn <- FALSE
     id.psi.changed <- rep(FALSE, it.max)
+    tolOp <-if(is.null(opz$tol.opt)) seq(.001, .Machine$double.eps^0.25, l=it.max) else rep(opz$tol.opt, it.max)
     #============================================== inizio ciclo
+    idU <- ncol(XREG)+ 1:n.psi
+    idV <- 1:n.psi + max(idU)
     while (abs(epsilon) > toll) {
         it <- it + 1
+        #if(it==2) browser()
         n.psi0 <- n.psi1
         n.psi1 <- ncol(Z)
         if (n.psi1 != n.psi0) {
-            U <- ((Z - PSI) * (Z > PSI))
-            if (pow[1] != 1) 
-                U <- U^pow[1]
-            obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
-            if (class(obj0)[1] == "try-error") 
-                obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
-            L0 <- sum(obj0$residuals^2 * w)
+          V<- (Z > PSI)   
+          U <- (Z - PSI) * V
+          V<- -V
+          idU <- ncol(XREG)+ 1:n.psi1
+          idV <- 1:n.psi1 + max(idU)
+          #if (pow[1] != 1) U <- U^pow[1]
+          obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
+          if (class(obj0)[1] == "try-error") obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
+          L0 <- sum(obj0$residuals^2 * w)
         }
-        V <- dpmax(Z, PSI, pow = pow[2])
         X <- cbind(XREG, U, V)
-        rownames(X) <- NULL
-        colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U", 
-            1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
-        obj <- lm.wfit(x = X, y = y, w = w, offset = offs)
-        
-        #browser()
-        
-        beta.c <- coef(obj)[paste("U", 1:ncol(U), sep = "")]
-        gamma.c <- coef(obj)[paste("V", 1:ncol(V), sep = "")]
-        if (any(is.na(c(beta.c, gamma.c)))) {
+        #rownames(X) <- NULL
+        #colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U", 1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
+        obj <- fitter(X,y,w,offs)# lm.wfit(x = X, y = y, w = w, offset = offs)
+        #obj <- .lm.fit(x = X, y = y)
+        #beta.c <- coef(obj)[paste("U", 1:ncol(U), sep = "")]
+        #gamma.c <- coef(obj)[paste("V", 1:ncol(V), sep = "")]
+        beta.c <- obj$coefficients[idU]
+        gamma.c <- obj$coefficients[idV]
+        #if (any(is.na(c(beta.c, gamma.c)))) {
+        #if(it==1) browser()
+        if(any(isZero(c(beta.c, gamma.c)))) {
             if (fix.npsi) {
                 if (return.all.sol) 
                   return(list(dev.values, psi.values))
                 else stop("breakpoint estimate too close or at the boundary causing NA estimates.. too many breakpoints being estimated?", 
                   call. = FALSE)
-            }
-            else {
-                id.coef.ok <- !is.na(gamma.c)
+            } else {
+                id.coef.ok <- gamma.c!=0 #!is.na(gamma.c)
                 psi <- psi[id.coef.ok]
                 if (length(psi) <= 0) {
                   warning(paste("All breakpoints have been removed after", 
@@ -231,9 +296,11 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         psi<- adj.psi(psi, limZ)
         #browser()
         
-        psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
+        psi<-unlist(tapply(psi, id.psi.group, sort), use.names =FALSE)
         
-        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs)
+        #if(it==2) browser()
+        
+        a<-optimize(search.minOK, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs, tol=tolOp[it])
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
         #L1.k[length(L1.k) + 1] <- L1<- a$objective
@@ -242,8 +309,9 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         if (!is.null(digits)) psi <- round(psi, digits)
         #PSI <- matrix(rep(psi, rep(n, length(psi))), ncol = length(psi))
         PSI <- matrix(psi, nrow=n, ncol = length(psi), byrow=TRUE)
-        U1 <- (Z - PSI) * (Z > PSI)
-        
+        V <- (Z > PSI)
+        U <- (Z - PSI) * V
+        V <- -V
         #if(it==3) browser()
         
         #if (pow[1] != 1) U1 <- U1^pow[1]
@@ -260,11 +328,9 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
                   format = "f"), collapse = "  "), sep = ""), 
                 "\n")
         }
-        epsilon <- if (conv.psi) 
-            max(abs((psi - psi.old)/psi.old))
-        else (L0 - L1)/(abs(L0) + 0.1)
+        #epsilon <- if (conv.psi) max(abs((psi - psi.old)/psi.old)) else (L0 - L1)/(abs(L0) + 0.1)
+        epsilon <- (L0 - L1)/(abs(L0) + 0.1)
         L0 <- L1
-        U <- U1
         k.values[length(k.values) + 1] <- use.k
         psi.values[[length(psi.values) + 1]] <- psi
         dev.values[length(dev.values) + 1] <- L0
@@ -273,13 +339,11 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         id.psi.ok <- id.psi.in & id.psi.far
         if (!all(id.psi.ok)) {
             if (fix.npsi) {
-                psi <- psi * ifelse(id.psi.far, 1, attr(id.psi.far, 
-                  "factor"))
+                psi <- psi * ifelse(id.psi.far, 1, attr(id.psi.far, "factor"))
                 #PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
                 PSI <- matrix(psi, nrow=n, ncol = length(psi), byrow=TRUE)
                 id.psi.changed[it] <- TRUE
-            }
-            else {
+            } else {
                 Z <- Z[, id.psi.ok, drop = FALSE]
                 PSI <- PSI[, id.psi.ok, drop = FALSE]
                 rangeZ <- rangeZ[, id.psi.ok, drop = FALSE]
@@ -312,26 +376,34 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     attr(psi.values, "k") <- k.values
     psi <- unlist(tapply(psi, id.psi.group, sort))
     names(psi) <- id.psi.group
-    names.coef <- names(obj$coefficients)
+    #names.coef <- names(obj$coefficients)
     #PSI.old <- PSI
     #PSI <- matrix(rep(psi, rep(nrow(Z), length(psi))), ncol = length(psi))
     PSI <- matrix(psi, nrow=n, ncol = length(psi), byrow=TRUE)
     #if (sd(PSI - PSI.old) > 0 || id.psi.changed[length(id.psi.changed)]) {
-    U <- (Z - PSI) * (Z > PSI)
-    colnames(U) <- paste("U", 1:ncol(U), sep = "")
-    V <- -(Z > PSI)
-    colnames(V) <- paste("V", 1:ncol(V), sep = "")
-    obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
-    L1 <- sum(obj$residuals^2 * w)
-    #}
-    #else {
-    #    obj <- obj1
-    #}
+    V <- (Z > PSI)
+    U <- (Z - PSI) * V
+    V<- -V
+    #colnames(U) <- paste("U", 1:ncol(U), sep = "")
+    #colnames(V) <- paste("V", 1:ncol(V), sep = "")
+    
+    #Poiche' servono solo coeff, fitted e resid potrei usare anche mylmOK() o .lm.fit che e' piu' veloce..
+    
+    obj <-   mylmOK(x = cbind(XREG, U), y = y, w = w, offs = offs)
+    L1 <- obj$L0
+    # if(id.w.offs){
+    #   obj <- lm.fit(x = cbind(XREG, U), y = y) #mylmOK(x = cbind(XREG, U), y = y, w = w, offset = offs)
+    #   L1 <- sum(obj$residuals^2)
+    # } else {
+    #   obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs) #
+    #   L1 <- sum(obj$residuals^2 * w)
+    # }
+    
     obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
-    names(obj$coefficients) <- names.coef
+    #names(obj$coefficients) <- names.coef
     obj$epsilon <- epsilon
     obj$it <- it
-    obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, 
+    obj <- list(obj = obj, it = it, psi = psi, psi.values = psi.values, idU=ncol(XREG)+1:(length(psi)),
         U = U, V = V, rangeZ = rangeZ, epsilon = epsilon, nomiOK = nomiOK, 
         SumSquares.no.gap = L1, id.psi.group = id.psi.group, 
         id.warn = id.warn)

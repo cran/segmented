@@ -7,11 +7,11 @@
   the fitted broken-line relationship for the selected segmented term.
 }
 \usage{
-\method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, 
-    link=TRUE, res.col=grey(.15, alpha = .4), rev.sgn=FALSE, const=NULL, shade=FALSE, 
-    rug=!add, dens.rug=FALSE, dens.col = grey(0.8), transf=I, 
-    isV=FALSE, is=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, .coef=NULL, 
-    prev.trend=FALSE, smoos=NULL, hide.zeros=FALSE, leg="topleft", psi.lines=FALSE, ...)
+\method{plot}{segmented}(x, term, add=FALSE, res=FALSE, conf.level=0, interc=TRUE, link=TRUE, 
+    res.col=grey(.15, alpha = .4), rev.sgn=FALSE, const=NULL, shade=FALSE, rug=!add, 
+    dens.rug=FALSE, dens.col = grey(0.8), transf=I, isV=FALSE, is=FALSE, var.diff=FALSE, 
+    p.df="p", .vcov=NULL, .coef=NULL, prev.trend=FALSE, smoos=NULL, hide.zeros=FALSE, 
+    leg="topleft", psi.lines=FALSE, ...)
       }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

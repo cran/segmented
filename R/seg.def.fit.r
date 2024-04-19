@@ -94,7 +94,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
     if (sum(c1 + c2) != 0 || is.na(sum(c1 + c2))) 
         stop("psi out of the range")
     n <- nrow(Z)
-    min.step <- opz$min.step
+    #min.step <- opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha <- opz$alpha
     limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
@@ -152,7 +152,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
     fn.obj <- opz$fn.obj
     U <- ((Z - PSI) * (Z > PSI))
     colnames(U) <- nomiU
-    if (pow[1] != 1) U <- U^pow[1]
+    #if (pow[1] != 1) U <- U^pow[1]
     
    
     
@@ -196,6 +196,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
     }
     id.warn <- FALSE
     id.psi.changed<-rep(FALSE, it.max)
+    tolOp <-if(is.null(opz$tol.opt)) seq(.001, .Machine$double.eps^0.25, l=it.max) else rep(opz$tol.opt, it.max)
     while (abs(epsilon) > toll) {
         it <- it + 1
         n.psi0 <- n.psi1
@@ -251,7 +252,7 @@ seg.def.fit<-function (obj, Z, PSI, mfExt, opz, return.all.sol = FALSE) {
         psi <- psi.old + hh*gamma.c/beta.c
         psi<- adj.psi(psi, limZ)
         
-        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old)
+        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, tol=tolOp[it])
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
         psi <- psi*use.k + psi.old* (1-use.k)

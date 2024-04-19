@@ -1,6 +1,6 @@
 plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, interc = TRUE, add.fx=FALSE,
                             psi.lines = TRUE, link = FALSE, surf=FALSE, zero.cor=TRUE, 
-                            heurs=TRUE, shade=FALSE, ...) {
+                            heurs=TRUE, shade=FALSE, se.type=c("cdf","abs","none"), k=NULL, .vcov=NULL, ...) {
   #=============================
   plot2step<-function(object, res, interc, psi.lines, arg, add){
     nomiZ<- object$nameUV$Z
@@ -19,8 +19,8 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
     fit01<- 1- (fit-min(fit))/diff(range(fit))
     
     estpsi=object$psi[,"Est."]
-    estpsi1=estpsi[nomiZ[1]==gsub("psi[1234567890].","",nomiPsi)]
-    estpsi2=estpsi[nomiZ[2]==gsub("psi[1234567890].","",nomiPsi)]
+    estpsi1=estpsi[nomiZ[1]==gsub("psi[1234567890]*[1234567890].","",nomiPsi)]
+    estpsi2=estpsi[nomiZ[2]==gsub("psi[1234567890]*[1234567890].","",nomiPsi)]
     
     #browser()
     if(is.null(arg$xlim)) arg$xlim<-object$rangeZ[,nomiZ[1]]
@@ -81,12 +81,11 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
     #nomiPsi nomiU
   }  
   #=============================
-  pred.step.plot<-function(object, k=NULL, apprx=c("cdf","abs"), nomeZ, zero.cor=TRUE, ...){
+  pred.step.plot<-function(object, k=NULL, apprx=c("cdf","abs","none"), nomeZ, zero.cor=TRUE, V=NULL, ...){
     apprx=match.arg(apprx)
-    X=model.matrix.stepmented(object, k=k, apprx=apprx)
-    V=vcov.stepmented(object, zero.cor=zero.cor)
-    
-    #browser()
+    X=model.matrix.stepmented(object, k=k, type=apprx)
+    if(is.null(V)) V<-vcov.stepmented(object, zero.cor=zero.cor, type=apprx)
+
     interc=TRUE
     nomiZ<- object$nameUV$Z
     nomiV<- object$nameUV$V
@@ -104,20 +103,33 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
     for(i in 1:length(nomePsi.ok)){
       #psi <- object$psi[nomePsi.ok[i],"Est."]
       psi <- object$psi.rounded[1, nomePsi.ok[i]]
-      se  <- object$psi[nomePsi.ok[i],"St.Err"]
+      #se  <- object$psi[nomePsi.ok[i],"St.Err"]
+      se  <- sqrt(diag(V))[nomePsi.ok[i]]
+      if(is.na(se)) se<-1e-5
       vv[,i] <-  qnorm(seq(.0005, .9995,l=N), psi, se)
     }
     vv<-as.vector(vv)  
     mi=object$rangeZ[1,nomeZ]
     ma=object$rangeZ[2, nomeZ]
-    vv<-sort(c(object$psi.rounded[1, nomePsi.ok], seq(mi,ma,l=30), 
-               vv))
+    vv<-sort(c(object$psi.rounded[1, nomePsi.ok], seq(mi,ma,l=30), vv))
+    vv<- vv[vv>=mi & vv<= ma]
     
-    Xok<-matrix(, length(vv), 2*length(nomePsi.ok))
-    colnames(Xok)<- c(nomeU.ok,nomePsi.ok)
-    for(i in 1:length(nomePsi.ok)){
-      Xok[, nomeU.ok[i]]   <- spline(object$Z[,nomeZ], X[, nomeU.ok[i]], xout=vv)$y
-      Xok[, nomePsi.ok[i]] <- spline(object$Z[,nomeZ], X[, nomePsi.ok[i]], xout=vv)$y
+    #browser()
+    
+    if(apprx!="none"){
+      Xok<-matrix(, length(vv), 2*length(nomePsi.ok))
+      colnames(Xok)<- c(nomeU.ok,nomePsi.ok)
+      for(i in 1:length(nomePsi.ok)){
+        Xok[, nomeU.ok[i]]   <- spline(object$Z[,nomeZ], X[, nomeU.ok[i]], xout=vv)$y
+        Xok[, nomePsi.ok[i]] <- spline(object$Z[,nomeZ], X[, nomePsi.ok[i]], xout=vv)$y
+      }
+    } else {
+      Xok<-matrix(, length(vv), length(nomeU.ok))
+      colnames(Xok)<- nomeU.ok
+      for(i in 1:length(nomeU.ok)){
+        Xok[, nomeU.ok[i]]   <- spline(object$Z[,nomeZ], X[, nomeU.ok[i]], xout=vv)$y
+        #Xok[, nomePsi.ok[i]] <- spline(object$Z[,nomeZ], X[, nomePsi.ok[i]], xout=vv)$y
+      }
     }
     
     id.ok = grep(paste(".", nomeZ,sep=""), colnames(X))
@@ -135,13 +147,15 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
       cof<-c(object$coefficients[1], cof)
     }
     
+    #browser()
+    
     se=rowSums((Xok%*%V[id.ok,id.ok])*Xok)
     if(any(se<=0)) {
       warning("correcting non-positive st.err 1", call.=FALSE)
       se[se<=0]<-median(se[se>0])
     }
     se.smooth=sqrt(se)
-    fit.smooth <- drop(Xok[,-match(nomePsi.ok, colnames(Xok))]%*%cof)
+    fit.smooth <- drop(Xok[,-match(nomePsi.ok, colnames(Xok), 0)]%*%cof)
     
     #=======================================
     Xok[, nomeU.ok] <- if(id.interc) M[,-1] else M
@@ -157,80 +171,10 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
     r<-list(values=vv, g=g, fit.nonsmooth=fit.nonsmooth, se.nonsmooth=se.nonsmooth,
             fit.smooth=fit.smooth, se.smooth=se.smooth)
     r
-    #browser()
-    #matplot(vv, cbind(ff, ff-2*se, ff+2*se), type="l", lty=c(1,2,2), col=1, xlab=colnames(object$Z)[1])
-    #browser()
-    #matpoints(vv, cbind(ff, ff-2*se, ff+2*se), type="l", lty=c(1,2,2), col=2)
-    #matpoints(vv, cbind(ff, ff-2*se, ff+2*se), col=4, pch=4)
   }
   #=============================
-  # model.matrix.stepmented<-function(object, k=NULL, apprx=c("cdf","abs"), ...){
-  #   #if(!inherits(object, "segmented")) stop("A 'segmented' fit is requested")
-  #   apprx=match.arg(apprx) 
-  #   if(inherits(object, "lm")) {
-  #     X<- qr.X(object$qr, ...)
-  #     if(inherits(object, "glm")) {
-  #       W<-chol(diag(object$weights))
-  #       X <- X/diag(W)
-  #     }
-  #   } else {
-  #     class(object)<-class(object)[-1]
-  #     X<-try(model.matrix(object,...), silent=TRUE)
-  #     if(!is.matrix(X)) X<- model.matrix(object, data=model.frame(object))
-  #   }
-  #   X0<-X
-  #   p=ncol(X)
-  #   n=nrow(X)
-  #   nomiZ<- object$nameUV$Z
-  #   nomiV<- object$nameUV$V
-  #   nomiU<- object$nameUV$U
-  #   nomiPsi<- gsub("V","psi", nomiV)
-  #   id.noV<-setdiff(colnames(X), nomiPsi)
-  #   maxZ.list<-NULL
-  #   #browser()
-  #   sigma=sqrt(sum(object$residuals^2)/object$df.residual)
-  #   
-  #   for(i in 1:length(nomiU)){
-  #     nomeZ<- gsub("U[1-9].","",nomiU[i])
-  #     Z<-object$Z[,nomeZ]
-  #     minZ<-min(Z)
-  #     maxZ<-max(Z)
-  #     psi<-object$psi[nomiPsi[i],"Est."]
-  #     Z01<- (Z-minZ)/(maxZ-minZ)
-  #     psi01<- (psi-minZ)/(maxZ-minZ)
-  #     if(is.null(k)){
-  #       idU<-match(nomiU[i],nomiU)
-  #       snr.idU<-abs(object$coefficients[nomiU][idU])/sigma
-  #       ss01=n^(-(.6 + .3* log(snr.idU) -abs(psi01-.5)^.5/sqrt(n)))
-  #     } else {
-  #       ss01=n^k
-  #     }
-  #     ss<- ss01*(maxZ-minZ)
-  #     
-  #     X0[, nomiU[i]]<-  pnorm((Z-psi)/ss) 
-  #     X0[, nomiPsi[i]] <- -(object$coefficients[nomiU[i]]/ss)*dnorm((Z-psi)/ss)
-  #     
-  #     #X0[, nomiU[i]]<-  pnorm((Z01-psi01)/ss01) #1*(Z>psi)
-  #     #X0[, nomiPsi[i]] <- -(object$coefficients[nomiU[i]]/ss01)*dnorm((Z01-psi01)/ss01)
-  #     
-  #     #opzione 2:
-  #     xx <- Z-psi
-  #     den <- -xx+2*xx*pnorm(xx/ss)+2*ss*dnorm(xx/ss) #.05*log(cosh((x-.5)/.05)))
-  #     #den <- abs(xx)
-  #     #browser()
-  #     V <- (1/(2 * den))
-  #     
-  #     X[,nomiU[i]]<- (Z * V + 1/2) #U <-
-  #     X[, nomiPsi[i]] <- -object$coefficients[nomiU[i]]*V
-  #     maxZ.list[[length(maxZ.list)+1]] <- maxZ-minZ
-  #   }
-  #   #browser()
-  #   #X e' basata sull'approx del valore assoluto
-  #   XX<-if(apprx=="cdf") X0 else X
-  #   return(XX)
-  # }
-  #=============================
   arg <- list(...)
+  se.type <- match.arg(se.type)
   if (is.null(arg$col))    arg$col = 2#grey(0.4)
   if (is.null(arg$lwd))    arg$lwd = 2.5
   if (is.null(arg$lty))    arg$lty = 1
@@ -253,7 +197,7 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
   }
   
   if (missing(term)) {
-    if (length(x$nameUV$Z) > 1) {
+    if (length(unique(x$nameUV$Z)) > 1) {
       stop("please, specify `term'")
     } else {
       term <- x$nameUV$Z
@@ -268,12 +212,15 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
       stop("invalid `term'")
   }
   if(add.fx && !term%in%colnames(x$f.x)) stop("no additional effect for the selected term")
+  #browser()
+  
   idU <- x$nameUV$U[endsWith(x$nameUV$U, paste(".", term, sep = ""))]
   if (interc && "(Intercept)" %in% names(x$coefficients)) idU <- c("(Intercept)", idU)
   est.means <- cumsum(x$coefficients[idU])
   nomiPsi <- gsub("V", "psi", x$nameUV$V)
   idPsi <- nomiPsi[endsWith(nomiPsi, paste(".", term, sep = ""))]
-  psi <- sort(x$coefficients[idPsi])
+  #psi <- sort(x$coefficients[idPsi])
+  psi <- sort(x$psi.rounded[1,idPsi])
   rangeZ <- x$rangeZ[, term]
   Z <- drop(x$Z[, term, drop = TRUE])
   m <- min(rangeZ)
@@ -355,17 +302,18 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
   }
    
   #browser()
+  
   if(conf.level>0){
     if(add.fx && !is.null(x$f.x)) stop(" conf.level>0 is not allowed with additional terms")
-    r<-pred.step.plot(x, k=NULL, apprx="cdf", nomeZ=term, zero.cor=zero.cor)
+    r<-pred.step.plot(x, k=k, apprx=se.type, nomeZ=term, zero.cor=zero.cor, V=.vcov)
     #browser()
     vv<-r$values
     ff<-r$fit.nonsmooth
     se<-r$se.nonsmooth
-    z<-abs(qnorm((1-conf.level)/2))
+    z<-if(inherits(x, "glm")) abs(qnorm((1-conf.level)/2)) else abs(qt((1-conf.level)/2, df= x$df.residual))
     inf= ff-z*se
     sup= ff+z*se
-    if(heurs) {
+    if(heurs && se.type!="none") {
       inf<-pmin(inf, r$fit.smooth-z*r$se.smooth )
       sup<-pmax(sup, r$fit.smooth+z*r$se.smooth )
     }

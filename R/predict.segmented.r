@@ -23,7 +23,7 @@ predict.segmented<-function(object, newdata, se.fit=FALSE, interval=c("none","co
   dummy.matrix<-function(x.values, x.name, obj.seg, psi.est=TRUE, isV=FALSE, .coef=NULL){ 
     #given the segmented fit 'obj.seg' and a segmented variable x.name with corresponding values x.values,
     #this function simply returns a matrix with columns (x, (x-psi)_+, -b*I(x>psi))
-    #or  ((x-psi)_+, -b*I(x>psi)) if obj.seg does not include the coef for the linear "x"
+    #if obj.seg does not include the coef for the linear "x", the returned matrix is  ((x-psi)_+, -b*I(x>psi)) 
     f.U<-function(nomiU, term=NULL){
       #trasforma i nomi dei coeff U (o V) nei nomi delle variabili corrispondenti
       #and if 'term' is provided (i.e. it differs from NULL) the index of nomiU matching term are returned
