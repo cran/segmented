@@ -141,10 +141,11 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     }
     n <- length(y)
     #min.step <- opz$min.step
-    rangeZ <- apply(Z, 2, range)
     alpha <- opz$alpha
-    limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
-
+    rangeZ <- if(is.null(opz$rangeZ)) apply(Z, 2, range) else opz$rangeZ
+    #limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
+    limZ <- if(is.null(opz$limZ)) apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2])) else opz$limZ
+    
     #browser()
     
     psi <- PSI[1, ]
@@ -169,10 +170,8 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     k.values <- dev.values <- NULL
     psi.values <- list()
     #psi.values[[length(psi.values) + 1]] <- NA
-    sel.col.XREG <- unique(sapply(colnames(XREG), function(x) match(x, 
-        colnames(XREG))))
-    if (is.numeric(sel.col.XREG)) 
-        XREG <- XREG[, sel.col.XREG, drop = FALSE]
+    sel.col.XREG <- unique(sapply(colnames(XREG), function(x) match(x, colnames(XREG))))
+    if (is.numeric(sel.col.XREG)) XREG <- XREG[, sel.col.XREG, drop = FALSE]
     invXtX <- opz$invXtX
     Xty <- opz$Xty
     
@@ -205,6 +204,21 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
                 id.warn = TRUE)
       return(obj)
     }
+    
+    # 
+    # for(.i in opz$nomiSeg) { ##poni min(z)=0, cosi solve() in step.lm.fit non ha problemi.
+    #  if(.i %in% colnames(XREG)) XREG[,.i] <- XREG[,.i] - min(XREG[,.i])
+    #}
+    #
+    #XREG0<-XREG
+    id.changeCoef <- FALSE
+    if(any(opz$nomiSeg%in%colnames(XREG))) {
+      id.changeCoef <- TRUE
+      nomiSeg<- intersect(opz$nomiSeg, colnames(XREG))
+      minZ<- apply(XREG[,nomiSeg,drop=FALSE], 2, min)
+      XREG[,nomiSeg] <- sweep(XREG[, nomiSeg, drop=FALSE], 2, minZ)
+    }
+    
     
     if(!opz$usesegreg){
       dev.values[length(dev.values) + 1] <- opz$dev0 #modello senza psi 
@@ -240,7 +254,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     idV <- 1:n.psi + max(idU)
     while (abs(epsilon) > toll) {
         it <- it + 1
-        #if(it==2) browser()
+        #if(it==1) browser()
         n.psi0 <- n.psi1
         n.psi1 <- ncol(Z)
         if (n.psi1 != n.psi0) {
@@ -388,6 +402,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     #colnames(V) <- paste("V", 1:ncol(V), sep = "")
     
     #Poiche' servono solo coeff, fitted e resid potrei usare anche mylmOK() o .lm.fit che e' piu' veloce..
+    #browser()
     
     obj <-   mylmOK(x = cbind(XREG, U), y = y, w = w, offs = offs)
     L1 <- obj$L0
@@ -399,6 +414,9 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
     #   L1 <- sum(obj$residuals^2 * w)
     # }
     
+    #browser()
+    idInt<-match("(Intercept)", names(obj$coefficients), 0)
+    if(id.changeCoef) obj$coefficients[idInt] <-  obj$coefficients[idInt]-sum(obj$coefficients[nomiSeg]*minZ)
     obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
     #names(obj$coefficients) <- names.coef
     obj$epsilon <- epsilon

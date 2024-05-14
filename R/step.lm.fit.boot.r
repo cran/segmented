@@ -76,13 +76,16 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
   opz0 <- opz
   opz0$agg <- .2
   alpha<-opz$alpha
-  limZ <- apply(Z, 2, quantile, names = FALSE, probs = alpha)
+  #limZ <- apply(Z, 2, quantile, names = FALSE, probs = alpha)
+  limZ <- if(is.null(opz$limZ)) apply(Z, 2, quantile, names=FALSE, probs=alpha) else opz$limZ
+  
   rangeZ <- apply(Z, 2, range) #serve sempre
   o0<-try(suppressWarnings(step.lm.fit(y, XREG, Z, PSI, w, offs, opz0, return.all.sol=FALSE)), silent=TRUE)
   #browser()
   if(!is.list(o0)) {
+    #qui riproviamo con opz (che ha agg=.05) e che puo' convergere e comunque ha "return.all.sol=TRUE"
     o0<- suppressWarnings(step.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))
-    o0<-extract.psi(o0)
+    if(length(o0)==2) o0<-extract.psi(o0)
     ss00<-opz$dev0
     if(!nonParam) {warning("using nonparametric boot");nonParam<-TRUE}
   }
@@ -152,7 +155,9 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
     if(is.list(o.boot)){
       all.est.psi.boot[k,]<-est.psi.boot<-o.boot$psi
     } else {
+      #browser()
       est.psi.boot<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
+      est.psi.boot<- unlist(tapply(est.psi.boot, opz$id.psi.group, sort))
     }
     PSI <- matrix(est.psi.boot, n, ncol = length(est.psi.boot), byrow=TRUE)
     #opz$h<-max(opz$h*.9, .2)

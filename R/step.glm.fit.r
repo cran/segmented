@@ -50,7 +50,8 @@ step.glm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE
   min.step<- opz$min.step #=.0001
   conv.psi<-opz$conv.psi #=FALSE
   alpha<-opz$alpha
-  limZ <- apply(Xtrue, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
+  #limZ <- apply(Xtrue, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
+  limZ <- if(is.null(opz$limZ)) apply(Xtrue, 2, quantile, names=FALSE, probs=alpha) else opz$limZ
   
   fix.npsi<-opz$fix.npsi
   agg<-opz$agg

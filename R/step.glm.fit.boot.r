@@ -38,8 +38,9 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
     r
   }
   #-------------
+  #browser()
   if(is.null(opz$seed)){
-    mY <- mean(y)
+    mY <- mean(as.numeric(y))
     sepDec<-if(options()$OutDec==".") "\\." else "\\,"
     vv <- strsplit(paste(strsplit(paste(mY), sepDec)[[1]], collapse=""),"")[[1]]
     vv<-vv[vv!="0"]
@@ -66,7 +67,8 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
   opz0$agg<-.2
   n<-length(y)
   alpha<-opz$alpha
-  limZ <- apply(Z, 2, quantile, names = FALSE, probs = alpha) #c(alpha, 1 - alpha))
+  #limZ <- apply(Z, 2, quantile, names = FALSE, probs = alpha) #c(alpha, 1 - alpha))
+  limZ <- if(is.null(opz$limZ)) apply(Z, 2, quantile, names=FALSE, probs=alpha) else opz$limZ
   rangeZ <- apply(Z, 2, range) #serve sempre
   o0 <-try(suppressWarnings(step.glm.fit(y, XREG, Z, PSI, w, offs, opz0, return.all.sol=FALSE)), silent=TRUE)
   #browser()
@@ -141,6 +143,7 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
       all.est.psi.boot[k,]<-est.psi.boot<-o.boot$psi
     } else {
       est.psi.boot<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
+      est.psi.boot<- unlist(tapply(est.psi.boot, opz$id.psi.group, sort))
     }
     PSI <- matrix(est.psi.boot, n, ncol = length(est.psi.boot), byrow=TRUE)
     #opz$h<-max(opz$h*.9, .2)

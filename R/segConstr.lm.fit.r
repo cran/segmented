@@ -160,9 +160,12 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
     min.step <- opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha <- opz$alpha #ha gia' 2 componenti! 
-    limZ <- apply(Z, 2, quantile, names = FALSE, probs = alpha) #c(alpha, 1 - alpha))
-    
+    #limZ <- apply(Z, 2, quantile, names = FALSE, probs = alpha) #c(alpha, 1 - alpha))
+    limZ <- if(is.null(opz$limZ)) apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2])) else opz$limZ
     #browser()
+    #for(.i in opz$nomiSeg) { ##poni min(z)=0, cosi solve() in step.lm.fit non ha problemi.
+    #  if(.i %in% colnames(XREG)) XREG[,.i] <- XREG[,.i] - min(XREG[,.i])
+    #}
     
     psi <- PSI[1, ]
     id.psi.group <- opz$id.psi.group
@@ -199,7 +202,12 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
     n.psi1 <- ncol(Z)
     
     Zseg <- XREG[,opz$nomiSeg,drop=FALSE] #
+    minZ<- apply(Zseg, 2, min)
+    Zseg0<- Zseg
+    Zseg <- sweep(Zseg, 2, minZ)  
     XREG <- XREG[, -match(opz$nomiSeg, colnames(XREG)),drop=FALSE]
+    
+    #browser()
     
     U <- ((Z - PSI) * (Z > PSI))
     #if (pow[1] != 1) U <- U^pow[1]
@@ -260,8 +268,7 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
         n.psi1 <- ncol(Z)
         if (n.psi1 != n.psi0) {
             U <- ((Z - PSI) * (Z > PSI))
-            if (pow[1] != 1) 
-                U <- U^pow[1]
+            #if (pow[1] != 1) U <- U^pow[1]
             obj0 <- try(mylm(cbind(XREG, U), y, w, offs), silent = TRUE)
             if (class(obj0)[1] == "try-error") 
                 obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
@@ -400,7 +407,7 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
     
     U <- (Z - PSI) * (Z > PSI)
     for(i in 1:length(RList)){#trasforma le U
-      UList[[i]]<- cbind(Zseg[,i], U[, id.psi.group==i])%*%invA.RList[[i]] 
+      UList[[i]]<- cbind(Zseg0[,i], U[, id.psi.group==i])%*%invA.RList[[i]] 
       nomiUList[[i]]<- rep(i, ncol(UList[[i]]) )
     }
     U<-do.call(cbind, UList) #X <- cbind(XREG, U, V)
@@ -408,14 +415,23 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
     colnames(U) <- paste("U", 1:ncol(U), sep = "")
     
     
-    obj <- mylmOK(x = cbind(XREG, U), y = y, w = w, offs = offs)
-    L1 <- obj$L0
-    
-    #obj <- lm.wfit(x = cbind(XREG, U), y = y, w = w, offset = offs)
-    #L1 <- sum(obj$residuals^2 * w)
+    #obj <- mylmOK(x = cbind(XREG, U), y = y, w = w, offs = offs)
+    #L1 <- obj$L0
     
     #browser()
+    
+    obj <- fitter(cbind(XREG, U), y, w, offs) #lm.wfit()
+    #obj <- lm.wfit(cbind(XREG, U), y, w, offs)
+    L1 <- sum(obj$residuals^2 * w)
+    
+    #browser()
+    
+    #idInt<-match("(Intercept)", names(obj$coefficients),0)
+    #obj$coefficients[idInt] <-  obj$coefficients[idInt]-sum(obj$coefficients[opz$nomiSeg]*minZ)
+    
     obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
+    obj$df.residual <- length(y) - length(obj$coefficients)
+    obj$fitted.values <- y - obj$residuals
     #names(obj$coefficients) <- names.coef
     obj$epsilon <- epsilon
     obj$it <- it

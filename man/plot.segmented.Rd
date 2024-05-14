@@ -30,7 +30,7 @@
   \item{rev.sgn}{ when \code{TRUE} it is assumed that current \code{term} is `minus' the actual segmented variable,
     therefore the sign is reversed before plotting. This is useful when a null-constraint has been set on the last slope.}
   \item{const}{ constant to add to each fitted segmented relationship (on the scale of the linear predictor) before plotting.
-  If the fit includes a segmented interaction term (obtained via \code{seg(..,by)} in the formula), the group-specific intercept is included. 
+  If \code{const=NULL} and the fit includes a segmented interaction term (obtained via \code{seg(..,by)} in the formula), the group-specific intercept is included. 
   }
   \item{shade}{if \code{TRUE} and \code{conf.level>0} it produces shaded regions (in grey color) for the pointwise confidence 
   intervals embracing the fitted segmented line. }

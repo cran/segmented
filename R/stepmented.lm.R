@@ -293,7 +293,7 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   #browser()
   
   opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ, usestepreg=FALSE,
-            id.psi.group=id.psi.group, h=h,
+            id.psi.group=id.psi.group, h=h, limZ=NULL,
             #nomiOK=nomiOK, , visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, conv.psi=conv.psi, 
             alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, npsii=npsii, 
             seed=control$seed, fit.psi0=control$fit.psi0)
@@ -444,7 +444,8 @@ stepmented.lm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control=seg.con
   objF$obj.ok<-mylm(X, y, w=ww, offs=offs) #coefficients=b,fitted.values=fit,residuals=r, df.residual=length(y)-length(b))
   objF$fitted.values<-objF$obj.ok$fitted.values
   objF$residuals<- objF$obj.ok$residuals
-  objF$coefficients[1:length(objF$obj.ok$coefficients)] <- objF$obj.ok$coefficients
+  objF$coefficients[names(objF$obj.ok$coefficients)] <- objF$obj.ok$coefficients
+  #objF$coefficients[1:length(objF$obj.ok$coefficients)] <- objF$obj.ok$coefficients
   objF$coefficients[nomiVxb] <-psi.rounded[1,]
   objF$nameUV <- list(U = drop(nomiU), V = nomiV, Z = name.Z) #Z = name.Z
   objF$rangeZ<-obj$rangeZ

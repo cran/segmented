@@ -48,8 +48,7 @@ Muggeo, V.M.R. (2017) Interval estimation for the breakpoint in segmented regres
 }
 \author{ Vito M.R. Muggeo }
 \note{ 
-Currently \code{method="score"} or \code{method="gradient"} only works for segmented \emph{linear} model. For segmented \emph{generalized linear} model, 
-  currently only \code{method="delta"} is available. 
+Currently \code{method="score"} or \code{method="gradient"} only works for segmented \emph{linear} model. For segmented \emph{generalized linear} model, currently only \code{method="delta"} is available. 
 }
 %
 % ~Make other sections like Warning with \section{Warning }{....} ~

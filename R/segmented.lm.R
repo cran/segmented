@@ -345,9 +345,16 @@ mfExt <-eval(mfExt, parent.frame())
     if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max, usesegreg=FALSE, tol.opt=control$tol.opt,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, #conv.psi=conv.psi, 
-        alpha=alpha, fix.npsi=fix.npsi, fc=fc, seed=control$seed, fit.psi0=control$fit.psi0, min.n=control$min.n)
+        alpha=alpha, fix.npsi=fix.npsi, fc=fc, seed=control$seed, fit.psi0=control$fit.psi0, min.n=control$min.n, limZ=NULL, rangeZ=NULL,
+        nomiSeg=unique(colnames(Z)))
+    
+    # for(.i in unique(colnames(Z))) { #    #poni min(z)=0, cosi solve() in step.lm.fit non ha problemi.
+    #   if(.i %in% colnames(XREG)) XREG[,.i]<- XREG[,.i] - min(XREG[,.i])
+    # }
+
+    
     if(n.boot<=0){
-    obj<-seg.lm.fit(y,XREG,Z,PSI,weights,offs,opz)
+    obj<-seg.lm.fit(y, XREG, Z, PSI ,weights, offs, opz)
     } else {
     obj<-seg.lm.fit.boot(y, XREG, Z, PSI, weights, offs, opz, n.boot=n.boot, size.boot=size.boot, random=random, break.boot=break.boot)
     #seed<- obj$seed
@@ -406,7 +413,7 @@ mfExt <-eval(mfExt, parent.frame())
         mfExt[nomiVxb[i]]<-mf[nomiVxb[i]]<-Vxb[,i]
         }
     nnomi <- c(nomiU, nomiVxb)
-#    browser()
+    #browser()
     Fo <- update.formula(formula(obj0), as.formula(paste(".~.+", paste(nnomi, collapse = "+"))))
     #########========================= SE PSI FIXED
     if(id.psi.fixed){
@@ -443,8 +450,15 @@ mfExt <-eval(mfExt, parent.frame())
       #names(obj$coefficients)[match(c(nomiU, nomiVxb), names(coef(obj)))]<- nnomi
       #names(obj$coefficients)[c(idU,idV)]<- nnomi
       #objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce tutti i coef (gli ultimi sono 0)  
-      objF$coefficients<-obj$coefficients
-      names(objF$coefficients)<-names.coef
+      
+      #Attenzione: quando obj0 contiene interazioni, il rispettivo coeff viene messo alla fine di tutti gli altri (anche di psi), 
+      #   per cui bisogna fare attenzione a come vengono sostituiti i coeffs  
+      #browser()
+      #objF$coefficients<-obj$coefficients
+      if(ncol(XREG)>0) objF$coefficients[match(names(objF$coefficients), names(obj$coefficients),0)] <- obj$coefficients[1:ncol(XREG)]
+      objF$coefficients[nomiU]  <- obj$coefficients[idU]
+      objF$coefficients[nomiVxb]<- 0
+      #names(objF$coefficients)<-names.coef
       objF$fitted.values<-obj$fitted.values
       objF$residuals<-obj$residuals
       #objF$qr<-obj$qr #NON credo..

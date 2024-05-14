@@ -9,10 +9,10 @@ Plot method for stepmented objects
   the fitted piecewise constant lines for the selected stepmented term.
 }
 \usage{
-\method{plot}{stepmented}(x, term, add = FALSE, res = TRUE, conf.level=0, interc = TRUE, 
-      add.fx = FALSE, psi.lines = TRUE, link=FALSE, surf=FALSE, zero.cor=TRUE, 
-      heurs=TRUE, shade=FALSE, se.type=c("cdf","abs","none"), 
-      k=NULL, .vcov=NULL, ...)
+\method{plot}{stepmented}(x, term, add = FALSE, res = TRUE, conf.level=0, interc = TRUE, add.fx = FALSE, 
+      psi.lines = TRUE, link=FALSE, const=NULL, res.col=grey(.15, alpha = .4), 
+      surf=FALSE, zero.cor=TRUE, heurs=TRUE, shade=FALSE, se.type=c("cdf","abs","none"), 
+      k=NULL, .vcov=NULL, leg="topleft", ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -46,6 +46,10 @@ if \code{TRUE} vertical lines corresponding to the estimated changepoints are al
   \item{link}{
 if \code{FALSE} the fitted lines (and possibily the residuals) are reported on the response scale. Ignored if the fit object \code{x} is not a glm-like fit.
 }
+  \item{const}{ constant to add to each fitted segmented relationship (on the scale of the linear predictor) before plotting.
+  If \code{const=NULL} and the fit includes a segmented interaction term (obtained via \code{seg(..,by)} in the formula), the group-specific intercept is included. 
+  }
+  \item{res.col}{when \code{res=TRUE} it means the color of the points representing the partial residuals.}
   \item{surf}{
 if the object fit \code{x} includes 2 stepmented covariates (x1 and x2, say) with relevant estimated breakpoints, \code{surf=TRUE} will draw on the plane x1-x2 the areas splitted according to the estimated breakpoints with corresponding estimated means superimposed.
 }
@@ -67,6 +71,10 @@ The value to be passed to \code{vcov.stepmented} to computed the standard errors
   \item{.vcov}{
 The estimate var-covariance matrix; if \code{NULL}, it is computed internally by \code{\link{vcov.stepmented}}.
 }
+    \item{leg}{
+If the plot refers to stepmented relationships in groups, i.e. \code{term} has been specified as a vector, a legend is placed at the specified \code{leg} position. Put \code{NA} not to draw the legend.
+}
+
   \item{\dots}{ other graphics parameters to pass to plotting commands: `col', `lwd' and `lty' (that
   can be vectors and are recycled if necessary, see the example below) for the fitted piecewise constant lines; `ylab', `xlab', `main', `sub', `cex.axis', `cex.lab', `xlim' and `ylim' when a new plot is produced (i.e. when \code{add=FALSE}); `pch' and `cex' for the partial residuals (when \code{res=TRUE}, \code{res.col} is for the color).% \code{col.shade} for the shaded regions (provided that \code{shade=TRUE} and \code{conf.level>0}).
   }

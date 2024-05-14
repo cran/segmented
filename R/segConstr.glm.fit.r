@@ -91,7 +91,8 @@ segConstr.glm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FA
     min.step<-opz$min.step
     rangeZ <- apply(Z, 2, range)
     alpha<-opz$alpha
-    limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2]))
+    #limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2]))
+    limZ <- if(is.null(opz$limZ)) apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2])) else opz$limZ
     psi<-PSI[1,]
     id.psi.group<-opz$id.psi.group
     conv.psi<-opz$conv.psi 

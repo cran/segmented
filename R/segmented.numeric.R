@@ -138,6 +138,10 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     Xty<-NULL
     nomiOK<-nomiU
     
+    #browser()
+    
+    #for(.i in unique(colnames(Z))) XREG[,.i]<- XREG[,.i] - min(XREG[,.i])
+    
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, 
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, fc=fc, id.weights=id.weights, seed=control$seed, min.n=control$min.n)

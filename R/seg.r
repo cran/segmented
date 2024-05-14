@@ -20,6 +20,7 @@ function(x, npsi=1, psi=NA, est=NA, R=NA, fixed.psi=NULL, by=NULL, f.x=I){
         colnames(r)[1]<-nome
         attr(r,"nomeBy")<-paste(colnames(by), collapse=",")
       } else {
+        #r<-cbind(x, as.factor(by)) #mettere questo cosi' puo' funzionare anche se by e' "character" o "numeric"?
         colnames(r)<-c(nome, "by") #Perche' non usare attr(r,"nomeBy")
         attr(r,"nomeBy")<-deparse(substitute(by), backtick = TRUE, width.cutoff = 500)
       }
@@ -33,7 +34,7 @@ function(x, npsi=1, psi=NA, est=NA, R=NA, fixed.psi=NULL, by=NULL, f.x=I){
     attr(r,"f.x")<- f.x
     attr(r, "by")<-by
     attr(r,"levelsBy")<-levels(by)
-    
+    #class(r) <- c("withAttributes", class(r))
     r
 }
 

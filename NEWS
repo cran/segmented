@@ -6,13 +6,21 @@
 
 
 
+===============
+version 2.1-0 (2024-05-14)
+===============
+* New functions stepreg() to fit stepmented regression via the formula interface (like segreg()), and predict.stepmented() to compute predictions for 'stepmented' objects; predict.segmented() gains argument 'na.action'.
+* A change in the procedure to outdistance the possible close estimated breakpoints (thanks to Marc Laurencelle for the input) by segmented.
+* Some changes in the object returned by selgmented() to have the same names regardless of the final output (thanks to Marc Laurencelle for the input); argument 'const' added in plot.stepmented.
+* Bug fix: segmented.lm did not manage covariates having large values (tens of thousands). This bug was incidentally introduced in version 2.0-4; thanks to Brian Binder for reporting. model.matrix.segmented() did not work on fits with n large (n>=1e+05, say); thanks to A. Priulla for the input. segmented.(g)lm did not print correctly coefficients when an interaction term with the segmented covariate was included (thanks to Annalise LaPlume for reporting); predict.segmented() did not work if the supplied dataframe had missing values (thanks to Marc Laurencelle for reporting)
+
 
 ===============
 version 2.0-4 (2024-04-19)
 ===============
 * Some improvements in the fitter functions for segmented and stepmented fits to gain efficiency
-* A small change in the segmented.* methods: the possible estimated breakpoints at the boundary or too close each other are slightly outdistanced to avoid puzzly results (null or very large st.errs). See min.nj in seg.control()
-* Bug fix: confint.stepmented() did not work if the supplied fit had variable names including dots (thanks to Matti Lehtonen for reporting); segmented crashed when options(outDec=",") was set (thanks to Andras Kosztolanyi for reporting); selgmented() was ignoring return.fit=FALSE when 0 breakpoints were selected (thanks to Marc Laurencelle for reporting); vcov.stepmented() did not work correctly for glm fits.
+* A small change in the segmented.* methods: the possible estimated breakpoints at the boundary or too close each other are slightly outdistanced to avoid puzzly results (null or very large st.errs). See 'min.nj' in seg.control()
+* Bug fix: confint.stepmented() did not work if the supplied fit had variable names including dots (thanks to Matti Lehtonen for reporting); segmented crashed when options(outDec=",") was set (thanks to Andras Kosztolanyi for reporting); selgmented() was ignoring return.fit=FALSE when 0 breakpoints were selected (thanks to Marc Laurencelle for reporting); vcov.stepmented() did not work correctly for stepmented glm fits.
 
 
 ===============

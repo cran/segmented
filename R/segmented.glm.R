@@ -277,7 +277,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
     eta0<- if(is.null(control$eta)) obj$linear.predictors else control$eta
     opz<-list(toll=toll, h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max, nomiOK=nomiOK, usesegreg=FALSE,
-        fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap, tol.opt=control$tol.opt,
+        fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap, tol.opt=control$tol.opt, limZ=NULL, rangeZ=NULL,
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi,eta0=eta0, # min.step=min.step,
         pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, seed=control$seed, fit.psi0=control$fit.psi0, min.n=control$min.n)   
 
@@ -403,10 +403,9 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     
     #if(!gap){
         names.coef<-names(objF$coefficients)
-        #names(obj$coefficients)[match(c(paste("U",1:k, sep=""), paste("V",1:k, sep="")), names(coef(obj)))]<- nnomi  
-        #objF$coefficients[names.coef]<-obj$coefficients[names.coef] #sostituisce gli 0 
-        objF$coefficients<-obj$coefficients
-        names(objF$coefficients) <- names.coef
+        if(ncol(XREG)>0) objF$coefficients[match(names(objF$coefficients), names(obj$coefficients),0)] <- obj$coefficients[1:ncol(XREG)]
+        objF$coefficients[nomiU]  <- obj$coefficients[idU]
+        objF$coefficients[nomiVxb]<- 0
         objF$fitted.values<-obj$fitted.values
         objF$linear.predictors<-obj$linear.predictors
         objF$residuals<-obj$residuals

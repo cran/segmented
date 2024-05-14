@@ -2,10 +2,10 @@
 \alias{seg}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Specifying a segmented term in the segreg formula
+Specifying a segmented/stepmented term in the segreg/stepreg formula
 }
 \description{
-Function used to define the segmented term within the segreg formula. The function simply passes relevant information to proper fitter functions.
+Function used to define a segmented (stepmented) term within the segreg (stepreg) formula. The function simply passes relevant information to proper fitter functions.
 }
 \usage{
 seg(x, npsi = 1, psi = NA, est = NA, R = NA, fixed.psi = NULL, by = NULL, f.x = I)
@@ -13,13 +13,13 @@ seg(x, npsi = 1, psi = NA, est = NA, R = NA, fixed.psi = NULL, by = NULL, f.x = 
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{
-The segmented (numeric) covariate
+The segmented/stepmented (numeric) covariate
 }
   \item{npsi}{
-The number of breakpoints to estimate. Default to \code{npsi=1}. If \code{by} has been specified, the same \code{npsi} applies to all categories of the factor \code{by}; otherwise it can be vector, wherein the entries represent  the number of breakpoints of the segmented relationships within the categories of \code{by}. If \code{npsi} is specified as a vector, the corresponding \code{est} should be a list. The \code{npsi} starting values are computed according the specification of \code{quant} in \code{\link{seg.control}}.
+The number of breakpoints/jumpoints to estimate. Default to \code{npsi=1}. If \code{by} has been specified, the same \code{npsi} applies to all categories of the factor \code{by}; otherwise it can be vector, wherein the entries represent  the number of breakpoints of the segmented relationships within the categories of \code{by}. If \code{npsi} is specified as a vector, the corresponding \code{est} should be a list. The \code{npsi} starting values are computed according the specification of \code{quant} in \code{\link{seg.control}}.
 }
   \item{psi}{
-Numerical vector indicating possible starting value(s) for the breakpoint(s). When provided, \code{psi} overwrites \code{npsi}. If \code{by} has been specified, \code{psi} can be a list, wherein the components represent  the starting values of the segmented relationships within the categories of \code{by}.
+Numerical vector indicating possible starting value(s) for the breakpoint(s). When provided, \code{psi} overwrites \code{npsi}. If \code{by} has been specified, \code{psi} can be a list, wherein the components represent  the starting values of the segmented/stepmented relationships within the categories of \code{by}.
 }
   \item{est}{
 Possible vector (of length equal to \code{npsi+1}) of 0's and 1's to indicate whether the slopes have to be estimated or fixed to zero. \code{NA}, the default, means all ones, namely every slope is estimated. Consecutive zeroes are not allowed. If \code{by} has been specified, the same \code{est} applies to all categories of the factor \code{by}; otherwise \code{est} can be a list, wherein the components represent the slope constraints of the segmented relationships within the categories of \code{by}. Note that, when a grouping variable has been specified in \code{by}, \code{npsi} can be specified as a vector, and \code{est} should be a list.
@@ -38,7 +38,7 @@ an optional function meaning a function to apply to the covariate before fitting
 }
 }
 \details{
-The function is used within \code{\link{segreg}} to 'build' information about the segmented relationships to fit. 
+The function is used within \code{\link{segreg}} and \code{stepreg} to 'build' information about the segmented relationships to fit. 
 }
 \value{
 The function simply returns the covariate with added attributes relevant to segmented term

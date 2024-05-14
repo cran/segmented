@@ -145,7 +145,6 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
     adj.psi <- function(psii, LIM) {
         pmin(pmax(LIM[1, ], psii), LIM[2, ])
     }
-    #XREG<-cbind(1,Z[,1])
     
     n <- length(y)
     #min.step <- opz$min.step
@@ -190,7 +189,12 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
       stop("psi starting values too close each other or at the boundaries. Please change them (e.g. set 'quant=TRUE' 
           in seg.control()), or decrease their number.", call. = FALSE)
     n.psi1 <- ncol(Z)
-    U <- ((Z - PSI) * (Z > PSI))
+    #U <- ((Z - PSI) * (Z > PSI))
+    V <- (Z > PSI) #dpmax(Z, PSI, pow = pow[2])
+    U <- (Z - PSI) * V
+    V<- -V
+    
+    
     obj0 <-list(residuals=rep(1,3))
     L0 <- var(y)*n #sum(obj0$residuals^2)
     
@@ -211,6 +215,15 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
                   id.warn = TRUE, idU=seq_along(psi)+ncol(XREG), idV=NULL)
       return(obj)
     }
+    
+    #XREG<-cbind(1,Z[,1])
+    #for(.i in opz$nomiSeg) { ##poni min(z)=0, cosi solve() in step.lm.fit non ha problemi.
+    #  if(.i %in% colnames(XREG)) XREG[,.i] <- XREG[,.i] - min(XREG[,.i])
+    #}
+    #in seg.num.fit() la xreg ha sempre e solo l'interc e la seconda colonna il termine segmented! 
+    minZ <- min(XREG[,2])
+    XREG[,2]<-XREG[,2]- minZ
+    
 
     n.intDev0 <- nchar(strsplit(as.character(L0), "\\.")[[1]][1])
     dev.values[length(dev.values) + 1] <- opz$dev0
@@ -234,6 +247,7 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
     
     while (abs(epsilon) > toll) {
         it <- it + 1
+        #if(it==1) browser()
         n.psi0 <- n.psi1
         n.psi1 <- ncol(Z)
         if (n.psi1 != n.psi0) {
@@ -243,9 +257,9 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
             if(class(obj0)[1] == "try-error") obj0 <- .lm.fit(cbind(XREG, U), y)
             L0 <- sum(obj0$residuals^2)
         }
-        V <- (Z > PSI) #dpmax(Z, PSI, pow = pow[2])
-        U <- (Z - PSI) * V
-        V<- -V
+        # V <- (Z > PSI) #dpmax(Z, PSI, pow = pow[2])
+        # U <- (Z - PSI) * V
+        # V<- -V
         X <- cbind(XREG, U, V)
         #colnames(X)[2:ncol(X)] <- nomiUV
 
@@ -282,11 +296,8 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
         #aggiusta la stima di psi..
         psi<- adj.psi(psi, limZ)
         
-        #browser()
-        
         psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
-        
-        
+
         a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, tol=tolOp[it])
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
@@ -295,6 +306,10 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
         psi<- adj.psi(psi, limZ)
         if (!is.null(digits)) psi <- round(psi, digits)
         PSI <- matrix(psi, n, ncol = length(psi), byrow=TRUE)
+        V <- (Z > PSI)
+        U <- (Z - PSI) * V
+        V <- -V
+        
         
         if (visual) {
             flush.console()
@@ -371,12 +386,11 @@ seg.num.fit <-function (y, XREG, Z, PSI, w, opz, return.all.sol = FALSE) {
     #   obj <- .lm.fit(x = cbind(XREG, U), y = y)
     #   L1 <- sum(obj$residuals^2)
     # }
+    #browser()
+    
     obj <-   mylmOK(x = cbind(XREG, U), y = y, w = w)
-    L1 <- obj$L0 
-    #}
-    #else {
-    #    obj <- obj1
-    #}
+    L1 <- obj$L0
+    obj$coefficients[1] <-  obj$coefficients[1]-sum(obj$coefficients[2]*minZ)
     obj$coefficients <- c(obj$coefficients, rep(0, ncol(V)))
     names(obj$coefficients) <- names.coef
     obj$epsilon <- epsilon

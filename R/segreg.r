@@ -10,6 +10,20 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
   #Allora considerando seggrowth() qua ci dovrebbero essere problemi in nel predict..
   
   #=================================
+  # `[.withAttributes` <- function(r, i) {
+  #   subset <- NextMethod()
+  #   attr(subset, "nomeBy") <- attr(r, "nomeBy")
+  #   attr(subset, "nomeX") <- attr(r, "nomeX")
+  #   attr(subset, "psi") <- attr(r, "psi")
+  #   attr(subset, "npsi") <- attr(r, "npsi")
+  #   attr(subset, "est") <- attr(r, "est")
+  #   attr(subset, "R") <- attr(r, "R")
+  #   attr(subset, "fix.psi") <- attr(r, "fix.psi")
+  #   attr(subset, "f.x") <- attr(r, "f.x")
+  #   attr(subset, "by") <- attr(r, "by")
+  #   attr(subset, "levelsBy") <- attr(r, "levelsBy")
+  #   subset
+  # }
   
     build.all.psi<-function(psi, fixed.psi){
     all.names.psi<-union(names(psi),names(fixed.psi))
@@ -102,14 +116,20 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     id.ps<-attr(tf,"specials")$seg #posizione nel modelframe; vettore se ci sono piu' termini..include y ma non da interc
 
     #browser()
+    
     mf <- match.call(expand.dots = FALSE)
     m <- match(c("formula", "data", "subset", "weights",  "na.action"), names(mf), 0L) #"offset",
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     names(mf)[2]<-"formula" #serve se NON hai usato "formula"
+    
+    #browser()
+    
     mf <- eval(mf, parent.frame())
     
+    #browser()
+    n<-nrow(mf)
     mt <- attr(mf, "terms")
     intercMt<-attr(mt,"intercept")
     interc<-intercMt==1
@@ -124,21 +144,25 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         Y <- eval(parse(text=transf), list(y=Y))
         transf.inv<-splinefun(Y, Y.orig, ties=min, method="monoH.FC")
     }
+    if(is.null(alpha)) alpha<- max(.05, 1/length(Y))
+    if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
     
+    #browser()
     .xlivelli<-.getXlevels(mt, mf) 
     weights <- as.vector(model.weights(mf))
     if(!is.null(weights) && !is.numeric(weights)) stop("'weights' must be a numeric vector")
     if(!is.null(weights) && any(weights < 0)) stop("negative weights not allowed")
     offs <- as.vector(model.offset(mf))
+    
     #browser() #funziona sia nella formula che come argomento?
     
     testo.ps<-names(mf)[id.ps]
     nomiCoefUNPEN<-names(mf)[-c(1,id.ps)]
-    X <- if(!is.empty.model(mt)){
-        model.matrix(mt, mf, contrasts) 
-      } else {stop("error in the design matrix")}#matrix(, NROW(Y), 0L)
-    attrContr<-attr(X, "contrasts")
-    n<-nrow(X)
+    # X <- if(!is.empty.model(mt)){
+    #     model.matrix(mt, mf, contrasts) 
+    #   } else {stop("error in the design matrix")}#matrix(, NROW(Y), 0L)
+    # attrContr<-attr(X, "contrasts")
+    # n<-nrow(X)
     
     
     #browser()
@@ -197,9 +221,10 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     levelsBy <- lapply(l,function(xx) attr(xx,"levelsBy"))
     
     #browser()
+    
     if(all(sapply(levelsBy, is.null)) && (length(npsiList)!=length(nomiPS))) stop(" 'npsi' is not correctly specified")
     
-    rangeSmooth<-mVariabili<-NULL
+    limZ<-rangeSmooth<-mVariabili<-NULL
 		#se ci sono termini ps()+ps(..,by) il nome delle variabili smooth vengono cambiati per aggiungere la variabile by
 		nomiPS.orig <- nomiPS
 		  
@@ -220,19 +245,22 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     #BFixed<-BB<-Bderiv
     
     
-    
+    #browser()
     
     for(j in 1:length(mVariabili)) {
       if(nomiBy[j]=="NULL"){ # se usuale termine seg()
         nomiBy.j <- NULL
         variabileSmooth<- c(mVariabili[[j]]) #c() converte le matrici in vettori, drop() no..!
-        variabileSmooth<- attr( mVariabili[[j]], "f.x")(variabileSmooth)
+        #variabileSmooth<- attr(mVariabili[[j]], "f.x")(variabileSmooth)
+        variabileSmooth<- fxList[[j]](variabileSmooth)
         #for(jj in c("nomeX", "psi", "npsi", "f.x", "nomeBy")) attr(variabileSmooth,jj)<-NULL
         B[[j]]<- variabileSmooth
         rangeSmooth[[j]] <- range(variabileSmooth)
+        limZ[[j]] <- quantile(variabileSmooth, names=FALSE, probs=c(alpha[1],alpha[2]))
         nomiPS.ps.int.list[[j]]<- nomiPS[j]
         
       } else { #se ci sono termini by
+        #browser()
         if(is.null(levelsBy[[j]])){ #se e' vc con variabile continua
           stop(" 'by' in seg(), if provided, should be a factor")
           #B[[j]] <-variabileBy*B[[j]]
@@ -240,11 +268,12 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         } else {#se e' VC con variabile categoriale
           nomiBy.j <- nomiBy[j]
           variabileSmooth<- mVariabili[[j]][,-ncol(mVariabili[[j]]),drop=TRUE] 
-          variabileSmooth<- attr( mVariabili[[j]], "f.x")(variabileSmooth)
+          variabileSmooth<- fxList[[j]](variabileSmooth)
           variabileBy<- mVariabili[[j]][, ncol(mVariabili[[j]]),drop=TRUE]
           M<-model.matrix(~0+factor(variabileBy))
           B[[j]]<- lapply(1:ncol(M), function(.x) M[,.x]*variabileSmooth)
           rangeSmooth[[j]] <- lapply(B[[j]], function(.x) range(.x[.x!=0]))
+          limZ[[j]] <- lapply(B[[j]], function(.x) quantile(.x[.x!=0], names=FALSE, probs=c(alpha[1],alpha[2])))
           #browser()
           cond1 <- is.list(psiList[[j]])
           cond2 <- length(names(psiList[[j]]))==length(levelsBy[[j]])
@@ -259,6 +288,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     } #end for(j in 1:length(mVariabili))
     
     #browser()
+    #sapply(limZ[[1]], cbind)
     
     repl<-pmax(sapply(B,length)*sapply(B,is.list),1)
     for(i in 1:length(npsiList)){
@@ -295,6 +325,9 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         rangeSmooth <- append(rangeSmooth, rangeSmooth[[id.vc]], after = id.vc-1)
         rangeSmooth[[id.vc+nc]]<-NULL
         
+        limZ <- append(limZ, limZ[[id.vc]], after = id.vc-1)
+        limZ[[id.vc+nc]]<-NULL
+        
         estList <- append(estList, estList[[id.vc]], after = id.vc-1)
         estList[[id.vc+nc]]<-NULL
         
@@ -306,9 +339,9 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         #penMatrixList[[id.vc+nc]]<-NULL
     }
     
-      
       #if(!all(sapply(estList,check.estPsi))) stop(" 'est' is misspecified in one or more seg() term")
-      
+    #browser()
+    
     nomiTerminiSEG<-nomiCoefPSI <-NULL
     nomiPS.ps.unlist.seg <- unlist(nomiPS.ps.list)
     nomiPS.ps.unlist <- sub("[)]", "", sub("seg[(]", "",nomiPS.ps.unlist.seg ))
@@ -375,7 +408,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
             j.ok=match(nomiSeg[j], names(estList), nomatch=0)
             j.ok <-if(j.ok>0) j.ok else j
             if(!any(is.na(estList[[j.ok]]))){
-              if(length(estList[[j.ok]])!=(K+1)) stop(" 'est' is not compatible with 'n.psi' ")
+              if(length(estList[[j.ok]])!=(K+1)) stop(" 'est' is not compatible with 'npsi' ")
               #browser()
               RList[[j]]<-diag(K+1)[,estList[[j.ok]]==1,drop=FALSE]
               id.contrR[j] <-TRUE
@@ -395,10 +428,8 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       nomiCoefU<-lapply(nomiCoefPSI, function(.x) sub("psi","U",.x )) 
       nomiCoefZ<-lapply(nomiCoefPSI, function(.x) sub("psi","Z",.x ))
 
-
+      npsii <- sapply(psiList,length)
       id.psi.group <- rep(1:length(psiList), sapply(psiList,length))
-      #browser()
-      
       Z<- lapply(1:length(B), function(.x) matrix(B[[.x]], nrow=n, ncol=npsiList1[[.x]]))
       Z<- do.call(cbind,Z)
       colnames(Z) <- unlist(nomiCoefZ)
@@ -418,7 +449,13 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       #nomiInterCateg: "x:g1" "x:g2" "x:g3" ..
       
       #========================================================================================================
-
+      X <- if(!is.empty.model(mt)){
+        model.matrix(mt, mf, contrasts) 
+      } else {stop("error in the design matrix")}#matrix(, NROW(Y), 0L)
+      attrContr<-attr(X, "contrasts")
+      #n<-nrow(X)
+      
+      
       X<- X[, !startsWith(colnames(X),"seg("), drop=FALSE]
 
       idZ <- unlist(tapply(id.psi.group, id.psi.group, function(.x) c(TRUE, rep(FALSE, length(.x)-1))))
@@ -451,18 +488,31 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       if(is.null(weights)) weights<-rep(1,n)
       if(is.null(offs)) offs<-rep(0,n)
 
+      #browser()
+      
+      
+      limZ <-do.call(cbind, lapply(limZ, function(.x){if(is.list(.x)) do.call(cbind, .x) else cbind(.x)} ))
+      #limZ <-matrix(sapply(1:length(npsii), function(.x) rep(limZ[,.x],npsii[.x])), nrow=2, byrow = FALSE)
+      limZ <- do.call(cbind, lapply(1:length(npsii), function(.x) matrix(limZ[,.x],nrow=2,ncol=npsii[.x])))
+      rangeZ <- do.call(cbind, lapply(1:length(npsii), function(.x) matrix(rangeSmooth[[.x]],nrow=2,ncol=npsii[.x])))
+      #rangeZ<- matrix(sapply(1:length(npsii), function(.x) rep(rangeSmooth[[.x]],npsii[.x])), nrow=2, byrow = FALSE)
+      
+      
       invXtX<-Xty<-NULL
-      if(is.null(alpha)) alpha<- max(.05, 1/length(Y))
-      if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
       #browser()
       opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,L0=NULL,visual=visual,it.max=it.max,nomiOK=unlist(nomiCoefU), usesegreg=TRUE,
-                fam=family, eta0=NULL, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap,
+                fam=family, eta0=NULL, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap, limZ=limZ, rangeZ=rangeZ,
                 conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, tol.opt=control$tol.opt,
                 pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg, seed=control$seed, min.n=control$min.n)
+      
       #browser()
       
       if(any(id.contrR)){
         if(fitter0=="lm"){
+          # for(.i in nomiSeg) { #    #poni min(z)=0, cosi solve() in step.lm.fit non ha problemi.
+          #   if(.i %in% colnames(X)) X[,.i]<- X[,.i] - min(X[,.i])
+          # }
+          
           if(n.boot <= 0) {
           obj <- segConstr.lm.fit(Y, X, Z, PSI, weights, offs, opz)
           } else {
@@ -485,7 +535,9 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
           class0<-c("glm","lm")
           }
       } else {
+        #browser()
         if(fitter0=="lm"){
+
           if(n.boot <= 0) {
             obj <- seg.lm.fit(Y, X, Z, PSI, weights, offs, opz)
             } else {
@@ -538,6 +590,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       U<-obj$U
       V<-obj$V
       rangeZ<-obj$rangeZ
+      #browser()
       colnames(rangeZ) <- unlist(nomiTerminiSEG)
       it <- obj$it
       epsilon <- obj$epsilon
@@ -655,7 +708,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       
       #names(mf) <- nomi.mf
       objV$terms <- mt
-      objV$y<-Y
+      if(fitter0=="lm") objV$y<-Y #modificato il 6/5/24.. Non c'e' bisogno.. l'ogg restituit da glm.fit() ha gia' la y
       if(x) objV$x <- X
       objV$contrasts <- attrContr  
       objV$xlevels <- .xlivelli 

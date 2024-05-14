@@ -11,10 +11,10 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
     
     nomiU<-object$nameUV$U
     nomiV<-object$nameUV$V
-    nomiPsi<- gsub("V", "psi", nomiV)
+    nomiPsi<- sub("V", "psi", nomiV)
     idU <-match(nomiU,names(coef(object)[!is.na(coef(object))]))
     idV <-match(nomiPsi,names(coef(object)[!is.na(coef(object))]))
-    beta.c<- coef(object)[nomiU]
+    #beta.c<- coef(object)[nomiU]
     #per metodo default.. ma serve????
     if("stepmented.default" == as.character(object$call)[1]){
       summ <- c(summary(object, ...), object["psi"])
@@ -29,13 +29,31 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
     se <- sqrt(diag(VAR))
     object$psi[,"St.Err"] <- se[nomiPsi] 
     
-    if("lm"%in%class(object) && !"glm"%in%class(object)){
+    #if("lm"%in%class(object) && !"glm"%in%class(object)){
+    if(inherits(object, "lm") && !inherits(object, "glm")){
+      #object$rank include i psi, mentre object$qr$rank no.
+      #Affinche' summary.lm() funzioni, e' necessario che object$rank non tenga conto del numero di psi..
+      #quindi qua (e anche nei lm sopra) modifichiamo il valore di rank..
+      #NB: questo problema NON si presenta se sono state usate le funzioni stepmented.* in cui anche object$qr$rank tiene gia' conto
+      # dei psi (perche' hanno stimato il modello con le variabili W per cercare di ottenere una qualche misura del se)
+      object$rank <- object$qr$rank #object$rank - nrow(object$psi)
+      # summ <- c(suppressWarnings(summary.lm(object, ...)), object["psi"])
+      # summ$Ttable <-summ$coefficients
+      # b <- coef(object, FALSE)
+      # b<-b[b!=0]
+      # summ <- list(Ttable=matrix(NA, length(b), 4, dimnames = list(names(b),c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))),
+      #              psi=object[["psi"]], sigma=sigma(object), call=object$call, df=c(length(coef(object)), object$df.residual, length(coef(object)) ) )
+      # summ$Ttable[,"Estimate"] <- b 
+      # summ$Ttable[,"Std. Error"] <- se[1:length(b)] #se[rownames(summ$coefficients)]
+      # summ$Ttable[,"t value"] <- summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"] 
+      # summ$Ttable[,"Pr(>|t|)"] <- 2*pt(abs(summ$Ttable[,"t value"]), df=object$df.residual, lower.tail = FALSE) # summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"]
+      
       summ <- c(suppressWarnings(summary.lm(object, ...)), object["psi"])
-      summ$Ttable <-summ$coefficients
-      summ$Ttable[,"Std. Error"] <- se[rownames(summ$coefficients)]
-      summ$Ttable[,"t value"] <- summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"] 
-      summ$Ttable[,"Pr(>|t|)"] <- 2*pt(abs(summ$Ttable[,"t value"]), df=object$df.residual, lower.tail = FALSE) # summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"]
-      #browser()
+      summ$Ttable <- summ$coefficients
+      summ$Ttable[, "Std. Error"] <- se[rownames(summ$coefficients)]
+      summ$Ttable[, "t value"] <- summ$Ttable[, "Estimate"]/summ$Ttable[,"Std. Error"]
+      summ$Ttable[, "Pr(>|t|)"] <- 2 * pt(abs(summ$Ttable[,"t value"]), df = object$df.residual, lower.tail = FALSE)
+      
       
       if(var.diff){
         stop("not allowed")
@@ -72,11 +90,18 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
       return(summ)
     }
     if(inherits(object, "glm")){
+      #browser()
+      #23/4/24 mi sono reso conto che con gaussian GLM viene stampato "t-value" e non z-value... 
+      #     Per cui piuttostoche i nomi, metto gli indici delle colonne..
+      object$rank <- object$qr$rank
       summ <- c(suppressWarnings(summary.glm(object, ...)), object["psi"])
       summ$Ttable <-summ$coefficients
       summ$Ttable[,"Std. Error"] <- se[rownames(summ$coefficients)]
-      summ$Ttable[,"z value"] <- summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"] 
-      summ$Ttable[,"Pr(>|z|)"] <- 2*pnorm(abs(summ$Ttable[,"z value"]), lower.tail = FALSE) # summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"]
+      # summ$Ttable[,"z value"] <- summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"] 
+      # summ$Ttable[,"Pr(>|z|)"] <- 2*pnorm(abs(summ$Ttable[,"z value"]), lower.tail = FALSE) # summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"]
+      summ$Ttable[,3] <- summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"] 
+      summ$Ttable[,4] <- if(object$family$family=="gaussian") 2*pt(abs(summ$Ttable[,3]), df=object$df.residual, lower.tail = FALSE) else 2*pnorm(abs(summ$Ttable[,3]), lower.tail = FALSE) # summ$Ttable[,"Estimate"]/summ$Ttable[,"Std. Error"]
+      
       summ$Ttable[idU,4]<-NA
       if(all(!is.na(idV))) summ$Ttable<-summ$Ttable[-idV,] 
       summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]

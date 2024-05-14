@@ -2,8 +2,8 @@ Package: segmented
 Type: Package
 Title: Regression Models with Break-Points / Change-Points Estimation
         (with Possibly Random Effects)
-Version: 2.0-4
-Date: 2024-04-19
+Version: 2.1-0
+Date: 2024-05-14
 Authors@R: c(person(given = c("Vito","M.","R."), family = "Muggeo", role =
         c("aut", "cre"), email = "vito.muggeo@unipa.it", comment=c(ORCID="0000-0002-3386-4054")))
 Maintainer: Vito M. R. Muggeo <vito.muggeo@unipa.it>
@@ -18,7 +18,8 @@ Description: Fitting regression models where, in addition to possible linear ter
 Depends: R (>= 3.5.0), MASS, nlme
 License: GPL
 NeedsCompilation: no
-Packaged: 2024-04-19 09:51:06 UTC; vito
+Packaged: 2024-05-14 10:39:45 UTC; vito
 Author: Vito M. R. Muggeo [aut, cre] (<https://orcid.org/0000-0002-3386-4054>)
+RoxygenNote: 7.3.1
 Repository: CRAN
-Date/Publication: 2024-04-19 11:32:36 UTC
+Date/Publication: 2024-05-14 11:10:02 UTC

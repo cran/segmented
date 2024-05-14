@@ -9,12 +9,12 @@ Returns predictions and optionally associated quantities (standard errors or con
 }
 \usage{
 \method{predict}{segmented}(object, newdata, se.fit=FALSE, interval=c("none","confidence", "prediction"), 
-            type = c("link", "response"), level=0.95, .coef=NULL, ...)
+            type = c("link", "response"), na.action=na.omit, level=0.95, .coef=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{
-a fitted segmented model coming from \code{segmented.lm} or \code{segmented.glm}.
+a fitted segmented model coming from \code{segmented.(g)lm} or \code{segreg}.
 }
   \item{newdata}{
 An optional data frame in which to look for variables with which to predict. If omitted, the fitted values are used.
@@ -27,6 +27,9 @@ Which interval? See \code{\link{predict.lm}}
 }
   \item{type}{
 Predictions on the link or response scale? Only if \code{object} is a segmented glm.
+}
+  \item{na.action}{
+How to deal with missing data,  \emph{if} \code{newdata} include them.
 }
   \item{level}{
 The confidence level.
@@ -50,11 +53,11 @@ See \code{predict.lm} or  \code{predict.glm}.
 \author{
 Vito Muggeo
 }
-\note{
-If \code{type="terms"}, \code{predict.segmented} returns predictions for each component of the segmented term. 
-Namely if `my.x' is the segmented variable, predictions for `my.x', `U1.my.x' and `psi1.my.x' are returned. These are
-meaningless individually, however their sum provides the predictions for the segmented term.
-}
+%\note{
+%If \code{type="terms"}, \code{predict.segmented} returns predictions for each component of the segmented term. 
+%Namely if `my.x' is the segmented variable, predictions for `my.x', `U1.my.x' and `psi1.my.x' are returned. These are
+%meaningless individually, however their sum provides the predictions for the segmented term.
+%}
 
 \section{Warning }{
 For segmented glm fits with offset obtained starting from the model \code{glm(.., offset=..)}, \code{predict.segmented} returns the fitted values without considering the offset. 

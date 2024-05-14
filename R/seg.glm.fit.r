@@ -82,12 +82,17 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     #--------------
     n<- if(is.matrix(y)) nrow(y) else length(y)
     min.step<-opz$min.step
-    rangeZ <- apply(Z, 2, range)
+    #rangeZ <- apply(Z, 2, range)
     alpha<-opz$alpha
-    limZ <- apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2]))
+    rangeZ <- if(is.null(opz$rangeZ)) apply(Z, 2, range) else opz$rangeZ
+    limZ <- if(is.null(opz$limZ)) apply(Z, 2, quantile, names=FALSE, probs=c(alpha[1],alpha[2])) else opz$limZ
+    
     psi<-PSI[1,]
-    psi<-adj.psi(psi, limZ)
-    PSI<-matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
+    
+    #browser()
+    
+    psi<- adj.psi(psi, limZ)
+    PSI<- matrix(psi,nrow=n, ncol=ncol(PSI), byrow=TRUE)
     id.psi.group<-opz$id.psi.group
     #conv.psi<-opz$conv.psi 
     digits<-opz$digits
@@ -195,6 +200,8 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     tolOp <-if(is.null(opz$tol.opt)) seq(.001, .Machine$double.eps^0.25, l=it.max) else rep(opz$tol.opt, it.max)
     idU <- ncol(XREG)+ 1:n.psi
     idV <- 1:n.psi + max(idU)
+    #browser()
+    
     while (abs(epsilon) > toll) {
         it<-it+1
         n.psi0 <- n.psi1

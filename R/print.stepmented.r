@@ -10,10 +10,11 @@
         #browser()
         
         #iV<- -match(x$nameUV[[2]],names(coef(x)))#iV<- -grep("psi.",names(coef(x)))#indices all but V
-        nomiPsi <- gsub("V", "psi", x$nameUV$V)
+        nomiPsi <- rownames(x$psi) #sub("V", "psi", x$nameUV$V)
         coeff <- coef(x)
-        iV<- -match(nomiPsi,names(coeff))#iV<- -grep("psi.",names(coef(x)))#indices all but V
-        coeff <- if(any(is.na(coeff[iV]))) coeff else coeff[iV]  
+        iV<- match(nomiPsi,names(coeff))#iV<- -grep("psi.",names(coef(x)))#indices all but V
+        #coeff <- if(any(is.na(coeff[iV]))) coeff else coeff[iV]  
+        coeff <- coeff[-iV]
         print.default(format(coeff, digits = digits), print.gap = 2, quote = FALSE)
         cat("\n")
         cat("Estimated Jump-Point(s):\n")

@@ -85,7 +85,7 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
       summ$short<-short
       class(summ) <- c("summary.segmented", "summary.lm")
       return(summ)
-      }
+    }
     #if("glm"%in%class(object)){
     if(inherits(object, "glm")){
       summ <- c(summary.glm(object, ...), object["psi"])
@@ -95,7 +95,8 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
       summ$n.boot<-length(na.omit(object$psi.history$all.ss))
       summ$short<-short
       class(summ) <- c("summary.segmented", "summary.glm")
-      return(summ)}
+      return(summ)
+    }
     if("Arima"%in%class(object)){
       #da controllare
       coeff<-object$coef
@@ -108,6 +109,8 @@ function(object, short=FALSE, var.diff=FALSE, p.df="p", .vcov=NULL, ...){
       summ[c("it","epsilon","conv.warn")]<-object[c("it","epsilon","id.warn")]
       summ$n.boot<-length(na.omit(object$psi.history$all.ss))
       class(summ) <- c("summary.segmented", "summary.Arima")
-      return(summ)}
+      return(summ)
+    }
 }
+
 

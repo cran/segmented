@@ -3,8 +3,9 @@ model.matrix.segmented<-function(object,...){
   if(inherits(object, "lm")) {
     X<- qr.X(object$qr, ...)
     if(inherits(object, "glm")) {
-      W<-chol(diag(object$weights))
-      X <- X/diag(W)
+      #W<-chol(diag(object$weights))
+      #X <- X/diag(W)
+      X<- X/sqrt(object$weights)
     }
   } else {
     class(object)<-class(object)[-1]

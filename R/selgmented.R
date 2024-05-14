@@ -467,7 +467,7 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
               startpsi[[i]] <- sort(c(estpsi, psi0))
             } else {
               #aggiungi uno starting psi
-              M<-matrix(c(m1 ,rep(estpsi, each=2), m2), ncol=2, nrow=length(estpsi)+1, byrow=TRUE)
+              M<- matrix(c(m1 ,rep(estpsi, each=2), m2), ncol=2, nrow=length(estpsi)+1, byrow=TRUE)
               diffpsi <- apply(M,1,diff)
               id.max.diffpsi <- which.max(diffpsi)
               psi0 <- sum(M[id.max.diffpsi,])/2
@@ -566,18 +566,24 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
           print(bic.values)
           cat(paste("\nNo. of selected breakpoints: ", n.psi.ok, " \n"))
         }
-        if(return.fit) return(olm) else return(list(bic.values=bic.values, npsi=n.psi.ok))
+        bic.values=rbind(npsiVeri, bic.values)
+        rownames(bic.values)<-c("npsi", paste(ICname, "value",sep=""))
+        selection.psi <- list(bic.values=bic.values, npsi=n.psi.ok)
+        if(return.fit) {
+          #browser()
+          olm$selection.psi <- selection.psi
+          return(olm)
+          } else {
+            return(list(selection.psi=selection.psi))
+            #return(list(bic.values=bic.values, npsi=n.psi.ok))
+          }
       }
-      
+
       #browser()
       
       if(Kmax==n.psi.ok && msg) warning(paste("The best",ICname, "value at the boundary. Increase 'Kmax'?"), call.=FALSE, immediate. = TRUE)
       id.best<- which.min(bic.values[-1])
       
-      if(!return.fit) {
-        r <- list(bic.values=bic.values, npsi=n.psi.ok)
-        return(r) 
-      }
       #browser()
       r<- r0 <- ris[[id.best]]
       
@@ -613,6 +619,8 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
             rm.id<-1
           }
         }
+        #browser()
+        
         if(length(all.psi)<=0 || is.null(r$psi) ) {
           n.psi.ok<-0
           r<- olm
@@ -647,8 +655,15 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
         cat(paste("\nNo. of selected breakpoints:", n.psi.ok, add.msg))
       }
       
+      if(!return.fit) {
+        bic.values=rbind(npsiVeri, bic.values)
+        rownames(bic.values)<-c("npsi", paste(ICname, "value",sep=""))
+        r<-list(selection.psi=list(bic.values=bic.values, npsi=n.psi.ok))
+        return(r) 
+      }
+      
       bic.values=rbind(npsiVeri, bic.values)
-      rownames(bic.values)<-c("no. breakpoints", paste(ICname, "value",sep=""))
+      rownames(bic.values)<-c("npsi", paste(ICname, "value",sep=""))
       r$selection.psi <- list(bic.values=bic.values, npsi=n.psi.ok)
       if(refit) r$selection.psi$psi.before.refit <-all.psi
       return(r)

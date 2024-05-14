@@ -143,6 +143,7 @@ step.ts.fit.boot <- function(y, XREG, Z, PSI, opz, n.boot=10, size.boot=NULL, jt
       all.est.psi.boot[k,]<-est.psi.boot<-o.boot$psi
     } else {
       est.psi.boot<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
+      est.psi.boot<- unlist(tapply(est.psi.boot, opz$id.psi.group, sort))
     }
     PSI <- matrix(est.psi.boot, n, ncol = length(est.psi.boot), byrow=TRUE)
     #opz$h<-max(opz$h*.9, .2)

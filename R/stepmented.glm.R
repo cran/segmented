@@ -310,7 +310,7 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   if(length(alpha)==1) alpha<-c(alpha, 1-alpha)
   eta0 <- if(is.null(control$eta)) obj$linear.predictors else control$eta
   opz<-list(toll=tol, dev0=dev0, display=display, it.max=it.max, agg=agg, digits=digits, rangeZ=rangeZ, usestepreg=FALSE,
-            fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, h=h, eta0=eta0,
+            fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, h=h, eta0=eta0, limZ=NULL,
             #nomiOK=nomiOK,  visualBoot=visualBoot, invXtX=invXtX, Xty=Xty, conv.psi=conv.psi,  min.step=min.step,
             alpha=alpha, fix.npsi=fix.npsi, npsii=npsii, seed=control$seed, fit.psi0=control$fit.psi0)
   opz$Nboot <- 0
@@ -489,7 +489,8 @@ stepmented.glm <- function(obj, seg.Z, psi, npsi, fixed.psi=NULL,
   objF$objW<- objW
   objF$fitted.values<-objF$obj.ok$fitted.values
   objF$residuals<- objF$obj.ok$residuals
-  objF$coefficients[1:length(objF$obj.ok$coefficients)] <- objF$obj.ok$coefficients
+  #objF$coefficients[1:length(objF$obj.ok$coefficients)] <- objF$obj.ok$coefficients
+  objF$coefficients[names(objF$obj.ok$coefficients)] <- objF$obj.ok$coefficients
   objF$coefficients[nomiVxb] <-psi.rounded[1,]
   objF$nameUV <- list(U = drop(nomiU), V = nomiV, Z = name.Z) #Z = name.Z
   objF$rangeZ<-obj$rangeZ

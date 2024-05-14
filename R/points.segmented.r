@@ -33,13 +33,17 @@ points.segmented <-function(x, term, interc=TRUE, link=TRUE,
       psii<- x$psi[nameV, "Est."]
       d<-data.frame(a=psii)
       names(d)<-term
-      opz$y<-broken.line(x,d, se.fit=FALSE, interc=interc, link=link, .coef=.coef, .vcov=.vcov)[[1]]
+      opz$y<-broken.line(x,d, se.fit=FALSE, interc=interc, link=TRUE, .coef=.coef, .vcov=.vcov)[[1]]
       #browser()
       if(rev.sgn) psii<- -psii
       opz$x<- psii 
       if(is.null(opz$cex)) opz$cex<-1.25
       if(is.null(opz$lwd)) opz$lwd<-1.6
       opz$y <- opz$y + const
+      #browser()
+      if(inherits(x, "glm") && !link) {
+        opz$y<- x$family$linkinv(opz$y)
+      }
       opz$y<-do.call(transf, list(opz$y))
       do.call(points, opz)
       if(v) segments(psii, par()$usr[3], psii, opz$y, lty = opz$lty, col=opz$col )

@@ -21,7 +21,7 @@ model.matrix.stepmented<-function(object, type=c("cdf","abs","none"), k=NULL, ..
   nomiZ<- object$nameUV$Z
   nomiV<- object$nameUV$V
   nomiU<- object$nameUV$U
-  nomiPsi<- gsub("V","psi", nomiV)
+  nomiPsi<- sub("V","psi", nomiV)
   id.noV<-setdiff(colnames(X), nomiPsi)
   
   #se object viene da stepmented() la matrice restituita e' sbagliata

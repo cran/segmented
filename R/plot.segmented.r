@@ -81,7 +81,20 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     cexs<- rep(cexs, l=length(term))
     pchs<- if("pch"%in% names(opz)) opz$pch else 19
     pchs<- rep(pchs, l=length(term))
-    Ylim <- if(!is.null(opz$ylim)) opz$ylim else range(x$fitted.values+x$residuals)
+    if(!is.null(opz$ylim)) {
+      Ylim <- opz$ylim 
+      } else {
+        if(inherits(x, "glm")){
+          if(link){
+            Ylim <- if(!res) range(x$linear.predictors) else range(x$linear.predictors+x$residuals)
+          } else {
+            Ylim <- if(!res) range(x$fitted.values) else range(x$fitted.values+ residuals(x, "response"))
+          }
+        } else {
+          Ylim <- if(!res) range(x$fitted.values) else range(x$fitted.values+x$residuals)
+        }
+        
+      }
     Ylab <- if(!is.null(opz$ylab)) opz$ylab else paste(formula(x))[2]
     idTerm <- if(is.numeric(term)) term else match(term, x$nameUV$Z)
     nomeX <- intersect(strsplit(x$nameUV$Z,":")[[idTerm[1]]], unlist(strsplit(x$nameUV$Z,":")[idTerm[-1]]))
@@ -97,7 +110,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
                    lty=ltys[1],pch=pchs[1],lwd=lwds[1],cex=cexs[1])
     Term<- if(is.numeric(term[1])) x$nameUV$Z[term[1]] else term[1]
     int.all[1]<-interc.gr<- strsplit(Term, ":")[[1]][2]
-    points.segmented(x, term[1], col=cols[1], const=estcoef[interc.gr], v=psi.lines, pch=20)
+    points.segmented(x, term[1], col=cols[1], const=estcoef[interc.gr], v=psi.lines, pch=20, link=link)
     for(j in 2:length(term)){
       plot.segmented(x, term[j], add = TRUE, res = res, conf.level = conf.level, 
                      interc=interc, link = link, res.col = res.cols[j], rev.sgn = rev.sgn, const = const, 
@@ -107,7 +120,7 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
                      lty=ltys[j],pch=pchs[j],lwd=lwds[j],cex=cexs[j])
       Term<- if(is.numeric(term[j])) x$nameUV$Z[term[j]] else term[j]
       int.all[j]<-interc.gr<- strsplit(Term, ":")[[1]][2]
-      points.segmented(x, term[j], col=cols[j], const = estcoef[interc.gr], v=psi.lines, pch=20)
+      points.segmented(x, term[j], col=cols[j], const = estcoef[interc.gr], v=psi.lines, pch=20, link=link)
     }
     if(!is.na(leg)) {
       legend(leg, int.all, col=cols, lty=1, lwd=1.5, bty="n")
@@ -136,6 +149,10 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     if(!interc && length(idInterc)==1) a<- a-estcoef[idInterc]
     b <- slope(x, term, digits=20, .coef=estcoef, .vcov=covv)[[1]][, "Est."]
   
+    
+    #browser()
+    
+    
     id <- f.U(rownames(x$psi), term)
     est.psi <- x$indexU[[term]]
     val <- sort(c(est.psi, x$rangeZ[, term]))
@@ -169,31 +186,28 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     b.ok1 <- c(b, b[length(b)])
     y.val <- y.val1 <- a.ok1 + b.ok1 * val + const
     s <- 1:(length(val) - 1)
-  
+    if(rev.sgn) val <- -val
+    m <- cbind(val[s], y.val1[s], val[s + 1], y.val[s + 1])
     #xvalues <-  if(all(c("segmented", "Arima") %in% class(x))) x$Z[,1] else  model.matrix(x)[,term] #x$model[, term]
   
     #browser()
-    if(inherits(x,"Arima")){
-      xvalues <-x$Z[,1]
-    } else {
-      M <- model.matrix.segmented(x)
-      #il 18/4/24 mi sono accorto che con ogg ottenuti da segmented.* con leftmost pendenza nulla non funzionava
-      #perche' model.matrix.segmented non restituiva la variabile (non inserita nel modello (g)lm di partenza..)
-      if(!term %in% colnames(M) && term%in%names(x$model)) M<-cbind(M, x$model[,term,drop=FALSE] )
-      if(term %in% colnames(M)) {
-        xvalues <- M[,term]
-        } else {
-          id.segTerm<-which(sapply(names(x$nameUV$formulaSeg), function(.x) startsWith(term,.x)))
-          xvalues <- model.matrix(x$nameUV$formulaSeg[[id.segTerm]], data=x$model)[,term]
-        }
+    if(res || dens.rug || rug){
+      if(inherits(x,"Arima")){
+        xvalues <-x$Z[,1]
+      } else {
+        M <- model.matrix.segmented(x)
+        #il 18/4/24 mi sono accorto che con ogg ottenuti da segmented.* con leftmost pendenza nulla non funzionava
+        #perche' model.matrix.segmented non restituiva la variabile (non inserita nel modello (g)lm di partenza..)
+        if(!term %in% colnames(M) && term%in%names(x$model)) M<-cbind(M, x$model[,term,drop=FALSE] )
+        if(term %in% colnames(M)) {
+          xvalues <- M[,term]
+          } else {
+            id.segTerm<-which(sapply(names(x$nameUV$formulaSeg), function(.x) startsWith(term,.x)))
+            xvalues <- model.matrix(x$nameUV$formulaSeg[[id.segTerm]], data=x$model)[,term]
+          }
+      }
+      if(rev.sgn) xvalues <- -xvalues
     }
-
-    if(rev.sgn) {
-      val <- -val
-      xvalues <- -xvalues
-    }
-    m <- cbind(val[s], y.val1[s], val[s + 1], y.val[s + 1])
-  #values where to compute predictions (useful only if res=TRUE)
   #browser()
     if(res){
       new.d<-data.frame(ifelse(rep(rev.sgn, length(xvalues)),-xvalues, xvalues))
@@ -223,13 +237,14 @@ plot.segmented<-function (x, term, add = FALSE, res = FALSE, conf.level = 0,
     xhat <- l$x
     m[, c(2, 4)] <- x$family$linkinv(m[, c(2, 4)])
     if (!add) {
-      plot(as.vector(m[, c(1, 3)]), as.vector(m[, c(2,
-                                                    4)]), type = "n", xlab = xlabs, ylab = ylabs,
+      plot(as.vector(m[, c(1, 3)]), as.vector(m[, c(2, 4)]), 
+           type = "n", xlab = xlabs, ylab = ylabs,
            main = opz$main, sub = opz$sub, 
            cex.axis = opz$cex.axis,
            cex.lab = opz$cex.lab,
            xlim = opz$xlim,
-           ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim )
+           ylim = if(is.null(opz$ylim)) enl.range(fit, rangeCI, enlarge=dens.rug) else opz$ylim 
+           )
       if(dens.rug){
         density <- density(xvalues)
         # the height of the densityity curve

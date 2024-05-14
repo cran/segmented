@@ -64,7 +64,7 @@ vcov.stepmented<-function(object, k=NULL, zero.cor=TRUE, type=c("cdf", "none", "
   nomiZ<- object$nameUV$Z
   nomiV<- object$nameUV$V
   nomiU<- object$nameUV$U
-  nomiPsi<- gsub("V","psi", nomiV)
+  nomiPsi<- sub("V","psi", nomiV)
   id.noV<-setdiff(colnames(X), nomiPsi)
   
   #====================================

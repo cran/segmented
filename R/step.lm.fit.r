@@ -88,9 +88,8 @@ step.lm.fit<-function(y, x.lin, Xtrue, PSI, ww, offs, opz, return.all.sol=FALSE)
   alpha<-opz$alpha
   
   #browser()
-  
-  limZ <- apply(Xtrue, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
-  #limZ <- apply(Xtrue, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+  limZ <- if(is.null(opz$limZ)) apply(Xtrue, 2, quantile, names=FALSE, probs=alpha) else opz$limZ
+  #limZ <- apply(Xtrue, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
   fix.npsi<-opz$fix.npsi
   agg<-opz$agg
   h<-opz$h
