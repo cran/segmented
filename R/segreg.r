@@ -640,6 +640,24 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         objV$deviance<-objU$deviance
         objV$aic<-objU$aic + 2*ncol(PSI) #k
         objV$weights<-objU$weights
+        
+        
+        if (length(offs) && attr(mt, "intercept") > 0L) {
+          #se c'e' un offset devi calcolare la null.deviance (come fa glm())
+          obj0 <- try(suppressWarnings(glm.fit(X[, "(Intercept)", drop = FALSE], y = Y, offset = offs,
+                                               weights = weights, family = opz$fam, #control = glm.control(maxit = maxit.glm), 
+                                               etastart = objU$linear.predictors, intercept=TRUE)), silent = TRUE)
+          
+          # obj0 <- eval(call(if (is.function(method)) "method" else method, 
+          #                   x = X[, "(Intercept)", drop = FALSE], y = Y, mustart = fit$fitted.values, 
+          #                   weights = weights, offset = offset, family = family, 
+          #                   control = control, intercept = TRUE))
+          if (!obj0$converged) warning("fitting to calculate the null deviance did not converge -- increase 'maxit'?")
+          objV$null.deviance <- obj0$deviance
+        }
+        
+        
+        
         if(var.psi) {
           R <- chol2inv(objV$qr$qr)
           s2 <- 1

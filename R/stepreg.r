@@ -796,6 +796,20 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
                                              etastart = eta0)), silent = TRUE) #obj$obj$linear.predictors
         objV$df.residual <- objV$df.residual- length(psi)
         L0 <- objV$deviance
+        if (length(offs) && attr(mt, "intercept") > 0L) {
+          #se c'e' un offset devi calcolare la null.deviance (come fa glm())
+          obj0 <- try(suppressWarnings(glm.fit(X[, "(Intercept)", drop = FALSE], y = Y, offset = offs,
+                                               weights = weights, family = opz$fam, #control = glm.control(maxit = maxit.glm), 
+                                               etastart = eta0, intercept=TRUE)), silent = TRUE)
+          
+          # obj0 <- eval(call(if (is.function(method)) "method" else method, 
+          #                   x = X[, "(Intercept)", drop = FALSE], y = Y, mustart = fit$fitted.values, 
+          #                   weights = weights, offset = offset, family = family, 
+          #                   control = control, intercept = TRUE))
+          if (!obj0$converged) warning("fitting to calculate the null deviance did not converge -- increase 'maxit'?")
+          objV$null.deviance <- obj0$deviance
+        }
+        
         if(var.psi) {
           R <- chol2inv(objV$qr$qr)
           s2 <- 1

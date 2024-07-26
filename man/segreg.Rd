@@ -3,10 +3,10 @@
 \alias{stepreg}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Fitting segmented regression
+Fitting segmented/stepmented regression
 }
 \description{
-\code{segreg} (\code{stepreg}) fits linear or generalized linear segmented (stepmented) regression via a symbolic description of the linear predictor. This is an alternative, introduced since version 2.0-0 (segreg) and 2.1-0 (stepreg), to \code{segmented.lm} and \code{segmented.glm}, or (\code{stepmented.lm} or \code{stepmented.glm}).
+\code{segreg} (\code{stepreg}) fits (generalized) linear segmented (stepmented) regression via a symbolic description of the linear predictor. This is an alternative but equivalent function, introduced since version 2.0-0 (segreg) and 2.1-0 (stepreg), to \code{segmented.(g)lm} or \code{stepmented.(g)lm}.
 }
 \usage{
 segreg(formula, data, subset, weights, na.action, family = lm, control = seg.control(), 

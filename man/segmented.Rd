@@ -41,10 +41,10 @@ segmented(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(),
     fit may be supplied since version 0.5-0 (see 'Details'). \code{obj} can include any covariate understood to have a linear (i.e. no break-points) effect on the response. If \code{obj} also includes the segmented covariate specified in \code{seg.Z}, then all the slopes of the fitted segmented relationship will be estimated. On the other hand, if \code{obj} misses the segmented variable, then the 1st (the leftmost) slope is assumed to be zero. Since version 1.5.0, \code{obj} can be a simple numeric or \code{ts} object but with only a single segmented variable (\code{segmented.numeric}) see examples below.}
 \item{seg.Z}{ the segmented variable(s), i.e. the continuous covariate(s) understood to have a piecewise-linear relationship with response. It is a formula with no response variable, such as \code{seg.Z=~x} or \code{seg.Z=~x1+x2}. It can be missing when \code{obj} includes only one covariate which is taken as segmented variable. Currently, formulas involving functions, 
 such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"x1"]} or \code{seg.Z=~d$x1}, are \emph{not} allowed. Also, variable names formed by \verb{U} or \verb{V} only (with or without numbers) are not permitted.}
-\item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. 
+\item{psi}{ starting values for the breakpoints to be estimated. If there is a single segmented variable specified in \code{seg.Z}, \code{psi} is a numeric vector, and it can be missing  when 1 breakpoint has to be estimated (and the median of the segmented variable is used as a starting value). If \code{seg.Z} includes several covariates, \code{psi} has be specified as a \emph{named} list of vectors whose names have to match the variables in the \code{seg.Z} argument. Each vector of such list includes starting values for the break-point(s) for the corresponding variable in \code{seg.Z}. A \code{NA} value means that `\code{K}' quantiles (or equally spaced values) are used as starting values; \code{K} is fixed via the \code{\link{seg.control}} auxiliary function. See \code{npsi} as an alternative to specify just the number of breakpoints.  
       }
 \item{npsi}{
-  A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally   computed via the quantiles or equally spaced values, as specified in argument \code{quant} in \code{\link{seg.control}}. \code{npsi} can be   missing and \code{npsi=1} is assumed for all variables specified in \code{seg.Z}. If \code{psi} is provided, \code{npsi} is ignored.
+  A named vector or list meaning the \emph{number} (and not locations) of breakpoints to be estimated. The starting values will be internally computed via the quantiles or equally spaced values, as specified in argument \code{quant} in \code{\link{seg.control}}. \code{npsi} can be missing and \code{npsi=1} is assumed for all variables specified in \code{seg.Z}. If \code{psi} is provided, \code{npsi} is ignored.
   }
 \item{fixed.psi}{An optional named list meaning the breakpoints to be kept fixed during the estimation procedure. The names should be a subset of (or even the same) variables specified in \code{seg.Z}. If there is a single variable in \code{seg.Z}, a simple numeric vector can be specified. Note that, in addition to the values specified here, \code{segmented} will estimate additional breakpoints. To keep fixed all breakpoints (to be specified in \code{psi}) use \code{it.max=0} in \code{\link{seg.control}}
 }
@@ -65,8 +65,8 @@ such as \code{seg.Z=~log(x1)}, or selection operators, such as \code{seg.Z=~d[,"
   a new regression model having broken-line relationships with the variables specified in \code{seg.Z}.
   A segmented (or broken-line) relationship is defined by the slope
   parameters and the break-points where the linear relation changes. The number of breakpoints
-  of each segmented relationship is fixed via the \code{psi} argument, where initial
-  values for the break-points must be specified. The model
+  of each segmented relationship is fixed via the \code{psi} (or \code{npsi}) argument, where initial
+  values for the break-points (or simply their number via \code{npsi}) must be specified. The model
   is estimated simultaneously yielding point estimates and relevant approximate
    standard errors of all the model parameters, including the break-points.
 
@@ -90,7 +90,7 @@ segmented returns an object of class "segmented" which inherits
 
 An object of class "segmented" is a list containing the components of the
 original object \code{obj} with additionally the followings:
-  \item{psi}{estimated break-points and relevant (approximate) standard errors}
+  \item{psi}{estimated break-points (sorted) and relevant (approximate) standard errors}
   \item{it}{number of iterations employed}
   \item{epsilon}{difference in the objective function when the algorithm stops}
   \item{model}{the model frame}

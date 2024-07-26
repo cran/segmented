@@ -17,6 +17,8 @@ intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, .vcov=NULL, .
           return(nomiU.ok)
         }
     
+    #if(!inherits(ogg, "segmented.lme") || !inherits(ogg, "segmented")) stop("only segmented fits allowed")
+    
     covv <- if(is.null(.vcov)) vcov(ogg, ...) else .vcov 
     estcoef<- if(is.null(.coef)) coef(ogg) else .coef
     
@@ -31,9 +33,9 @@ intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, .vcov=NULL, .
     #browser()
     nomepsi <- rownames(ogg$psi)
     nomeU <- ogg$nameUV$U
-    nomeZ <- ogg$nameUV$Z
+    nomeZ <- if(inherits(ogg, "segmented.lme")) ogg$namesGZ$nameZ else ogg$nameUV$Z
     if (missing(parm)) {
-        nomeZ <- ogg$nameUV$Z
+        #nomeZ <- ogg$nameUV$Z
         if (length(rev.sgn) == 1)
             rev.sgn <- rep(rev.sgn, length(nomeZ))
     } else {
@@ -72,10 +74,10 @@ intercept<-function (ogg, parm, rev.sgn = FALSE, var.diff = FALSE, .vcov=NULL, .
         #alpha0<-if("(Intercept)"%in%names(estcoef)) estcoef["(Intercept)"] else 0
         alpha0<-if(length(idInterc)==1) estcoef[idInterc] else 0
 
-        Allpsi[[i]] <-ogg$indexU[[nomeZ[i]]]
+        Allpsi[[i]] <- if(inherits(ogg, "segmented.lme")) estcoef["G0"] else ogg$indexU[[nomeZ[i]]]
         
         if(is.null(ogg$constr)){
-          cof<- estcoef[names(ogg$indexU[[nomeZ[i]]])]
+          cof<- if(inherits(ogg, "segmented.lme")) estcoef["U"] else estcoef[names(ogg$indexU[[nomeZ[i]]])]
         } else {
           index <- match(c(nomeZ[i],ogg$nameUV$U[grep(nomeZ[i], ogg$nameUV$U)]), names(coef(ogg)),0)
           cof<- drop(ogg$constr$invA.RList[[match(nomeZ[i], ogg$nameUV$Z,0)]]%*%coef(ogg)[index])[-1] #solo le 

@@ -119,9 +119,10 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
   alpha<-.1
   corr=1.2
   #browser()
+  n.boot.rev<- 3 #3 o 4?
+  
   for(k in seq(n.boot)){
     ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
-    n.boot.rev<- 3 #3 o 4?
     diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
     if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
       #browser()
@@ -141,6 +142,10 @@ step.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot
       #est.psi0 <-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
       ##est.psi0<- jitter(est.psi0, amount=min(diff(est.psi0))) 
     }
+    
+    ########################### 25/7/24 #####
+    est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
+    #########################################
     
     PSI <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
     if(jt) Z<-apply(Z.orig,2,jitter)

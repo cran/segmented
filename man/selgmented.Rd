@@ -19,7 +19,7 @@ selgmented(olm, seg.Z, Kmax=2, type = c("score", "bic", "davies", "aic"),
 A starting \code{lm} or \code{glm} object, or a simple numerical vector meaning the response variable.
 }
   \item{seg.Z}{
-A one-side formula for the segmented variable. Only one term can be included, and it can be omitted if \code{olm} is a (g)lm fit including just one covariate.
+A one-side formula for the segmented variable. Only one term can be included, and it can be omitted if \code{olm} is a (g)lm fit including just one numeric covariate. Also it might be omitted, and will be taken as 1,2..., if \code{olm} includes a single numeric variable. 
 }
   \item{Kmax}{
 The maximum number of breakpoints being tested. If \code{type='bic'} or \code{type='aic'}, any integer value can be specified; otherwise at most \code{Kmax=2} breakpoints can be tested via the Score or Davies statistics.

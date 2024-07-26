@@ -26,8 +26,15 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
   #---
   extract.psi<-function(lista){
     #serve per estrarre il miglior psi..
-    dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
-    psi.values<-lista[[2]][-1] #remove the 1st one (NA)
+    #dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
+    #psi.values<-lista[[2]][-1] #remove the 1st one (NA)
+    dev.values<-lista[[1]]
+    psi.values<-lista[[2]]
+    if(any(is.na(psi.values[[1]]))) {#se la 1 componente e' NA (fino alla versione 2.0-3 era cosi'... perche' in dev.values c'erano 
+      #  anche i valori relativi al modello senza psi.. )
+      dev.values<-dev.values[-1] #remove the 1st one referring to model without psi
+      psi.values<-psi.values[-1]
+    }
     dev.ok<-min(dev.values)
     id.dev.ok<-which.min(dev.values)
     if(is.list(psi.values))  psi.values<-matrix(unlist(psi.values),
@@ -110,11 +117,12 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
   ###INIZIO BOOT
   alpha<-.1
   corr=1.2
+  n.boot.rev<- 3 #3 o 4?
+  
   for(k in seq(n.boot)){
     #if(k==7) browser()
     ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
     opz$eta0 <- eta0
-    n.boot.rev<- 3 #3 o 4?
     diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
     if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
       #browser()
@@ -127,6 +135,9 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
       est.psi0 <- adj.psi(est.psi0, limZ)
       #est.psi0<- jitter(est.psi0, amount=min(diff(est.psi0))) 
     }
+    ############################ 25/7/24 #####
+    est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
+    ##########################################
     
     PSI <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
     if(jt) Z<-apply(Z.orig,2,jitter)
@@ -153,6 +164,8 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
     opz$Nboot <- k
     #
     o <-try(suppressWarnings(step.glm.fit(y, XREG, Z.orig, PSI, w, offs, opz, return.all.sol=TRUE)), silent=TRUE)
+    #if(k==8) browser()
+    
     if(!is.list(o) && random){
       est.psi0<-apply(limZ,2,function(r)runif(1,r[1],r[2]))
       PSI1 <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
@@ -164,8 +177,9 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
       if(!"coefficients"%in%names(o$obj)) o<-suppressWarnings(try(extract.psi(o), silent=TRUE))
       #if(class(o)!="try-error"){
       if(!inherits(o, "try-error")){
-        all.est.psi[k,]<-o$psi
-        all.ss[k]<-o$SumSquares.no.gap
+        #if(k==8) browser()
+        all.est.psi[k,]<-o$psi[!is.na(o$psi)]
+        all.ss[k]<- o$SumSquares.no.gap
         if(o$SumSquares.no.gap<=ifelse(is.list(o0), o0$SumSquares.no.gap, 10^12)) o0<-o
         est.psi0<-o0$psi
         all.selected.psi[k,] <- est.psi0
@@ -220,6 +234,7 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
   if(!is.list(o0)) return(0)
   o0$boot.restart<-ris
   o0$seed <- seed
+  
   #rm(.Random.seed, envir=globalenv())
   return(o0)
 }

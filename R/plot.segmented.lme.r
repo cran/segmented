@@ -46,7 +46,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
         for (j in nomi.levels) {
           if (nome %in% names(ro[[j]])) {
             for (i in unique(obj$groups[, j])) tutti[obj$groups[,
-                                                                j] == i, j, nome] <- ro[[j]][rownames(ro[[j]]) == i,
+                                                              j] == i, j, nome] <- ro[[j]][rownames(ro[[j]]) == i,
                                                                                              nome]
           }
         }
@@ -251,6 +251,10 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     m <- cbind(x, mu)
     m <- m[order(m[, 1]), ]
     
+    
+    #browser()
+    
+    
     if (!lines) {
       points(m, col = l.col, pch = l.pch, lwd = l.lwd)  #do.call(points, opz)
     } else {
@@ -287,15 +291,19 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
         ### GUARDARE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         #########################################################
         
-        xvar<-seq(min(x), max(x), l=100) 
+        #browser()
+        
+        xvar<-seq(min(x), max(x), l=100)
+        
+        coef.ok<- as.numeric(coef.ok)
+        
+        if(!is.null(obj$namesGZ$nomiUx)) {
+          coef.ok[3] <- coef.ok[3]+ coef.ok["bUx"]* obj$lme.fit.noG$data[,obj$namesGZ$nomiUx]
+        }
         
         mu.ok <- cbind(1, xvar, pmax(xvar-psi.ok,0))%*%coef.ok
         lines(xvar, mu.ok, col = l.col, lwd = l.lwd, lty = l.lty)
         
-        coef.ok<- as.numeric(coef.ok)
-        if(!is.null(obj$namesGZ$nomiUx)) {
-          coef.ok[3] <- coef.ok[3]+ coef.ok["bUx"]* obj$lme.fit.noG$data[,obj$namesGZ$nomiUx]
-        }
         
         # come fare se ci sono variabili U.x? coef.ok include il coef ma c'? bisogno
         # del valore corrispondente all'unita' id..

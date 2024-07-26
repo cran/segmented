@@ -350,6 +350,7 @@ selgmented <-function(olm, seg.Z, Kmax=2, type=c("score", "bic", "davies", "aic"
       if(length(nomeX)==0 || length(nomeX)>1 || any(is.na(nomeX))) stop("I cannot determine the segmented variable")
       seg.Z<- as.formula(paste("~", nomeX ))
       Z <- olm$model[[nomeX]]
+      if(!is.numeric(Z)) stop("The variable in the starting model does not appear to be numeric")
     } else {
       if(length(all.vars(seg.Z))>1) stop("Multiple variables are not allowed in seg.Z")
       nomeX<-all.vars(seg.Z)

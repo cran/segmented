@@ -101,11 +101,12 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
 #      if(visualBoot) cat(0, " ", formatC(opz$dev0, 3, format = "f"),"", "(No breakpoint(s))", "\n")
       count.random<-0
       alpha<-.1
+      n.boot.rev<- 3 #3 o 4?
+      
       #=====================================
       for(k in seq(n.boot)){
         opz$eta0 <- eta0
         ##se gli *ultimi* n.boot.rev valori di ss sono uguali, cambia i psi...
-        n.boot.rev<- 3 #3 o 4?
         diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
         #if(length(na.omit(diff(all.selected.ss[1:n.boot.rev])))==(n.boot.rev-1) && all(round(diff(all.selected.ss[1:n.boot.rev]),6)==0)){
         if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
@@ -114,6 +115,10 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
           alpha<- 1-alpha
           est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
         }
+        ########################### 25/7/24 #####
+        est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
+        #########################################
+        
           PSI <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
           if(jt) Z<-apply(Z.orig,2,jitter)
           if(nonParam){

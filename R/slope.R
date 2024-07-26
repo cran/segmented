@@ -29,6 +29,8 @@
     nomeZ<-obj$namesGZ$nameZ
     beta.noG<- fixef(obj$lme.fit.noG) 
     beta.all<-fixef(obj$lme.fit)
+    #browser()
+    
     beta.G<-beta.all[setdiff(names(fixef(obj$lme.fit)), names(beta.noG))]
     nomiCoef<-names(beta.noG)
     if(!is.null(by)) {

@@ -17,7 +17,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
 \arguments{
   \item{n.boot}{ number of bootstrap samples used in the bootstrap restarting algorithm. If 0 the standard algorithm,
     i.e. without bootstrap restart, is used. Default to 10 that appears to be sufficient in most of problems. However
-    when multiple breakpoints have to be estimated it is suggested to increase \code{n.boot}, e.g. \code{n.boot=50}.}
+    when multiple breakpoints have to be estimated it is suggested to increase \code{n.boot}, e.g. \code{n.boot=50}, and even \code{break.boot}.}
   \item{display}{ logical indicating if the value of the objective function should be printed along with current breakpoint estimates at each iteration or at each bootstrap resample (but no more than 5 breakpoints are printed). If bootstrap restarting is employed, the values of objective and breakpoint estimates should not change at the last runs.}
   \item{tol}{ positive convergence tolerance. }
   \item{it.max}{ integer giving the maximal number of iterations. }
@@ -33,7 +33,7 @@ seg.control(n.boot=10, display = FALSE, tol = 1e-05, it.max = 30, fix.npsi=TRUE,
     the estimation process (see details). }
   \item{break.boot}{
   Integer, less than \code{n.boot}. If \code{break.boot} consecutive bootstrap samples lead to the same objective function during the estimation process, the algorithm stops without performing all \code{n.boot} 'trials'.
-  This can save computational time considerably. Default is \code{5} for the \code{segmented} and \code{5+2} for the \code{stepmented} functions.
+  This can save computational time considerably. Default is \code{5} for the \code{segmented} and \code{5+2} for the \code{stepmented} functions. However if the number of changepoints is large, \code{break.boot} should be increased, even 10 or 15.
     }
   \item{size.boot}{the size of the bootstrap samples. If \code{NULL}, it is taken equal to the actual sample size. If the sample is very large, the idea is to run bootstrap restarting using smaller bootstrap samples.}
   \item{jt}{logical. If \code{TRUE} the values of the segmented variable(s) are jittered before fitting the model to the

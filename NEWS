@@ -5,6 +5,12 @@
 ****************************
 
 
+===============
+version 2.1-1 (2024-07-26)
+===============
+* Bugs fixed: intercept() did not work for segmented.lme fits (thanks to Kelly Aho for reporting); 
+segreg() e stepreg() returned wrong null deviance when an offset term was included; segmented.* occasionally returned unsorted breakpoints (thanks to Christian Wirtz for reporting).
+
 
 ===============
 version 2.1-0 (2024-05-14)

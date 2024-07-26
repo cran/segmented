@@ -384,6 +384,8 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #
   
   #browser()
+  
+  
   Z <- mf[[name.Z]]
   
   #limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))

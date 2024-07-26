@@ -112,11 +112,11 @@ step.ts.fit.boot <- function(y, XREG, Z, PSI, opz, n.boot=10, size.boot=NULL, jt
   corr=1.2
   
   #browser()
-  
+  n.boot.rev<- 3 #3 o 4?
   for(k in seq(n.boot)){
     #if(k==2) browser()
     #browser()
-    n.boot.rev<- 3 #3 o 4?
+    
     diff.selected.ss <- rev(diff(na.omit(all.selected.ss)))
     if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
       qpsi     <- sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
@@ -128,6 +128,10 @@ step.ts.fit.boot <- function(y, XREG, Z, PSI, opz, n.boot=10, size.boot=NULL, jt
       est.psi0 <- adj.psi(est.psi0, limZ)
       #est.psi0<- jitter(est.psi0, amount=min(diff(est.psi0))) 
     }
+    
+    ########################### 25/7/24 #####
+    est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
+    #########################################
     
     PSI <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
     if(jt) Z<-apply(Z.orig,2,jitter)
