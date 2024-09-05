@@ -1,5 +1,5 @@
 plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, interc = TRUE, add.fx=FALSE,
-                            psi.lines = TRUE, link = FALSE, const=NULL, res.col = grey(.15, alpha = .4), 
+                            psi.lines = TRUE, link = TRUE, const=NULL, res.col = grey(.15, alpha = .4), 
                             surf=FALSE, zero.cor=TRUE, heurs=TRUE, shade=FALSE, se.type=c("cdf","abs","none"), 
                             k=NULL, .vcov=NULL, leg="topleft", ...) {
   #=============================
@@ -387,24 +387,23 @@ plot.stepmented <- function(x, term, add = FALSE, res = TRUE, conf.level=0, inte
       ###############################################################  
       if(res) y<- if(link) y+x$residuals else y + resid(x, "response")
       if(add) {
-        points(Z, y, pch = arg$pch, col =res.col,
-               cex = arg$cex)
-      } else {
-        if (res) {
-          plot(Z, y, ylab = arg$ylab, xlab = arg$xlab, pch = arg$pch, col =res.col,
-            cex = arg$cex, xlim = arg$xlim, ylim = arg$ylim,
-            main=arg$main, sub=arg$sub, cex.axis=arg$cex.axis, cex.lab=arg$cex.lab)
-          } else {
-          plot(Z, y, ylab = arg$ylab, xlab = arg$xlab, type = "n",
-            xlim = arg$xlim, ylim = arg$ylim,
-            main=arg$main, sub=arg$sub, cex.axis=arg$cex.axis, cex.lab=arg$cex.lab)
-          }
-      }
+        if(res) points(Z, y, pch = arg$pch, col =res.col, cex = arg$cex)
+        } else {
+          if (res) {
+            plot(Z, y, ylab = arg$ylab, xlab = arg$xlab, pch = arg$pch, col =res.col,
+              cex = arg$cex, xlim = arg$xlim, ylim = arg$ylim,
+              main=arg$main, sub=arg$sub, cex.axis=arg$cex.axis, cex.lab=arg$cex.lab)
+            } else {
+              plot(Z, y, ylab = arg$ylab, xlab = arg$xlab, type = "n",
+                xlim = arg$xlim, ylim = arg$ylim,
+                main=arg$main, sub=arg$sub, cex.axis=arg$cex.axis, cex.lab=arg$cex.lab)
+            }
+        }
       coll <- rep(arg$col, length(est.means))
-      ltyy <-rep(arg$lty, length(est.means))
+      ltyy <- rep(arg$lty, length(est.means))
       lwdd <- rep(arg$lwd, length(est.means))
       
-      #browser()
+      
       
       if(add.fx && !is.null(x$f.x)){
         #limy<-tapply(f.x100, g, function(.x).x[1])

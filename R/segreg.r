@@ -486,8 +486,10 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       #[1] "U1.x" "U2.x" "U1.z"
       id.noOW <- if(is.null(weights) && is.null(offs)) TRUE else FALSE 
       if(is.null(weights)) weights<-rep(1,n)
+      orig.offs<-offs
       if(is.null(offs)) offs<-rep(0,n)
 
+      #E' realmente necessario assegnare offs e weight con 0 e 1 anche se non servono???
       #browser()
       
       
@@ -641,6 +643,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         objV$aic<-objU$aic + 2*ncol(PSI) #k
         objV$weights<-objU$weights
         
+        #browser()
         
         if (length(offs) && attr(mt, "intercept") > 0L) {
           #se c'e' un offset devi calcolare la null.deviance (come fa glm())
@@ -666,7 +669,6 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         }
       }
 
-#      browser()
       objV$fitted.values <- objU$fitted.values
       objV$residuals <- objU$residuals
       names.coef<-names(objV$coefficients)
@@ -774,6 +776,12 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       objV$id.psi.group<- id.psi.group
       objV$psi[,"Initial"]<-NA
       if(n.boot>0) objV$seed <- seed
+      #browser()
+      
+      #il comando structure() l'ho messo perche' avevo bisogno che anche in mancanza di offset, l'oggetto finale restituisse 
+      # un oggetto con la componente offset NULL. Cosa che non viene fatta con il semplice comando di sotto.. 
+      #objV<- if(id.O) c(objV, offset=offs) else c(objV, offset=NULL)
+      objV<- structure(c(objV, list(offset=orig.offs)))
       class(objV)<-c("segmented", class0)
       objV
     

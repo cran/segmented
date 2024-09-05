@@ -10,7 +10,7 @@ Plot method for stepmented objects
 }
 \usage{
 \method{plot}{stepmented}(x, term, add = FALSE, res = TRUE, conf.level=0, interc = TRUE, add.fx = FALSE, 
-      psi.lines = TRUE, link=FALSE, const=NULL, res.col=grey(.15, alpha = .4), 
+      psi.lines = TRUE, link=TRUE, const=NULL, res.col=grey(.15, alpha = .4), 
       surf=FALSE, zero.cor=TRUE, heurs=TRUE, shade=FALSE, se.type=c("cdf","abs","none"), 
       k=NULL, .vcov=NULL, leg="topleft", ...)
 }

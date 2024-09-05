@@ -538,6 +538,7 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
       #nomiCoefPEN include i nomi le interazioni con i livelli (nel caso vc) e anche del numero dei psi
       #[1] "U1.x" "U2.x" "U1.z"
       if(is.null(weights)) weights<-rep(1,n)
+      orig.offs<-offs
       if(is.null(offs)) offs<-rep(0,n)
 
       invXtX<-Xty<-NULL
@@ -914,6 +915,7 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
       objV$it <- it 
       objV$epsilon <- epsilon
       objV$id.warn <- id.warn
+      objV<- structure(c(objV, list(offset=orig.offs)))
       class(objV)<-c("stepmented", class0)
       objV
 }

@@ -213,6 +213,8 @@ predict.stepmented<-function(object, newdata, se.fit=FALSE, interval=c("none","c
   
   mu <- eta<- drop(X.noV%*% estcoef.noV)
   
+  if(!is.null(object$offset)) mu<- eta<- eta+ object$offset
+  
   #ATTENZIONE c'e' il problema dell'appaiamento dei nomi!!!
   #il problema e' che estcoef non ha sempre nomi!! 
   

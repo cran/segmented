@@ -5,6 +5,14 @@
 ****************************
 
 
+
+===============
+version 2.1-2 (2024-09-05)
+===============
+* predict.segmented() and predict.stepmented() now account for the possible offset term in the model (thanks to Pauline Scherdel for her input); 'link' in plot.stepmented() now defaults to TRUE.
+* Bugs fixed: segreg() and stepreg() did not return the possible offset term in the object fit (although computations correctly accounted for it).
+
+
 ===============
 version 2.1-1 (2024-07-26)
 ===============

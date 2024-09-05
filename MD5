@@ -1,6 +1,6 @@
-44bdb7b58cc6101b8343284fae473804 *DESCRIPTION
+64ab098fcb94dab4ba7962128a698f39 *DESCRIPTION
 8a39cd45e05043a52b992dbbf4e450ee *NAMESPACE
-40fd619a78abd750d1d7ddc98e43cce8 *NEWS
+0b9224b4743f938ab67823769be415a8 *NEWS
 7f9cbdb9dec5d8b633589f7bf3758f12 *R/aapc.r
 fa6d75b931abb040a6da324dce80147c *R/broken.line.r
 ac4704d275166b0b4ad149e994701429 *R/coef.segmented.r
@@ -20,10 +20,10 @@ a0bca571dc1de664492d7b14d5a6117d *R/model.matrix.segmented.r
 422f89a5f7368305904b599d593303db *R/model.matrix.stepmented.r
 4ea18abeba2bf11331847867f5697945 *R/plot.segmented.lme.r
 a6342dad177a0f58457eb949e399fc76 *R/plot.segmented.r
-2b46a8c639cc30d1cbf653105726a432 *R/plot.stepmented.r
+ddacf8f19e9192baa79e7f7fe9636f00 *R/plot.stepmented.r
 4c0f71531e13426ee80c86fe4ada36e4 *R/points.segmented.r
-9ab7deadbf384d0d096aaf018003ae02 *R/predict.segmented.r
-f420ae614a5cb595c03c230a3bb919fa *R/predict.stepmented.R
+d9b5750271967fad34c5d75ea04a2d4e *R/predict.segmented.r
+9ff14017f80c6b79b535fc167d90baa4 *R/predict.stepmented.R
 0b02283b97702932f5208cc6956bda8f *R/print.segmented.R
 d70d6634cb8d1a670b956e39821d2982 *R/print.segmented.lme.r
 82536ff771cfd4d80049ec84d68cc249 *R/print.stepmented.r
@@ -55,7 +55,7 @@ fb0c87cd5f82b35b8120f77efc140652 *R/segmented.R
 76c7f1025c12ea223ab6e5939afc3256 *R/segmented.lm.R
 bd66499c75dd9cff5c7b6ab60be04324 *R/segmented.lme.r
 1e5802c31bd43f5e8d03431efbb7ecbc *R/segmented.numeric.R
-421f4b4df7d8f2b52e466b024489aec8 *R/segreg.r
+5ff9850512ac077247d4afad4b34e689 *R/segreg.r
 5f3017324657b1ab6ac7736fb88703f4 *R/selgmented.R
 055288fafb32d0b3321115d02af08534 *R/slope.R
 262d03d0e029f19b430240c081d98fa6 *R/step.glm.fit.boot.r
@@ -71,7 +71,7 @@ f174f0fca61a5ec05788d0acc1055ddc *R/stepmented.R
 b444bb9a52aa1ed46c5bf7b15a72cb82 *R/stepmented.lm.R
 686e298cb55680c51b11dda53ac44763 *R/stepmented.numeric.r
 e6827b44c5adcd8c5b9cae837d9d88a3 *R/stepmented.ts.R
-0c43cfdfb6a4b08d783967872036ec6f *R/stepreg.r
+0ec5d88e76f8bd140622a64673f5deaf *R/stepreg.r
 cd2bf0f14f4a5af160da38fb591094a0 *R/summary.segmented.R
 2e84dec73c1d995d1bbbb8363795dad0 *R/summary.segmented.lme.r
 0d33a232cfde42bbfdb34ffb8f3c8f0c *R/summary.stepmented.R
@@ -101,7 +101,7 @@ faff03829b9cb70b138c830a3ba97ef7 *man/lines.segmented.Rd
 c8cfb285da49911d8e218de1b6b4dd53 *man/plant.Rd
 0883be3331641ee7e0964c5587264d74 *man/plot.segmented.Rd
 4ee1e0baa33914210347eabec189c70d *man/plot.segmented.lme.Rd
-962dffd2ceaae3f0c9118bb2a59d6276 *man/plot.stepmented.Rd
+835416f3699aff532c49c1b2af6d0ee2 *man/plot.stepmented.Rd
 219df852a0a7188483525ba1d8e3dd5c *man/points.segmented.Rd
 98ef7b2997a55b31c3bc6cd9c4303d4b *man/predict.segmented.Rd
 db347a1dfb870ab0be563d8a667b83de *man/predict.stepmented.Rd
@@ -112,7 +112,7 @@ ee9ae4505bc6c2211e72febc1b60c2e0 *man/pwr.seg.Rd
 816f840a62297de3164a9bf6722e71ed *man/seg.Rd
 c39b4d4dcb018beba72f8cd0b411620a *man/seg.control.Rd
 72b357bcc101f027fe7c1acf25cf050d *man/seg.lm.fit.Rd
-ab4f93fdfd0a73b9d24de149ce850d80 *man/segmented-package.Rd
+677bc8cd9323dfd6c85b78415d676823 *man/segmented-package.Rd
 6db3a0651c07a5aca5cc88efcb16ea30 *man/segmented.Rd
 87faba8222a57863c6aa1ee858d012b1 *man/segmented.lme.Rd
 1ad50ff20b2c6675ebf49b37166aaaf9 *man/segreg.Rd

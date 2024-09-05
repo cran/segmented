@@ -215,6 +215,7 @@ predict.segmented<-function(object, newdata, se.fit=FALSE, interval=c("none","co
   
   mu <- eta<- drop(X.noV%*% estcoef.noV)
   
+  if(!is.null(object$offset)) mu<- eta<- eta+ object$offset
 
   X <- X[,c(colnomi.noV, nameV),drop=FALSE]
 
