@@ -7,6 +7,13 @@
 
 
 ===============
+version 2.1-3 (2024-10-25)
+===============
+* New argument 'level' in slope() to return 'individual' left/right slopes for "segmented.lme" fits (thanks to Otto Monge for the input) 
+* Bug fixed in segmented.lme(): with noisy data, the changepoints predictions were not consistent with the fixed effect estimate (thanks to E. (Lisa) Levelt for reporting)
+
+
+===============
 version 2.1-2 (2024-09-05)
 ===============
 * predict.segmented() and predict.stepmented() now account for the possible offset term in the model (thanks to Pauline Scherdel for her input); 'link' in plot.stepmented() now defaults to TRUE.

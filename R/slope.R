@@ -1,5 +1,5 @@
 `slope` <- function(ogg, parm, conf.level=0.95, rev.sgn=FALSE, APC=FALSE, .vcov=NULL, .coef=NULL, use.t=NULL,
-                    by=NULL, interc=TRUE, ..., digits = max(4, getOption("digits") - 2)){
+                    by=NULL, interc=TRUE, level=0, ..., digits = max(4, getOption("digits") - 2)){
 
 #   se e' un "newsegmented"
 #    if(!is.null(ogg$R.slope)) {
@@ -11,7 +11,7 @@
 #             } else {
 #             covv<-try(vcov(ogg,...), silent=TRUE)
 #             }
-  slopeM<-function(obj, by=NULL, conf.level=0.95, vcov.=NULL, ... ){
+  slopeM<-function(obj, by=NULL, conf.level=0.95, vcov.=NULL, level=level, ... ){
     #=========>> da provare con by con piu' termini e se leftSlope=0 
     #obj: the segmented.lme object
     #by: a named list indicating covariate names and corresponding values affecting the fitted segmented relationship.
@@ -104,6 +104,13 @@
     #  if(rev.sgn){
     #    ris<-cbind(-ris[nrow(ris):1,1],ris[nrow(ris):1,2],-ris[nrow(ris):1,3],
     #               -ris[nrow(ris):1,5],-ris[nrow(ris):1,4])}
+    if(level>0){
+      re<-ranef(obj[['lme.fit.noG']])
+      re.left<- if(obj$namesGZ$nameZ%in%colnames(re)) re[,obj$namesGZ$nameZ] else rep(0, nrow(re))
+      re.right<- if("U"%in%colnames(re)) re.left+re[,"U"] else re.left
+      ris<- data.frame("leftSlope"=re.left+ris["leftSlope","Est."], "rightSlope"=re.right+ris["rightSlope","Est."])
+      rownames(ris)<-rownames(re)
+    }
     ris
   }
   
@@ -197,7 +204,7 @@
     } else {
     #if(length(ogg)>2 && (inherits(ogg, "segmented") || inherits(ogg, "segmented.lme"))){
       if(class(ogg)[1]=="segmented.lme"){
-            a<-slopeM(ogg, conf.level=conf.level, vcov.=.vcov, by=by, ...)
+            a<-slopeM(ogg, conf.level=conf.level, vcov.=.vcov, by=by, level=level, ...)
             return(a)
             
           } else {

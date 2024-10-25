@@ -60,11 +60,11 @@ Vito Muggeo
 %}
 
 \section{Warning }{
-For segmented glm fits with offset obtained starting from the model \code{glm(.., offset=..)}, \code{predict.segmented} returns the fitted values without considering the offset. 
+For segmented glm fits with offset, \code{predict.segmented} returns the fitted values \emph{including} the offset. 
 }
 
 \seealso{
-\code{\link{segmented}}, \code{\link{plot.segmented}}, \code{\link{broken.line}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}
+\code{\link{segreg}}, \code{\link{segmented}}, \code{\link{plot.segmented}}, \code{\link{broken.line}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}
 }
 \examples{
 n=10

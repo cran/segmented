@@ -308,12 +308,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         #aggiusta la stima di psi..
         #psi<- adj.psi(psi, rangeZ) 
         psi<- adj.psi(psi, limZ)
-        #browser()
-        
         psi<-unlist(tapply(psi, id.psi.group, sort), use.names =FALSE)
-        
-        #if(it==2) browser()
-        
         a<-optimize(search.minOK, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs, tol=tolOp[it])
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
@@ -326,8 +321,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
         V <- (Z > PSI)
         U <- (Z - PSI) * V
         V <- -V
-        #if(it==3) browser()
-        
+
         #if (pow[1] != 1) U1 <- U1^pow[1]
         #obj1 <- try(mylm(cbind(XREG, U1), y, w, offs), silent = TRUE)
         #if (class(obj1)[1] == "try-error") obj1 <- try(lm.wfit(cbind(XREG, U1), y, w, offs), silent = TRUE)

@@ -1,6 +1,6 @@
-64ab098fcb94dab4ba7962128a698f39 *DESCRIPTION
+ce1522def272259525cc0ba347d76e9c *DESCRIPTION
 8a39cd45e05043a52b992dbbf4e450ee *NAMESPACE
-0b9224b4743f938ab67823769be415a8 *NEWS
+4b16ee9dcee76ffe4a8446069e458b9c *NEWS
 7f9cbdb9dec5d8b633589f7bf3758f12 *R/aapc.r
 fa6d75b931abb040a6da324dce80147c *R/broken.line.r
 ac4704d275166b0b4ad149e994701429 *R/coef.segmented.r
@@ -40,7 +40,7 @@ d965c3e8b84dafcddcb4ec31d8617c94 *R/seg.control.R
 a75757d4a0fdbbb6ddff1a4220463624 *R/seg.glm.fit.boot.r
 fb96de6f9b477b7ae13bf8185f3184cd *R/seg.glm.fit.r
 bdded92454231b2f76e28e6e08fbda78 *R/seg.lm.fit.boot.r
-6d5a290445ebd67ca567a95b2f6ef7a4 *R/seg.lm.fit.r
+88435513e509236f9449776db069c9d0 *R/seg.lm.fit.r
 15a23ac83e988bd8ac914f20de36835b *R/seg.num.fit.boot.r
 e290749a348a754f76fb867d308cadc2 *R/seg.num.fit.r
 06a4816ee12cc2f3d9b24f27a9d342aa *R/seg.r
@@ -53,11 +53,11 @@ fb0c87cd5f82b35b8120f77efc140652 *R/segmented.R
 709adcac85ac994dfd12e16ee9031cf6 *R/segmented.default.r
 9ffb3123bffd7e2b447f3b8e51de2086 *R/segmented.glm.R
 76c7f1025c12ea223ab6e5939afc3256 *R/segmented.lm.R
-bd66499c75dd9cff5c7b6ab60be04324 *R/segmented.lme.r
+b1b51c3dc926b35cf14f3240b887d106 *R/segmented.lme.r
 1e5802c31bd43f5e8d03431efbb7ecbc *R/segmented.numeric.R
 5ff9850512ac077247d4afad4b34e689 *R/segreg.r
 5f3017324657b1ab6ac7736fb88703f4 *R/selgmented.R
-055288fafb32d0b3321115d02af08534 *R/slope.R
+7548de190e0d7d67c0c1c0710b4d7bac *R/slope.R
 262d03d0e029f19b430240c081d98fa6 *R/step.glm.fit.boot.r
 5dde92cd0442428ca8e300743ef6ccf4 *R/step.glm.fit.r
 fb1287c2f715ce5dcbd2d27e169173e0 *R/step.lm.fit.boot.r
@@ -103,8 +103,8 @@ c8cfb285da49911d8e218de1b6b4dd53 *man/plant.Rd
 4ee1e0baa33914210347eabec189c70d *man/plot.segmented.lme.Rd
 835416f3699aff532c49c1b2af6d0ee2 *man/plot.stepmented.Rd
 219df852a0a7188483525ba1d8e3dd5c *man/points.segmented.Rd
-98ef7b2997a55b31c3bc6cd9c4303d4b *man/predict.segmented.Rd
-db347a1dfb870ab0be563d8a667b83de *man/predict.stepmented.Rd
+2dda4be7833f0e93a439e31ffc4cf182 *man/predict.segmented.Rd
+df673c8f387b2201fce75857d2e03235 *man/predict.stepmented.Rd
 eb62553aba6323ad4b64c3a4172c739d *man/print.segmented.Rd
 070bfad8dd24836d10fcbb35c1ee7907 *man/print.segmented.lme.Rd
 5e3bc7061c64f06c78f17a919e54d812 *man/pscore.test.rd
@@ -112,12 +112,12 @@ ee9ae4505bc6c2211e72febc1b60c2e0 *man/pwr.seg.Rd
 816f840a62297de3164a9bf6722e71ed *man/seg.Rd
 c39b4d4dcb018beba72f8cd0b411620a *man/seg.control.Rd
 72b357bcc101f027fe7c1acf25cf050d *man/seg.lm.fit.Rd
-677bc8cd9323dfd6c85b78415d676823 *man/segmented-package.Rd
+550cce6dfcf2f5757469fdcaa1efe125 *man/segmented-package.Rd
 6db3a0651c07a5aca5cc88efcb16ea30 *man/segmented.Rd
 87faba8222a57863c6aa1ee858d012b1 *man/segmented.lme.Rd
 1ad50ff20b2c6675ebf49b37166aaaf9 *man/segreg.Rd
 031ea87f8743dfcc246a5ab0259a644f *man/selgmented.Rd
-a0d78a295f182cf55cf0563f6847e6e2 *man/slope.Rd
+2206bceda41670c9a535c4269df5c88b *man/slope.Rd
 1c8095f4472b4cabf3dc3cae5132260f *man/stagnant.Rd
 93f5155a4c8ef92bd065dc9cef152a0a *man/step.lm.fit.Rd
 9b2f6c18d8e86a7f4a748cd8472dfa8b *man/stepmented.Rd

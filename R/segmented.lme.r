@@ -227,7 +227,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     fit$history.boot.restart<-cbind(b=1:length(all.psi),psi=all.psi, logL=all.L)
     fit$seed<-seed
     #r<-list(seg.lme.fit=fit, history=cbind(b=1:length(all.psi),psi=all.psi, logL=all.L) )
-    if(msg) cat(" New solution(s) found:", length(unique(all.psi))-1, "\n")
+    if(msg) cat(" New solution(s) found:", length(unique(all.psi)), "\n")
     fit
   }
   #------------------
@@ -598,6 +598,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   obj<-o #serve per estrarre la logLik
   b.new<-rep(.1,length(all.vars(formulaFix))) #la risposta conteggiata in all.vars(formulaFix) conta per l'intercetta
   while(abs(epsilon) > tol){
+    #if(it==9) browser()
     DD<-if(psi.link=="logit") (max.Z-min.Z)*exp(etai)/((1+exp(etai))^2) else rep(1,n)
     V<-ifelse(Z >psi.ex, -1, 0)
     VD <- V*DD
@@ -659,15 +660,15 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     it <- it+1
     #stopping rules not met: update the estimates
     ##-------------------------------
-    
+    continua<-  (abs(epsilon) > tol && it< it.max)
     #delta0i<-if(inflate.res) inflate.2residuals(obj, coeff=TRUE)[,"U"] else unlist(coef(obj)["U"])    #length=N
     if(id.x.diff) delta <- fixed.effects(obj)[nomiUx]
     
     delta0i <- unlist(coef(obj)["U"])
+    kappa0.old <- kappa0 #length=1
+    kappa0 <- fixed.effects(obj)["G0"]
     
-    if(est.kappa0){
-      kappa0.old <- kappa0 #length=1
-      kappa0 <- fixed.effects(obj)["G0"]
+    if(est.kappa0 && continua){
       kappa0<- if(psi.link=="identity")  adj.psi(kappa0, limZ) else max(min(9,kappa0),-9)
       kappa0 <- kappa0.old + (kappa0 - kappa0.old)*h/2 
       #questo controllo e' sbagliato se link.psi="logit"
@@ -702,7 +703,8 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       kappa<-fixed.effects(obj)[nomiG]  #esclude G0..
       etai<-etai+drop(Z.psi%*%kappa)
     }
-    if(anyFixedG){ #questo e' se ci sono parametri con valori *fissati* da non stimare..
+    #questo e' se ci sono parametri con valori *fissati* da non stimare..
+    if(anyFixedG){ 
       etai <- etai+ Offs.kappa
     }
     

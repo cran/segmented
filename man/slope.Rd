@@ -7,12 +7,12 @@
 }
 \usage{
 slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE, 
-    APC=FALSE, .vcov=NULL, .coef=NULL, 
-    use.t=NULL, by=NULL, interc=TRUE, ..., digits = max(4, getOption("digits") - 2))
+    APC=FALSE, .vcov=NULL, .coef=NULL, use.t=NULL, by=NULL, 
+    interc=TRUE, level=0, ..., digits = max(4, getOption("digits") - 2))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{ogg}{ an object of class "segmented", returned by any \code{segmented} method or a list of two segmented fits to compare the estimates of corresponding slopes.}
+  \item{ogg}{ an object of class "segmented" or "segmented.lme", returned by any \code{segmented} method or a list of two segmented fits to compare the estimates of corresponding slopes.}
   \item{parm}{ the segmented variable whose slopes have to be computed. If missing all the segmented variables are considered. }
   \item{conf.level}{ the confidence level required. }
   \item{rev.sgn}{vector of logicals. The length should be equal to the length of \code{parm}, but it is recycled 
@@ -28,6 +28,8 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   For instance, \code{by=list(group="2",z2=.2)}, provided that the model has been fitted by specifying \code{group} and \code{z2} in \code{x.diff} (or as interaction with the segmented variable). Note that if the provided variables or values are irrelevant for changing the slopes, a warning message is printed.   
   }
   \item{interc}{logical, only for \code{'stepmented'} fits. If \code{TRUE}, the mean levels also account for the intercept; otherwise the first level is assumed to be zero.
+  }
+  \item{level}{Numeric, only for \code{'segmented.lme'} fits. If \code{0}, fixed effects left/right slopes are returned, otherwise the subject-specific values (with no confidence intervals).
   }
   \item{...}{ Further arguments to be passed on to \code{vcov.segmented}, such as \code{var.diff} and \code{is}. See Details in \code{\link{vcov.segmented}} and \code{\link{summary.segmented}}.
   }

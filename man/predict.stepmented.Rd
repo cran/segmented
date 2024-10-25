@@ -64,11 +64,11 @@ Vito Muggeo
 %}
 
 \section{Warning }{
-For stepmented glm fits with offset obtained starting from the model \code{glm(.., offset=..)}, \code{predict.stepmented} returns the fitted values without considering the offset. 
+For stepmented glm fits with offset, \code{predict.stepmented} returns the fitted values \emph{including} the offset. 
 }
 
 \seealso{
-\code{\link{stepmented}}, \code{\link{plot.stepmented}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}
+\code{\link{stepreg}}, \code{\link{stepmented}}, \code{\link{plot.stepmented}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}
 }
 \examples{
 n=10
