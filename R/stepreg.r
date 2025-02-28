@@ -354,6 +354,8 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
     if(!any(sapply(psiList,is.list))) psiList <- rep(psiList, repl)
     if(!any(sapply(estList,is.list))) estList <- rep(estList, repl)
     if(!any(sapply(RList,is.list))) RList <- rep(RList, repl)
+    if(!any(sapply(fixpsiList,is.list))) fixpsiList<- rep(fixpsiList, repl)
+    
     nomiPS.orig <- rep(nomiPS.orig, repl)
     Bfix <- rep(Bfix, repl)
     fixpsiList<- rep(fixpsiList, repl)
@@ -382,6 +384,9 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
         
         RList <- append(RList, RList[[id.vc]], after = id.vc-1)
         RList[[id.vc+nc]]<-NULL
+        
+        fixpsiList <- append(fixpsiList, fixpsiList[[id.vc]], after = id.vc-1)
+        fixpsiList[[id.vc+nc]]<-NULL
         
         #se la lista contiene solo NULL, non funziona...
         #penMatrixList <- append(penMatrixList, penMatrixList[[id.vc]], after = id.vc-1)
@@ -444,7 +449,8 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
         }
         if(!is.null(fixpsiList[[j]])) {
           Bfix[[j]]<- sapply(sort(fixpsiList[[j]]), function(.x) 1*(B[[j]]>.x))
-          colnames(Bfix[[j]])<- paste("U", 1:length(fixpsiList[[j]]),".fixed.",nomiPS.orig[j], sep="")
+          #colnames(Bfix[[j]])<- paste("U", 1:length(fixpsiList[[j]]),".fixed.",nomiPS.orig[j], sep="")
+          colnames(Bfix[[j]])<- paste("U", 1:length(fixpsiList[[j]]),".fixed.",nomiPS.ps.unlist[j], sep="")
         }
         #se per qualche termine ci sono le matrici dei vincoli sulle slope
         j.ok=match(nomiSeg[j], names(RList), nomatch=0)

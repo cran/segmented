@@ -34,6 +34,7 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
         vv<-vv[vv!="0"]
         vv=na.omit(vv[1:5])
         seed <-eval(parse(text=paste(vv, collapse="")))
+        if(is.null(seed)) seed <- 1
         set.seed(seed)
       } else {
         if(is.na(opz$seed)) {
@@ -66,6 +67,10 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
       opz0 <- opz
       opz0$maxit.glm <- 2
       o0<-try(suppressWarnings(seg.glm.fit(y, XREG, Z, PSI, w, offs, opz0)), silent=TRUE)
+      if(!is.list(o0)) {
+        o0<-try(suppressWarnings(seg.glm.fit(y, XREG, Z, opz0$PSI1, w, offs, opz0, return.all.sol=FALSE)), silent=TRUE)
+      }
+      
            
       if(!is.list(o0)) {
         o0<- suppressWarnings(seg.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))
@@ -115,8 +120,8 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
           alpha<- 1-alpha
           est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
         }
-        ########################### 25/7/24 #####
-        est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
+        ########################### 25/7/24 ##### #spostato sotto
+        #est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
         #########################################
         
           PSI <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
@@ -159,15 +164,18 @@ seg.glm.fit.boot<-function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boot=N
             all.selected.ss[k]<-o0$dev.no.gap #min(c(o$SumSquares.no.gap, o0$SumSquares.no.gap))
             eta0 <- o0$eta0
           }
+          
+          est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
 
           if (visualBoot) {
             flush.console()
             #n.intDev0<-nchar(strsplit(as.character(dev.values[2]),"\\.")[[1]][1])
             cat(paste("boot sample = ", sprintf("%2.0f",k),
-                      "  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$dev.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
-                      "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
-                      "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
-                      sep=""), "\n")
+                  #"  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$dev.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                  "  opt.dev = ", sprintf("%1.5f", as.numeric(strsplit(format(o0$dev.no.gap, scientific=TRUE), "e")[[1]][1])),
+                  "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
+                  "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
+                  sep=""), "\n")
           }
           asss<-na.omit(all.selected.ss)
           if(length(asss)>break.boot){

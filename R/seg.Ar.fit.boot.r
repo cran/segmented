@@ -27,6 +27,7 @@ seg.Ar.fit.boot<-function(obj, XREG, Z, PSI, opz, n.boot=10, size.boot=NULL, jt=
         vv<-vv[vv!="0"]
         vv=na.omit(vv[1:5])
         seed <-eval(parse(text=paste(vv, collapse="")))
+        if(is.null(seed)) seed <- 1
         set.seed(seed)
       } else {
         if(is.na(opz$seed)) {
@@ -46,10 +47,15 @@ seg.Ar.fit.boot<-function(obj, XREG, Z, PSI, opz, n.boot=10, size.boot=NULL, jt=
       
       opz1$it.max <-0
       n<-nrow(Z)
-      o0<-try(suppressWarnings(seg.Ar.fit(obj, XREG, Z, PSI, opz)), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
       alpha <- opz$alpha
       limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
+      
+      o0<-try(suppressWarnings(seg.Ar.fit(obj, XREG, Z, PSI, opz)), silent=TRUE)
+      if(!is.list(o0)){
+        o0<-try(suppressWarnings(seg.Ar.fit(obj, XREG, Z, opz$PSI1, opz)), silent=TRUE)
+      }
+      
       
       if(!is.list(o0)) {
           o0<- seg.Ar.fit(obj, XREG, Z, PSI, opz, return.all.sol=TRUE)

@@ -89,7 +89,11 @@ logical. If \code{TRUE}, the estimate covariance matrix is also computed via \co
   is estimated simultaneously yielding point estimates and relevant approximate
    standard errors of all the model parameters, including the break-points.
 
-  \code{stepmented} implements the algorithm described in Fasola et al. (2018) along with  bootstrap restarting (Wood, 2001) to escape local optima. The procedure turns out to be particularly appealing and probably efficient when there are two or more covariates exhibiting different change points to be estimated.
+  \code{stepmented} implements the algorithm described in Fasola et al. (2018) along with  bootstrap restarting 
+  (Wood, 2001) to escape local optima. The procedure turns out to be particularly appealing and efficient
+  when there are two or more covariates exhibiting different change points to be estimated.
+  
+  See also section `Note' below.
 
 }
 \value{
@@ -121,7 +125,17 @@ original object \code{obj} with additionally the followings:
 %}
 
 \note{
-The component \code{psi.rounded} of the fit object includes the rounded changepoint values which are usually taken as the final estimates. More specifically, each column of \code{psi.rounded} represents a changepoint and the corresponding rows are the range of the `optimal' interval. The first row, i.e. the lower bound of the interval, is taken as point estimate. \code{print.stepmented}, \code{print.summary.stepmented}, and \code{confint.stepmented} return the rounded (lower) value of the interval.
+Assuming a single changepoint \eqn{\psi} for the covariate \eqn{x}, the underlying fitted stepmented relationship is 
+\eqn{\beta_0+\beta_1 \ I(x>\psi)}, namely the fitted value (on the linear predictor scale) is \eqn{\beta_0} if \eqn{x\le \psi}, and \eqn{\beta_0+\beta_1} when 
+\eqn{x > \psi}. While the point estimate \eqn{\hat\psi} returned (in the \code{psi} component of the fit object) 
+is a unique real number, actually there exist infinite solutions in the range \eqn{[a, b)} where the extremes are the two 
+closest \emph{observed} covariate values 
+such hat \eqn{a \le \hat\psi<b}. The component \code{psi.rounded} of the fit object includes the rounded changepoint values 
+which can be taken as the final estimates. More specifically, each column of \code{psi.rounded} 
+represents a changepoint and the corresponding rows are the extremes of the `optimal' interval \eqn{[a, b)}. 
+The first row, i.e. the lower bound of the interval (\eqn{a} in the above example), 
+is taken as point estimate. \code{print.stepmented}, \code{print.summary.stepmented}, 
+and \code{confint.stepmented} return the rounded (lower) value of the interval.
 
 Also:
 \enumerate{

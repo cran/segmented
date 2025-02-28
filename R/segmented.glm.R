@@ -193,16 +193,30 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi)))  stop("Length or names of Z and psi do not match")
     nome <- names(psi)[id.nomiZpsi]
     psi <- psi[nome]
+    psiQ<-psiE<-psi
     if(id.npsi){
       for(i in 1:length(psi)) {
         K<-length(psi[[i]])
-        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
+        psiQ[[i]]<-quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
+        psiE[[i]]<-(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))
+        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) psiQ[[i]] else psiE[[i]]
       }
     } else {
       for(i in 1:length(psi)) {
-        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
+        psiQ[[i]]<-quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
+        psiE[[i]]<-(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))
+        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) psiQ[[i]] else psiE[[i]]
       }
     }
+    if(control$quant) {
+      initial<-unlist(psiE)
+      PSI1<- matrix(initial, n, length(initial), byrow = TRUE)
+    } else {
+      initial<-unlist(psiQ)
+      PSI1<- matrix(initial, n, length(initial), byrow = TRUE)
+    }
+    
+    
   #########==================== SE PSI FIXED
   id.psi.fixed <- FALSE
   if(!is.null(fixed.psi)){
@@ -237,7 +251,7 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     psi <- unlist(psi)
     psi<-unlist(tapply(psi,id.psi.group,sort))
     k <- ncol(Z)
-    PSI <- matrix(rep(psi, rep(n, k)), ncol = k)
+    PSI <- matrix(psi, n, k, byrow=TRUE) #rep(psi, rep(n, k)), ncol = k)
     colnames(Z) <- nomiZ <- rep(nome, times = a)
     ripetizioni <- as.numeric(unlist(sapply(table(nomiZ)[order(unique(nomiZ))], function(xxx) {1:xxx})))
     nomiU <- paste("U", ripetizioni, sep = "")
@@ -279,7 +293,8 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
     opz<-list(toll=toll, h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max, nomiOK=nomiOK, usesegreg=FALSE,
         fam=fam, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap, tol.opt=control$tol.opt, limZ=NULL, rangeZ=NULL,
         conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi,eta0=eta0, # min.step=min.step,
-        pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, seed=control$seed, fit.psi0=control$fit.psi0, min.n=control$min.n)   
+        pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, seed=control$seed, fit.psi0=control$fit.psi0, 
+        min.n=control$min.n, PSI1=PSI1)   
 
     #browser()
     

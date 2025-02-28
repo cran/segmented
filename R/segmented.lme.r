@@ -58,7 +58,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #   immediatamente prima del max (o dopo il min) vengono forzati al min/max e cos? sono di fatto annullati; naturalmente il
   #   modello ? ristimato secondo  i nuovi psi. Se 2 l'aggiustamento viene fatto durante l'algoritmo..
   #---------------------
-  reboot.slme <-function(fit, B=10, display=FALSE, metodo=1, frac=1, it.max=6, it.max.b=5, seed=NULL, start=NULL, msg=TRUE){
+  reboot.slme <-function(fit, B=10, display=FALSE, break.boot=B, metodo=1, frac=1, it.max=6, it.max.b=5, seed=NULL, start=NULL, msg=TRUE){
     #metodo: viene passato alla funzione logL. Se 1 la logL che viene calcolata e' quella della componente
     #   fit$lme.fit.noG, namely the logLik from the lme fit without the G variables..
     #bootRestart for slme4
@@ -126,11 +126,11 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     #o.ok$fixed<- update.formula(o.ok$fixed, paste(nomeRispo,"~."))
     
     call.ok<-update(object=fit, obj=o.ok, data=newData, it.max=it.max,
-                    start=list(kappa0=startKappa0.b,kappa=startingKappa.b), display=FALSE, evaluate=FALSE)
+                    start=list(kappa0=startKappa0.b, kappa=startingKappa.b), display=FALSE, evaluate=FALSE)
     
     
-    call.ok$n.boot <- call.b$n.boot<-0
-    call.ok$control <- call.b$control<-quote(seg.control(display=FALSE))
+    #call.ok$n.boot <- call.b$n.boot<-0
+    call.ok$control <- call.b$control<-quote(seg.control(display=FALSE, n.boot=0))
     all.L<-all.psi<-NULL
     it<-0
     L0<-L.orig<-logLik(fit$lme.fit.noG)# logL(fit, metodo=metodo)
@@ -152,12 +152,39 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       startingKappa<-start[-which("G0"%in%names(start))]
       nomiKappa<-names(startingKappa)
     }
-    if(is.null(seed)) seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
-    if(!is.numeric(seed)) stop(" 'seed' is not numeric")
-    set.seed(seed)
+    #if(is.null(seed)) seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+    if(is.null(seed)){
+      mY <- mean(newData[,nomeRispo])
+      sepDec<-if(options()$OutDec==".") "\\." else "\\,"
+      vv <- strsplit(paste(strsplit(paste(mY), sepDec)[[1]], collapse=""),"")[[1]]
+      vv<-vv[vv!="0"]
+      vv=na.omit(vv[1:5])
+      seed <-eval(parse(text=paste(vv, collapse="")))
+      set.seed(seed)
+    } else {
+      if(is.na(seed)) {
+        seed <-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+        set.seed(seed)
+      } else {
+        if(!is.numeric(seed)) stop(" 'seed' is not numeric") else set.seed(seed)
+      }
+    }  
     
+
     #browser()
+    n.boot.rev<- 3
+    alpha1<-alpha[1]
     for(i in seq(B)){
+      diff.selected.ss <- rev(diff(na.omit(all.L)))
+      if(length(diff.selected.ss)>=(n.boot.rev-1) && all(round(diff.selected.ss[1:(n.boot.rev-1)],6)==0)){
+        #qpsi<-sapply(1:ncol(Z),function(i)mean(est.psi0[i]>=Z[,i]))
+        qpsi<- mean(startKappa0>Z)
+        qpsi<-ifelse(abs(qpsi-.5)<.1, alpha1, qpsi)
+        alpha1<-1-alpha1
+        #est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
+        startKappa0 <- quantile(Z, probs=1-qpsi, names=FALSE)
+      }
+      
       #build the boot sample
       #idx<-sample(N, replace=TRUE)
       #idx<-sample(1:N, size=trunc(N*frac), replace=TRUE)
@@ -223,7 +250,15 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       nomiKappa<-names(startingKappa)
       nomiKappa<-sapply(strsplit(nomiKappa, "G\\."),function(x)x[2])
       names(startingKappa) <- nomiKappa
+      
+      #conta i valori ss uguali per fermarsi prima..
+       asss<-na.omit(all.L)
+       if(length(asss)>break.boot){
+         if(all(rev(round(diff(asss),6))[1:(break.boot-1)]==0)) break
+       }
+      
     } #end boot replicates
+    #============================================================================================
     fit$history.boot.restart<-cbind(b=1:length(all.psi),psi=all.psi, logL=all.L)
     fit$seed<-seed
     #r<-list(seg.lme.fit=fit, history=cbind(b=1:length(all.psi),psi=all.psi, logL=all.L) )
@@ -517,7 +552,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   psi.ex<-rep(psi.new, ni ) #length = N (n. tot obs)
   
   #----------------------------------------
-  mf$U<- pmax(0, Z-psi.ex)
+  mf$U<- (Z-psi.ex)*(Z>psi.ex) #pmax(0, Z-psi.ex)
   formulaFix.noG<-update.formula(my.call$fixed, paste("~.+","U"))
   if(id.x.diff){
     Ux<- as.matrix(mf$U*X.diff)
@@ -855,13 +890,15 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   RIS$rangeZ<- tapply(Z, id, range)
   names(Z)<-id #names(psi.new)
   RIS$Z<-Z
+  #browser()
   class(RIS)<- "segmented.lme" #c("segmented.lme","segmented")
-  opz.control<-list(...)
-  if(!is.null(opz.control$n.boot)) n.boot<- opz.control$n.boot
+  #opz.control<-list(...)
+  #if(!is.null(opz.control$n.boot)) n.boot<- opz.control$n.boot
   if(it >= (it.max+1) && n.boot==0) warning("max no. of iterations achieved.. 'n.boot>0' suggested", call. = FALSE)
   if(n.boot>0){
     if(display) cat("Implementing bootstrap restarting..\n")
-    RIS <- reboot.slme(RIS, B=n.boot, display=display, seed=control$seed, msg=display)#, metodo=1, frac=1, it.max=6, it.max.b=5, start=NULL, msg=TRUE)
+    RIS <- reboot.slme(RIS, B=n.boot, display=display, break.boot=control$break.boot ,
+                       seed=control$seed, msg=display)#, metodo=1, frac=1, it.max=6, it.max.b=5, start=NULL, msg=TRUE)
   }
   RIS
 }

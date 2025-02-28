@@ -60,6 +60,7 @@ seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL,
         vv<-vv[vv!="0"]
         vv=na.omit(vv[1:5])
         seed <-eval(parse(text=paste(vv, collapse="")))
+        if(is.null(seed)) seed <- 1
         set.seed(seed)
       } else {
         if(is.na(opz$seed)) {
@@ -77,12 +78,17 @@ seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL,
       opz1<-opz
       opz1$it.max <- 0
       n<-length(y)
-      o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI, w, opz, return.all.sol=FALSE)), silent=TRUE)
       rangeZ <- apply(Z, 2, range) #serve sempre
       
       alpha <- opz$alpha
       #limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha, 1 - alpha))
       limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
+      
+      o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI, w, opz, return.all.sol=FALSE)), silent=TRUE)
+      
+      if(!is.list(o0)) {
+        o0<-try(suppressWarnings(seg.num.fit(y, XREG, Z, PSI=opz$PSI1, w, opz, return.all.sol=FALSE)), silent=TRUE)
+      }
       
       if(!is.list(o0)) {
           o0<- suppressWarnings(seg.num.fit(y, XREG, Z, PSI, w, opz, return.all.sol=TRUE))
@@ -182,10 +188,11 @@ seg.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL,
               #                "  dev = ",sprintf('%8.5f',L1), #formatC(L1,width=8, digits=5,format="f"), #era format="fg"
               #n.intDev0<-nchar(strsplit(as.character(dev.values[2]),"\\.")[[1]][1])
               cat(paste("boot sample = ", sprintf("%2.0f",k),
-                        "  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$SumSquares.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
-                        "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
-                        "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
-                        sep=""), "\n")
+                      #"  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$SumSquares.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                      "  opt.dev = ", sprintf("%1.5f", as.numeric(strsplit(format(o0$SumSquares.no.gap, scientific=TRUE), "e")[[1]][1])),
+                      "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
+                      "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
+                      sep=""), "\n")
         }
         #conta i valori ss uguali.. cosi puoi fermarti prima..
         asss<-na.omit(all.selected.ss)

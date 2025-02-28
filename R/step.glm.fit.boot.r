@@ -53,6 +53,7 @@ step.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size.boo
     vv<-vv[vv!="0"]
     vv=na.omit(vv[1:5])
     seed <-eval(parse(text=paste(vv, collapse="")))
+    if(is.null(seed)) seed <- 1
     set.seed(seed)
   } else {
     if(is.na(opz$seed)) {

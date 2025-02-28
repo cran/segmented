@@ -59,7 +59,13 @@ Ignored
 }
 }
 \details{
-The function allows to fit segmented/stepmented (G)LM regression models using a formula interface. Results will be the same of those coming from the traditional \code{segmented.lm} and \code{segmented.glm} (or \code{stepmented.lm} or \code{stepmented.glm}), but there are some additional facilities: i) it is possible to estimate strightforwardly the segmented/stepmented relationships in each level of a categorical variable, see argument \code{by} in  \code{\link{seg}}; ii) it is possible to constrain some slopes of the segmented relationship, see argument \code{est} or \code{R} in \code{\link{seg}}.
+The function allows to fit segmented/stepmented (G)LM regression models using a formula interface. Results will be the 
+same of those coming from the traditional \code{segmented.lm} and \code{segmented.glm} (or \code{stepmented.lm} or 
+\code{stepmented.glm}), but there are some additional facilities: i) it is possible to estimate strightforwardly the segmented/stepmented 
+relationships in each level of a categorical variable, see argument \code{by} in  \code{\link{seg}}; 
+ii) it is possible to constrain some slopes of the segmented relationship, see argument \code{est} or \code{R} in \code{\link{seg}}.
+
+See  \code{\link{segmented}} and \code{\link{stepmented}} for some details on the fit objects.
 }
 \value{
 An object of class "segmented" (or "stepmented") which inherits from the class "lm" or "glm" depending on \code{family} specification. See \code{\link{segmented.lm}}.

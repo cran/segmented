@@ -235,12 +235,18 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
 
     n.intDev0 <- nchar(strsplit(as.character(L0), "\\.")[[1]][1])
     
+    #n.intDev0 <- nchar(strsplit(format(L0, scientific = FALSE), "\\.")[[1]][1])
+    #fac.L0<- 10^(nchar(strsplit(format(L0, scientific = FALSE),"\\.")[[1]][2])-1)
+    
+    #browser()
     
     dev.values[length(dev.values) + 1] <- L0
     psi.values[[length(psi.values) + 1]] <- psi
     if (visual) {
         cat(paste("iter = ", sprintf("%2.0f", 0), 
-                  "  dev = ",  sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), L0), 
+                  #"  dev = ",  sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), L0),
+                  "  dev = ",  sprintf("%1.5f", as.numeric(strsplit(format(L0, scientific=TRUE), "e")[[1]][1])),
+                  #"  dev = ",  sprintf(paste("%", n.intDev0 + 6, ".3f", sep = ""), L0*fac.L0),
                   "  k = ", sprintf("%5.0f", NA), 
                   "  n.psi = ", formatC(length(unlist(psi)), digits = 0, format = "f"), 
                   "  ini.psi = ", paste(formatC(unlist(psi), digits = 3, format = "f"), collapse = "  "), 
@@ -269,6 +275,7 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
           L0 <- sum(obj0$residuals^2 * w)
         }
         X <- cbind(XREG, U, V)
+        #browser()
         #rownames(X) <- NULL
         #colnames(X)[(ncol(XREG) + 1):ncol(X)] <- c(paste("U", 1:ncol(U), sep = ""), paste("V", 1:ncol(V), sep = ""))
         obj <- fitter(X,y,w,offs)# lm.wfit(x = X, y = y, w = w, offset = offs)
@@ -328,12 +335,12 @@ seg.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FALSE)
 
         if (visual) {
             flush.console()
-            cat(paste("iter = ", sprintf("%2.0f", it), "  dev = ", 
-                sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), 
-                  L1), "  k = ", sprintf("%2.3f", use.k), "  n.psi = ", 
-                formatC(length(unlist(psi)), digits = 0, format = "f"), 
-                "  est.psi = ", paste(formatC(unlist(psi), digits = 3, 
-                  format = "f"), collapse = "  "), sep = ""), 
+            cat(paste("iter = ", sprintf("%2.0f", it), 
+            #"  dev = ", sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), L1),
+            "  dev = ",  sprintf("%1.5f", as.numeric(strsplit(format(L1, scientific=TRUE), "e")[[1]][1])),
+            "  k = ", sprintf("%2.3f", use.k), 
+            "  n.psi = ", formatC(length(unlist(psi)), digits = 0, format = "f"), 
+            "  est.psi = ", paste(formatC(unlist(psi), digits = 3, format = "f"), collapse = "  "), sep = ""), 
                 "\n")
         }
         #epsilon <- if (conv.psi) max(abs((psi - psi.old)/psi.old)) else (L0 - L1)/(abs(L0) + 0.1)

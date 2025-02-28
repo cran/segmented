@@ -7,10 +7,17 @@
 
 
 ===============
+version 2.1-4 (2025-02-26)
+===============
+* Small changes in the selection of the starting values for psi and when printing the estimation process  
+* Bugs fixed: in segmented.lme() arguments 'seed' and 'break.boot' were not managed correctly. Thanks to Athanasios Protopapas for reporting.
+
+
+===============
 version 2.1-3 (2024-10-25)
 ===============
 * New argument 'level' in slope() to return 'individual' left/right slopes for "segmented.lme" fits (thanks to Otto Monge for the input) 
-* Bug fixed in segmented.lme(): with noisy data, the changepoints predictions were not consistent with the fixed effect estimate (thanks to E. (Lisa) Levelt for reporting)
+* Bug fixed in segmented.lme(): with noisy data, the changepoints predictions were not consistent with the fixed effect estimate (thanks to E. (Lisa) Levelt for reporting).
 
 
 ===============

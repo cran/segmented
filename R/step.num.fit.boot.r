@@ -45,6 +45,7 @@ step.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL
     vv<-vv[vv!="0"]
     vv=na.omit(vv[1:5])
     seed <-eval(parse(text=paste(vv, collapse="")))
+    if(is.null(seed)) seed <- 1
     set.seed(seed)
   } else {
     if(is.na(opz$seed)) {

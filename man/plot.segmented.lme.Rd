@@ -12,7 +12,7 @@ Takes a fitted \code{segmented.lme} object returned by \code{segmented.lme()} an
 \method{plot}{segmented.lme}(x, level=1, id = NULL, res = TRUE, pop = FALSE, yscale = 1, xscale = 1, 
     n.plot, pos.leg = "topright", vline = FALSE, lines = TRUE, 
     by=NULL, add=FALSE, conf.level=0, withI=TRUE, vcov.=NULL, shade=FALSE, 
-    drop.var=NULL, text.leg=NULL, id.name=TRUE, ...)
+    drop.var=NULL, text.leg=NULL, id.name=TRUE, ci.psi.pop=-1, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -77,6 +77,10 @@ If specified (and \code{pos.leg} has been also specified), it is the legend text
 }
   \item{id.name}{
 If \code{pos.leg} is different from \code{NULL}, \code{id.name=TRUE} will portray the cluster variable name along the value. Namely \code{id.name=TRUE} leads to 'country = italy' on each panel, while  \code{id.name=FALSE} to 'italy'. 
+}
+  \item{ci.psi.pop}{
+Should the point estimate and CI for the population breakpoint be added? If \code{ci.psi.pop>0} both the point estimate and CI (at level \code{ci.psi.pop})
+are added; if \code{ci.psi.pop=0} only the point estimate.   
 }
   \item{\dots}{
 additional arguments, such as \code{ylab},\code{xlab}, \code{ylim} and \code{xlim}; \code{l.col,l.lwd,l.lty} (for the fitted individual lines - can be vectors and will be recycled); \code{p.col, p.lwd, p.lty} for the population line (if \code{pop=TRUE}); \code{col, cex, pch} for the data points (if \code{res=TRUE}); \code{t.col} for the legend color, if \code{pos.leg} is not \code{NULL}. If \code{level=0} and \code{conf.level>0}, \code{lty} and \code{lwd} can be vectors.

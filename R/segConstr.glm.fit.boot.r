@@ -45,6 +45,7 @@ segConstr.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, siz
         vv<-vv[vv!="0"]
         vv=na.omit(vv[1:5])
         seed <-eval(parse(text=paste(vv, collapse="")))
+        if(is.null(seed)) seed <- 1
         set.seed(seed)
       } else {
         if(is.na(opz$seed)) {
@@ -74,7 +75,9 @@ segConstr.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, siz
       #o0<-try(suppressWarnings(seg.glm.fit(y, XREG, Z, PSI, w, offs, opz0)), silent=TRUE)
       #mettere opz o opz0?
       o0<-try(suppressWarnings(segConstr.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)), silent=TRUE)
-      
+      if(!is.list(o0)){
+        o0<-try(suppressWarnings(segConstr.glm.fit(y, XREG, Z, opz$PSI1, w, offs, opz, return.all.sol=FALSE)), silent=TRUE)
+      }
       if(!is.list(o0)) {
           o0<- suppressWarnings(segConstr.glm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=TRUE))
           o0<-extract.psi(o0)
@@ -174,10 +177,11 @@ segConstr.glm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, siz
               #                "  dev = ",sprintf('%8.5f',L1), #formatC(L1,width=8, digits=5,format="f"), #era format="fg"
               #n.intDev0<-nchar(strsplit(as.character(dev.values[2]),"\\.")[[1]][1])
               cat(paste("boot sample = ", sprintf("%2.0f",k),
-                        "  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$dev.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
-                        "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
-                        "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
-                        sep=""), "\n")
+                    #"  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$dev.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                    "  opt.dev = ", sprintf("%1.5f", as.numeric(strsplit(format(o0$dev.no.gap, scientific=TRUE), "e")[[1]][1])),
+                    "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
+                    "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
+                    sep=""), "\n")
         }
         #conta i valori ss uguali.. cosi puoi fermarti prima..
         asss<-na.omit(all.selected.ss)

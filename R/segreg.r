@@ -302,13 +302,21 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       }
     }
     npsiList <- unlist(npsiList)
-      
+    
+    #browser()
+    
     if(!any(sapply(psiList,is.list))) psiList <- rep(psiList, repl)
     if(!any(sapply(estList,is.list))) estList <- rep(estList, repl)
     if(!any(sapply(RList,is.list))) RList <- rep(RList, repl)
+    if(!any(sapply(fixpsiList,is.list))) fixpsiList<- rep(fixpsiList, repl)
+    
+    
     nomiPS.orig <- rep(nomiPS.orig, repl)
     Bfix <- rep(Bfix, repl)
-    fixpsiList<- rep(fixpsiList, repl)
+    
+    
+    
+    
     while(any(sapply(B,is.list))){
         id.vc<-which((sapply(B, is.list)))[1]
         nc<-length(B[[id.vc]])
@@ -333,6 +341,10 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         
         RList <- append(RList, RList[[id.vc]], after = id.vc-1)
         RList[[id.vc+nc]]<-NULL
+        
+        fixpsiList <- append(fixpsiList, fixpsiList[[id.vc]], after = id.vc-1)
+        fixpsiList[[id.vc+nc]]<-NULL
+        
         
         #se la lista contiene solo NULL, non funziona...
         #penMatrixList <- append(penMatrixList, penMatrixList[[id.vc]], after = id.vc-1)
@@ -379,22 +391,25 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     if(any(sapply(estList, is.list))) stop(" One or more 'est' components misspecified")
     
     npsiList1<-id.contrR <- rep(NA, length(B))
+    psiListE<-psiListQ<-psiList
     for(j in 1:length(B)){
         #K<- npsiList[j]
         K <- if(!is.na(npsiList[nomiSeg[j]])) npsiList[nomiSeg[j]] else npsiList[j]
         npsiList1[j]<- K
         if(any(is.na(psiList[[j]]))){ 
-          if(control$quant) {
-            psiList[[j]]<- quantile(B[[j]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
-          } else {
-            psiList[[j]]<- (min(B[[j]])+ diff(range(B[[j]]))*(1:K)/(K+1))
-          }
+          #if(control$quant) {
+            psiListQ[[j]]<- quantile(B[[j]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
+          #} else {
+            psiListE[[j]]<- (min(B[[j]])+ diff(range(B[[j]]))*(1:K)/(K+1))
+          #}
         } else {
           K<-npsiList1[j]<-length(psiList[[j]])
         }
         if(!is.null(fixpsiList[[j]])) {
           Bfix[[j]]<- sapply(sort(fixpsiList[[j]]), function(.x) (B[[j]]-.x)*(B[[j]]>.x))
-          colnames(Bfix[[j]])<- paste("U", 1:length(fixpsiList[[j]]),".fixed.",nomiPS.orig[j], sep="")
+          #colnames(Bfix[[j]])<- paste("U", 1:length(fixpsiList[[j]]),".fixed.",nomiPS.orig[j], sep="")
+          colnames(Bfix[[j]])<- paste("U", 1:length(fixpsiList[[j]]),".fixed.",nomiPS.ps.unlist[j], sep="")
+          
         }
       #se per qualche termine ci sono le matrici dei vincoli sulle slope
         #browser()
@@ -419,8 +434,21 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
           }
     }
     
-      
-      #NB: Poiche' ora psiList include i veri numeri dei psi, i codici vanno rilanciati
+    #browser()
+    
+    if(control$quant) {
+      psiList<-psiListQ
+      initial <- unlist(psiListE)
+      PSI1<- matrix(initial, n, length(initial), byrow = TRUE)
+      } else {
+        psiList<-psiListE
+        initial <- unlist(psiListQ)
+        PSI1<- matrix(initial, n, length(initial), byrow = TRUE)
+      }
+    #Quindi PSI1 e' una matrice di valori inziali di psi.. Vanno usati da seg.lm.fit.boot nel caso in cui i primi PSI
+    #non portino ad adattare un modello
+    
+    #NB: Poiche' ora psiList include i veri numeri dei psi, i codici vanno rilanciati
       for(i in 1:length(B)) {
         nomiCoefPSI[[i]]<- paste(paste("psi",1:length(psiList[[i]]), sep=""), nomiPS.ps.unlist[i], sep=".") ##oppure sep=".psi"
         nomiTerminiSEG[[i]]<-rep(nomiPS.ps.unlist[i], length(psiList[[i]]))
@@ -465,7 +493,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       #colnames(Z)<- unlist(nomiCoefPEN)
       initial <- unlist(psiList)
       PSI <- matrix(initial, n, length(initial), byrow = TRUE)
-      
+      #PSI1 di riserva definito sopra.
       #browser()
       
       #NB la matrie del disegno X include in nomi "seg(x)" e non va bene perche' poi da problemi con i 
@@ -497,15 +525,22 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       #limZ <-matrix(sapply(1:length(npsii), function(.x) rep(limZ[,.x],npsii[.x])), nrow=2, byrow = FALSE)
       limZ <- do.call(cbind, lapply(1:length(npsii), function(.x) matrix(limZ[,.x],nrow=2,ncol=npsii[.x])))
       rangeZ <- do.call(cbind, lapply(1:length(npsii), function(.x) matrix(rangeSmooth[[.x]],nrow=2,ncol=npsii[.x])))
+      colnames(rangeZ)<-rep(names(npsii), npsii) #unlist(nomiTerminiSEG)
+      
+      #browser()
+      
       #rangeZ<- matrix(sapply(1:length(npsii), function(.x) rep(rangeSmooth[[.x]],npsii[.x])), nrow=2, byrow = FALSE)
       
       
       invXtX<-Xty<-NULL
+      
+      
       #browser()
       opz<-list(toll=toll,h=h,stop.if.error=stop.if.error,L0=NULL,visual=visual,it.max=it.max,nomiOK=unlist(nomiCoefU), usesegreg=TRUE,
                 fam=family, eta0=NULL, maxit.glm=maxit.glm, id.psi.group=id.psi.group, gap=gap, limZ=limZ, rangeZ=rangeZ,
                 conv.psi=conv.psi, alpha=alpha, fix.npsi=fix.npsi, min.step=min.step, tol.opt=control$tol.opt,
-                pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg, seed=control$seed, min.n=control$min.n)
+                pow=pow, visualBoot=visualBoot, digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg, 
+                seed=control$seed, min.n=control$min.n, PSI1=PSI1)
       
       #browser()
       
@@ -537,7 +572,12 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
           class0<-c("glm","lm")
           }
       } else {
+        
+        
         #browser()
+        
+        
+        
         if(fitter0=="lm"){
 
           if(n.boot <= 0) {

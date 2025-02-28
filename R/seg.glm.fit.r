@@ -188,7 +188,8 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
     
     if (visual) {
         cat(paste("iter = ", sprintf("%2.0f",0),
-                  "  dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), L0), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                  #"  dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), L0), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                  "  dev = ",  sprintf("%1.5f", as.numeric(strsplit(format(L0, scientific=TRUE), "e")[[1]][1])),
                   "  k = ", sprintf("%5.0f", NA),
                   "  n.psi = ",formatC(length(unlist(psi)),digits=0,format="f"), 
                   "  ini.psi = ",paste(formatC(unlist(psi),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
@@ -313,7 +314,8 @@ seg.glm.fit<-function(y,XREG,Z,PSI,w,offs,opz,return.all.sol=FALSE){
         if (visual) {
             flush.console()
             cat(paste("iter = ", sprintf("%2.0f",it),
-                      "  dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), L1), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                      #"  dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), L1), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                      "  dev = ",  sprintf("%1.5f", as.numeric(strsplit(format(L1, scientific=TRUE), "e")[[1]][1])),
                       "  k = ", sprintf("%2.3f", use.k),
                       "  n.psi = ",formatC(length(unlist(psi)),digits=0,format="f"), 
                       "  est.psi = ",paste(formatC(unlist(psi),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)

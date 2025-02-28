@@ -51,9 +51,9 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
      if(n.Seg==1){
         if(!is.list(psi)) {psi<-list(psi);names(psi)<-all.vars(seg.Z)}
         } else {#se n.Seg>1
-        if(!is.list(psi)) stop("with multiple terms in `seg.Z', `psi' should be a named list")
-        if(n.Seg!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
-        if(!all(names(psi)%in%all.vars(seg.Z))) stop("Names in `seg.Z' and `psi' do not match")
+          if(!is.list(psi)) stop("with multiple terms in `seg.Z', `psi' should be a named list")
+          if(n.Seg!=length(psi)) stop("A wrong number of terms in `seg.Z' or `psi'")
+          if(!all(names(psi)%in%all.vars(seg.Z))) stop("Names in `seg.Z' and `psi' do not match")
         }
     }
 
@@ -233,18 +233,29 @@ mfExt <-eval(mfExt, parent.frame())
     if ((length(Z)!=length(psi)) || any(is.na(id.nomiZpsi))) stop("Length or names of Z and psi do not match")
     nome <- names(psi)[id.nomiZpsi]
     psi <- psi[nome]
+    psiQ<-psiE<-psi
     if(id.npsi){
       for(i in 1:length(psi)) {
         K<-length(psi[[i]])
-        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
+        psiQ[[i]]<-quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
+        psiE[[i]]<-(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))
+        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) psiQ[[i]] else psiE[[i]]
       }
     } else {
-    for(i in 1:length(psi)) {
-        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) {quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)} else {(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))}
-        }
+      for(i in 1:length(psi)) {
+        psiQ[[i]]<-quantile(Z[[i]], prob= seq(0,1,l=K+2)[-c(1,K+2)], names=FALSE)
+        psiE[[i]]<-(min(Z[[i]])+ diff(range(Z[[i]]))*(1:K)/(K+1))
+        if(any(is.na(psi[[i]]))) psi[[i]]<-if(control$quant) psiQ[[i]] else psiE[[i]]
+      }
     }
-  
-    
+    if(control$quant) {
+      initial<-unlist(psiE)
+      PSI1<- matrix(initial, n, length(initial), byrow = TRUE)
+    } else {
+      initial<-unlist(psiQ)
+      PSI1<- matrix(initial, n, length(initial), byrow = TRUE)
+    }
+
     
   #########==================== SE PSI FIXED
   id.psi.fixed <- FALSE
@@ -285,7 +296,7 @@ mfExt <-eval(mfExt, parent.frame())
     #se psi e' numerico, la seguente linea restituisce i valori ordinati all'interno della variabile..
     psi<-unlist(tapply(psi,id.psi.group,sort))
     k <- ncol(Z)
-    PSI <- matrix(rep(psi, rep(n, k)), ncol = k)
+    PSI <- matrix(psi, n, k, byrow=TRUE) #rep(psi, rep(n, k)), ncol = k)
     #controllo se psi e' ammissibile..
     c1 <- apply((Z <= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo <)
     c2 <- apply((Z >= PSI), 2, all) #dovrebbero essere tutti FALSE (prima era solo >)
@@ -346,7 +357,7 @@ mfExt <-eval(mfExt, parent.frame())
     opz<-list(toll=toll,h=h, stop.if.error=stop.if.error, dev0=dev0, visual=visual, it.max=it.max, usesegreg=FALSE, tol.opt=control$tol.opt,
         nomiOK=nomiOK, id.psi.group=id.psi.group, gap=gap, visualBoot=visualBoot, pow=pow, digits=digits,invXtX=invXtX, Xty=Xty, #conv.psi=conv.psi, 
         alpha=alpha, fix.npsi=fix.npsi, fc=fc, seed=control$seed, fit.psi0=control$fit.psi0, min.n=control$min.n, limZ=NULL, rangeZ=NULL,
-        nomiSeg=unique(colnames(Z)))
+        nomiSeg=unique(colnames(Z)), PSI1=PSI1)
     
     # for(.i in unique(colnames(Z))) { #    #poni min(z)=0, cosi solve() in step.lm.fit non ha problemi.
     #   if(.i %in% colnames(XREG)) XREG[,.i]<- XREG[,.i] - min(XREG[,.i])

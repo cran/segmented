@@ -247,12 +247,13 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
     psi.values[[length(psi.values) + 1]] <- psi
     #browser()
     if (visual) {
-        cat(paste("iter = ", sprintf("%2.0f", 0), "  dev = ", 
-            sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), 
-                L0), "  k = ", sprintf("%2.0f", NA), "  n.psi = ", 
-            formatC(length(unlist(psi)), digits = 0, format = "f"), 
-            "  ini.psi = ", paste(formatC(unlist(psi), digits = 3, 
-                format = "f"), collapse = "  "), sep = ""), "\n")
+        cat(paste(
+          "iter = ", sprintf("%2.0f", 0), 
+          #"  dev = ", sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), L0), 
+          "  dev = ",  sprintf("%1.5f", as.numeric(strsplit(format(L0, scientific=TRUE), "e")[[1]][1])),
+          "  k = ", sprintf("%2.0f", NA), 
+          "  n.psi = ", formatC(length(unlist(psi)), digits = 0, format = "f"), 
+          "  ini.psi = ", paste(formatC(unlist(psi), digits = 3, format = "f"), collapse = "  "), sep = ""), "\n")
     }
     id.warn <- FALSE
     id.psi.changed <- rep(FALSE, it.max)
@@ -343,9 +344,12 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
 
         if (visual) {
             flush.console()
-            cat(paste("iter = ", sprintf("%2.0f", it), 
-                "  dev = ", sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), L1), 
-                "  k = ", sprintf("%2.3f", use.k), "  n.psi = ", formatC(length(unlist(psi)), digits = 0, format = "f"), 
+            cat(paste(
+                "iter = ", sprintf("%2.0f", it), 
+                #"  dev = ", sprintf(paste("%", n.intDev0 + 6, ".5f", sep = ""), L1), 
+                "  dev = ",  sprintf("%1.5f", as.numeric(strsplit(format(L1, scientific=TRUE), "e")[[1]][1])),
+                "  k = ", sprintf("%2.3f", use.k), 
+                "  n.psi = ", formatC(length(unlist(psi)), digits = 0, format = "f"), 
                 "  est.psi = ", paste(formatC(unlist(psi), digits = 3, format = "f"), collapse = "  "), sep = ""), "\n")
         }
         epsilon <-  (L0 - L1)/(abs(L0) + 0.1)

@@ -38,6 +38,7 @@ extract.psi<-function(lista){
     	r
 	}
 #-------------
+#browser()
   if(is.null(opz$seed)){
     mY <- mean(y)
     sepDec<-if(options()$OutDec==".") "\\." else "\\,"
@@ -45,6 +46,7 @@ extract.psi<-function(lista){
     vv<-vv[vv!="0"]
     vv=na.omit(vv[1:5])
     seed <-eval(parse(text=paste(vv, collapse="")))
+    if(is.null(seed)) seed <- 1
     set.seed(seed)
   } else {
     if(is.na(opz$seed)) {
@@ -72,6 +74,9 @@ extract.psi<-function(lista){
     #browser()
     
     o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, PSI, w, offs, opz, return.all.sol=FALSE)), silent=TRUE)
+    if(!is.list(o0)) {
+      o0<-try(suppressWarnings(seg.lm.fit(y, XREG, Z, opz$PSI1, w, offs, opz, return.all.sol=FALSE)), silent=TRUE)
+    }
       
     
     #browser()
@@ -120,8 +125,8 @@ extract.psi<-function(lista){
           alpha<-1-alpha
           est.psi0<-sapply(1:ncol(Z),function(i)quantile(Z[,i],probs=1-qpsi[i],names=FALSE))
         }
-        ########################### 25/7/24 #####
-        est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
+        ########################### 25/7/24 ##### spostato sotto..
+        #est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
         #########################################
         
         PSI <- matrix(est.psi0, n, ncol = length(est.psi0), byrow=TRUE)
@@ -157,8 +162,6 @@ extract.psi<-function(lista){
                 count.random<-count.random+1
         }
         
-        #browser()
-        
         #se il modello e' stato stimato controlla se la soluzione e' migliore..
         if(is.list(o)){
               if(!"coefficients"%in%names(o$obj)) o<-extract.psi(o)
@@ -169,6 +172,10 @@ extract.psi<-function(lista){
               all.selected.psi[k,] <- est.psi0
               all.selected.ss[k] <- o0$SumSquares.no.gap #min(c(o$SumSquares.no.gap, o0$SumSquares.no.gap))
         }
+        ########################### 11/12/24 #####
+        est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))
+        #########################################
+        
             
         if(visualBoot) {
               flush.console()
@@ -176,10 +183,12 @@ extract.psi<-function(lista){
               #      cat(paste("iter = ", spp, it,
               #                "  dev = ",sprintf('%8.5f',L1), #formatC(L1,width=8, digits=5,format="f"), #era format="fg"
               #n.intDev0<-nchar(strsplit(as.character(dev.values[2]),"\\.")[[1]][1])
-              cat(paste("boot sample = ", sprintf("%2.0f",k),
-                        "  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$SumSquares.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
-                        "  n.psi = ",formatC(length(unlist(est.psi0)),digits=0,format="f"), 
-                        "  est.psi = ",paste(formatC(unlist(est.psi0),digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
+          #est.psi0 <- unlist(tapply(est.psi0, opz$id.psi.group, sort))   
+          cat(paste("boot sample = ", sprintf("%2.0f",k),
+                        #"  opt.dev = ", sprintf(paste("%", n.intDev0+6, ".5f",sep=""), o0$SumSquares.no.gap), #formatC(L1,width=8, digits=5,format="f"), #era format="fg" 
+                        "  opt.dev = ", sprintf("%1.5f", as.numeric(strsplit(format(o0$SumSquares.no.gap, scientific=TRUE), "e")[[1]][1])),
+                        "  n.psi = ",formatC(length(est.psi0),digits=0,format="f"), 
+                        "  est.psi = ",paste(formatC(est.psi0,digits=3,format="f"), collapse="  "), #sprintf('%.2f',x)
                         sep=""), "\n")
         }
         #conta i valori ss uguali.. cosi puoi fermarti prima..
@@ -188,7 +197,7 @@ extract.psi<-function(lista){
           if(all(rev(round(diff(asss),6))[1:(break.boot-1)]==0)) break
         }
         #id.uguali<-(round(diff(all.selected.ss[c(k-1,k-2)]),6)==0)+id.uguali      
-        } #end n.boot
+        } #end n.boot#====================
 
       #browser()
       

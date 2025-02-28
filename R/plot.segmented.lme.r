@@ -1,7 +1,7 @@
 plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
          yscale = 1, xscale = 1, n.plot, pos.leg = "topright", vline = FALSE, lines = TRUE, 
          by=NULL, add=FALSE, conf.level=0, withI=TRUE, vcov.=NULL, shade=FALSE, drop.var=NULL, text.leg=NULL, 
-         id.name=TRUE, ...) {
+         id.name=TRUE, ci.psi.pop=-1, ...) {
   # plotting fitted segmented relationships for multiple subjects
   # obj: a 'segmented.lme' object 
   # id: the subject id to be plotted
@@ -629,6 +629,14 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       }
       box()
       if(pop) plotmarg(obj, add=TRUE, col=p.col, lwd=p.lwd, lty=p.lty)
+      if(ci.psi.pop>=0){
+        y <- par()$usr[3]+abs(par()$usr[3])/10 
+        points(fixef(obj)["G0"],y,type="p", col=p.col, pch=19, cex=.8)
+        if(ci.psi.pop>0){
+          ci.psi<-confint.segmented.lme(obj, level=ci.psi.pop)[,"G0"]
+          arrows(min(ci.psi), y, max(ci.psi), y, code=3, angle=90, length=.05, col=p.col)
+        }
+      }
       return(invisible(NULL))
     }
     
@@ -682,6 +690,17 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       opz$pop<-FALSE
       do.call(plotSegLme, opz)
       if(pop) plotmarg(obj, add=TRUE, lty=2)
+      #browser()
+      
+      if(ci.psi.pop>=0){
+        y <- par()$usr[3]+abs(par()$usr[3])/10 
+        points(fixef(obj)["G0"], y, type="p", col=p.col, pch=19, cex=.8)
+        if(ci.psi.pop>0){
+          ci.psi<-confint.segmented.lme(obj, level=ci.psi.pop)[,"G0"]
+          arrows(min(ci.psi), y, max(ci.psi), y, code=3, angle=90, length=.05, col=p.col)
+        }
+      }
+      
       #browser()
       
       # tt<-axTicks(1) las=2
