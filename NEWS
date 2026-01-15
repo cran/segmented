@@ -5,6 +5,14 @@
 ****************************
 
 
+===============
+version 2.2-0 (2026-01-15)
+===============
+* New function stelpmented() to select changepoints in stepmented regression
+* New argument 'offs' in plot.segmented.lme()
+* Argument 'res' in plot.stepmented() now defaults to FALSE (like in plot.segmented())
+* Bugs fixed. In segreg() when fitting constrained segmented, argument 'est' in seg() did not work correctly (thanks to Carlos Arnillas Merino for reporting); in segmented.lme(): specification of block diagonal matrices did not work (thanks to Athanasios Protopapas for reporting); plot.segmented.lme() did not work for fits without intercept; segreg() and stepreg() ignored the 'offset' argument.
+
 
 ===============
 version 2.1-4 (2025-02-26)

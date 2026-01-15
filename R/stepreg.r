@@ -1,12 +1,9 @@
-#funziona fino a un certo punto.. 
-#E comunque devi aggiunegere il caso di interazioni...
-
 #byList nomiBy sono definiti.. 
 
 #Vedi C:\dati\lavori\jumpoint\fasola\funzioniSalvo\nuove\perpacchetto
 
 #stepreg(y~seg(tt, by=x1, npsi=2)+seg(tt, by=cbind(x2,x3))+seg(tt))
-stepreg <- function(formula, data, subset, weights, na.action, family=lm, control=seg.control(), 
+stepreg <- function(formula, data, subset, weights, na.action, family=lm, offset, control=seg.control(), 
     transf=NULL, contrasts=NULL, model=TRUE, x=FALSE, var.psi=FALSE, ...){
   ##### ====================================================================================
   #DA FARE:
@@ -36,22 +33,22 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
   #-----------
   #=================================
     build.all.psi<-function(psi, fixed.psi){
-    all.names.psi<-union(names(psi),names(fixed.psi))
-    all.psi<-vector("list", length=length(all.names.psi))
-    names(all.psi)<- all.names.psi
-    for(i in names(all.psi)) {
-      if(!is.null(psi[[i]])){
-        psi[[i]]<-sort(psi[[i]])
-        names(psi[[i]])<-paste("U",1:length(psi[[i]]),".",i,sep="")
+      all.names.psi<-union(names(psi),names(fixed.psi))
+      all.psi<-vector("list", length=length(all.names.psi))
+      names(all.psi)<- all.names.psi
+      for(i in names(all.psi)) {
+        if(!is.null(psi[[i]])){
+          psi[[i]]<-sort(psi[[i]])
+          names(psi[[i]])<-paste("U",1:length(psi[[i]]),".",i,sep="")
+        }
+        if(!is.null(fixed.psi[[i]])){
+          fixed.psi[[i]]<-sort(fixed.psi[[i]])
+          names(fixed.psi[[i]])<-	paste("U",1:length(fixed.psi[[i]]),".fixed.",i,sep="")
+        }
+        all.psi[[i]]<-sort(c(psi[[i]],fixed.psi[[i]]))
       }
-      if(!is.null(fixed.psi[[i]])){
-        fixed.psi[[i]]<-sort(fixed.psi[[i]])
-        names(fixed.psi[[i]])<-	paste("U",1:length(fixed.psi[[i]]),".fixed.",i,sep="")
-      }
-      all.psi[[i]]<-sort(c(psi[[i]],fixed.psi[[i]]))
+      return(all.psi)
     }
-    return(all.psi)
-  }
   #=================================
     #===============================
     check.estPsi<-function(.x){
@@ -148,7 +145,7 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
     id.ps<-attr(tf,"specials")$seg #posizione nel modelframe; vettore se ci sono piu' termini..include y ma non da interc
 
     mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "weights",  "na.action"), names(mf), 0L) #"offset",
+    m <- match(c("formula", "data", "subset", "weights",  "na.action", "offset"), names(mf), 0L) #"offset",
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
@@ -214,7 +211,10 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
     levelsBy <- lapply(l,function(xx) attr(xx,"levelsBy"))
     names(byList) <- nomiBy
     
-    #browser()
+    id.isMatr<-sapply(l,function(xx) attr(xx,"isMatr")) #qualche termine seg() ha matrici con piu' di una colonna?
+    
+    if(any(id.isMatr) && length(id.isMatr)>1) stop("if a matrix is provided in seg(), no additional seg() terms are allowed") #in realta' non so se e' realmente necessario..
+    
     ## questo e' un tentativo per tenere conto di seg(X, npsi=c(2,1,2...))
     if(length(nomiPS)>1 && length(npsiList)==1 && length(npsiList[[1]])== length(nomiPS) ) {
       id.ps <- seq(id.ps, l=length(nomiPS))
@@ -333,10 +333,14 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
         }
       } 
     } #end for(j in 1:length(mVariabili))
-    allNameOK <- unlist(nomiPS.ps.int.list.All)
-    if(length(allNameOK)!=length(unique(allNameOK))) stop("some error in specification of seg() terms")
     
     #browser()
+    allNameOK <- unlist(nomiPS.ps.int.list.All) 
+    #if(length(allNameOK)!=length(unique(allNameOK))) stop("some error in specification of seg() terms")
+    
+    #eliminato il 4/12/25 per consentire termini come seg(tt, by=cbind(x2,x3))+ seg(tt, by=x3) 
+    
+    
     
     repl<-pmax(sapply(B,length)*sapply(B,is.list),1)
     for(i in 1:length(npsiList)){
@@ -557,9 +561,7 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
       #limZ<-matrix(sapply(1:length(npsii), function(.x) rep(limZ[,.x],npsii[.x])), nrow=2, byrow = FALSE)
       limZ <- do.call(cbind, lapply(1:length(npsii), function(.x) matrix(limZ[,.x],nrow=2,ncol=npsii[.x])))
       rangeZ <- do.call(cbind, lapply(1:length(npsii), function(.x) matrix(rangeSmooth[[.x]],nrow=2,ncol=npsii[.x])))
-      #browser()
       colnames(rangeZ) <- unlist(nomiTerminiSEG)
-
       
       #sapply(byList, function(.x) {if(length(.x)>0 && !is.matrix(.x)) 1 else ncol(.x)})
       #browser()
@@ -576,6 +578,10 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
                 digits=digits, fc=fc, RList=RList, nomiSeg=nomiSeg, seed=control$seed,
                 npsii=npsii, agg=agg, byList=byList,rangeZ=rangeZ, tol.opt=control$tol.opt)
       
+      opz$low<- opz$rangeZ[1,unique(colnames(Z)),drop=FALSE] #apply(Z[,unique(colnames(Z)),drop=FALSE], 2, min)
+      opz$up <- opz$rangeZ[2,unique(colnames(Z)),drop=FALSE] # apply(Z[,unique(colnames(Z)),drop=FALSE], 2, max)
+      
+      
       #browser()
       
       if(any(sapply(levelsBy, is.null)) && any(!sapply(byList, is.null))){ #se ci sono Struct Changes
@@ -584,7 +590,7 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
         if(fitter0=="lm"){
         if(n.boot <=0 ) {
           obj <- step.lm.fitSC(Y, X, Z, PSI, weights, offs, opz)
-          return(obj)
+          #return(obj)
         } else {
           obj <- step.lm.fitSC.boot(Y, X, Z, PSI, weights, offs, opz, 
                                   n.boot = n.boot, size.boot = size.boot, random = random, 
@@ -594,7 +600,7 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
           } else {
             if(n.boot <=0 ) {
               obj <- step.glm.fitSC(Y, X, Z, PSI, weights, offs, opz)
-              return(obj)
+              #return(obj)
               } else {
                 obj <- step.glm.fitSC.boot(Y, X, Z, PSI, weights, offs, opz, 
                                       n.boot = n.boot, size.boot = size.boot, random = random, 
@@ -653,8 +659,6 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
         }
       }
       }
-      
-      
       #browser()
       
       #da modificare... vedi stepmented.lm o stepmented.glm
@@ -682,13 +686,14 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
       name.Z <- unlist(nomiTerminiSEG) #e nel caso di Structural changes?
       U <- obj$U #le U sono calcolate sui psi non-rounded, pero' mi sa che e' lo stesso...
       
-      psi.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[,j]<psi[j])+c(0,1,2),j])
-      #psi.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[,j]<psi[j])+c(-1,0,1,2),j]) #se vuoi prendere il precedente..
       #browser()
 
       id.new.result<-rep(FALSE, npsi)
       
       if(control$check.next){ #se vuoi fare un controllo sulle soluzioni +1..
+        psi.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[,j]<=psi[j])+c(0,1,2),j])
+        #psi.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[,j]<psi[j])+c(-1,0,1,2),j]) #se vuoi prendere il precedente..
+        
         L0 <- as.numeric(obj$SumSquares.no.gap)
         ############== definisci la f
         final.fit.f<-function(fitter0){
@@ -713,10 +718,26 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
         psi.roundedOK <- psi.rounded[1:2,,drop=FALSE]
         psiTry<-psi.rounded[1,]
         
+        
+        
         if(idSC) {
           PSI<- matrix(psi.rounded[1,], n, npsi, byrow = TRUE)
-          idUpsi <- rep(1:npsi, sapply(byList, function(.x) if(is.null(.x)) 1 else ncol(.x )))#per individuare le U corrispondenti ai 
-          #diversi psi.. Infatti con SC si possono avere diverse U per un unico psi
+    #per individuare le U corrispondenti ai diversi psi.. Infatti con SC si possono avere diverse U per un unico psi
+          #idUpsi <- rep(1:npsi, sapply(byList, function(.x) if(is.null(.x)) 1 else ncol(.x )))
+          #la linea sopra non funziona se ci sono termini seg(,by) con 2 psi e termini seg(by con 1 psi)
+          nGint  <- sapply(byList, function(.x) if(is.null(.x)) 0 else ncol(.x ))
+          rr<-0
+          idUpsi<-NULL
+          #browser()
+          
+          for(j in 1:length(nGint)){
+            idUpsi[[j]]<-rr + rep(1:npsii[j], max(nGint[j],1)) 
+            rr<-max(idUpsi[[j]])
+          }
+          idUpsi<-unlist(idUpsi)
+          
+          #browser()
+          
           for(j in 1:npsi){
             psiTry[j] <- psi.rounded[2,j]
             Unew <- obj$fn.U(Z, matrix(psiTry, n, npsi, byrow = TRUE), byList, id.psi.group)
@@ -746,6 +767,8 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
         }
         psi.rounded <- psi.roundedOK
         
+      } else {
+        psi.rounded<-sapply(1:npsi, function(j) Z0[sum(Z0[,j]<=psi[j])+c(0,1),j])
       }
         
       
@@ -777,14 +800,31 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
       # psi.roundedOK<-sapply(1:ncol(psi.rounded), function(.x) psi.rounded[id[.x]+0:1,.x])
       # 
 
-
-      colnames(U)<- nomiU <-unlist(nomiCoefU)
+      #browser()
+      f<-function(x){
+        b<-strsplit(x,",")[[1]]
+        if(length(b)==1) return(x)
+        r<-strsplit(x,":")
+        r1<-r[[1]][1]
+        r2<-r[[1]][2]
+        a<-strsplit(r2,",")[[1]]
+        k<-rep(NA, length(b))
+        for(i in 1:length(a)) k[i]<-paste(r1, ":", a[i], sep="")
+        k
+      }
+      #nomiU<-unlist(sapply(nomiCoefU, f)) 
+      nomiU<- as.vector(t(unlist(sapply(unlist(nomiCoefU), f)))) 
+      colnames(U)<- nomiU 
       nomiVxb <- unlist(nomiCoefPSI)
       nomiV<- gsub("psi", "V", nomiVxb)
       colnames(psi.rounded)<-rownames(ris.psi)<-names(psi)<-nomiVxb
       rownames(psi.rounded)<-c("inf [","sup (")
 
       se.psi<-rep(NA, npsi)
+      
+      
+      #browser()
+      
       if(fitter0=="lm"){
         class0<-"lm"
         objV <- if(is.null(weights)) lm.fit(cbind(X, U), Y, offset = offs) else lm.wfit(cbind(X, U), Y, weights, offset = offs)
@@ -796,6 +836,8 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
           se.psi <- sqrt(diag(R)*s2)[match(nomiVxb, names(coef(objV)),0)]
         }
       } else {
+        #browser()
+        
         class0<-c("glm", "lm")
         eta0 <- attr(obj$SumSquares.no.gap, "eta") #obj$eta0
         objV <- try(suppressWarnings(glm.fit(cbind(X, U), y = Y, offset = offs,
@@ -828,6 +870,8 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
       
       if(any(id.new.result) && display) cat(" Better objective found:", L0, "at psi =", psi.rounded[1,], "\n")
       
+      #browser()
+      
       objV$rank <- objV$rank + length(psi)
       if(!is.null(objV$aic)){
         objV$aic <- objV$aic +  2*length(psi)
@@ -843,17 +887,35 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
       objV$psi.history <- psi.values
       objV$psi.rounded <- psi.rounded
       if(n.boot>0) objV$seed <- seed
-      
-      
-      #browser()
-      
+
       objV$Z <- Z.ok #Z[,unique(name.Z),drop=FALSE]
+      #NON CAPISCO I CODICI DI SOTTO. DI COSA HO BISOGNO??
+      #i seguenti codici sono un'alternativa piu' semplice
       
+      #browser()      
+
+      # e poi mf1 
+      # mf1<-mf
+      # attributes(mf1)<-NULL
+      # for(i in 1:ncol(mf)){
+      #   if(!(i %in% id.ps)) {
+      #     mf1[i]<-mf[i]
+      #     } else {
+      #       .a<-mf[[i]]
+      #       mf1[[i]]<-.a[,1]
+      #       names(mf1[i])<- attr(.a, "nomeX")
+      #     }
+      # }
+       #browser()
+      # 
+      # attr(mf1,"names")<- names(mf)[]
+      # attr(mf1,"class")<-"data.frame"
+      # 
       
-      all.seg.form<-NULL
+      #all.seg.form<-NULL
       mf1<-mf[1]
       for(i in 2:ncol(mf)) {
-        if(i %in% id.ps){
+        if(i %in% id.ps){ #se e' un termine seg
           l<-attributes(mf[[i]])
           if(!is.null(l$by)){
             if(!l$nomeBy%in%names(mf)){
@@ -863,24 +925,37 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
               m<-data.frame(mf[[i]][,1])
               colnames(m) <- l$nomeX
             }
-            all.seg.form[[length(all.seg.form)+1]]<-as.formula(
-              paste("~0+", l$nomeX, "*", l$nomeBy, "-", l$nomeX))
+        #    all.seg.form[[length(all.seg.form)+1]]<-as.formula(paste("~0+", l$nomeX, "*", l$nomeBy, "-", l$nomeX))
           } else {
             m <-  data.frame(mf[[i]])
             colnames(m) <- l$nomeX
-            all.seg.form[[length(all.seg.form)+1]]<- as.formula(paste("~", l$nomeX))
+       #     all.seg.form[[length(all.seg.form)+1]]<- as.formula(paste("~", l$nomeX))
           }
-        } else {
+        } else { #se e' termine lineare..
           m <-  mf[i]
         }
         mf1<-cbind(mf1, m)
       }
       
-      names(all.seg.form)<-nomiPS
+      #browser()
+      
+      all.seg.form=try(sapply(1:length(nomiPS), function(.x){
+        if(nomiBy[.x]=="NULL") reformulate(nomiPS[.x]) else reformulate(c(nomiBy[.x],nomiPS[.x]))})
+        , silent=TRUE)
+      if(!class(all.seg.form)[1]=="try-error") names(all.seg.form)<-nomiPS
+      
+      
+      # all.seg.form<- sapply(nomiPS, function(.x) as.formula(paste("~", .x)))
+      #     Va bene sempre ma quando c'e' interazione:
+      #   all.seg.form e' ~x:g invece che ~0+x*g-x
+      #reformulate(c(nomiBy,nomiPS)) 
+      
+      
       #costruisci la formulaLin.. Attenzione non tiene conto di eventuali vincoli sulle pendenze.
       splitFo <- strsplit(as.character(formula),"[+]")
       #allX.lin<-paste(c(splitFo[[3]][-grep("seg[(]", splitFo[[3]])], unique(nomiPS.orig)), collapse="+") #anche le variabili seg
       
+
       termLin <- splitFo[[3]][-grep("seg[(]", splitFo[[3]])]
       if(length(termLin)>0){ #se ci sono altre variabili lineari (i.e. non-seg)
         allX.lin <- paste(termLin , collapse="+")                          #solo i termini non-seg!
@@ -910,7 +985,7 @@ stepreg <- function(formula, data, subset, weights, na.action, family=lm, contro
       objV$nameUV <- list(U = drop(nomiU), V = nomiV, Z = name.Z)
       #objV$nameUV <- list(U = drop(nomiU), V = rownames(ris.psi), Z = nomiPS.orig) #nomiPS.orig??
       objV$nameUV$formulaSeg<- all.seg.form
-      objV$nameUV$formulaSegAllTerms<- paste("~", paste(sapply(all.seg.form, function(.x) strsplit(paste(.x), "~"))[2,],collapse="+"))
+      if(!class(all.seg.form)[1]=="try-error") objV$nameUV$formulaSegAllTerms<- paste("~", paste(sapply(all.seg.form, function(.x) strsplit(paste(.x), "~"))[2,],collapse="+"))
       
       objV$formulaLin<- formulaLin
       objV$terms <- mt

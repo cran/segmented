@@ -12,8 +12,8 @@ Estimation and inference of regression models with piecewise linear relationship
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 2.1-4\cr
-Date: \tab 2025-02-26\cr
+Version: \tab 2.2-0\cr
+Date: \tab 2026-01-16\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} aims to estimate linear and generalized linear models (and virtually any regression model) having one or more segmented or stepmented relationships in the linear predictor. Estimates of the slopes and

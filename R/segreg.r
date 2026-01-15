@@ -1,4 +1,4 @@
-segreg <- function(formula, data, subset, weights, na.action, family=lm, control=seg.control(), 
+segreg <- function(formula, data, subset, weights, na.action, family=lm, offset, control=seg.control(), 
     transf=NULL, contrasts=NULL, model=TRUE, x=FALSE, var.psi=TRUE, ...){
   ##### ====================================================================================
   #DA FARE:
@@ -118,7 +118,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     #browser()
     
     mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "weights",  "na.action"), names(mf), 0L) #"offset",
+    m <- match(c("formula", "data", "subset", "weights",  "na.action", "offset"), names(mf), 0L) #"offset",
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
@@ -204,6 +204,9 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
     #npsiList <-unlist(sapply(l,function(xx) attr(xx,"npsi")))
     npsiList <- lapply(l,function(xx) attr(xx,"npsi"))
     estList <- lapply(l,function(xx) attr(xx,"est"))
+    
+    #browser()
+    
     if(length(setdiff(drop(unlist(sapply(estList, function(.x){if(any(is.na(.x))) 0 else unique(.x)}))), c(0,1)))>0) stop(" 'est' should include 0's and 1's only")
     
     if(length(intersect(nomiCoefUNPEN, nomiPS))>0) stop("any segmented variable included as linear term too?")
@@ -412,6 +415,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
           
         }
       #se per qualche termine ci sono le matrici dei vincoli sulle slope
+        
         #browser()
         
         j.ok=match(nomiSeg[j], names(RList), nomatch=0)
@@ -572,13 +576,9 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
           class0<-c("glm","lm")
           }
       } else {
-        
-        
         #browser()
-        
-        
-        
-        if(fitter0=="lm"){
+
+          if(fitter0=="lm"){
 
           if(n.boot <= 0) {
             obj <- seg.lm.fit(Y, X, Z, PSI, weights, offs, opz)
@@ -604,6 +604,8 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         }
       }
       
+      #browser()
+      
       if(!is.list(obj)){
         warning("Estimation failed. Too many breakpoints? Returning a (g)lm fit..", call. = FALSE)
         
@@ -625,13 +627,17 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
         return(invisible(NULL))
       }
       #
+
       id.psi.group<-obj$id.psi.group
       npsi.groups <- tapply(id.psi.group, id.psi.group, length)
       psi<-obj$psi
       psi.values<-if(n.boot<=0) obj$psi.values else obj$boot.restart
       U<-obj$U
       V<-obj$V
+      R=cor(cbind(U,V))
+      if(any(abs(R[col(R)>row(R)])>=.99)) stop("Not enought information for the fit: \n too many psi/small sample/replicated data", call.=FALSE)
       rangeZ<-obj$rangeZ
+      
       #browser()
       colnames(rangeZ) <- unlist(nomiTerminiSEG)
       it <- obj$it
@@ -641,6 +647,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       objU <- obj$obj
       #beta.c <- coef(objU)[paste("U", 1:ncol(U), sep = "")]
       beta.c <- coef(objU)[obj$idU]
+      
       #browser()
       
       if(any(id.contrR)) {
@@ -669,6 +676,10 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       se.psi<-rep(NA,k)
       if(fitter0=="lm"){
         objV <- if(id.noOW) lm.fit(x = cbind(X, U, Vxb), y = Y) else lm.wfit(x = cbind(X, U, Vxb), y = Y, w = weights, offset = offs)
+        if(any(is.na(objV$coefficients))) {
+          warning("some interval with 1 observation. St.errs cannot be computed")
+          var.psi=FALSE
+        }
         if(var.psi) {
           s2 <- sum(weights*objU$residuals^2)/objV$df.residual
           R <- chol2inv(objV$qr$qr)
@@ -698,9 +709,10 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
           if (!obj0$converged) warning("fitting to calculate the null deviance did not converge -- increase 'maxit'?")
           objV$null.deviance <- obj0$deviance
         }
-        
-        
-        
+        if(any(is.na(objV$coefficients))) {
+          warning("some interval with 1 observation. St.errs cannot be computed")
+          var.psi=FALSE
+        }
         if(var.psi) {
           R <- chol2inv(objV$qr$qr)
           s2 <- 1
@@ -821,6 +833,7 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, control
       #il comando structure() l'ho messo perche' avevo bisogno che anche in mancanza di offset, l'oggetto finale restituisse 
       # un oggetto con la componente offset NULL. Cosa che non viene fatta con il semplice comando di sotto.. 
       #objV<- if(id.O) c(objV, offset=offs) else c(objV, offset=NULL)
+      #browser()
       objV<- structure(c(objV, list(offset=orig.offs)))
       class(objV)<-c("segmented", class0)
       objV

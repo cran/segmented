@@ -9,11 +9,13 @@ Fitting segmented/stepmented regression
 \code{segreg} (\code{stepreg}) fits (generalized) linear segmented (stepmented) regression via a symbolic description of the linear predictor. This is an alternative but equivalent function, introduced since version 2.0-0 (segreg) and 2.1-0 (stepreg), to \code{segmented.(g)lm} or \code{stepmented.(g)lm}.
 }
 \usage{
-segreg(formula, data, subset, weights, na.action, family = lm, control = seg.control(), 
-      transf = NULL, contrasts = NULL, model = TRUE, x = FALSE, var.psi = TRUE, ...)
+segreg(formula, data, subset, weights, na.action, family = lm, offset, 
+    control = seg.control(), transf = NULL, contrasts = NULL, model = TRUE, 
+    x = FALSE, var.psi = TRUE, ...)
       
-stepreg(formula, data, subset, weights, na.action, family = lm, control = seg.control(), 
-       transf = NULL, contrasts = NULL, model = TRUE, x = FALSE, var.psi = FALSE, ...)
+stepreg(formula, data, subset, weights, na.action, family = lm, offset, 
+    control = seg.control(), transf = NULL, contrasts = NULL, model = TRUE, 
+    x = FALSE, var.psi = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -34,6 +36,9 @@ a function which indicates what happen when the data contain NA values. See \cod
 }
   \item{family}{
 The family specification, similar to \code{family} in \code{\link{glm}}. Default to \code{'lm'} for segmented/stepmented linear models.
+}
+  \item{offset}{
+  A possible offset term.
 }
   \item{control}{
 See \code{\link{seg.control}}
@@ -83,6 +88,7 @@ When the formula includes even a single segmented term with constraints (specifi
 \section{Warning }{
 Currently for fits returned by \code{segreg}, \code{\link{confint.segmented}} only works if \code{method="delta"}.
 Constraints on the mean levels (possibly via argument 'est' of \code{seg}) are not yet allowed when calling \code{stepreg}.
+For \code{stepreg} fits, when printing the iterative process (i.e. \code{display=TRUE} in \code{seg.control()}), the changepoints displayed are based on the working approximation of the indicator function. Thus, also the last value (at convergence) will be different from the one reported in the component \code{psi.rounded} of the fit.    
 } 
 
 \seealso{

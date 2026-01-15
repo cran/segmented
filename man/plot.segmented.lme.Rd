@@ -9,7 +9,7 @@ Takes a fitted \code{segmented.lme} object returned by \code{segmented.lme()} an
   the fitted broken-line relationship for the segmented term.
 }
 \usage{
-\method{plot}{segmented.lme}(x, level=1, id = NULL, res = TRUE, pop = FALSE, yscale = 1, xscale = 1, 
+\method{plot}{segmented.lme}(x, level=1, id = NULL, res = TRUE, pop = FALSE, offs=0, yscale = 1, xscale = 1, 
     n.plot, pos.leg = "topright", vline = FALSE, lines = TRUE, 
     by=NULL, add=FALSE, conf.level=0, withI=TRUE, vcov.=NULL, shade=FALSE, 
     drop.var=NULL, text.leg=NULL, id.name=TRUE, ci.psi.pop=-1, ...)
@@ -31,6 +31,9 @@ If \code{TRUE}, the data points are also drawn. Ignored if \code{level=0}.
 }
   \item{pop}{
 if \code{TRUE}, the fitted segmented relationships based on fixed-effects only is also portrayed. Ignored if \code{level=0}.
+}
+  \item{offs}{
+Values (scalar or 100-length) to be added to the fitted values before plotting. Only if \code{level=0}.
 }
   \item{yscale}{
 If \code{>= 0}, the same and common y-scale is used for all 'subjects' (panels); otherwise the y-scale will depend on the actual (observed and fitted) values for each 'subject'.

@@ -193,11 +193,15 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       newD <- do.call("rbind",lapply(idx, function(x)newData[newData[,nome.id]==x,]))
       newD$y.b<- newD[,nomeRispo]
       
+      #browser
+      
       #       r<-list(newD=newD, call.b=call.b)
       #       return(r)
       
       #-->>       CAMBIA STARTING VALUE in call.b
       if(startKappa0>=rangeZ[2] | startKappa0<=rangeZ[1] ) startKappa0<- jitter(startKappa00,factor=5) #sum(rangeZ)/2
+      
+      #browser()
       
       fit.b<-try(suppressWarnings(eval(call.b)), silent=TRUE) #envir=newD) 
       if(!is.list(fit.b)){
@@ -327,8 +331,11 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #---------------------------------------------------------------------------
   ###
   #browser()
+  
   h <- control$h 
-  if(!(is.call(obj) || class(obj)[1]=="lme")) stop(" 'obj' should be a lme fit or a lme call")
+  check <- is.call(obj) || (inherits(obj,"lme") && !inherits(obj,"glmmPQL"))
+  #if(!(is.call(obj) || class.check)) stop(" 'obj' should be a lme fit or a lme call")
+  if(!check) stop(" 'obj' should be a lme fit or a lme call")
   if(missing(psi) && it.max==0) stop("Please supply 'psi' with 'it.max=0'")
   
   if(is.call(obj)) {
@@ -577,9 +584,18 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   if(id.x.diff) start.delta<-start$delta
   need.prelim<- (is.null(start.delta0) || (id.x.diff && is.null(start.delta)))
   
+  #browser()
+  
   if(need.prelim){
     random.noG <- random
-    for(j in 1:J) attr(random.noG[[j]],"formula")<-update.formula(formula(random[[j]]), ~.-G0)
+    for(j in 1:J) {
+      if(length(random[[j]])>0) {
+        for(.k in 1:length(random[[j]])) if("G0" %in% all.vars(formula(random[[j]])[[.k]])) attr(random.noG[[j]][[.k]],"formula")<-update.formula(formula(random[[j]])[[.k]], ~.-G0)
+        } else {
+          attr(random.noG[[j]],"formula")<-update.formula(formula(random[[j]]), ~.-G0)
+        }
+      }
+    #for(j in 1:J) attr(random.noG[[j]],"formula")<-update.formula(formula(random[[j]]), ~.-G0)
     o<-update.lme.call(my.call, fixed=formulaFix.noG, random=random.noG, data=mf, evaluate=TRUE)
     #o<-update.lme.call(my.call, fixed=formulaFix.noG, data=mf, evaluate=TRUE)
     delta0i<-unlist(coef(o)["U"]) #length= N
@@ -616,6 +632,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   formulaRand<-formulaRandOrig<-my.call$random
   minMax <- cbind(tapply(Z,id,min),tapply(Z,id,max)) #matrice nx2 dei min-max
   #---------------------------------------------------------
+  
   call.ok<-update.lme.call(my.call, fixed = formulaFix, random=random, data=mf, evaluate=FALSE,
                            control = list(msVerbose = FALSE, niterEM = 100, opt = "optim"))
   if(!is.null(start.pd)) call.ok$random<-quote(list(id=start.pd))
@@ -635,9 +652,9 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   while(abs(epsilon) > tol){
     #if(it==9) browser()
     DD<-if(psi.link=="logit") (max.Z-min.Z)*exp(etai)/((1+exp(etai))^2) else rep(1,n)
-    V<-ifelse(Z >psi.ex, -1, 0)
+    V<- -1*(Z >psi.ex)#ifelse(Z >psi.ex, -1, 0)
     VD <- V*DD
-    mf$U <- pmax(0, Z-psi.ex)
+    mf$U <- (psi.ex-Z)*V #pmax(0, Z-psi.ex)
     mf$G0<- rep(delta0i,ni)*VD #rowSums(rep(delta0i,ni)*VD)
     if(id.x.diff){
       Ux<- as.matrix(mf$U*X.diff)

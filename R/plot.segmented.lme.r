@@ -1,4 +1,4 @@
-plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
+plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, offs=0,
          yscale = 1, xscale = 1, n.plot, pos.leg = "topright", vline = FALSE, lines = TRUE, 
          by=NULL, add=FALSE, conf.level=0, withI=TRUE, vcov.=NULL, shade=FALSE, drop.var=NULL, text.leg=NULL, 
          id.name=TRUE, ci.psi.pop=-1, ...) {
@@ -252,9 +252,6 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     m <- m[order(m[, 1]), ]
     
     
-    #browser()
-    
-    
     if (!lines) {
       points(m, col = l.col, pch = l.pch, lwd = l.lwd)  #do.call(points, opz)
     } else {
@@ -298,7 +295,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
         coef.ok<- as.numeric(coef.ok)
         
         if(!is.null(obj$namesGZ$nomiUx)) {
-          coef.ok[3] <- coef.ok[3]+ coef.ok["bUx"]* obj$lme.fit.noG$data[,obj$namesGZ$nomiUx]
+          #coef.ok[3] <- coef.ok[3]+ coef.ok["bUx"]* obj$lme.fit.noG$data[,obj$namesGZ$nomiUx]
+          coef.ok["U"] <- coef.ok["U"]+ coef.ok["bUx"]* obj$lme.fit.noG$data[,obj$namesGZ$nomiUx]
         }
         
         mu.ok <- cbind(1, xvar, pmax(xvar-psi.ok,0))%*%coef.ok
@@ -378,7 +376,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
   }
   #========================================================================
   plotmarg<-function(obj, by=NULL, add=FALSE, conf.level=0, pos.leg=NULL, withI=TRUE, vcov.=NULL, 
-                     shade=FALSE, drop.var=NULL, text.leg, ... ){
+                     shade=FALSE, drop.var=NULL, text.leg, offs=0, ... ){
     #=========>> da provare con by con piu' termini e se leftSlope=0 
     #obj: the segmented.lme object
     #by: a named list indicating covariate names and corresponding values affecting the fitted segmented relationship.
@@ -407,19 +405,20 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     if(!is.null(pos.leg)) pos.leg<- match.arg(pos.leg, c("bottomright", "bottom", "bottomleft", 
                                                          "left", "topleft", "top", "topright", "right", "center"))
     Z<-obj$Z 
-    nomeZ<-obj$namesGZ$nameZ
     beta.noG<- fixef(obj$lme.fit.noG) 
     beta.all<-fixef(obj$lme.fit)
     beta.G<-beta.all[setdiff(names(fixef(obj$lme.fit)), names(beta.noG))]
     nomiCoef<-names(beta.noG)
-    
+    nomeZ<-obj$namesGZ$nameZ
+    nomiCoef <- if(nomeZ%in%nomiCoef) c(nomeZ, "U", "G0") else c("U", "G0")
+    if("(Intercept)"%in%names(beta.noG)) nomiCoef <-c("(Intercept)", nomiCoef)
+
     if(!is.null(by)) {
       a<-by
       #isZero<-sapply(a, function(x) x==0)
       if(!all(sapply(a, length)==1)) stop("vectors in 'by' are not allowed")
       nomiOK<-const<-idList<-vector("list", length(a))
       values<-vector(,length(a))
-      
       for(i in 1:length(a)) {
         nomiOK[i]<-nomeOK <- if(is.character(a[[i]])) paste(names(a[i]),a[[i]], sep="") else names(a[i])
         
@@ -457,22 +456,23 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
       nomiNOdiff <- names(which(colSums(const)==0))
       if(length(nomiNOdiff)>0) warning("The", paste(" '", nomiNOdiff,"' ",sep=""), "value supplied in 'by' does not modify the baseline line", call. = FALSE)
       
-      nomiCoef<- c("(Intercept)", nomeZ, "U", "G0", unlist(idList))
+      nomiCoef<- c(nomiCoef, unlist(idList))
       ##########################################    
     } else { #se 'by' e' NULL
-      const<-matrix(0,4,1) 
-      nomiCoef<- c("(Intercept)", nomeZ, "U", "G0")
-      values<-rep(1,4)
+      const<-matrix(0, length(nomiCoef),1)
+      values<-rep(1, length(nomiCoef))
     }  
     ##########################################    
     #browser()  
     #prepara la matrice del disegno..
-    est.psi.fixed <-fixef(obj$lme.fit)["G0"]+ sum(const[4,])
+    est.psi.fixed <-fixef(obj$lme.fit)["G0"]+ sum(const[length(nomiCoef),])
     if(obj$call$psi.link=="logit") est.psi.fixed <- plogis(est.psi.fixed)
-    Z.new<-as.numeric(sort(c(seq(min(Z),max(Z),l=100), est.psi.fixed)))
+    Z.new<-as.numeric(sort(c(seq(min(Z),max(Z),l=99), est.psi.fixed)))
     U<-pmax(Z.new-est.psi.fixed,0)
-    X<-cbind(1,Z.new,U) #colnames(X)<-c("(Intercept)",nomeZ,"U")
     
+    X <- if(nomeZ%in%nomiCoef) cbind(Z.new, U) else cbind(U)
+    if("(Intercept)"%in%nomiCoef) X<-cbind(1, X)
+
     Ident<-diag(ncol(X))
     M<-vector("list", length=ncol(const))
     for(j in 1:ncol(const)) M[[j]]<-values[j]*Ident[, which(const[-4,j]!=0), drop=FALSE]
@@ -487,8 +487,6 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     final.names<-setdiff(nomiCoef, c("G0",obj$namesGZ$nomiG,""))
     final.names<-final.names[!is.na(final.names)]
     
-      #browser()
-    
     if(!is.null(drop.var)){
       colnames(M)<-final.names
       final.names <-setdiff(final.names, drop.var)
@@ -496,7 +494,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
     }
     
     XX<- X%*%M
-    r<-fit<- XX %*% beta.noG[final.names]
+    if(length(offs)>1 && length(offs)!=100) stop("If provided, 'offs' should have length = 100")
+    r<-fit<- XX %*% beta.noG[final.names] +offs
     
     if (conf.level > 0) {
       zalpha<- -qnorm((1-conf.level)/2)
@@ -544,7 +543,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE,
   #inizio funzione
   if(level==0){
     plotmarg(x, by=by, add=add, conf.level=conf.level, pos.leg = pos.leg, withI=withI, vcov.=vcov., 
-             shade=shade, drop.var=drop.var, text.leg=text.leg, ...)
+             shade=shade, drop.var=drop.var, text.leg=text.leg, offs=offs, ...)
   } else {
     obj <- x
     rnfGrp <- obj$lme.fit.noG$groups

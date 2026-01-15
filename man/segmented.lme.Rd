@@ -1,11 +1,12 @@
 \name{segmented.lme}
 \alias{segmented.lme}
+\alias{segmented.glme}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Segmented relationships in linear mixed models
 }
 \description{
-Fits linear mixed models with a segmented relationship between the response and 
+Fits (generalized) linear mixed models with a segmented relationship between the response and 
 a numeric covariate. Random effects are allowed in each model parameter, including the breakpoint.
 }
 \usage{
@@ -15,17 +16,17 @@ a numeric covariate. Random effects are allowed in each model parameter, includi
     random.noG = NULL, start.pd = NULL, psi.link = c("identity", "logit"), 
     start = NULL, data, fixed.parms = NULL,...)
 }
+
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{obj}{
-A 'lme' fit returned by \code{lme} or simply its call. See example below. This represents the linear mixed model
-where the segmented relationship is added.
+A fit returned by \code{lme()} or simply its call (if using \code{segmented.lme}). See example below. This represents the linear mixed model where the segmented relationship is added. It has to include the argument \code{data}.
 }
   \item{seg.Z}{
 A one-sided formula indicating the segmented variable, i.e. the quantitative variable having a segmented relationship with
   the response. In longitudinal studies typically it is the time.}
   \item{psi}{
-An optional starting value for the breakpoint. If missing a starting value is obtained via the nadir estimate of a quadratic fit.
+An optional starting value for the breakpoint. If missing, a starting value is obtained via the nadir estimate of a quadratic fit.
 When provided it may be a single numeric value or a vector of length equal to the number of clusters (i.e. subjects).
 }
   \item{z.psi}{
@@ -96,7 +97,7 @@ matching length and names in \code{x.diff} and \code{z.psi} respectively. The co
 a scalar or a vector with length equal to the number of clusters (subjects).
 }
   \item{data}{
-the dataframe where the variables are stored. If missing, the dataframe of the \code{"lme"} fit \code{obj} is assumed.
+the dataframe where the variables are stored. If missing, the dataframe of the \code{"lme"} (or \code{"glmmPQL"} ) fit \code{obj} is assumed.
 }
   \item{fixed.parms}{
 An optional \emph{named} vector representing the coefficients \emph{of the changepoint} to be maintained \emph{fixed}
@@ -149,11 +150,13 @@ Working paper available on RG. doi: 10.13140/RG.2.1.4180.8402
 Vito M.R. Muggeo \email{vito.muggeo@unipa.it}
 }
 \note{
-Currently only one breakpoint (with or without random effects) can be estimated. If \code{fit} is the segmented.lme fit, use \code{VarCorr(fit$lme.fit)} to extract the random effect covariance matrix.
+\code{segmented.lme()} relies on \code{lme()} using REML by default. 
+
+If \code{fit} is the segmented.lme fit, use \code{VarCorr(fit$lme.fit)} to extract the random effect covariance matrix.
 }
 
 \section{Warning }{
-The function deals with estimation with a \emph{single} breakpoint only.
+The function deals with estimation of a \emph{single} breakpoint only (with or without random effects).
 %All the functions for segmented mixed models (*.segmented.lme) work pretty well, but you should are still at an experimental stage
 } 
 

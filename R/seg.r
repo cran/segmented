@@ -3,6 +3,7 @@ function(x, npsi=1, psi=NA, est=NA, R=NA, fixed.psi=NULL, by=NULL, f.x=I){
 #------------
     r<-x
     r<- if(!is.null(by)) cbind(r,by) else cbind(r)
+    attr(r, "isMatr") <- if(is.matrix(x) && ncol(x)>1) TRUE else FALSE
     nome <- deparse(substitute(x))
     if(is.null(by)) {
       if(is.matrix(x) && ncol(x)>=2) {

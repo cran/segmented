@@ -1,25 +1,33 @@
 \name{selgmented}
 \alias{selgmented}
+\alias{stelpmented}
+
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Selecting the number of breakpoints in segmented regression
+  Selecting the number of breakpoints/changepoints in segmented/stepmented regression
 }
 \description{
-This function selects (and estimates) the number of breakpoints of the segmented relationship according to the BIC/AIC criterion or sequential hypothesis testing.
+This function selects (and estimates) the number of breakpoints/changepoints of the segmented/stepmented relationship according to the BIC/AIC criterion or sequential hypothesis testing (via the pseudo-Score test).
 }
 \usage{
-selgmented(olm, seg.Z, Kmax=2, type = c("score", "bic", "davies", "aic"), 
-  alpha = 0.05, control = seg.control(), refit = FALSE, stop.if = 5, 
+selgmented(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies"), 
+  alpha = 0.05, control = seg.control(), refit = FALSE, stop.if = 6, 
   return.fit = TRUE, bonferroni = FALSE, msg = TRUE, plot.ic = FALSE, th = NULL, 
   G = 1, check.dslope = TRUE)
+
+stelpmented(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies"), 
+  alpha = 0.05, control = seg.control(), refit = FALSE, stop.if = 6, 
+  return.fit = TRUE, bonferroni = FALSE, msg = TRUE, plot.ic = FALSE, th = NULL, 
+  G = 1, check.dslope = TRUE, a=1, Cn=1)
 }
+
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{olm}{
 A starting \code{lm} or \code{glm} object, or a simple numerical vector meaning the response variable.
 }
   \item{seg.Z}{
-A one-side formula for the segmented variable. Only one term can be included, and it can be omitted if \code{olm} is a (g)lm fit including just one numeric covariate. Also it might be omitted, and will be taken as 1,2..., if \code{olm} includes a single numeric variable. 
+A one-side formula for the segmented variable. Only one term can be included, and it can be omitted if \code{olm} is a (g)lm fit including just one numeric covariate. Also \code{seg.Z} might be omitted, and will be taken as 1,2..., if \code{olm} is a single numeric vector. 
 }
   \item{Kmax}{
 The maximum number of breakpoints being tested. If \code{type='bic'} or \code{type='aic'}, any integer value can be specified; otherwise at most \code{Kmax=2} breakpoints can be tested via the Score or Davies statistics.
@@ -60,9 +68,13 @@ Number of sub-intervals to consider to search for the breakpoints when \code{typ
   \item{check.dslope}{
 Logical. Effective only if \code{type='bic'} or \code{'aic'}. After the optimal number of breakpoints has been selected (via AIC/BIC), should the \eqn{t}{t} values of the slope differences be checked? If \code{TRUE}, the breakpoints corresponding to slope differences with a 'low' \eqn{t}{t} values will be removed. Note the model is re-fitted at each removal and a new check is performed. Simulation evidence suggests that such strategy leads to better results. See Details.
 }
-%  \item{a}{
-%An additional tuning parameter for the BIC. \eqn{a=1}{a=1} provides the classical BIC.
-%}
+  \item{a}{
+An additional tuning parameter for the BIC. \code{a=1} provides the classical BIC (see Details).
+}
+  \item{Cn}{
+An additional tuning parameter for the BIC. \code{Cn=1} provides the classical BIC (see Details).
+}
+
 }
 \details{
 The function uses properly the functions \code{segmented}, \code{pscore.test} or \code{davies.test} to select the 'optimal' number of breakpoints \code{0,1,...,Kmax}. If \code{type='bic'} or \code{'aic'}, the procedure stops if the last \code{stop.if} fits have increasing values of the information criterion. Moreover, a breakpoint is removed if too close to other, actually if the difference between two consecutive estimates is less then \code{th}. Finally, if \code{check.dslope=TRUE}, breakpoints whose corresponding slope difference estimate is `small' (i.e. \eqn{p}-value larger then \code{alpha} or \code{alpha/Kmax}) are also removed. 
@@ -73,6 +85,8 @@ Note \code{Kmax} is always tacitely reduced in order to have at least 1 residual
 
 When \code{type='score'} or \code{'davies'}, the function also returns the 'overall p-value' coming from combing the single p-values using the Fisher method. The pooled p-value, however, does not affect the final result which depends on the single p-values only. 
 
+Arguments \code{a} and \code{Cn} in \code{stelpmented()} modify the classical penalty term in the BIC, namely \eqn{p*(log(n)^a)*Cn}{p (log(n)^a) C_n}
+where \eqn{p}{p} is the number of model parameters. I don't know which are the most appropriate values for them.
 }
 
 \note{
@@ -103,6 +117,8 @@ Vito M. R. Muggeo
 }
 \examples{
 
+## breakpoint selection (segmented)
+
 set.seed(12)
 xx<-1:100
 zz<-runif(100)
@@ -110,13 +126,27 @@ yy<-2+1.5*pmax(xx-35,0)-1.5*pmax(xx-70,0)+15*pmax(zz-.5,0)+rnorm(100,0,2)
 dati<-data.frame(x=xx,y=yy,z=zz)
 out.lm<-lm(y~x,data=dati)
 
-os <-selgmented(out.lm) #selection (Kmax=2) via the Score test (default)
+os <-selgmented(out.lm, type="score", Kmax=2) #selection (Kmax=2) via the Score test 
 
-os <-selgmented(out.lm, type="bic", Kmax=3) #BIC-based selection
+os <-selgmented(out.lm, type="bic", Kmax=5) #BIC-based selection
+
+
+## changepoint (stepmented)
+yy<-2+1.5*(xx>30)-1.5*(xx>65)+1.5*(xx>80)+rnorm(100,0,.5)
+
+
+os <-stelpmented(yy, Kmax=5)  
+
+#selection accounting for an additional linear covariate: 
+out.lm<-lm(yy~zz)
+os <-stelpmented(out.lm, ~xx, Kmax=5) 
+
+
+
 
 \dontrun{
 ########################################
-#Example 1: selecting a large number of breakpoints
+#Example 1: selecting a large number of breakpoints in segmented regression
 
 b <- c(-1,rep(c(1.5,-1.5),l=15))
 psi <- seq(.1,.9,l=15)

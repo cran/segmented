@@ -1,6 +1,6 @@
-cf1d293070d2c90d7dd0a9e28059894f *DESCRIPTION
-8a39cd45e05043a52b992dbbf4e450ee *NAMESPACE
-9146b0cfa0b4dfc250bdfc6b19ed0944 *NEWS
+2fd5947c779a7b3c39f4f6506f91cd86 *DESCRIPTION
+b8c0d9f0697d55a0d5d157b0599c6afd *NAMESPACE
+e291bf2c1693af9938712d004bbb36de *NEWS
 7f9cbdb9dec5d8b633589f7bf3758f12 *R/aapc.r
 fa6d75b931abb040a6da324dce80147c *R/broken.line.r
 ac4704d275166b0b4ad149e994701429 *R/coef.segmented.r
@@ -18,7 +18,7 @@ d42b36090f870a32beda4a6d1b365f5c *R/lines.stepmented.R
 c14cbe109767f8f8f79b3f71c8c00440 *R/logLik.segmented.lme.r
 a0bca571dc1de664492d7b14d5a6117d *R/model.matrix.segmented.r
 422f89a5f7368305904b599d593303db *R/model.matrix.stepmented.r
-6e231ed4a00ca2fbd7e4c7b888a5b974 *R/plot.segmented.lme.r
+c392d0a3324216f38297fbac666217ad *R/plot.segmented.lme.r
 a6342dad177a0f58457eb949e399fc76 *R/plot.segmented.r
 ddacf8f19e9192baa79e7f7fe9636f00 *R/plot.stepmented.r
 4c0f71531e13426ee80c86fe4ada36e4 *R/points.segmented.r
@@ -43,7 +43,7 @@ ceb7e4160113c6443bf72da6882b2abc *R/seg.glm.fit.r
 c98e64c4d3caea5af3ad098fffa40952 *R/seg.lm.fit.r
 767361e25ee57560287bd85310ea78b0 *R/seg.num.fit.boot.r
 e290749a348a754f76fb867d308cadc2 *R/seg.num.fit.r
-06a4816ee12cc2f3d9b24f27a9d342aa *R/seg.r
+b9f5636bee260610ef11c9fb30b428b6 *R/seg.r
 2ed51b73094d739e63a41c60231c8562 *R/segConstr.glm.fit.boot.r
 80762f2079f535aa96b86aad85fb5138 *R/segConstr.glm.fit.r
 dbd8a459a12a0f6f41a20d67f7c0ca71 *R/segConstr.lm.fit.boot.r
@@ -53,11 +53,12 @@ fb0c87cd5f82b35b8120f77efc140652 *R/segmented.R
 709adcac85ac994dfd12e16ee9031cf6 *R/segmented.default.r
 c90963d12efcb64dbf15c8d4e4271907 *R/segmented.glm.R
 fb9ba2e95854c85572cadb9684dadcd1 *R/segmented.lm.R
-9310244ad3e105b252b54aeece19e61d *R/segmented.lme.r
+733f7effc727c83b7121c0efa5199d4d *R/segmented.lme.r
 1e5802c31bd43f5e8d03431efbb7ecbc *R/segmented.numeric.R
-ae360e6ae70202d1294cf1ebb1f4c729 *R/segreg.r
-5f3017324657b1ab6ac7736fb88703f4 *R/selgmented.R
+fcd8a0c131dcde468f8130284020910b *R/segreg.r
+2d50bdab5058e69dff627988563a4910 *R/selgmented.R
 7548de190e0d7d67c0c1c0710b4d7bac *R/slope.R
+c76188c91eaf1a51887e05143ef2e627 *R/stelpmented.R
 2b25cebd1f4db6cc0ba5207f07a8eaae *R/step.glm.fit.boot.r
 73bc8c74645e369a281087afb6b9e195 *R/step.glm.fit.r
 b407aaa1a5c4fc54503043441530b21e *R/step.lm.fit.boot.r
@@ -71,7 +72,7 @@ f174f0fca61a5ec05788d0acc1055ddc *R/stepmented.R
 b444bb9a52aa1ed46c5bf7b15a72cb82 *R/stepmented.lm.R
 83c3832c2f6c7bf055a6785fdcce4826 *R/stepmented.numeric.r
 2039c7acffb9f1d65e13551b37c5e4c9 *R/stepmented.ts.R
-e851837572b61067cfe43ba5b13214e7 *R/stepreg.r
+b2c0f564d8f1383dcc2eb248e4df2207 *R/stepreg.r
 cd2bf0f14f4a5af160da38fb591094a0 *R/summary.segmented.R
 2e84dec73c1d995d1bbbb8363795dad0 *R/summary.segmented.lme.r
 0d33a232cfde42bbfdb34ffb8f3c8f0c *R/summary.stepmented.R
@@ -100,7 +101,7 @@ faff03829b9cb70b138c830a3ba97ef7 *man/lines.segmented.Rd
 740bac6cf4aa0b5069a461a642a9dd2d *man/model.matrix.stepmented.Rd
 c8cfb285da49911d8e218de1b6b4dd53 *man/plant.Rd
 0883be3331641ee7e0964c5587264d74 *man/plot.segmented.Rd
-9898781e7a4b61f2e82d239bd5742722 *man/plot.segmented.lme.Rd
+cb04d9dd012925a1260c45502fbe7a93 *man/plot.segmented.lme.Rd
 835416f3699aff532c49c1b2af6d0ee2 *man/plot.stepmented.Rd
 219df852a0a7188483525ba1d8e3dd5c *man/points.segmented.Rd
 2dda4be7833f0e93a439e31ffc4cf182 *man/predict.segmented.Rd
@@ -112,11 +113,11 @@ ee9ae4505bc6c2211e72febc1b60c2e0 *man/pwr.seg.Rd
 9e324c810e8fbeaa0d9b9cb0f611a66b *man/seg.Rd
 c39b4d4dcb018beba72f8cd0b411620a *man/seg.control.Rd
 72b357bcc101f027fe7c1acf25cf050d *man/seg.lm.fit.Rd
-780269440bab49b9374e7d8d246c0b81 *man/segmented-package.Rd
+c649f16667dabc641b40e658f9da9f2f *man/segmented-package.Rd
 6db3a0651c07a5aca5cc88efcb16ea30 *man/segmented.Rd
-87faba8222a57863c6aa1ee858d012b1 *man/segmented.lme.Rd
-a1ce1880ddab5d09db47c4e68fdef6f8 *man/segreg.Rd
-031ea87f8743dfcc246a5ab0259a644f *man/selgmented.Rd
+ab0e84f4849184847c82654f043545ce *man/segmented.lme.Rd
+eb0934437276353a768042b738bbf242 *man/segreg.Rd
+3ed80244568381b65fb7c1828d15d416 *man/selgmented.Rd
 2206bceda41670c9a535c4269df5c88b *man/slope.Rd
 1c8095f4472b4cabf3dc3cae5132260f *man/stagnant.Rd
 93f5155a4c8ef92bd065dc9cef152a0a *man/step.lm.fit.Rd

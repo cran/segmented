@@ -1,10 +1,8 @@
-selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies"), alpha=0.05, 
+stelpmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies"), alpha=0.05, 
                   control=seg.control(), refit=FALSE, stop.if=6, return.fit=TRUE, bonferroni=FALSE, #improve.after.G=FALSE,
-                  msg=TRUE, plot.ic=FALSE, th=NULL, G=1, check.dslope=TRUE){ #}, a=1){
+                  msg=TRUE, plot.ic=FALSE, th=NULL, G=1, check.dslope=TRUE, a=1, Cn=1){ 
   
   #vedere bene il fatto del th!!
-  
-  #ruolo di alpha??? e se la ricerca si vuole restringere a un intervallo? perndere seg.control()$alpha? 
   
   #check.dslope: if TRUE, a check on slope difference parameters is done to spot the "non-significant" ones. Then 
   #  the changepoints corresponding to such slopes are removed from the last fit. 
@@ -16,6 +14,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
   #===
   if(stop.if<=0) stop("'stop.if' should be an integer (at least 4, probably)")
   stop.if<-ceiling(stop.if)
+  #=====
   f<-function(x, soglia){
     #restituisce l'indice del vettore x t.c. il valore e' il piu' piccolo 
     #tra quelli che sono minori della soglia  
@@ -26,21 +25,39 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
     ind[id.ok]
   }
   #===
-  sel1 <- function(y, x, G, Kmax, type="bic",th=th,refit=FALSE,check.dslope=TRUE,
-                   msg=TRUE, bonferroni=FALSE, olm0, control){ #, a=1
+  sel1 <- function(y, x, G, Kmax, type="bic", th=5, refit=FALSE, check.dslope=TRUE, 
+                   msg=TRUE, bonferroni=FALSE, olm0, control, a=1, Cn=1){ #, a=1
     #BIC<-function(obj){
     #  n <-length(obj$residuals)
-    #  r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*(log(n)^a) #- 1
+    #  r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*(log(n)^a) #BIC
+    #  r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*2   #AIC
     #  r
     #}
+    #---
     ICname<- if(type=="bic") "BIC" else "AIC"
     
     control1<-control
     control1$n.boot = 0
     control1$tol <- .001 #
+
+    if(type=="bic"){
+      BIC.f<-function(obj, a=1, Cn=1){
+        #Se a=1 questo e' il BIC classico (a meno di una costante)
+        n <-length(obj$residuals)
+        r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*(log(n)^a) * Cn
+        r
+      }
+    } else {
+      BIC.f<-function(obj, a=1,Cn=1){
+        #Questo e' l'AIC (a meno di una costante)
+        n <-length(obj$residuals)
+        r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*2
+        r
+      }
+    }
     
     
-    BIC.f<-if(type=="bic") BIC else AIC
+    
     #---
     drop.close <-function(all.psi, th){
       if(length(all.psi)==1) return(all.psi)
@@ -54,7 +71,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
       all.psi <- setdiff(all.psi,c(m1, m2))
       all.psi
     }
-        #start..
+    #start..
     n<-length(y)
     K1<-ceiling(Kmax/G)
     
@@ -64,43 +81,40 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
     #cutvalues <- c(seq(1,n,by=n1),n+1)
     
     cutvalues <- c(min(x), cumsum(rep(sum(range(x))/G, G)))
-
+    
     id<-cut(x, cutvalues, right=FALSE, labels=FALSE)
     r<-vector("list",G)
-    
-    #browser()
+
     
     for(i in 1:G){
-      #if(i==4) browser()
       yy<-y[id==i]
       xx<-x[id==i] 
-      olm<-lm(yy~xx) #, data=d)
-      .a <- capture.output(r[[i]] <-try(suppressWarnings(selgmented(olm, ~xx, type=type, Kmax=K1, 
-                                                    refit=FALSE, msg=FALSE, G=1, control=control, check.dslope=FALSE)
-                                                    ), silent=TRUE)) 
+      olm<-lm(yy~1) #, data=d)
+      .a <- capture.output(r[[i]] <-try(suppressWarnings(stelpmented(olm, ~xx, type=type, Kmax=K1, 
+                                          refit=FALSE, msg=FALSE, G=1, control=control, check.dslope=FALSE)
+                                                          ), silent=TRUE)) 
+      
       if(inherits(r[[i]],"try-error")) r[[i]]<- olm
-      n.psi<- if(is.null(r[[i]]$psi) || any(is.na(r[[i]]$psi[,"Est."]))) 0 else nrow(r[[i]]$psi)
+      n.psi<- if(is.null(r[[i]]$psi) || any(is.na(r[[i]]$psi))) 0 else nrow(r[[i]]$psi)
       n.psi<- if(n.psi<10)  paste("", n.psi) else paste(n.psi)
       if(msg) {
         cat("\n##### subset ", paste(i, ": ...",sep=""))
-        cat(" ",n.psi,"selected breakpoints \n")
+        cat(" ",n.psi,"selected jumpoints \n")
       }
       
     }
-    
-    #browser()
     
     all.psi <-unlist(sapply(r, function(.x) .x$psi[,"Est."]))
     psi.fromG <- drop.close(all.psi,th)
     psi.removed<- setdiff(all.psi, psi.fromG)
     psi.removed<- psi.removed[!is.na(psi.removed)]
     if(length(psi.removed)>=1 && msg){
-      cat(paste("\n", length(psi.removed), "breakpoint(s) removed for closeness (see argument 'th')\n"))
+      cat(paste("\n", length(psi.removed), "jumpoint(s) removed for closeness (see argument 'th')\n"))
     }
     
     all.psi <- psi.fromG
 
-    olm <- olm0 #lm(y~x)
+    olm <- olm0 #lm(y~1)
     newpsi <- cutvalues[-c(1, length(cutvalues))]
     if(msg){
       cat(paste("\n => Assessing the", length(newpsi), "cutoff(s) as breakpoint(s). Computing the", ICname, "values.. \n"))
@@ -110,9 +124,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
     
     #elimina quelli vicini..
     psi.withCut <- all.psi <-drop.close(all.psi,th)
-
     
-    #browser()
     
     ######## ORA stima modelli con un numero decrescente di psi...
     tvalueU <- psi0 <- all.psi
@@ -121,24 +133,26 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
     #browser()
     #se nella riduzione del numero di  psi il modello non viene stimato, allora piuttosto che passargli i valori di psi
     # da cui ha arbitrariamente eliminato il primo, passagli il numero di psi..
-    #fit.ok<-TRUE
     idbreak<-FALSE
     conv <- bicVa <- NULL
     #browser()
     if(msg) cat("    no. breakpoints: ", length(all.psi))
     control2<-control1
     control2$n.boot=6
+    
+    
+    
     while(length(tvalueU)>=1){
       .a <- capture.output(os0 <- try(suppressWarnings(
-          segmented(olm, ~x, psi=all.psi, control=control2)), silent=TRUE))
-      if(!inherits(os0, "segmented")) {
+        stepmented(olm, ~x, psi=all.psi, control=control2)), silent=TRUE))
+      if(!inherits(os0, "stepmented")) {
         .a <- capture.output(os0 <- try(suppressWarnings(
-          segmented(olm, ~x, npsi=length(all.psi), control=control1)), silent=TRUE))
+          stepmented(olm, ~x, npsi=length(all.psi), control=control1)), silent=TRUE))
       }
       
-      if(inherits(os0, "segmented")) {
+      if(inherits(os0, "stepmented")) {
         conv[length(conv)+1]<- 1
-        bicVa[length(bicVa)+1] <- BIC.f(os0)
+        bicVa[length(bicVa)+1] <- BIC.f(os0,a=a,Cn=Cn)
         list.fit[[length(list.fit)+1]] <- os0
         list.psi[[length(list.psi)+1]]<- os0$psi[,"Est."]
         if(length(os0$psi[,"Est."])==1) break
@@ -147,7 +161,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
         #man mano che rimuovi i psi, se il t della diffSlope del psi che stai rimuovendo e' > soglia, fermati!
         ## allora non continuare a toglierli..
         #===>>>NOOOOO!! puo' accadere poi che toglie qualche psi, si ferma perche' tutti i t sono grandi, ma il bic e' piu' basso
-        #in un modello precedente.. Quindi alla fine il criterio non e' ne bic e neanche tutti i t significativi.
+        #in un modello precedente.. Quindi alla fine il criterio non e' ne bic e neanche tutti i t signif.
         #Allora, coerentemente con il caso di G=1, la "verifica delle slope nonsignif, va fatta sul modello 
         #selezionato con il BIC!! Quindi commentiamo le righe di sotto (il idbreak si potrebbe pure eliminare)
         #e il controllo checkdslope lo facciamo dopo sul modello selezionato dal bic.
@@ -171,7 +185,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
       #se gli ultimi fit non sono tutti insuccessi. 
     }
     if(msg) cat(" .. 0\n")
-    bicV <-  sapply(list.fit, function(.x) if(inherits(.x, "segmented")) BIC.f(.x) else NA)
+    bicV <-  sapply(list.fit, function(.x) if(inherits(.x, "stepmented")) BIC.f(.x, a=a,Cn=Cn) else NA)
     
     if(length(bicV)!=length(bicVa)) stop("Errore inatteso 1")
     
@@ -190,7 +204,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
     } else {
       if(length(bicV)!= length(psi.withCut)) stop("Errore nella dim!!")
       list.fit[[length(list.fit)+1]] <- olm
-      bicV<- c(bicV, BIC.f(olm))
+      bicV<- c(bicV, BIC.f(olm,a=a,Cn=Cn))
       r <- r0 <- list.fit[[which.min(bicV)]]
       npsi.ok <- ((length(psi.withCut)):0)[which.min(bicV)]
       if(npsi.ok!=length(r$psi[,"Est."])) stop("Unexpected error..")
@@ -202,7 +216,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
     #   ed inoltre al modello selezionato un ultimo fit con boot bisognerebbe darlo...
     #browser()
     
-    if(inherits(r, "segmented")){
+    if(inherits(r, "stepmented")){
       #ALTRO CONTROLLO SULLA VICINANZA DEI psi..
       all.psi <- sort(r$psi[,"Est."])
       #all.psi <- drop.close(all.psi,th)
@@ -213,11 +227,11 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
         start.psi<-drop.close(all.psi,th)
         r0$call$psi<- start.psi 
         .a <- capture.output(r <- suppressWarnings(try(update(r0))), type="message")
-        all.psi<- if(inherits(r, "segmented")) r$psi[,"Est."] else start.psi[-1]
-        cont1<- !(inherits(r, "segmented") && (length(all.psi)==length(drop.close(all.psi,th))))
+        all.psi<- if(inherits(r, "stepmented")) r$psi[,"Est."] else start.psi[-1]
+        cont1<- !(inherits(r, "stepmented") && (length(all.psi)==length(drop.close(all.psi,th))))
         cont1 <- cont1 &&  length(all.psi)>0
       }
-      if(inherits(r, "segmented")){
+      if(inherits(r, "stepmented")){
         # all.psi<- r$psi[,"Est."]
         # soglia <- if(!bonferroni) qnorm(1-alpha/2) else qnorm(1-alpha/(2* length(r$nameUV$U)) ) 
         # rm.id <- which(abs(summary(r)$coefficients[r$nameUV$U, 3]) <= soglia)
@@ -227,7 +241,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
         #   #     #ALTRO CONTROLLO SULLA SIGNIF DELLE SLOPE-DIFF 
         #   #Non puoi eliminarli tutti assieme, perche' una volta che il piu' piccolo e stato eliminato 
         #gli altri possono cambiare..
-          #browser()
+        #browser()
         
         rm.after.check <- 0
         all.psi<- r$psi[,"Est."]
@@ -242,13 +256,13 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
             if(length(all.psi)<=0) break
             r0$call$psi=quote(all.psi)
             .a <- capture.output(r <- suppressWarnings(try(update(r0), silent=TRUE))) #senza boot
-            if(!inherits(r,"segmented")){ #facciamo un altro tentativo..
+            if(!inherits(r,"stepmented")){ #facciamo un altro tentativo..
               #r0$call$psi=all.psi
               #control$alpha <- .005
               r0$call$control<-control #con boot
               .a <- capture.output(r<-suppressWarnings(try(r<-update(r0), silent=TRUE)))
             }
-            if(inherits(r,"segmented")){
+            if(inherits(r,"stepmented")){
               tU <- abs(summary(r)$coefficients[r$nameUV$U, 3])
               #rm.id <- which.min(tU[tU<=soglia])
               rm.id <- f(tU, soglia)
@@ -289,18 +303,14 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
         }
       } else {
         #stop("Errore inatteso 1")
-       r<-olm
-       n.psi.ok<-0
+        r<-olm
+        n.psi.ok<-0
       }
     } else {
-      #stop("Errore inatteso 2")
       r<-olm
       n.psi.ok<-0
     }
-
-    if(msg) cat("\n####### Overall: ...  ", n.psi.ok, "selected breakpoint(s) \n\n")
-    #cat(" ##### Overall ", nrow(r$psi),"selected breakpoints \n")
-    #if(!is.list(r)) r<- olm
+    if(msg) cat("\n####### Overall: ...  ", n.psi.ok, "selected jumpoints(s) \n\n")
     bic.values=rbind(as.numeric(names(bicV)), bicV)
     rownames(bic.values)<-c("no. breakpoints", ICname)
     r$selection.psi <-list(bic.values=bic.values, npsi=n.psi.ok, cutvalues=cutvalues) ##cutvalues #including the extremes
@@ -311,18 +321,17 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
     #r
   } #fine sel1()
   #=====================================================================
-  # BIC<-function(obj, a=1){
-  #   #Se a=1 questo e' il BIC classico (a meno di una costante)
-  #   n <-length(obj$residuals)
-  #   r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*(log(n)^a) #- 1
-  #   r
-  # }
+  #BIC <- function(obj, a=1){
+  #  n <-length(obj$residuals)
+  #  r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*(log(n)^a) #- 1
+  #  r
+  #}
   #=====================================================================
   type<-match.arg(type)
-  if(!type%in%c("bic","aic") && Kmax!=2) stop("Kmax>2 is not (yet?) allowed with hypothesis testing procedures. Set type='bic' or 'aic'", call.=FALSE)
-  if(!type%in%c("bic","aic") && G>1) stop("G>1 is allowed only with type='bic' or 'aic' ", call.=FALSE)
+  if(!type%in%c("bic","aic") && Kmax!=2) stop("Kmax>2 is not (yet?) allowed with hypothesis testing procedures", call.=FALSE)
+  if(!type%in%c("bic","aic") && G>1) stop("G>1 is allowed only with type='aic' or 'bic' ", call.=FALSE)
+  if(type=="davies") stop("type='davies' is not allowed")
   #=====================================================================
-  
   if(is.numeric(olm)){
     y<-olm
     if(missing(seg.Z)){
@@ -332,10 +341,10 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
       if(length(nomeX)==1) {
         Z<- eval(parse(text=nomeX))
       } else {
-        stop("a single segmented variable should be specified in 'seg.Z' ")
+        stop("a single stepmented variable should be specified in 'seg.Z' ")
       }
     }
-    olm <- lm(y~x)
+    olm <- lm(y~1)
   } else {
     if(!inherits(olm,"lm")) stop("'olm' does not appear a (g)lm fit")
     y<- model.response(model.frame(olm))
@@ -347,19 +356,117 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
     #browser()
     if(missing(seg.Z)){
       nomeX <- setdiff(all.vars(formula(olm)), nomeY)
-      if(length(nomeX)==0 || length(nomeX)>1 || any(is.na(nomeX))) stop("I cannot determine the segmented variable")
+      if(length(nomeX)==0 || length(nomeX)>1 || any(is.na(nomeX))) stop("I cannot determine the stepmented variable")
       seg.Z<- as.formula(paste("~", nomeX ))
-      Z <- olm$model[[nomeX]]
-      if(!is.numeric(Z)) stop("The variable in the starting model does not appear to be numeric")
+      Z <- olm$Z[,nomeX]
     } else {
       if(length(all.vars(seg.Z))>1) stop("Multiple variables are not allowed in seg.Z")
       nomeX<-all.vars(seg.Z)
-      Z <- if(nomeX%in%all.vars(formula(olm))) olm$model[[nomeX]] else eval(parse(text=nomeX)) 
+      Z <- if(nomeX%in%all.vars(formula(olm))) olm$Z[,nomeX] else eval(parse(text=nomeX)) 
     }
   }
+  
+  if(is.matrix(Z) && ncol(Z)>=2){
+    if(!type%in%c("bic","aic")) stop("If a matrix is supplied, only 'bic' or 'aic' allowed in type")
+    sel.psiZ<-function(y, X, type="bic", a=1, msg=FALSE){
+      if(type=="bic"){
+        BIC.f<-function(obj, a=1, Cn=1){
+          #Se a=1 questo e' il BIC classico (a meno di una costante)
+          n <-length(obj$residuals)
+          r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*(log(n)^a)*Cn 
+          r
+        }
+      } else {
+        BIC.f<-function(obj, a=1, Cn=1){
+          #Questo e' l'AIC (a meno di una costante)
+          n <-length(obj$residuals)
+          r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*2
+          r
+        }
+      }
+      
+      X0<-X
+      p0 <- ncol(X0) #n. variabili
+      #browser()
+      oALL<-nomiZ<-risBIC <- NULL
+      nomiX<-colnames(X)
+      if(is.null(nomiX)) nomiX<- paste(1:ncol(X)) 
+      nomiZ[[length(nomiZ)+1]] <-nomiX
+      #browser()
+      npsiV <- rep(Kmax, p0)
+      idVar<- 1:p0 
+      idVarPsi <- rep(1:p0, each=Kmax) #se Kmax e' vettore metti rep(1:p0, Kmax) 
+      if(msg) cat(" Assessing no. of variables: ")
+      for(i in 1:sum(npsiV)){ #ncol(X)
+        #if(i==5) 
+        #browser()
+        if(msg) cat("", if(is.null(ncol(X0))) 1 else ncol(X0),".." )  
+        oALL[[length(oALL)+1]]<- object <- stepreg(y ~ seg(X0, as.numeric(npsiV)))
+        risBIC[length(risBIC)+1]<-BIC.f(object, a=a, Cn=Cn)
+        if(!is.matrix(X0)) break
+        nomiU<- object$nameUV$U
+        p <- length(object$coefficients)
+        se<- sqrt(diag(chol2inv(object$qr$qr[1:p, 1:p, drop = FALSE]))) #unscaled
+        names(se) <- names(object$coefficients)
+        se<- se[nomiU]
+        d<-object$coefficients[nomiU]
+        idU<-which.min(abs(d)/se)
+        #nomiZ[[length(nomiZ)+1]] <-nomiX <- nomiX[-idU]
+        idVarPsi <- idVarPsi[-idU]
+        drop.X<-setdiff(idVar,idVarPsi)
+        if(length(drop.X)>0){
+          id.drop.X <- match(drop.X, idVar)
+          idVar <- idVar[-id.drop.X]
+          X0<-X0[,-id.drop.X]
+          npsiV<- npsiV[-id.drop.X]
+        } else {
+          npsiV<- tapply(idVarPsi, idVarPsi, length)
+        }
+        nomiZ[[length(nomiZ)+1]] <-idVarPsi
+      }
+      
+      #browser()
+      obj<-list(residuals=y-mean(y), df.residual=length(y)-1)
+      if(msg) cat(" 0\n")
+      bic.values <- c(risBIC, BIC.f(obj, a=a, Cn=Cn))
+      names(bic.values)<-paste(sum(rep(Kmax, p0)):0) #paste(ncol(X):0)
+      #sapply(nomiZ,function(.x)length(unique(.x)))
+      id<-which.min(bic.values)
+      
+      #browser()
+      if(id==length(bic.values)){
+        cat("no variable selected\n")
+        return(lm(y~1))
+      } else {
+        if(msg) cat(paste("", length(nomiZ[[id]]), "selected terms:", paste(nomiX[nomiZ[[id]]], collapse=" "), collapse =""),"\n")
+        #if(msg) cat(paste("", length(nomiZ[[id]]), "selected variables:", paste(nomiZ[[id]], collapse=" "), " with no. of breaks:",  , collapse =""),"\n")
+        r <- oALL[[id]]
+      }
+      #browser()
+      mm<-cbind(as.numeric(names(bic.values)), c(sapply(nomiZ, function(.x)length(unique(.x))),0),bic.values)
+      colnames(mm)<-c("no. jumpoints", "no. different Xj", "BICvalue")
+      r$selection.psi<-list(bic.values=t(mm), npsi=nrow(r$psi))
+      r
+    } #end sel.psiZ
+    o<-sel.psiZ(y, Z, type, a=a, msg=msg)
+    #browser()
+    if(plot.ic) {
+          plot(o$selection.psi$bic.values[1,], o$selection.psi$bic.values[3,], 
+                    type="o", xlab="Number of jumpoints", ylab=paste(type, "values"), xaxt="n")
+          axis(1, at=o$selection.psi$bic.values[1,])
+          axis(3, at=o$selection.psi$bic.values[1,], labels=o$selection.psi$bic.values[2,], cex.axis=.6)
+          #browser()
+          mtext("Number of different variables", 3, cex=.6, line=2)
+          points(o$selection.psi$npsi, min(o$selection.psi$bic.values[3,]), pch=19, cex=1.1)
+    }
+    return(o)
+  }
+  
+  
+  
   m1 <-min(Z)
   m2 <-max(Z)
-
+  
   if(is.null(th)) th <- diff(range(Z))/100
 
   if(G==1){  
@@ -381,39 +488,73 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
       }
       R
     }
+    
     #browser()
+    
+    # if(is.numeric(olm)){
+    #   y<-olm
+    #   Z<-x<- 1:length(y)
+    #   olm <- lm(y~1)
+    # } else {
+    #   if(missing(seg.Z)){
+    #     nomeX <- "index" #all.vars(formula(olm))[2]
+    #     if(length(nomeX)>1 || any(is.na(nomeX))) stop("I cannot determine the stepmented variable")
+    #     seg.Z<- as.formula(paste("~", nomeX ))
+    #     Z <- 1:length(olm$fitted.values) #olm$model[[nomeX]]
+    #   } else {
+    #     if(length(all.vars(seg.Z))>1) stop("Multiple variables are not allowed in seg.Z")
+    #     Z<- olm$Z[,all.vars(seg.Z),drop=TRUE]
+    #   }
+    # }
     if(type%in%c("bic","aic")){
+      #BIC.f<-if(type=="bic") BIC else AIC
+      if(type=="bic"){
+        BIC.f<-function(obj, a=1, Cn=1){
+          #Se a=1 questo e' il BIC classico (a meno di una costante)
+          n <-length(obj$residuals)
+          r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*(log(n)^a)*Cn 
+          r
+        }
+      } else {
+        BIC.f<-function(obj, a=1, Cn=1){
+          #Questo e' l'AIC (a meno di una costante)
+          n <-length(obj$residuals)
+          r <- n*log(sum(obj$residuals^2)/n) + (n-obj$df.residual)*2
+          r
+        }
+      }
       control1<-control
-      control1$n.boot = 0
+      control1$n.boot = 8
       control1$tol <- .001 #default e' .00001
-      control1$alpha<-.01 #se lo aumenti puo' non funzionare bene se ci sono molti psi da selezionare..
+      control1$alpha<-.01
       ICname<- if(type=="bic") "BIC" else "AIC"
-      BIC.f<-if(type=="bic") BIC else AIC
-      bicM0 <- BIC.f(olm)
+      
+      bicM0 <- BIC.f(olm,a=a,Cn=Cn)
       
       Kmax <- min(floor((olm$df.residual-1)/2), Kmax)
       
       npsi<-1:Kmax
-      startpsi<-vector("list", length(npsi))  
+      startpsi<-ris<-vector("list", length(npsi))  
       conv<-bic.values<- rep(NA, length(npsi))
       
       if(!is.null(olm$call$data)) assign(paste(olm$call$data), eval(olm$call$data, envir=parent.frame() ))
       
       npsiVeri<-0
       #fit with 1 breakpoint
-      .a<-capture.output(os<- suppressWarnings(try(segmented(olm, seg.Z, npsi=1, control=control1), silent=TRUE)))
+      .a<-capture.output(os<- suppressWarnings(try(stepmented(olm, seg.Z, npsi=1, control=control1), silent=TRUE)))
       ris<- NULL
       ris[[1]] <- os #<- suppressWarnings(try(segmented(olm, seg.Z, npsi=1, control=control1), silent=TRUE))
       #if fails try boot restating
       if(inherits(os, "try-error")) {
-        .a <- capture.output(os<- suppressWarnings(try(segmented(olm, seg.Z, npsi=1, control=control), silent=TRUE)))
+        .a <- capture.output(os<- suppressWarnings(try(stepmented(olm, seg.Z, npsi=1, control=control), silent=TRUE)))
         ris[[1]]<- os
       }
       
-      if(inherits(os, "segmented")){
-        #if(is.null(th)) th <- drop(diff(os$rangeZ)/100)
-        bic.values[1]<- BIC.f(os)
-        Z<- os$model[,os$nameUV$Z]
+      if(inherits(os, "stepmented")){
+        if(is.null(th)) th <- drop(diff(os$rangeZ)/100)
+        bic.values[1]<- BIC.f(os,a=a,Cn=Cn)
+        #Z<- os$model[,os$nameUV$Z]
+        Z<- os$Z[,os$nameUV$Z]
         estpsi <- os$psi[,"Est."]
         M<-matrix(c(m1 ,rep(estpsi, each=2), m2), ncol=2, nrow=length(estpsi)+1, byrow=TRUE)
         psi0 <- sum(M[which.max(apply(M,1,diff)),])/2
@@ -421,11 +562,13 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
         conv[1] <- 1
         npsiVeri[length(npsiVeri)+1]<- length(estpsi)
       } else {
+        m1 <-min(Z)
+        m2 <-max(Z)
         estpsi <- (m1+m2)/2
         M<-matrix(c(m1 ,rep(estpsi, each=2), m2), ncol=2, nrow=length(estpsi)+1, byrow=TRUE)
         #psi0 <- sum(M[which.max(apply(M,1,diff)),])/2
         startpsi[[1]] <- estpsi
-        bic.values[1]<- BIC.f(olm)+1
+        bic.values[1]<- BIC.f(olm,a=a,Cn=Cn)+1
         conv[1] <- 0
         npsiVeri[length(npsiVeri)+1]<- 1
       }
@@ -440,18 +583,21 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
         #==========================================================================================
         #= inizio for
         #browser()
+        
         for(i in 2:Kmax){
-          #source("C:/dati/lavori/segmented/segIntermedio/segmented/R/selgmented.R")
-          #if(i==3) browser()
-          .a <- capture.output(os<-suppressWarnings(try(segmented(olm, seg.Z, psi=startpsi[[i-1]], control=control1), silent=TRUE)))
+          #if(i==14) 
+          #browser()
+          .a <- capture.output(os<-suppressWarnings(try(stepmented(olm, seg.Z, psi=startpsi[[i-1]], control=control1), silent=TRUE)))
+          #ris[[i]]<- os
           if(msg) {
             flush.console()
             cat(paste(i,".. "))
           }
-          if(inherits(os, "segmented")) {
+          
+          if(inherits(os, "stepmented")) {
             conv[i]<-1
             estpsi <- os$psi[,"Est."]
-            bic.values[i]<- BIC.f(os) #-2*logLik(ris[[i]]))+ edf*log(n)*Cn
+            bic.values[i]<- BIC.f(os,a=a,Cn=Cn) #-2*logLik(ris[[i]]))+ edf*log(n)*Cn
             ris[[length(ris)+1]]<- os
             npsiVeri[length(npsiVeri)+1]<-length(estpsi)
             id<- which(diff(estpsi)<=th)+1
@@ -468,7 +614,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
               startpsi[[i]] <- sort(c(estpsi, psi0))
             } else {
               #aggiungi uno starting psi
-              M<- matrix(c(m1 ,rep(estpsi, each=2), m2), ncol=2, nrow=length(estpsi)+1, byrow=TRUE)
+              M<-matrix(c(m1 ,rep(estpsi, each=2), m2), ncol=2, nrow=length(estpsi)+1, byrow=TRUE)
               diffpsi <- apply(M,1,diff)
               id.max.diffpsi <- which.max(diffpsi)
               psi0 <- sum(M[id.max.diffpsi,])/2
@@ -485,14 +631,14 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
             psi0 <- sum(M[which.max(diffpsi),])/2
             start.ora<- sort(c(psi0, M[-c(which.min(diffpsi), nrow(M)),2]))
             startpsi[[i-1]] <- start.ora 
-            .a <- capture.output(os<-suppressWarnings(try(segmented(olm, seg.Z, psi=start.ora, control=control1), silent=TRUE)))
-            if(!inherits(os, "segmented")) { #vai con il boot restrat
-              .a <- capture.output(os<-suppressWarnings(try(segmented(olm, seg.Z, psi=start.ora, control=control), silent=TRUE)))
+            .a <- capture.output(os<-suppressWarnings(try(stepmented(olm, seg.Z, psi=start.ora, control=control1), silent=TRUE)))
+            if(!inherits(os, "stepmented")) { #vai con il boot restrat
+              .a <- capture.output(os<-suppressWarnings(try(stepmented(olm, seg.Z, psi=start.ora, control=control), silent=TRUE)))
             }
-            if(inherits(os, "segmented")) {
+            if(inherits(os, "stepmented")) {
               conv[i]<-1
               estpsi <- os$psi[,"Est."]
-              bic.values[i]<- BIC.f(os) #-2*logLik(ris[[i]]))+ edf*log(n)*Cn
+              bic.values[i]<- BIC.f(os,a=a,Cn=Cn) #-2*logLik(ris[[i]]))+ edf*log(n)*Cn
               ris[[length(ris)+1]]<- os
               npsiVeri[length(npsiVeri)+1]<-length(estpsi)
               #aggiungi uno starting psi
@@ -509,10 +655,10 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
               conv[i]<-0
               bic.values[i]<- bic.values[i-1]+1
               M<-matrix(c(m1 ,rep(startpsi[[i-1]], each=2), m2), 
-                      ncol=2, nrow=length(startpsi[[i-1]])+1, byrow=TRUE)
+                        ncol=2, nrow=length(startpsi[[i-1]])+1, byrow=TRUE)
               diffpsi <- apply(M,1,diff)
               psi0 <- sum(M[which.max(diffpsi),])/2
-            
+              
               #aggiunge un psi ai precedenti
               startpsi[[i]] <- sort(c(startpsi[[i-1]], psi0))
               npsiVeri[length(npsiVeri)+1]<- length(startpsi[[i-1]])
@@ -531,31 +677,26 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
           if(ind1 || ind2) {earlyStop<-TRUE;break}
         } #end in for(2 in Kmax)
       
-        #browser()
-        #if(msg) cat(paste(" =>", length(psi.withCut)-length(bicVa), "unevaluated model(s) due to", stop.if, "increasing A/BIC value(s)..\n"))
-        
-        
         if(msg) cat("\n")  
       } else { #se Kmax=1
         earlyStop<-FALSE
-      }
+        }
       #npsiVeri <-sapply(ris, function(.x) if(is.list(.x))nrow(.x$psi) else NA ) #[1:i]
       #npsiVeri <- npsiVeri[!is.na(npsiVeri)]
-
+      
       #if(length(npsiVeri)!=max(npsiVeri)) {
       #  id.psi.repl<-which(diff(npsiVeri)==0)
       #  sapply(id.psi.repl, function(.x) which(npsiVeri==.x))
       #}
+      #browser()
       
       bic.valuesOrig <- bic.values 
       #bic.values<- bic.values#[1:i] #bic.values[!is.na(bic.values)]
       bic.values <- c(bicM0, bic.values)
       bic.values <- bic.values[1:length(npsiVeri)]
-
+      
       names(bic.values)<-npsiVeri
       n.psi.ok<- npsiVeri[which.min(bic.values)]
-
-      #browser()
       
       if(n.psi.ok==0){
         m<-matrix(NA,1,1, dimnames=list(NULL, "Est."))
@@ -567,28 +708,18 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
           print(bic.values)
           cat(paste("\nNo. of selected breakpoints: ", n.psi.ok, " \n"))
         }
-        bic.values=rbind(npsiVeri, bic.values)
-        rownames(bic.values)<-c("npsi", paste(ICname, "value",sep=""))
-        selection.psi <- list(bic.values=bic.values, npsi=n.psi.ok)
-        if(return.fit) {
-          #browser()
-          olm$selection.psi <- selection.psi
-          return(olm)
-          } else {
-            return(list(selection.psi=selection.psi))
-            #return(list(bic.values=bic.values, npsi=n.psi.ok))
-          }
+        return(olm)
       }
-
-      #browser()
       
-      if(Kmax==n.psi.ok && msg) warning(paste("The best",ICname, "value at the boundary. Increase 'Kmax'?"), call.=FALSE, immediate. = TRUE)
+      if(i==n.psi.ok && msg) warning(paste("The best",ICname, "value at the boundary. Increase 'Kmax'?"), call.=FALSE, immediate. = TRUE)
       id.best<- which.min(bic.values[-1])
       
+      if(!return.fit) {
+        r <- list(bic.values=bic.values, npsi=n.psi.ok)
+        return(r) 
+      }
       #browser()
       r<- r0 <- ris[[id.best]]
-      
-      #browser()
       
       rm.after.check <- 0
       all.psi<- r$psi[,"Est."]
@@ -604,14 +735,14 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
           all.psi <- all.psi[-rm.id]
           if(length(all.psi)<=0) break
           r0$call$psi=quote(all.psi)
-          .a <- capture.output(r <- suppressWarnings(try(update(r0), silent=TRUE))) #senza boot
-          if(!inherits(r,"segmented")){ #facciamo un altro tentativo..
+          .a <- capture.output(r <- suppressWarnings(try(update(r0), silent=TRUE)))
+          if(!inherits(r,"stepmented")){ #facciamo un altro tentativo..
             #r0$call$psi=all.psi
-            #control$alpha <- .005
-            r0$call$control<-control #con boot
+            control$alpha <- .005 #??????????????????????? in seg non c'e'
+            r0$call$control<-control
             .a <- capture.output(r<-suppressWarnings(try(r<-update(r0), silent=TRUE)))
           }
-          if(inherits(r,"segmented")){
+          if(inherits(r,"stepmented")){
             tU <- abs(summary(r)$coefficients[r$nameUV$U, 3])
             #rm.id <- which.min(tU[tU<=soglia])
             rm.id <- f(tU, soglia)
@@ -620,8 +751,6 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
             rm.id<-1
           }
         }
-        #browser()
-        
         if(length(all.psi)<=0 || is.null(r$psi) ) {
           n.psi.ok<-0
           r<- olm
@@ -630,16 +759,20 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
         }
       } else { #end if(check.dslope)
         #ATTENZIONE: SE NON HA SELEZIONATO BREAKPOINTS???
+    #browser()
         n.psi.ok<-length(all.psi) #in realta' gia' c'e' "n.psi.ok"
       }
-      
+        
       if(refit && length(all.psi)>0){
         r$call$psi<- all.psi
-        #control$alpha <- .005
-        r$call$control<-quote(control) #con boot
-        r <- update(r)
-      }
-
+          control$alpha <- .005 #??????????????????????? in seg non c'e'
+          r$call$control<-quote(control)
+          r <- update(r)
+        }
+        #browser()
+        #n.psi.ok<-length(r$psi[,"Est."]) #in realta' gia' c'e' "n.psi.ok"
+        
+      
       if(plot.ic) {
         if(rm.after.check!=0){
           warning(paste("Some psi have been removed due to check on the slope difference; the", ICname, "plot could be misleading"), call.=FALSE)
@@ -655,92 +788,85 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
         add.msg <- if(rm.after.check==0) " \n" else paste(" (", rm.after.check, " breakpoint(s) removed due to small slope diff)\n", sep="")
         cat(paste("\nNo. of selected breakpoints:", n.psi.ok, add.msg))
       }
-      
-      if(!return.fit) {
-        bic.values=rbind(npsiVeri, bic.values)
-        rownames(bic.values)<-c("npsi", paste(ICname, "value",sep=""))
-        r<-list(selection.psi=list(bic.values=bic.values, npsi=n.psi.ok))
-        return(r) 
-      }
-      
-      bic.values=rbind(npsiVeri, bic.values)
-      rownames(bic.values)<-c("npsi", paste(ICname, "value",sep=""))
-      r$selection.psi <- list(bic.values=bic.values, npsi=n.psi.ok)
-      if(refit) r$selection.psi$psi.before.refit <-all.psi
-      return(r)
+    bic.values=rbind(npsiVeri, bic.values)
+    rownames(bic.values)<-c("no. breakpoints", paste(ICname, "value",sep=""))
+    r$selection.psi <- list(bic.values=bic.values, npsi=n.psi.ok)
+    if(refit) r$selection.psi$psi.before.refit <-all.psi
+    return(r)
+  } else {#end aic/bic..
+    alpha.adj<-alpha/Kmax
+    p1<- if(type=="score")  pscore.test(olm, seg.Z, n.break=2, break.type="jump")$p.value else davies.test(olm)$p.value
+    p1.label<-"p-value '0 vs 2' "
+    if(p1>alpha.adj){
+      p2.label<-"p-value '0 vs 1' "
+      p2<- if(type=="score") pscore.test(olm, seg.Z, n.break=1, break.type="jump")$p.value else p1 #davies.test(olm)$p.value
+      if(!bonferroni) alpha.adj<- alpha
+      if(p2>alpha.adj) {
+        out<-olm
       } else {
-        #end aic/bic. Quindi se score o davies
-        alpha.adj<-alpha/Kmax
-        p1<- if(type=="score")  pscore.test(olm, seg.Z, n.break=2)$p.value else davies.test(olm)$p.value
-        p1.label<-"p-value '0 vs 2' "
-        if(p1>alpha.adj){
-          p2.label<-"p-value '0 vs 1' "
-          p2<- if(type=="score") pscore.test(olm, seg.Z, n.break=1)$p.value else p1 #davies.test(olm)$p.value
-          if(!bonferroni) alpha.adj<- alpha
-          if(p2>alpha.adj) {
-            out<-olm
-            } else {
-              out<-segmented(olm, seg.Z, npsi=1, control=control)
-            }
-          } else {
-            p2.label<-"p-value '1 vs 2' "
-            #################
-            #browser()
-            #MF<-build.mf(olm)
-            #olm<-update(olm, data=MF)
-            #olm$call$data<-quote(MF)
-            
-            #olm<-update(olm, data=model.frame(olm)) #questo e' necessario per far funzionare davies.test() sotto..
-            ################
-            if(type=="score") {
-              o1<-segmented(olm, seg.Z, npsi=1, control=control)
-              p2<-pscore.test(o1, seg.Z, more.break=TRUE)$p.value
-              } else {
-                #KK<-new.env()
-                #olm1<-update(olm, data=model.frame(o1))
-                #o1<-  update(o1, obj=olm1)
-                MF<-build.mf(olm)
-                olm<-update(olm, data=MF)
-                #olm$call$data<-quote(MF)
-                #olm<-update(olm, data=model.frame(olm)) #questo e' necessario per far funzionare davies.test() sotto..
-                o1 <- segmented(olm, seg.Z, npsi = 1, control = control)
-                p2<-  davies.test(o1, seg.Z)$p.value
-              }
-            if(!bonferroni) alpha.adj<-alpha 
-            if(p2>alpha.adj) {
-              o1<-segmented(olm, seg.Z, npsi=1, control=control)
-              #cat("One breakpoint detected\n")
-              out<-o1
-              } else {
-                  o2<-segmented(olm, seg.Z, npsi=2, control=control)
-                  #cat("Two breakpoint detected\n")
-                  out<-o2
-              }
-          }
-        n.psi.ok<-length(out$psi[,"Est."])
-        x2<- -2*sum(log(c(p1,p2)))
-        p<-1-pchisq(x2, df=2*2)
-        r<-list(pvalues=c(p1=p1, p2=p2, p=p), npsi=n.psi.ok)
-        attr(r, "label")<- p2.label
-        if(!return.fit) {
-          return(r)
-        }
-        if(msg){
-          cat("Hypothesis testing to detect no. of breakpoints\n")
-          type <- chartr(strsplit(type,"")[[1]][1], toupper(strsplit(type,"")[[1]][1]), type) #serve per render maiuscola la prima lettera..
-          cat(paste("statistic:", type,"  level:", alpha, "  Bonferroni correction:", bonferroni, "\n"))
-          cat(paste(p1.label, "= ", format.pval(p1,4), "   ", p2.label, "= ", format.pval(p2,4) ,
-                " \nOverall p-value = ", format.pval(p,4),"\n",sep=""))
-          cat(paste("No. of selected breakpoints: ", n.psi.ok, "\n"))
-        }
-        out$selection.psi<-r
-        return(out)
-      }#end if(score o davies)
-    } else { #se G>1
-      r <- sel1(y=y, x=Z, G=G, Kmax=Kmax, type=type, th=th, refit=refit, check.dslope = check.dslope, 
-              msg=msg, bonferroni=bonferroni, olm=olm, control=control)
-    r
+        out<-stepmented(olm, seg.Z, npsi=1, control=control)
+      }
+    } else {
+      p2.label<-"p-value '1 vs 2' "
+      #################
+      #browser()
+      #MF<-build.mf(olm)
+      #olm<-update(olm, data=MF)
+      #olm$call$data<-quote(MF)
+      
+      #olm<-update(olm, data=model.frame(olm)) #questo e' necessario per far funzionare davies.test() sotto..
+      ################
+      
+      if(type=="score") {
+        o1<-stepmented(olm, seg.Z, npsi=1, control=control)
+        p2<-pscore.test(o1, seg.Z, more.break=TRUE, break.type="jump")$p.value
+      } else {
+        #KK<-new.env()
+        #olm1<-update(olm, data=model.frame(o1))
+        #o1<-  update(o1, obj=olm1)
+        MF<-build.mf(olm)
+        olm<-update(olm, data=MF)
+        # olm$call$data<-quote(MF)
+        #olm<-update(olm, data=model.frame(olm)) #questo e' necessario per far funzionare davies.test() sotto..
+        
+        o1 <- stepmented(olm, seg.Z, npsi = 1, control = control)
+        p2<-  davies.test(o1, seg.Z)$p.value
+      }
+      if(!bonferroni) alpha.adj<-alpha 
+      if(p2>alpha.adj) {
+        o1<-stepmented(olm, seg.Z, npsi=1, control=control)
+        #cat("One breakpoint detected\n")
+        out<-o1
+      } else {
+        o2<-stepmented(olm, seg.Z, npsi=2, control=control)
+        #cat("Two breakpoint detected\n")
+        out<-o2
+      }
     }
+    n.psi.ok<-length(out$psi[,"Est."])
+    x2<- -2*sum(log(c(p1,p2)))
+    p<-1-pchisq(x2, df=2*2)
+    r<-list(pvalues=c(p1=p1, p2=p2, p=p), npsi=n.psi.ok)
+    attr(r, "label")<- p2.label
+    if(!return.fit) {
+      return(r)
+    }
+    if(msg){
+      cat("Hypothesis testing to detect no. of breakpoints\n")
+      type <- chartr(strsplit(type,"")[[1]][1], toupper(strsplit(type,"")[[1]][1]), type) #serve per render maiuscola la prima lettera..
+      cat(paste("statistic:", type,"  level:", alpha, "  Bonferroni correction:", bonferroni, "\n"))
+      cat(paste(p1.label, "= ", format.pval(p1,4), "   ", p2.label, "= ", format.pval(p2,4) ,
+                " \nOverall p-value = ", format.pval(p,4),"\n",sep=""))
+      cat(paste("No. of selected breakpoints: ", n.psi.ok, "\n"))
+    }
+    out$selection.psi<-r
+    return(out)
+  }
+  } else { #se G>1
+    r <- sel1(y=y, x=Z, G=G, Kmax=Kmax, type=type, th=th, refit=refit, check.dslope = check.dslope, 
+              msg=msg, bonferroni=bonferroni, olm=olm, control=control, a=a, Cn=Cn)
+    
+    r
+  }
 }
-
 
