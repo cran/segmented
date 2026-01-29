@@ -156,7 +156,7 @@ stelpmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davie
         list.fit[[length(list.fit)+1]] <- os0
         list.psi[[length(list.psi)+1]]<- os0$psi[,"Est."]
         if(length(os0$psi[,"Est."])==1) break
-        tvalueU<- abs(summary(os0)$coefficients[os0$nameUV$U,3])
+        tvalueU<- abs(summary(os0, type="none")$coefficients[os0$nameUV$U,3])
         idU <- which.min(abs(tvalueU))
         #man mano che rimuovi i psi, se il t della diffSlope del psi che stai rimuovendo e' > soglia, fermati!
         ## allora non continuare a toglierli..
@@ -248,7 +248,7 @@ stelpmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davie
         #browser()
         if(check.dslope){
           soglia <- if(!bonferroni) qnorm(1-alpha/2) else qnorm(1-alpha/(2* length(r$nameUV$U))) 
-          tU <- abs(summary(r)$coefficients[r$nameUV$U, 3])
+          tU <- abs(summary(r, type="none")$coefficients[r$nameUV$U, 3])
           rm.id <- f(tU, soglia)
           while(length(rm.id)>0){
             rm.after.check <- rm.after.check+1
@@ -263,7 +263,7 @@ stelpmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davie
               .a <- capture.output(r<-suppressWarnings(try(r<-update(r0), silent=TRUE)))
             }
             if(inherits(r,"stepmented")){
-              tU <- abs(summary(r)$coefficients[r$nameUV$U, 3])
+              tU <- abs(summary(r, type="none")$coefficients[r$nameUV$U, 3])
               #rm.id <- which.min(tU[tU<=soglia])
               rm.id <- f(tU, soglia)
               all.psi<-r$psi[,"Est."]
@@ -725,7 +725,7 @@ stelpmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davie
       all.psi<- r$psi[,"Est."]
       if(check.dslope){
         soglia <- if(!bonferroni) qnorm(1-alpha/2) else qnorm(1-alpha/(2* length(r$nameUV$U))) 
-        tU <- abs(summary(r)$coefficients[r$nameUV$U, 3])
+        tU <- abs(summary(r, type="none")$coefficients[r$nameUV$U, 3])
         #if(length(tU[tU<=soglia])==length(tU)) #anche se tutti i t<= soglia fai comunque la procedura, perche' 
         #riducendo i psi, i tU potrebbero cambiare
         #rm.id <- which.min(tU[tU<=soglia])
@@ -743,7 +743,7 @@ stelpmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davie
             .a <- capture.output(r<-suppressWarnings(try(r<-update(r0), silent=TRUE)))
           }
           if(inherits(r,"stepmented")){
-            tU <- abs(summary(r)$coefficients[r$nameUV$U, 3])
+            tU <- abs(summary(r, type="none")$coefficients[r$nameUV$U, 3])
             #rm.id <- which.min(tU[tU<=soglia])
             rm.id <- f(tU, soglia)
             all.psi<-r$psi[,"Est."]
