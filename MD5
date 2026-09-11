@@ -1,6 +1,6 @@
-3df0ba0a2da2de626a5311d753ae06de *DESCRIPTION
+9b7159cce5a1f17c0c96ef4868b597ac *DESCRIPTION
 b8c0d9f0697d55a0d5d157b0599c6afd *NAMESPACE
-bc40270c97a4b0796d75e46916089dd7 *NEWS
+f5452e61627b45e831cbb9d80879d7d6 *NEWS
 7f9cbdb9dec5d8b633589f7bf3758f12 *R/aapc.r
 fa6d75b931abb040a6da324dce80147c *R/broken.line.r
 ac4704d275166b0b4ad149e994701429 *R/coef.segmented.r
@@ -18,7 +18,7 @@ d42b36090f870a32beda4a6d1b365f5c *R/lines.stepmented.R
 c14cbe109767f8f8f79b3f71c8c00440 *R/logLik.segmented.lme.r
 a0bca571dc1de664492d7b14d5a6117d *R/model.matrix.segmented.r
 422f89a5f7368305904b599d593303db *R/model.matrix.stepmented.r
-c392d0a3324216f38297fbac666217ad *R/plot.segmented.lme.r
+579c6fed1cddf0c3c3c706e55e0bd998 *R/plot.segmented.lme.r
 a6342dad177a0f58457eb949e399fc76 *R/plot.segmented.r
 ddacf8f19e9192baa79e7f7fe9636f00 *R/plot.stepmented.r
 4c0f71531e13426ee80c86fe4ada36e4 *R/points.segmented.r
@@ -53,10 +53,10 @@ fb0c87cd5f82b35b8120f77efc140652 *R/segmented.R
 709adcac85ac994dfd12e16ee9031cf6 *R/segmented.default.r
 c90963d12efcb64dbf15c8d4e4271907 *R/segmented.glm.R
 fb9ba2e95854c85572cadb9684dadcd1 *R/segmented.lm.R
-733f7effc727c83b7121c0efa5199d4d *R/segmented.lme.r
+564b2936b5c4f96f3efcbac316a9036f *R/segmented.lme.r
 1e5802c31bd43f5e8d03431efbb7ecbc *R/segmented.numeric.R
-fcd8a0c131dcde468f8130284020910b *R/segreg.r
-2d50bdab5058e69dff627988563a4910 *R/selgmented.R
+1aa04a0af6d800098685b6bc552b5832 *R/segreg.r
+81d06f217955c287ce5e0a309ad88740 *R/selgmented.R
 7548de190e0d7d67c0c1c0710b4d7bac *R/slope.R
 376d9e7dd84143d833546efcefe8180f *R/stelpmented.R
 2b25cebd1f4db6cc0ba5207f07a8eaae *R/step.glm.fit.boot.r
@@ -113,7 +113,7 @@ ee9ae4505bc6c2211e72febc1b60c2e0 *man/pwr.seg.Rd
 9e324c810e8fbeaa0d9b9cb0f611a66b *man/seg.Rd
 c39b4d4dcb018beba72f8cd0b411620a *man/seg.control.Rd
 72b357bcc101f027fe7c1acf25cf050d *man/seg.lm.fit.Rd
-29a8da879b9ce75c5518a66171981110 *man/segmented-package.Rd
+388c1a846c52c763fa175820f77dc5a7 *man/segmented-package.Rd
 6db3a0651c07a5aca5cc88efcb16ea30 *man/segmented.Rd
 ab0e84f4849184847c82654f043545ce *man/segmented.lme.Rd
 eb0934437276353a768042b738bbf242 *man/segreg.Rd

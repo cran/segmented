@@ -826,6 +826,12 @@ segreg <- function(formula, data, subset, weights, na.action, family=lm, offset,
       objV$nameUV$formulaSegAllTerms<- paste("~", paste(sapply(all.seg.form, function(.x) strsplit(paste(.x), "~"))[2,],collapse="+"))
       objV$formulaLin<- formulaLin
       objV$id.psi.group<- id.psi.group
+      
+      #name.Z <- unlist(nomiTerminiSEG) 
+      #nomiSeg
+      if(length(nomiSeg)<=1) objV$id.group <- -rowSums(as.matrix(V)) #solo se c'e' 1 esplicativa
+      
+      
       objV$psi[,"Initial"]<-NA
       if(n.boot>0) objV$seed <- seed
       #browser()

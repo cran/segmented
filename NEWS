@@ -6,9 +6,16 @@
 
 
 ===============
+version 2.2-2 (2026-09-10)
+===============
+* plot.segmented.lme() was not working correctly for fits called with argument psi.link="logit". Thanks to Noah Degoulange for reporting.
+* selgmented() did not work when using type="davies" (thanks to Daniel Moriarity and Sara Schwind for reporting).
+
+
+===============
 version 2.2-1 (2026-01-29)
 ===============
-* seg() in stepmented() accepts a matrix to select a changepoint in each column of X
+* seg() in stepmented() accepts a matrix to select a changepoint in each column
 
 
 ===============

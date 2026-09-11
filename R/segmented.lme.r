@@ -749,6 +749,8 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     #        ki<-rep(ki,ni)
     ###########################
     
+    
+
     etai<-kappa0i
     if(id.z.psi) {
       kappa.old<-kappa #length=1
@@ -784,6 +786,8 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #---------------------------------------------------------------------------------------
   #Adesso devi fare in modo che le linee *veramente si uniscano (no salti), boot restarting e
   #valore di logLik ed infine aggiorna obj<-eval(call.ok)
+  
+  #browser()
   
   fixed.noG<-if(is.null(nomiG)) update.formula(call.ok$fixed, paste(".~.-G0",sep="")) 
   else update.formula(call.ok$fixed, paste(".~.-G0-",paste(nomiG, collapse="-"),sep=""))
@@ -822,6 +826,8 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   
   #if(it >= (it.max+1)) warning("max no. of iterations achieved.. refit.boot() suggested", call. = FALSE)
   psi.new<-psi.ex[cumsum(ni)]
+  
+  #browser()
   
   #5/7/18: rownames(ranef(obj)[[J]]) sono del tipo "1/1", cio? tengono conto di eventuali nested.. 
   #names(psi.new)<-rownames(ranef(obj)[[J]])
@@ -894,7 +900,11 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #browser()
   #RIS$misc$matrix.psi<- 
   if("G0" %in% dimnames(RE)[[3]]) {
-    RIS$misc$matrix.psi<- cbind(fixed=RIS$fixed.psi,drop(RE[cumsum(ni), , "G0", drop = FALSE]))
+    matrix.psi=cbind(RIS$fixed.eta.psi, drop(RE[cumsum(ni), , "G0", drop = FALSE]))
+    matrix.psi=sapply(1:ncol(matrix.psi), function(.x) rowSums(matrix.psi[,1:.x, drop=FALSE]))
+    if(psi.link=="logit") matrix.psi <- apply(matrix.psi, 2, function(.x)inv.logit(.x, min.Z, max.Z) ) 
+    RIS$misc$matrix.psi<- matrix.psi
+    #RIS$misc$matrix.psi<- cbind(fixed=RIS$fixed.psi,drop(RE[cumsum(ni), , "G0", drop = FALSE]))
     colnames(RIS$misc$matrix.psi) <- c("fixed", names(obj$groups))
     rownames(RIS$misc$matrix.psi) <- names(psi.new)#rownames(ranef(obj)[[J]])    
   } else {

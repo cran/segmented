@@ -55,7 +55,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
     }
     #---------------------
     if (missing(level)) level <- ncol(obj[[2]]$groups)
-    psi <- rowSums(obj$misc$matrix.psi[, 1:(level + 1), drop = FALSE])
+    #psi <- rowSums(obj$misc$matrix.psi[, 1:(level + 1), drop = FALSE])
+    psi <- obj$misc$matrix.psi[, 1:(level + 1), drop = TRUE]
     if (level == 0) {
       names(psi) <- NULL
     } else {
@@ -118,7 +119,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
     # psi<- obj$psi.i[[paste(id)]] in realt? si possono ottenere i psi a diversi livelli
     # di nested
     psi <- if (ncol(obj$misc$matrix.psi) <= 1)
-      obj$misc$matrix.psi[, 1] else rowSums(obj$misc$matrix.psi[, 1:(level + 1)])
+      obj$misc$matrix.psi[, 1] else obj$misc$matrix.psi[, (level + 1)]#rowSums(obj$misc$matrix.psi[, 1:(level + 1)])
     # se ci sono nested, i nomi di psi saranno sempre con '/' che non e' coerente se
     # level=1
     if (level < ncol(rnfGrp)) {
@@ -626,6 +627,9 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
         #opz$pop<-FALSE
         #do.call(plotSegLme, opz)
       }
+      
+      #browser()
+      
       box()
       if(pop) plotmarg(obj, add=TRUE, col=p.col, lwd=p.lwd, lty=p.lty)
       if(ci.psi.pop>=0){

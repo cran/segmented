@@ -671,7 +671,7 @@ selgmented <-function(olm, seg.Z, Kmax=10, type=c("bic", "aic", "score", "davies
       } else {
         #end aic/bic. Quindi se score o davies
         alpha.adj<-alpha/Kmax
-        p1<- if(type=="score")  pscore.test(olm, seg.Z, n.break=2)$p.value else davies.test(olm)$p.value
+        p1<- if(type=="score")  pscore.test(olm, seg.Z, n.break=2)$p.value else davies.test(olm, seg.Z)$p.value
         p1.label<-"p-value '0 vs 2' "
         if(p1>alpha.adj){
           p2.label<-"p-value '0 vs 1' "
