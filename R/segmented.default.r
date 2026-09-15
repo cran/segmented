@@ -266,7 +266,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
       names(fixed.psi)<-all.vars(seg.Z)
     }
     if(is.list(fixed.psi)) {
-      if(!(names(fixed.psi) %in% all.vars(seg.Z))) stop("names(fixed.psi) is not a subset of variables in 'seg.Z' ")
+      if(any(!(names(fixed.psi) %in% all.vars(seg.Z)))) stop("names(fixed.psi) is not a subset of variables in 'seg.Z' ")
     } else {
       stop(" 'fixed.psi' has to be a named list ")
       } 
