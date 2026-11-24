@@ -9,6 +9,7 @@ segmented.default<-function (obj, seg.Z, psi, npsi, fixed.psi=NULL, control = se
 #    Fo <- as.formula(Fo.charac)
 #    Fo.conDisp <- as.formula(paste(Fo.charac,nomiX.disp,sep="|"))
     #}
+  if("random"%in%names(list(...))) stop("segmented.lme() should be called explicitly..")
   if(is.ts(obj)) {
     o<-segmented.numeric(obj, seg.Z, psi, npsi, fixed.psi, control, model, keep.class=FALSE, ...)
     return(o)

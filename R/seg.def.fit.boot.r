@@ -3,7 +3,27 @@ seg.def.fit.boot<-function(obj, Z, PSI, mfExt, opz, n.boot=10, size.boot=NULL, j
 #random se TRUE prende valori random quando e' errore: comunque devi modificare qualcosa (magari con it.max)
 #     per fare restituire la dev in corrispondenza del punto psi-random
 #nonParm. se TRUE implemneta il case resampling. Quello semiparam dipende dal non-errore di
-      extract.psi<-function(lista){
+      
+  get_rand_state <- function() {
+    # Using `get0()` here to have `NULL` output in case object doesn't exist.
+    # Also using `inherits = FALSE` to get value exactly from global environment
+    # and not from one of its parent.
+    get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  }
+  
+  set_rand_state <- function(state) {
+    # Assigning `NULL` state might lead to unwanted consequences
+    if (!is.null(state)) {
+      assign(".Random.seed", state,  envir = .GlobalEnv,  inherits = FALSE)
+    }
+  }
+  
+  
+  old_state <- get_rand_state()
+  on.exit(set_rand_state(old_state))
+  
+  #-------------
+  extract.psi<-function(lista){
 #serve per estrarre il miglior psi..
           dev.values<-lista[[1]][-1] #remove the 1st one referring to model without psi
           psi.values<-lista[[2]][-1] #remove the 1st one (NA)

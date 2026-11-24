@@ -5,7 +5,7 @@
 Confidence intervals in segmented mixed models 
 }
 \description{
-Computes confidence intervals for all regression parameters, including the the breakpoint, in a fitted `segmented mixed' model.
+Computes Wald-based confidence intervals for all regression parameters, including the the breakpoint, in a fitted `segmented mixed' model.
 }
 \usage{
 \method{confint}{segmented.lme}(object, parm, level = 0.95, obj.boot, ...)
@@ -41,9 +41,9 @@ A matrix (or a list of matrices if bootstrap ci are requested) including the con
 \author{
 Vito Muggeo
 }
-%\note{
-%%  ~~further notes~~
-%}
+\note{
+The CI's are computed using the Wald statistic assumed to have a Normal distributed. This is reliable for the simple linear parameters and for the other parameters (coefficients of terms \code{G}) only if the segmented relationship is clear cut with changepoint in the middle of the covariate range. 
+}
 
 \section{Warning }{
 All the functions for segmented mixed models (*.segmented.lme) are still at an experimental stage 

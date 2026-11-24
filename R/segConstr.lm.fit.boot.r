@@ -19,6 +19,25 @@ segConstr.lm.fit.boot <- function(y, XREG, Z, PSI, w, offs, opz, n.boot=10, size
 #      ss
 #      }
 #--------
+  get_rand_state <- function() {
+    # Using `get0()` here to have `NULL` output in case object doesn't exist.
+    # Also using `inherits = FALSE` to get value exactly from global environment
+    # and not from one of its parent.
+    get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  }
+  
+  set_rand_state <- function(state) {
+    # Assigning `NULL` state might lead to unwanted consequences
+    if (!is.null(state)) {
+      assign(".Random.seed", state,  envir = .GlobalEnv,  inherits = FALSE)
+    }
+  }
+  
+  
+  old_state <- get_rand_state()
+  on.exit(set_rand_state(old_state))
+  
+  #---------
   extract.psi<-function(lista){
     #serve per estrarre il miglior psi..
     dev.values<-lista[[1]]

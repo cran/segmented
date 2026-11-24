@@ -28,6 +28,12 @@ vcov.segmented.lme <-function(object, B=0, ret.b=FALSE, ...){
     idLevels<-levels(fit$lme.fit$groups[[ncol(rnfGrp)]])
     N<-nlevels(fit$lme.fit$groups[[ncol(rnfGrp)]]) #n. of "subjects"
     
+    #e se e' un oggetto LM?
+    #=================================================
+    #newData<- mf
+    # newData<-if(isLM || isCallLM) fit$lme.fit$model else fit$lme.fit$data
+    #=========================================================
+
     nomeRispo<-all.vars(formula(fit$lme.fit))[1]
     #AGGIUSTA la risposta
     newData[,nomeRispo]<-newData[,nomeRispo] + fit$Off
@@ -61,14 +67,15 @@ vcov.segmented.lme <-function(object, B=0, ret.b=FALSE, ...){
       newD$y.b<- newD[,nomeRispo]
       
       fit.b<-try(suppressWarnings(eval(call.b)), silent=TRUE) #envir=newD)
+      #browser()
       if(is.list(fit.b)){
         Tt<- summary(fit.b[[1]])$tTable #usa summary.lme
         COEF[i,]<-Tt[,1] #coef
         SE[i,]<-Tt[,2] #se
-        FIT[i,]<-fitted.segmented.lme(fit.b, level=0)
+        #FIT[i,]<-fitted.segmented.lme(fit.b, level=0)
       }
     }
-    r<-list(coef=rbind(est,COEF),se=rbind(se,SE), fitted=rbind(fitt,FIT))
+    r<-list(coef=rbind(est,COEF),se=rbind(se,SE)) #, fitted=rbind(fitt,FIT))
     r
   }
   #--------------------

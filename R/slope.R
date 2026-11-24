@@ -23,7 +23,7 @@
     #obj[[1]] -> obj$lme.fit
     #obj[[2]] -> obj$lme.fit.noG
     #------------------
-    V<- if(is.null(vcov.)) vcov.segmented.lme(obj) else vcov. #object$lme.fit$varFix 
+    V<- if(is.null(vcov.)) vcov.segmented.lme(obj,...) else vcov. #object$lme.fit$varFix 
     if(!is.null(by) && !is.list(by)) stop("if provided, 'by' should be a (named) list of scalars")
     Z<-obj$Z 
     nomeZ<-obj$namesGZ$nameZ
@@ -39,6 +39,8 @@
       if(!all(sapply(a, length)==1)) stop("vectors in 'by' are not allowed")
       nomiOK<-const<-idList<-vector("list", length(a))
       values<-vector(,length(a))
+      
+      #browser()
       
       for(i in 1:length(a)) {
         nomiOK[i]<-nomeOK <- if(is.character(a[[i]])) paste(names(a[i]),a[[i]], sep="") else names(a[i])
@@ -97,7 +99,7 @@
     ci<-cbind(r-zalpha*SE.fit, r+zalpha*SE.fit)
     #colnames(ci)<-paste("CI", "(", conf.level * 100,"%", ")", c(".low", ".up"), sep = "")
     colnames(ci)<-paste(" ", conf.level, c(".low", ".up"), sep = "")
-    ris<-cbind("Est."=r, "St.Err"=SE.fit, "t value"=r/SE.fit, ci)
+    ris<-cbind("Est."=r, "St.Err"=SE.fit, "t value"=round(r/SE.fit,3), ci)
     rownames(ris)<-c("leftSlope", "rightSlope")
     #ris
     #  rev.sgn=FALSE

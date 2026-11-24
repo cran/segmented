@@ -8,7 +8,7 @@
 Computes fitted values at different levels of nesting for segmented mixed objects
 }
 \usage{
-\method{fitted}{segmented.lme}(object, level = 1, sort=TRUE, ...)
+\method{fitted}{segmented.lme}(object, level = 1, sort=FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

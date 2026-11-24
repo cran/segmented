@@ -30,7 +30,7 @@ confint.segmented.lme <- function(object, parm, level = 0.95, obj.boot, ...) {
     if (is.null(opz$B)) {
       r <- object$lme.fit$varFix
       SE <- sqrt(diag(r))
-      est <- object$lme.fit$coef$fixed
+      est <- fixef.segmented.lme(object) #object$lme.fit$coef$fixed
       zalpha <- -qnorm((1 - level)/2)
       CIN <- rbind(est - zalpha * SE, est + zalpha * SE)
       rownames(CIN) <- paste(100 * c((1 - level)/2, (level + (1 - level)/2)), "%", sep = "")

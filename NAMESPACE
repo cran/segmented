@@ -2,10 +2,10 @@ import(splines)
 import(MASS)
 import(nlme)
 importFrom("grDevices", "grey","adjustcolor","colorRampPalette")
-importFrom("graphics", "abline", "axis", "box", "lines", "matlines",
+importFrom("graphics", "abline", "axis", "box", "lines", "matlines", "rug",
              "matplot", "par", "plot", "points", "polygon", "segments","smoothScatter",
            "legend","mtext", "text", "rect", "arrows")
-importFrom("stats", "spline", "approx", "as.formula", "coef", "contrasts", "family",
+importFrom("stats", "spline", "approx", "as.formula", "coef", "contrasts", "family", "rbinom","rnorm","rpois",
              "fitted", "formula", "gaussian", "glm.control", "glm.fit",
              "is.empty.model", "lm.wfit", "median", "model.frame",
              "model.matrix", "model.offset", "model.response",
@@ -20,8 +20,7 @@ importFrom("stats", "spline", "approx", "as.formula", "coef", "contrasts", "fami
 
 importFrom("utils", "flush.console", "capture.output")
 
-export(segreg, seg, segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima, segmented.numeric, 
-	segmented.lme, print.segmented.lme, summary.segmented.lme, vcov.segmented.lme, confint.segmented.lme, 
+export(breakpoint, getVarCov.segmented.lme, sim.seg, segreg, seg, segmented, segmented.default, segmented.lm, segmented.glm, segmented.Arima,    segmented.numeric, segmented.lme, print.segmented.lme, summary.segmented.lme, vcov.segmented.lme, confint.segmented.lme, 
 	logLik.segmented.lme, fixef.segmented.lme, fitted.segmented.lme, plot.segmented.lme,
 	broken.line ,confint.segmented,davies.test,pscore.test,draw.history,aapc,
 	intercept,lines.segmented,plot.segmented,print.segmented, coef.segmented,
@@ -64,6 +63,7 @@ S3method(logLik, segmented.lme)
 S3method(fixef, segmented.lme)
 S3method(fitted, segmented.lme)
 S3method(plot, segmented.lme)
+S3method(getVarCov, segmented.lme)
 
 #S3method(stepmented,default)
 S3method(stepmented,lm)

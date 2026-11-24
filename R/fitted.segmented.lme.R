@@ -1,4 +1,4 @@
-fitted.segmented.lme<-function(object, level=1, sort=TRUE, ...){
+fitted.segmented.lme<-function(object, level=1, sort=FALSE, ...){
   #fit: an object of class "segmented.lme" 
   #What about "fitted(oo$lme.fit.noG)" or "fitted(obj,level=1)+fit$Off"?
   #fitted(fitG,level=1)+fit$Off e' proprio uguale a fitted(fit.noG, level=1)  
@@ -40,6 +40,7 @@ fitted.segmented.lme<-function(object, level=1, sort=TRUE, ...){
          #            "1"={ mu<-fitted(obj,level=1)+fit$Off #e' proprio uguale a fitted(fit[[2]], level=1)
          }
   ) #end_switch
+  #browser()
   if(sort) mu<- mu[order(names(mu))]
   return(mu)
 }

@@ -19,6 +19,24 @@ step.num.fit.boot <- function(y, XREG, Z, PSI, w, opz, n.boot=10, size.boot=NULL
   #      ss
   #      }
   #--------
+  get_rand_state <- function() {
+    # Using `get0()` here to have `NULL` output in case object doesn't exist.
+    # Also using `inherits = FALSE` to get value exactly from global environment
+    # and not from one of its parent.
+    get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  }
+  
+  set_rand_state <- function(state) {
+    # Assigning `NULL` state might lead to unwanted consequences
+    if (!is.null(state)) {
+      assign(".Random.seed", state,  envir = .GlobalEnv,  inherits = FALSE)
+    }
+  }
+  
+  
+  old_state <- get_rand_state()
+  on.exit(set_rand_state(old_state))
+  #--------
   adj.psi <- function(psii, LIM) {
     pmin(pmax(LIM[1, ], psii), LIM[2, ])
   }

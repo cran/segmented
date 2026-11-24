@@ -5,6 +5,17 @@
 ****************************
 
 
+
+===============
+version 2.3-0 (2026-11-24)
+===============
+* New function sim.seg() to simulate data according to a segmented regression model, possibly with random effects.
+* New dataset glucoseData included.
+* Some improvements (and bugs fixed) in segmented.lme() and plot.segmented.lme().
+* Bug fixed: segreg(, family="lm") when used with constraints was ignoring the offset term.
+* In all the boot restarting implementations of the fitter functions, the initial random state (i.e. .Random.seed) is restored at the exit (thanks to Matthias Templ for suggesting).  
+
+
 ===============
 version 2.2-2 (2026-09-10)
 ===============
@@ -15,7 +26,7 @@ version 2.2-2 (2026-09-10)
 ===============
 version 2.2-1 (2026-01-29)
 ===============
-* seg() in stepmented() accepts a matrix to select a changepoint in each column
+* seg() in stepmented() accepts a matrix to select a changepoint in each column.
 
 
 ===============
@@ -30,14 +41,14 @@ version 2.2-0 (2026-01-15)
 ===============
 version 2.1-4 (2025-02-26)
 ===============
-* Small changes in the selection of the starting values for psi and when printing the estimation process  
+* Small changes in the selection of the starting values for psi and when printing the estimation process.  
 * Bugs fixed: in segmented.lme() arguments 'seed' and 'break.boot' were not managed correctly. Thanks to Athanasios Protopapas for reporting.
 
 
 ===============
 version 2.1-3 (2024-10-25)
 ===============
-* New argument 'level' in slope() to return 'individual' left/right slopes for "segmented.lme" fits (thanks to Otto Monge for the input) 
+* New argument 'level' in slope() to return 'individual' left/right slopes for "segmented.lme" fits (thanks to Otto Monge for the input). 
 * Bug fixed in segmented.lme(): with noisy data, the changepoints predictions were not consistent with the fixed effect estimate (thanks to E. (Lisa) Levelt for reporting).
 
 
@@ -51,7 +62,7 @@ version 2.1-2 (2024-09-05)
 ===============
 version 2.1-1 (2024-07-26)
 ===============
-* Bugs fixed: intercept() did not work for segmented.lme fits (thanks to Kelly Aho for reporting); 
+* Bugs fixed: intercept() did not work for segmented.lme fits (thanks to Kelly Aho for reporting).
 segreg() e stepreg() returned wrong null deviance when an offset term was included; segmented.* occasionally returned unsorted breakpoints (thanks to Christian Wirtz for reporting).
 
 
@@ -61,7 +72,7 @@ version 2.1-0 (2024-05-14)
 * New functions stepreg() to fit stepmented regression via the formula interface (like segreg()), and predict.stepmented() to compute predictions for 'stepmented' objects; predict.segmented() gains argument 'na.action'.
 * A change in the procedure to outdistance the possible close estimated breakpoints (thanks to Marc Laurencelle for the input) by segmented.
 * Some changes in the object returned by selgmented() to have the same names regardless of the final output (thanks to Marc Laurencelle for the input); argument 'const' added in plot.stepmented.
-* Bug fix: segmented.lm did not manage covariates having large values (tens of thousands). This bug was incidentally introduced in version 2.0-4; thanks to Brian Binder for reporting. model.matrix.segmented() did not work on fits with n large (n>=1e+05, say); thanks to A. Priulla for the input. segmented.(g)lm did not print correctly coefficients when an interaction term with the segmented covariate was included (thanks to Annalise LaPlume for reporting); predict.segmented() did not work if the supplied dataframe had missing values (thanks to Marc Laurencelle for reporting)
+* Bug fix: segmented.lm did not manage covariates having large values (tens of thousands). This bug was incidentally introduced in version 2.0-4; thanks to Brian Binder for reporting. model.matrix.segmented() did not work on fits with n large (n>=1e+05, say); thanks to A. Priulla for the input. segmented.(g)lm did not print correctly coefficients when an interaction term with the segmented covariate was included (thanks to Annalise LaPlume for reporting); predict.segmented() did not work if the supplied dataframe had missing values (thanks to Marc Laurencelle for reporting).
 
 
 ===============

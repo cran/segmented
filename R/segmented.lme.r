@@ -1,6 +1,13 @@
-segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg.control(), model = TRUE,
+#segmented.lme 
+#14/09: se random is missing, it comes from obj
+#
+#random: can be NA or NULL if obj is a "lm" fit or corresponding call;
+#       a random component specified as a list; 
+#       if missing it is taken from obj, but it should be still specified as a call 
+#   
+segmented.lme<- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg.control(), model = TRUE,
                           z.psi=~1, x.diff=~1, 
-                          random=NULL, #una lista quale 'list(id=pdDiag(~1+x+U+G0))'
+                          random, #una lista quale 'list(id=pdDiag(~1+x+U+G0))'
                           random.noG=NULL, #una lista senza G0. Se NULL viene aggiornata la formula di random escludendo "G0"
                           start.pd=NULL, #una matrice come starting value
                           psi.link=c("identity","logit"), 
@@ -14,6 +21,30 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #control = list(niterEM = 0, optimMethod = "L-BFGS-B")
   #method = "ML"
   ################################################################################
+  lme<-function(..., random=NULL){
+    arg<- list(...)
+    if(is.null(random)){
+      f<-get("lm")
+      names(arg)[match("fixed", names(arg))]<-"formula"
+    } else {
+      f=nlme::lme #get("nlme::lme")
+      arg$random=random
+      if(!"fixed"%in%names(arg)) names(arg)[1]<- "fixed"
+    }
+    #browser()
+    r=do.call(f, args=arg, quote=FALSE)
+    mycall<-match.call()
+    if(is.null(random)) {
+      mycall[[1]]<- quote(lm)
+      mycall$random<-NULL
+      names(mycall)[match("fixed", names(mycall))]<-"formula"
+    } else {
+      mycall[[1]]<- quote(lme)
+      if(!"fixed"%in%names(mycall)) names(mycall)[2]<-"fixed"
+    }
+    r$call<-mycall
+    r
+  } 
   
   #require(nlme)
   adj.psi <- function(psii, LIM) {
@@ -22,7 +53,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   
   newData<-aa<-betaa<-fn1<-kappa1<-NULL
   tol <- control$toll
-  it.max <- control$it.max
+  it.max <- round(control$it.max/2) #
   display <- control$visual
   n.boot <- control$n.boot
   alpha <- control$alpha
@@ -58,7 +89,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #   immediatamente prima del max (o dopo il min) vengono forzati al min/max e cos? sono di fatto annullati; naturalmente il
   #   modello ? ristimato secondo  i nuovi psi. Se 2 l'aggiustamento viene fatto durante l'algoritmo..
   #---------------------
-  reboot.slme <-function(fit, B=10, display=FALSE, break.boot=B, metodo=1, frac=1, it.max=6, it.max.b=5, seed=NULL, start=NULL, msg=TRUE){
+  reboot.slme <-function(fit, B=10, display=FALSE, break.boot=B, metodo=1, frac=1, it.max=7, it.max.b=6, seed=NULL, start=NULL, msg=TRUE){
     #metodo: viene passato alla funzione logL. Se 1 la logL che viene calcolata e' quella della componente
     #   fit$lme.fit.noG, namely the logLik from the lme fit without the G variables..
     #bootRestart for slme4
@@ -69,7 +100,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     extract.psi<-function(obj){
       #questa funzione restituisce i "kappa", ovvero i coeff di psi..
       nomiG<-obj$namesGZ$nomiG
-      b<-fixef(obj[[1]])[c("G0",nomiG)]
+      b<-fixeff(obj[[1]])[c("G0",nomiG)]
       b
     }
     
@@ -97,40 +128,50 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     
     #idLevels <- levels(fit$lme.fit$groups[,ncol(fit$lme.fit$groups)])
     #N<- length(idLevels)
+
+    #newData<- mf
+    newData<-if(isLM || isCallLM) fit$lme.fit$model else fit$lme.fit$data
+    newData[,nomeRispo]<-newData[,nomeRispo] + fit$Off ##AGGIUSTA la risposta
+    #NB: se utilizzi direttamente mf (newData<- mf) NON hai bisogno di aggiungere l'offs 
     
-    newData<-fit$lme.fit$data
     nomeRispo<-all.vars(formula(fit$lme.fit))[1]
-    #AGGIUSTA la risposta
-    newData[,nomeRispo]<-newData[,nomeRispo] + fit$Off
+
+    if(!(isLM || isCallLM)){
+      nome.id <-names(fit$lme.fit$groups)[ncol(fit$lme.fit$groups)] #name of the innermost grouping variable 
+      newData[, nome.id]<- factor(newData[, nome.id])
+      var.id<-newData[, nome.id]
+      idLevels<-levels(var.id)
+      N<- length(idLevels)
+    }
     
-    nome.id <-names(fit$lme.fit$groups)[ncol(fit$lme.fit$groups)] #name of the innermost grouping variable 
-    newData[, nome.id]<- factor(newData[, nome.id])
-    var.id<-newData[, nome.id]
-    idLevels<-levels(var.id)
-    N<- length(idLevels)
+    #browser()
     
     o.b<-fit$boot.call
-    #old:    start.psi<-extract.psi(fit)
-    #old:    est.psi<-start.psi["G0"]
-    #old:    call.b<-update(object=fit, obj=o.b, data=newD, psi=est.psi, display=FALSE, evaluate=FALSE)
-    call.b<-update(object=fit, obj=o.b, data=newD, it.max=it.max.b,
-                   start=list(kappa0=startKappa0,kappa=startingKappa), display=FALSE, evaluate=FALSE)
-    
+
+    call.b<-update(object=fit, obj=o.b, data=newD, #it.max=it.max.b,
+                   start=list(kappa0=startKappa0,kappa=startingKappa), evaluate=FALSE) #display=FALSE, 
+
+    call.b$control<-quote(seg.control(display=FALSE, n.boot=0, it.max=it.max.b*2)) #x 2, in quanto in segmented.lme() poi divido per 2
     call.b$random <- fit$randomCALL
     
-    o.ok<-update.lme.call(o.b, fixed.=paste(nomeRispo,"~."), evaluate=FALSE)
+    if(isLM || isCallLM) {
+      o.ok<-o.b
+      o.ok$formula<-update.formula(o.b$formula, paste(nomeRispo,"~."))
+    } else {
+      o.ok<-update.lme.call(o.b, fixed.=paste(nomeRispo,"~."), evaluate=FALSE)
+    }
     #o.ok<-update.lme.call(o.b, fixed.=y~., evaluate=FALSE)
     #mycall$data=quote(gh)
     #o.ok<-update.lme.call(o.b, fixed.=y~.,evaluate=FALSE)
     #old:    call.ok<-update(object=fit, obj=o.ok, data=newData, psi=est.psi.b, display=FALSE, evaluate=FALSE)
     #o.ok$fixed<- update.formula(o.ok$fixed, paste(nomeRispo,"~."))
     
-    call.ok<-update(object=fit, obj=o.ok, data=newData, it.max=it.max,
-                    start=list(kappa0=startKappa0.b, kappa=startingKappa.b), display=FALSE, evaluate=FALSE)
+    call.ok<-update(object=fit, obj=o.ok, data=newData, #it.max=it.max,display=FALSE, 
+                    start=list(kappa0=startKappa0.b, kappa=startingKappa.b), evaluate=FALSE)
     
     
     #call.ok$n.boot <- call.b$n.boot<-0
-    call.ok$control <- call.b$control<-quote(seg.control(display=FALSE, n.boot=0))
+    call.ok$control <- quote(seg.control(display=FALSE, n.boot=0, it.max=it.max*2)) #x 2, in quanto in segmented.lme() poi divido per 2
     all.L<-all.psi<-NULL
     it<-0
     L0<-L.orig<-logLik(fit$lme.fit.noG)# logL(fit, metodo=metodo)
@@ -138,6 +179,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       flush.console()
       cat("original data:", 0, "  logLik =", formatC(as.numeric(L.orig), 3, format = "f"),"   psi parms:", formatC(extract.psi(fit),4,format="f"),"\n")
     }
+    #browser()
     if(is.null(start)){
       startingKappa<-extract.psi(fit)
       startKappa0<- startingKappa[1]
@@ -153,6 +195,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       nomiKappa<-names(startingKappa)
     }
     #if(is.null(seed)) seed<-eval(parse(text=paste(sample(0:9, size=6), collapse="")))
+    
     if(is.null(seed)){
       mY <- mean(newData[,nomeRispo])
       sepDec<-if(options()$OutDec==".") "\\." else "\\,"
@@ -171,7 +214,6 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     }  
     
 
-    #browser()
     n.boot.rev<- 3
     alpha1<-alpha[1]
     for(i in seq(B)){
@@ -185,32 +227,44 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
         startKappa0 <- quantile(Z, probs=1-qpsi, names=FALSE)
       }
       
-      #build the boot sample
-      #idx<-sample(N, replace=TRUE)
-      #idx<-sample(1:N, size=trunc(N*frac), replace=TRUE)
-      idx<-sample(idLevels, size=trunc(N*frac), replace=TRUE)
-      
-      newD <- do.call("rbind",lapply(idx, function(x)newData[newData[,nome.id]==x,]))
-      newD$y.b<- newD[,nomeRispo]
-      
-      #browser
-      
-      #       r<-list(newD=newD, call.b=call.b)
-      #       return(r)
-      
+      if(isLM || isCallLM){
+        idx<-sample(1:N, size=trunc(N*frac), replace=TRUE)
+        newD <- newData[idx, ]
+        newD$y.b<- newD[, nomeRispo]
+        call.b$random <- NA
+        #sopra e' NP boot; se vuoi permutare solo la risposta (cioe' semiparam BOOT)
+        #newD <- newData
+        #newD$y.b<- newD[idx, nomeRispo]
+      } else {
+        idx<-sample(idLevels, size=trunc(N*frac), replace=TRUE)
+        newD <- do.call("rbind",lapply(idx, function(x)newData[newData[,nome.id]==x,]))
+        newD$y.b<- newD[,nomeRispo]
+        
+      }
       #-->>       CAMBIA STARTING VALUE in call.b
       if(startKappa0>=rangeZ[2] | startKappa0<=rangeZ[1] ) startKappa0<- jitter(startKappa00,factor=5) #sum(rangeZ)/2
       
-      #browser()
+      ####################################################################################################
+      ####################################################################################################
+      ####################################################################################################
       
       fit.b<-try(suppressWarnings(eval(call.b)), silent=TRUE) #envir=newD) 
       if(!is.list(fit.b)){
-        #        fit.b<-NULL
         it.b<-0
         while(!is.list(fit.b)){
-          idx<-sample(idLevels, size=trunc(N*frac), replace=TRUE)
+          if(isLM || isCallLM){
+            idx<-sample(1:N, size=trunc(N*frac), replace=TRUE)
+            newD <- newData[idx, ]
+            newD$y.b<- newD[, nomeRispo]
+            #sopra e' NP boot; se vuoi permutare solo la risposta (cioe' semiparam BOOT)
+            #newD <- newData
+            #newD$y.b<- newD[idx, nomeRispo]
+
+          } else {
+            idx<-sample(idLevels, size=trunc(N*frac), replace=TRUE)
           newD <- do.call("rbind",lapply(idx, function(x)newData[newData[,nome.id]==x,]))
           newD$y.b<- newD[,nomeRispo]
+        }
           startKappa0<- jitter(startKappa00,factor=5)
           fit.b<-try(suppressWarnings(eval(call.b)), silent=TRUE) #envir=newD)
           it.b<-it.b+1
@@ -262,11 +316,12 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
        }
       
     } #end boot replicates
+    #browser()
     #============================================================================================
     fit$history.boot.restart<-cbind(b=1:length(all.psi),psi=all.psi, logL=all.L)
     fit$seed<-seed
     #r<-list(seg.lme.fit=fit, history=cbind(b=1:length(all.psi),psi=all.psi, logL=all.L) )
-    if(msg) cat(" New solution(s) found:", length(unique(all.psi)), "\n")
+    if(msg) cat(" New solution(s) found:", length(unique(all.psi))-1, "\n")
     fit
   }
   #------------------
@@ -331,28 +386,75 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #---------------------------------------------------------------------------
   ###
   #browser()
-  
-  h <- control$h 
-  check <- is.call(obj) || (inherits(obj,"lme") && !inherits(obj,"glmmPQL"))
-  #if(!(is.call(obj) || class.check)) stop(" 'obj' should be a lme fit or a lme call")
-  if(!check) stop(" 'obj' should be a lme fit or a lme call")
-  if(missing(psi) && it.max==0) stop("Please supply 'psi' with 'it.max=0'")
-  
+  #se random e' una formula con risposta id, viene considerata una diag
+  if(!missing(random) && inherits(random,"formula")){
+    if(length(as.character(random))<=2) stop(" the formula in 'random' should be like 'id ~ ..' ")
+    fo=random
+    nomiRE<-all.vars(fo)[-1]
+    if(length(nomiRE)<1) nomiRE<-"1"
+    random<-eval(parse(text=paste("list(",all.vars(fo)[1] ,paste("=pdDiag(~",paste(nomiRE, collapse = "+"), "))"))))
+  }
+    
+  if(inherits(obj, "formula")){
+    if(missing(data) || missing(random)) stop("If obj is a formula, 'data' and 'random' have to be supplied.")
+    obj<-call("lme.formula", fixed=obj, data=quote(data),random=random)
+    obj$data=deparse(substitute(data))
+  }
+  #browser()
   if(is.call(obj)) {
     my.call  <- obj
     datacall <- deparse(obj$data)
-    if(is.null(random)) random<-eval(obj$random)      
+    #if(missing(random)) random<-eval(obj$random)      
   } else {
     my.call <- obj$call
     datacall<- deparse(obj$call$data)
-    if(is.null(random)) random<-eval(obj$call$random)  
+    #if(missing(random)) random<-eval(obj$call$random)  
   }
+  
+  isCallLME <- if(is.call(obj) && "lme.formula"%in% as.character(obj)) TRUE else FALSE
+  isLME<- if(inherits(obj,"lme") && !inherits(obj,"glmmPQL")) TRUE else FALSE
+  
+  isLM <- if(inherits(obj,"lm") && !inherits(obj,"glm")) TRUE else FALSE
+  isCallLM <- if(is.call(obj) && "lm"%in%as.character(obj)) TRUE else FALSE
+  
+  h <- control$h 
+  check <- is.call(obj) || (inherits(obj,"lme") && !inherits(obj,"glmmPQL")) || 
+    (inherits(obj,"lm") && !inherits(obj,"glm"))
+  #if(!(is.call(obj) || class.check)) stop(" 'obj' should be a lme fit or a lme call")
+  if(!check) stop(" 'obj' should be a lme fit or a lme call")
+  
+  #browser()
+  if(missing(random)){
+    random<- if(is.call(obj)) eval(obj$random) else eval(obj$call$random)
+  } else {
+    a=try("~"%in%all.names(attr(random[[1]], "formula")), silent=TRUE)
+    if(inherits(a,"try-error")) stop("the 'random' argument appears misspecified ")
+    if(any(is.na(random))) random<-NULL
+  }
+    
+  
+  
+  # if(is.call(obj)) {
+  #   my.call  <- obj
+  #   datacall <- deparse(obj$data)
+  #   #if(missing(random)) random<-eval(obj$random)      
+  # } else {
+  #   my.call <- obj$call
+  #   datacall<- deparse(obj$call$data)
+  #   #if(missing(random)) random<-eval(obj$call$random)  
+  # }
+  
+  if((isLM || isCallLM) && !(is.null(random) || is.na(random))) stop("with 'lm' fits, 'random' should be NULL or NA")
+  
+  
   #my.call<-if(is.call(obj)) obj else obj$call
   #datacall<- if(is.call(obj)) deparse(obj$data) else deparse(obj$call$data)
   #if(is.null(random)) {random<- if(is.call(obj)) eval(obj$random) else eval(obj$call$random) }
+  #browser()
+  
   randomCALL<-random
   G0random<- sapply(random, function(.x) "G0" %in% all.vars(attr(.x, "formula")))
-  if(it.max==0 && !any(G0random)) stop("'G0' in the random part is meaningless with 'it.max=0'")
+  if(it.max==0 && any(G0random)) stop("'G0' in the random part is not allowed with 'it.max=0'")
   #    name.group<-nameRandom<-names(random)
   
   #    if(is.null(random)) {
@@ -367,17 +469,28 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #	      randomCALL<- random
   #    }
   
+  #browser()
+  
   if (!is.null(random)) {
     if (is.list(random)) {
       nameRandom <- names(random) #nomi dei fattori id
       if(is.null(nameRandom)) stop("random argument must be a *named* list.")
       else if(sum(nameRandom == "")) stop("all elements of random list must be named")
-    } else stop("random effects should be specified as named lists")
+      } else stop("random effects should be specified as named lists")
     random.vars <- c(unlist(lapply(random, function(x) all.vars(formula(x)))), nameRandom)
     names(random.vars)<-NULL #per evitare casini.. spesso i nomi erano le variabili stesse..
-  } else random.vars <- NULL
+  } else {
+    random.vars <- NULL
+  }
+  
+  #browser()
   
   J<-length(random)
+  nomi.randomX<-NULL
+  if(J>=1) {
+    nomi.randomX<-unlist(lapply(1:length(random) ,function(.x) sapply(formula(random[[.x]]),all.vars)))
+    nomi.randomX<-setdiff(nomi.randomX,"~")
+  }
   
   #if(missing(Z) && missing(seg.Z)) stop(" 'Z' or 'seg.Z' should be provided")
   #name.Z<-if(missing(seg.Z)) deparse(substitute(Z)) else all.vars(seg.Z)
@@ -386,9 +499,13 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   name.Z<- all.vars(seg.Z)
   if(length(name.Z)>1) stop("segmented.lme works with 1 breakpoint only")
   
-  allNOMI<-unique(c(name.Z, all.vars(my.call$fixed), random.vars, all.vars(z.psi), all.vars(x.diff)))
+  if("U"%in%all.vars(my.call$fixed)) stop(" The variable name 'U' is not allowed in your formula")
+  
+  #browser()
+  
+  allNOMI<-unique(c(name.Z, all.vars(my.call$fixed), random.vars, nomi.randomX, all.vars(z.psi), all.vars(x.diff)))
   formTUTTI<-as.formula(paste("~.+", paste(allNOMI,collapse="+")))
-  formTUTTI<-update.formula(my.call$fixed, as.formula(paste("~.+", paste(allNOMI,collapse="+"))))
+  formTUTTI<-update.formula(if(isLM || isCallLM) my.call$formula else my.call$fixed, as.formula(paste("~.+", paste(allNOMI,collapse="+"))))
   #U and G0 have not yet been defined
   formTUTTI<-update.formula(formTUTTI, .~.-U-G0)
   
@@ -401,6 +518,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     }
   }
   
+  #browser()
   
   if(is.null(my.call$data)) stop("`obj' should include the argument `data'")
   if(missing(data)) {
@@ -409,54 +527,39 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     mf<-model.frame(formTUTTI, data=data, na.action=na.omit)
   }
   
-  
-  
-  #    if (length(allvars)) {
-  #        mf$formula <- as.formula(paste(paste(deparse(gp$fake.formula, 
-  #            backtick = TRUE), collapse = ""), "+", paste(allvars, 
-  #            collapse = "+")))
-  #        mf <- eval(mf, parent.frame())
-  #    }
-  
-  #adesso si deve ordinare il dataframe..
-  mf<-mf[order(mf[[nameRandom[J]]]),] 
-  
-  nomeRispo<-names(mf)[1]
-  Rispo<-model.response(mf)
-  #
-  
-  #browser()
-  
-  
-  Z <- mf[[name.Z]]
-  
-  #limZ <- apply(Z, 2, quantile, names = FALSE, probs = c(alpha[1], alpha[2]))
 
-  limZ <- as.matrix(quantile(Z, names = FALSE, probs = c(alpha[1], alpha[2])))
-  
-  min.Z<- min(limZ[,1])
-  max.Z<- max(limZ[,1])
-  
-  
-  
-  
-  
-  
-  
-  #browser()
-  
-  if(!missing(psi)) {
-    if(length(psi)>1) stop("segmented.lme works with 1 breakpoint only")
-    if(psi<=min(limZ) || psi>=max(limZ)) stop("the provided psi is outside the range, see 'alpha' in seg.control()", call.=FALSE)
-    }
-  
-  id <- mf[[nameRandom[J]]] #the innermost factor
-  if(is.factor(id)) id <-factor(id, levels = unique(id)) 
+  #adesso si deve ordinare il dataframe..
+  if(!is.null(random)) {
+    mf<-mf[order(mf[[nameRandom[J]]]),] 
+    id <- mf[[nameRandom[J]]] #the innermost factor
+    if(is.factor(id)) id <-factor(id, levels = unique(id))
+  } else {
+    id=1:nrow(mf)
+  }
   
   ni<- tapply(id, id, length) #vector of cluster sizes
   N<-length(ni)#n. of clusters (subjects)
   n<-length(id) #n. of total measurements
   
+  nomeRispo<-names(mf)[1]
+  Rispo<-model.response(mf)
+  #
+  Z <- mf[[name.Z]]
+  
+  limZ <- as.matrix(quantile(Z, names = FALSE, probs = c(alpha[1], alpha[2])))
+  
+  min.Z<- min(limZ[,1])
+  max.Z<- max(limZ[,1])
+  
+  if(missing(psi)){
+    if(it.max==0) stop("Please supply 'psi' with 'it.max=0'")
+  } else {
+    if(length(psi)>1 && length(psi)!= N) stop("length of psi, when provided, should be 1 or N")
+    if(it.max>0) {if(psi<=min(limZ) || psi>=max(limZ)) stop("the provided psi is outside the range, see 'alpha' in seg.control()", call.=FALSE)}
+    
+  } 
+  
+
   id.x.diff<- FALSE
   id.z.psi <- FALSE
   #M.z.psi <- mf[all.vars(z.psi)] #
@@ -523,6 +626,14 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #correzione per nested r.e: poich? id ? quello "giusto" (costruito prima), allora
   #
   mf['id']<-id #E' necessario costruire una nuova id con nome esattamente 'id'??!??!
+  
+  #============================================================================================
+  #== nameRandom include il nome della variabile di cluster. Cosa succede se ci sono nested re?
+  #== 
+  #============================================================================================
+  
+  #browser()
+  
   mf[name.Z]<- Z
   
   est.kappa0<-TRUE
@@ -535,22 +646,18 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     if(!is.null(start$kappa0)) {
       psi<-if(psi.link=="logit") inv.logit(start$kappa0,min.Z,max.Z) else start$kappa0
     }
-    
     if(missing(psi)){
       #        formulaFix.Poly<-update.formula(my.call$fixed, paste("~.+",name.Z,"+",paste("I(",name.Z,"^2)",sep="")))
       #        obj2<-update.lme.call(my.call, fixed = formulaFix.Poly, data=mf, evaluate=TRUE)
       #        psi<- -fixed.effects(obj2)[name.Z]/(2*fixed.effects(obj2)[paste("I(",name.Z,"^2)",sep="")])
-      psi<-tapply(Z, id, function(.x) sum(range(.x))/2)   
+      psi<-if(is.null(random)) mean(Z) else tapply(Z, id, function(.x) sum(range(.x))/2)   
       if(any(psi <= min(Z))||any(psi>=max(Z))) stop("psi estimated by midvalues is outside the range") #the quadratic fit 
     }
   } else { #se e' fissato e quindi non devi stimarlo
     psi<- kappa0
   }
   
-  
-  #browser()
-  
-  
+
   psi.new <- psi #stime iniziali
   if(length(psi)!=1 && length(psi)!=N) stop("length(psi) has to be equal to 1 or n. of clusters")
   if(length(psi) == 1) {
@@ -558,21 +665,24 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   }
   psi.ex<-rep(psi.new, ni ) #length = N (n. tot obs)
   
+  #browser()
+  
   #----------------------------------------
   mf$U<- (Z-psi.ex)*(Z>psi.ex) #pmax(0, Z-psi.ex)
-  formulaFix.noG<-update.formula(my.call$fixed, paste("~.+","U"))
+  #formulaFix.noG<-update.formula(my.call$fixed, paste("~.+","U"))
+  formulaFix.noG<-update.formula(if(isLM || isCallLM) my.call$formula else my.call$fixed, paste("~.+","U"))
   if(id.x.diff){
     Ux<- as.matrix(mf$U*X.diff)
     colnames(Ux)<-nomiUx
     mf<-cbind(mf,Ux) #$Ux<- my.dd$U*X.diff
-    formulaFix.noG<-update.formula(my.call$fixed, paste(".~.+U+",paste(nomiUx,collapse="+"),sep=""))
+    #formulaFix.noG<-update.formula(my.call$fixed, paste(".~.+U+",paste(nomiUx,collapse="+"),sep=""))
+    
+    #formulaFix.noG<-update.formula(if(isLM) my.call$formula else my.call$fixed, paste(".~.+U+",paste(nomiUx,collapse="+"),sep=""))
+    
+    formulaFix.noG<-update.formula(formulaFix.noG, paste(".~.+",paste(nomiUx,collapse="+"),sep=""))
   }
   #se vuoi assumere i psi fissi (it.max=0)
   if(it.max==0) {
-    #aggiorna i random effects. Attenzione in tal caso random deve essere "U" ( o "1").
-    #Se fosse "U+G0" darebbe errore perch? G0 non esiste
-    #Oppure dovresti modificare la formula di random,
-    #attr(random[[1]], "formula")<-update.formula(attr(random[[1]], "formula"), ~.-G0)
     formulaRand<-formulaRandOrig<-my.call$random
     call.ok<-update.lme.call(my.call, fixed = formulaFix.noG, random=random, data=mf, evaluate=FALSE)
     o<-eval(call.ok)
@@ -588,23 +698,53 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   
   if(need.prelim){
     random.noG <- random
+    if(!is.null(random)){ #if(!isLM)
     for(j in 1:J) {
       if(length(random[[j]])>0) {
-        for(.k in 1:length(random[[j]])) if("G0" %in% all.vars(formula(random[[j]])[[.k]])) attr(random.noG[[j]][[.k]],"formula")<-update.formula(formula(random[[j]])[[.k]], ~.-G0)
-        } else {
+        for(.k in 1:length(random[[j]])) {
+          nomiRandom<-all.vars(formula(random[[j]])[[.k]])
+          if("G0" %in% nomiRandom) {
+            if(length(nomiRandom)>1) {
+              attr(random.noG[[j]][[.k]],"formula")<-update.formula(formula(random[[j]])[[.k]], ~.-G0)
+              } else {
+                random.noG[[j]][[.k]]<-NULL
+              }
+            }
+          } #end .k
+        #il problema e' che se nella matrice a blocchi un blocco ha solo la G0, poi quando viene costruita random.noG, rimuovere quel G0 porta a problemi
+        #e quindi sotto rimuovo tutta la componente. Devi verificare 
+        if(length(random.noG[[j]])==1) random.noG[[j]]<-random.noG[[j]][[1]]
+        } else { #end length(random[[j]])>0
           attr(random.noG[[j]],"formula")<-update.formula(formula(random[[j]]), ~.-G0)
-        }
+          }
+      } #end j
+        
+      o<-try(update.lme.call(my.call, fixed=formulaFix.noG, random=random.noG, data=mf, evaluate=TRUE), silent=TRUE)
+      if(!is.list(o)){
+        o<-try(update.lme.call(my.call, fixed=formulaFix.noG, random=random.noG, data=mf, evaluate=TRUE, 
+                               control=lmeControl(opt="optim")), silent=TRUE)
+        if(!is.list(o)) stop("The 1st fit is unsuccessful")
       }
-    #for(j in 1:J) attr(random.noG[[j]],"formula")<-update.formula(formula(random[[j]]), ~.-G0)
-    o<-update.lme.call(my.call, fixed=formulaFix.noG, random=random.noG, data=mf, evaluate=TRUE)
-    #o<-update.lme.call(my.call, fixed=formulaFix.noG, data=mf, evaluate=TRUE)
-    delta0i<-unlist(coef(o)["U"]) #length= N
-    if(id.x.diff) delta<-fixed.effects(o)[nomiUx] #length= n.1
-  } else {
+      
+      delta0i<-unlist(coef(o)["U"]) #length= N
+      if(id.x.diff) delta<-fixed.effects(o)[nomiUx] #length= n.1
+    } else { #if(!is.null(random))
+      #my.call$formula<- update.formula(old=my.call$formula, formulaFix.noG)
+      my.call$data<-quote(mf)
+      #o<-eval(my.call)
+      o<-update(list(call=my.call), formula.=update.formula(old=my.call$formula, formulaFix.noG))
+      delta0i<-coef(o)["U"] #length= N #mettere un rep (,N)?
+      if(id.x.diff) delta<-coef(o)[nomiUx] #length= n.1
+    }
+    dev.new<-as.numeric(logLik(o))
+  } #need prelim 
+    else {
     delta0i<-if(length(start.delta0)==N) start.delta0 else rep(start.delta0,N)
     if(id.x.diff) delta<-start.delta[nomiUx]
+    dev.new<-100
   }
   
+  #dev.new=100
   start.kappa<-start$kappa
   
   eta.psi<-0
@@ -625,16 +765,27 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   if(anyFixedG) eta.psi<- eta.psi + Offs.kappa
   #Offs.kappa<-data.matrix(mf[name.fixed.butG0])%*%fixed.parms[name.fixed.butG0]
   
+
   #-----------------------------------------------------------
-  formulaFix<-update.formula(my.call$fixed, paste(".~.+",fixed))
+  #browser()
+  
+  
+  formulaFix<-if(isLM || isCallLM) update.formula(my.call$formula, paste(".~.+",fixed)) else update.formula(my.call$fixed, paste(".~.+",fixed))
   
   if(!est.kappa0) formulaFix<-update.formula(formulaFix, .~.-G0)
   formulaRand<-formulaRandOrig<-my.call$random
-  minMax <- cbind(tapply(Z,id,min),tapply(Z,id,max)) #matrice nx2 dei min-max
   #---------------------------------------------------------
   
-  call.ok<-update.lme.call(my.call, fixed = formulaFix, random=random, data=mf, evaluate=FALSE,
+  if(isLM || isCallLM) {
+    call.ok<-my.call
+    call.ok$formula<-formulaFix
+    minMax <- cbind(rep(min(Z),N),max(Z)) #matrice nx2 dei min-max
+    
+  } else {
+    call.ok<-update.lme.call(my.call, fixed = formulaFix, random=random, data=mf, evaluate=FALSE,
                            control = list(msVerbose = FALSE, niterEM = 100, opt = "optim"))
+    minMax <- cbind(tapply(Z,id,min),tapply(Z,id,max)) #matrice nx2 dei min-max
+    }
   if(!is.null(start.pd)) call.ok$random<-quote(list(id=start.pd))
   #--------------------------------------------------------
   kappa0i  <- if(psi.link=="logit") logit(psi.ex,min.Z,max.Z)  else psi.ex #length=n
@@ -644,23 +795,47 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   psi.ex<-if(psi.link=="logit") inv.logit(etai,min.Z,max.Z) else etai  #length=n
   
   #----------------------------------------------------------
-  boot.call<-update.lme.call(my.call, y.b~., data=newData, evaluate=FALSE) #salva la call before modifying obj
+  #browser()
+  
+  if(isLM || isCallLM) {
+    boot.call<-my.call
+    boot.call$data<- quote(newData)
+    boot.call$formula<-update.formula(old=my.call$formula, new=y.b~.)
+  } else {
+    boot.call<-update.lme.call(my.call, y.b~., data=newData, evaluate=FALSE) #salva la call before modifying obj
+    boot.call$control=quote(lmeControl(apVar=FALSE))
+  }
   it <- 1
   epsilon <- 9
   obj<-o #serve per estrarre la logLik
   b.new<-rep(.1,length(all.vars(formulaFix))) #la risposta conteggiata in all.vars(formulaFix) conta per l'intercetta
+  
+  fixeff<- if(isLM || isCallLM) coef else fixed.effects
+  true.logLik<-function(obj){
+    mf["Rispo"]<-Rispo
+    dev.new <- logLik(eval(update.lme.call(obj$call, 
+                                update.formula(formulaFix.noG, Rispo~.),
+                        random=random.noG,
+                        control=lmeControl(apVar=FALSE,tolerance = 1e-6))))
+    as.numeric(dev.new)
+  }
+  all.k0<-NULL
+  
+  #browser()
+  
   while(abs(epsilon) > tol){
     #if(it==9) browser()
     DD<-if(psi.link=="logit") (max.Z-min.Z)*exp(etai)/((1+exp(etai))^2) else rep(1,n)
     V<- -1*(Z >psi.ex)#ifelse(Z >psi.ex, -1, 0)
     VD <- V*DD
     mf$U <- (psi.ex-Z)*V #pmax(0, Z-psi.ex)
-    mf$G0<- rep(delta0i,ni)*VD #rowSums(rep(delta0i,ni)*VD)
+    delta0i.ni<- if(isLM || isCallLM) rep(delta0i, N) else rep(delta0i, ni)
+    mf$G0<- delta0i.ni*VD  #rowSums(rep(delta0i,ni)*VD)
     if(id.x.diff){
       Ux<- as.matrix(mf$U*X.diff)
       colnames(Ux)<-nomiUx
       mf[,which(names(mf)%in%nomiUx)]<-Ux
-      deltaMatrix<-cbind(rep(delta0i,ni), matrix(delta,nrow=length(V),ncol=length(delta),byrow=TRUE))
+      deltaMatrix<-cbind(delta0i.ni, matrix(delta,nrow=length(V),ncol=length(delta),byrow=TRUE))
       deltaVDx<-deltaMatrix*VD*cbind(1,M.x.diff)
       mf$G0<-rowSums(deltaVDx)
     }
@@ -669,10 +844,13 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
       colnames(G)<-c("G0",nomiG)
       mf[,colnames(G)]<-G
     }
-    dev.old <- obj$logLik
+    dev.old <- dev.new #as.numeric(logLik(obj)) #obj$logLik
     #costruisci l'offset e modifica la risposta..
     Off<- if(est.kappa0)  -kappa0i*mf$G0 else -ki*mf$G0
     if(id.z.psi) Off<- Off - drop(as.matrix(mf[nomiG])%*%kappa[nomiG])
+    
+    #if(it==5) browser()
+    
     mf[nomeRispo]<-Rispo-Off
     
     # estimate the model
@@ -684,26 +862,32 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     #random.noG
     
     b.old<-b.new
-    b.new<-fixed.effects(obj)
+    b.new<-fixeff(obj)
     ###    if(psi.new>max(Z)| psi.new<min(Z)) stop("estimated psi out of range: try another starting value!")
-    dev.new <- obj$logLik#sum((fitted(obj)-my.dd[,paste(formula(obj))[2]])^2) #
     
     
+    dev.new <- as.numeric(logLik(obj)) #obj$logLik#sum((fitted(obj)-my.dd[,paste(formula(obj))[2]])^2) #
+    
+    #Qua estrai la logLik del modello noG.. 
+    #Stimi un modello in piu', ma dovresti fare meno interazioni
+    #dev.new <-true.logLik(obj)
+
+
+    #browser()
     #===============================================================================
     if (display) {
       flush.console()
       spp <- if (it < 10) " " else NULL
       cat(paste("iter = ", spp, it,
                 "  work.LL = ",formatC(dev.new,digits=3,format="f"), #era format="fg"
-                "  diff.s = ",formatC(fixef(obj)["U"],digits=3,format="f"), 
-                "  kappa0 = ",paste(formatC(fixef(obj)["G0"],digits=3, format="f"), collapse="  "),
+                "  diff.s = ",formatC(b.new["U"],digits=3,format="f"), 
+                "  kappa0 = ",paste(formatC(b.new["G0"],digits=3, format="f"), collapse="  "),
                 sep=""), "\n")
     }
     
-    
-    
     #===============================================================================
     epsilon <- abs((dev.new-dev.old)/(dev.old+.1))
+    #browser()
     #epsilon <- max(abs((b.new-b.old)/b.old))
     #26/7/16 PERCHE' HO MESSO QUI i CRITERI DI ARRESTO? E' un problema perch? poi il ciclo non
     # termina e i "delta", "kappa0", rimangono quelli dell'iterazione precedente..
@@ -714,31 +898,34 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     ##-------------------------------
     continua<-  (abs(epsilon) > tol && it< it.max)
     #delta0i<-if(inflate.res) inflate.2residuals(obj, coeff=TRUE)[,"U"] else unlist(coef(obj)["U"])    #length=N
-    if(id.x.diff) delta <- fixed.effects(obj)[nomiUx]
+    if(id.x.diff) delta <- b.new[nomiUx] #fixeff(obj)[nomiUx]
     
     delta0i <- unlist(coef(obj)["U"])
     kappa0.old <- kappa0 #length=1
-    kappa0 <- fixed.effects(obj)["G0"]
+    kappa0 <- b.new["G0"] # fixeff(obj)["G0"]
     
+    #if(it==15) browser()
+
     if(est.kappa0 && continua){
       kappa0<- if(psi.link=="identity")  adj.psi(kappa0, limZ) else max(min(9,kappa0),-9)
-      kappa0 <- kappa0.old + (kappa0 - kappa0.old)*h/2 
+      #if(it>=1) h<-h*0 #.000001
+      all.k0[length(all.k0)+1]<-kappa0 <- kappa0.old + (kappa0 - kappa0.old)*h/2 
       #questo controllo e' sbagliato se link.psi="logit"
       #if(kappa0<= min(Z) || kappa0>=max(Z)) stop("estimated psi outside the range")
     }
+
     
     
-    
-    #browser()
-    
-    kappa0i.old<-kappa0i #length=n
-    
-    #browser()
-    RE<-fn.re(obj) # array n x n.randmEff (2 se sono nested..) x n.termini (U, G0,..) 
-    ki<-if("G0" %in% dimnames(RE)[[3]]) rowSums(RE[ , ,"G0", drop=FALSE]) else rep(0,n)
+    if(isLME || isCallLME){
+      RE<-fn.re(obj) # array n x n.randmEff (2 se sono nested..) x n.termini (U, G0,..) 
+      if("G0" %in% dimnames(RE)[[3]]) ki<- rowSums(RE[ , ,"G0", drop=FALSE])
+    } else {
+      ki<- rep(0,n)
+    }
     #NB    RE[ , ,"G0"]  ? una matrice di n.obs righe e che ha in ogni colonna i breakpoint relativi ad ogni livello di nesting.. 
     #      RE[ , J,"G0"] e' l'innermost J=ncol(RE[ , ,"G0"])
     #Quindi i ki sono la somma di tutti i termini random (anche a diversi livelli di nested)
+    kappa0i.old<-kappa0i #length=n
     kappa0i <- kappa0+ki
     
     ########I codici sotto non funzionano con nested r.e.        
@@ -749,12 +936,10 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     #        ki<-rep(ki,ni)
     ###########################
     
-    
-
     etai<-kappa0i
     if(id.z.psi) {
       kappa.old<-kappa #length=1
-      kappa<-fixed.effects(obj)[nomiG]  #esclude G0..
+      kappa<-b.new[nomiG]  #esclude G0..
       etai<-etai+drop(Z.psi%*%kappa)
     }
     #questo e' se ci sono parametri con valori *fissati* da non stimare..
@@ -772,15 +957,18 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     #            psi.new[!id.bp] <- tapply(Z,id,max)[!id.bp]# minMax[!id.bp,2]
     #            }
     
-    #if(it==2) browser()
-    
     if(it >= (it.max+1)) break
     #        if(abs(epsilon) <= tol) break #NON serve, c'? il while(abs(epsilon) > tol)
     
     #f.pd() la chiamo solo se non ci sono nested r.e. (perch? in quel caso non funziona..) 
-    if(J<=1){ #se c'e' SOLO 1 r.e. 
+    if(J<=1 && !(isLM || isCallLM)){ #se c'e' SOLO 1 r.e. 
       pd<-f.pd(obj)
-      call.ok$random<-quote(list(id=pd))
+      pd=list(pd)
+      names(pd)<- nameRandom
+      call.ok$random<-quote(pd) ##call.ok$random<-quote(list(id=pd))
+      
+      #sembra funzionare, cosi viene preservato il nome dei random (subj invece che id)
+      #valutare con nested
     }
   } #end_while
   #---------------------------------------------------------------------------------------
@@ -788,40 +976,53 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   #valore di logLik ed infine aggiorna obj<-eval(call.ok)
   
   #browser()
+  #all.k0
   
-  fixed.noG<-if(is.null(nomiG)) update.formula(call.ok$fixed, paste(".~.-G0",sep="")) 
-  else update.formula(call.ok$fixed, paste(".~.-G0-",paste(nomiG, collapse="-"),sep=""))
-  if(is.null(random.noG)){ #se "random.noG" non ? stato specificato in segmented.lme()
-    random.noG<-random
-    #Escludi G0 dalla formula random..
-    #  -
-    #18/6/16: mi sono reso conto che random pu? essere una lista che contiene diverse formula che includono "G0" (ad es., nel caso di r.e.), quindi "G0" si deve
-    # eliminare in ogni formula..
-    # Just now I don't know what happen if random is a block matrix.. VERIFICARE.. comunque il codice sotto c'e'..
-    
-    for(j in 1:J){ #J =n. di random cluster (a des., children %in% school,..)
-      #questo sotto ? se random ? una lista e ogni sua componente ha una formula come "attributo".. Dovrebbero rientrare i casi di
-      #semplici e nested r.e. NON con una matrice a blocchi..
-      if(!is.null(attr(random.noG[[j]], "formula"))){ #semplici e nested r.e.
-        if("G0"%in%all.vars(attr(random.noG[[j]], "formula"))){#se la formula della componente j contiene "G0"..
-          attr(random.noG[[j]], "formula") <- update.formula(attr(random.noG[[j]], "formula"), ~.-G0)
-        }
-        #questo sotto e' se c'e' una matrice a blocchi..
-      } else {
-        #questo sotto e' se c'e' una matrice a blocchi..
-        for(k in length(random.noG[[j]])) {
-          if(!is.null(attr(random.noG[[j]][[k]], "formula"))){ #Questo ? se ci sono matrici a blocchi quando 
-            if("G0"%in%all.vars(attr(random.noG[[j]][[k]], "formula"))){#se la formula della componente j contiene "G0"..
-              attr(random.noG[[j]][[k]], "formula") <- update.formula(attr(random.noG[[j]][[k]], "formula"), ~.-G0)
-            }
+  #Riga sotto eliminata perche' c'e' gia' formulaFix.noG
+  #fixed.noG<-if(is.null(nomiG)) update.formula(call.ok$fixed, paste(".~.-G0",sep="")) 
+  #else update.formula(call.ok$fixed, paste(".~.-G0-",paste(nomiG, collapse="-"),sep=""))
+  
+  if(!(isLM || isCallLM)){
+    if(is.null(random.noG)){ #se "random.noG" non e' stato specificato in segmented.lme()
+      random.noG<-random
+      #Escludi G0 dalla formula random..
+      #  -
+      #18/6/16: mi sono reso conto che random pu? essere una lista che contiene diverse formula che includono "G0" (ad es., nel caso di r.e.), quindi "G0" si deve
+      # eliminare in ogni formula..
+      # Just now I don't know what happen if random is a block matrix.. VERIFICARE.. comunque il codice sotto c'e'..
+      
+      for(j in 1:J){ #J =n. di random cluster (a des., children %in% school,..)
+        #questo sotto ? se random ? una lista e ogni sua componente ha una formula come "attributo".. Dovrebbero rientrare i casi di
+        #semplici e nested r.e. NON con una matrice a blocchi..
+        if(!is.null(attr(random.noG[[j]], "formula"))){ #semplici e nested r.e.
+          if("G0"%in%all.vars(attr(random.noG[[j]], "formula"))){#se la formula della componente j contiene "G0"..
+            attr(random.noG[[j]], "formula") <- update.formula(attr(random.noG[[j]], "formula"), ~.-G0)
           }
-        } #end k=1..K
-      }
-    } #end j=1..J 
+          #questo sotto e' se c'e' una matrice a blocchi..
+        } else {
+          #questo sotto e' se c'e' una matrice a blocchi..
+          for(k in length(random.noG[[j]])) {
+            if(!is.null(attr(random.noG[[j]][[k]], "formula"))){ #Questo ? se ci sono matrici a blocchi quando 
+              if("G0"%in%all.vars(attr(random.noG[[j]][[k]], "formula"))){#se la formula della componente j contiene "G0"..
+                attr(random.noG[[j]][[k]], "formula") <- update.formula(attr(random.noG[[j]][[k]], "formula"), ~.-G0)
+              }
+            }
+          } #end k=1..K
+        }
+      } #end j=1..J 
+    }
+    
+    #call.ok.noG<-update.lme.call(call.ok, fixed = fixed.noG, random = random.noG)
+    call.ok.noG<-update.lme.call(call.ok, fixed = formulaFix.noG, random = random.noG)
+  } else {
+    call.ok.noG<-call.ok
+    call.ok.noG$formula<-update.formula(call.ok$formula, formulaFix.noG)
   }
   
-  call.ok.noG<-update.lme.call(call.ok, fixed = fixed.noG, random = random.noG)
+  #browser()
+  
   mf[nomeRispo]<-Rispo
+  
   obj.noG<-eval(call.ok.noG)
   
   #if(it >= (it.max+1)) warning("max no. of iterations achieved.. refit.boot() suggested", call. = FALSE)
@@ -845,6 +1046,9 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   names(psi.new)<-rownames(coef(obj.noG)) #oppure unique(rnfGroups[, ncol(rnfGroups)])
   attr(psi.new,which="ni")<-table(rnfGroups[, ncol(rnfGroups)]) 
   
+  
+  #browser()
+  
   id.bp<-I(psi.new>=minMax[,1]&psi.new<=minMax[,2])
   attr(psi.new,which="is.break")<-id.bp
   
@@ -857,7 +1061,7 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     psi.new[!id.bp] <- tapply(Z,id,max)[!id.bp]# minMax[!id.bp,2]
     psi.ex <- rep(psi.new, aa) #length=n.obs
     DD<-fn1(c(rep(kappa0,aa),kappa1), Z.psi ,2, link=psi.link) #length=n.obs
-    V<-ifelse(Z >psi.ex, -1, 0)
+    V<- -(Z >psi.ex) #ifelse(Z >psi.ex, -1, 0)
     my.dd$U<- pmax(0, Z -psi.ex)
     VD <- V*DD
     deltaMatrix<-cbind(rep(betaa,aa), matrix(delta,nrow=length(V),ncol=length(delta),byrow=TRUE))
@@ -866,11 +1070,12 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     G<-G0*M.z.psi
     colnames(G)<-c("G0",paste("G.",colnames(M.z.psi)[-1],collapse="+",sep=""))
     my.dd<-cbind(my.dd, G)
-    dev.old <- obj$logLik
+    dev.old <- as.numeric(logLik(obj)) #obj$logLik
     #stima il modello:
     obj<-eval(call.ok)
   }
   
+  #browser()
   
   #if(id.z.psi) names(kappa)<- colnames(M.z.psi) #? gi? fatto prima
   RIS <- list("lme.fit"=obj, "lme.fit.noG"=obj.noG, "psi.i"=psi.new, call=match.call())
@@ -882,26 +1087,26 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
     RIS$fixed.eta.psi<-rep(kappa0, length(psi.new))
     names(RIS$fixed.eta.psi) <-names(psi.new)
   }
+  
   if(id.x.diff) {
-    RIS$fixed.eta.delta<-drop(as.matrix(cbind(1,M.x.diff[cumsum(ni),]))%*%fixef(obj)[c("U",nomiUx)])
+    RIS$fixed.eta.delta<-drop(as.matrix(cbind(1,M.x.diff[cumsum(ni),]))%*%fixeff(obj.noG)[c("U",nomiUx)])
     names(RIS$fixed.eta.delta) <-names(psi.new)
   } else {
-    RIS$fixed.eta.delta<- rep(fixef(obj)["U"], length(psi.new))
+    RIS$fixed.eta.delta<- rep(fixeff(obj)["U"], length(psi.new))
     names(RIS$fixed.eta.delta) <-names(psi.new)
   }
   
   RIS$fixed.psi<-if(psi.link=="logit") inv.logit(RIS$fixed.eta.psi,min.Z,max.Z) else RIS$fixed.eta.psi
   #browser()
   names(RIS$fixed.psi) <- names(psi.new)
-  RIS$call$psi.link<-psi.link #in questo modo il nome e' "completo"..
   RIS$boot.call<-boot.call
   RIS$randomCALL<-randomCALL
   RIS$misc$datacall<- datacall
   #browser()
   #RIS$misc$matrix.psi<- 
-  if("G0" %in% dimnames(RE)[[3]]) {
+  if(!(isLM || isCallLM) && "G0" %in% dimnames(RE)[[3]]) {
     matrix.psi=cbind(RIS$fixed.eta.psi, drop(RE[cumsum(ni), , "G0", drop = FALSE]))
-    matrix.psi=sapply(1:ncol(matrix.psi), function(.x) rowSums(matrix.psi[,1:.x, drop=FALSE]))
+    #matrix.psi=sapply(1:ncol(matrix.psi), function(.x) rowSums(matrix.psi[,1:.x, drop=FALSE]))
     if(psi.link=="logit") matrix.psi <- apply(matrix.psi, 2, function(.x)inv.logit(.x, min.Z, max.Z) ) 
     RIS$misc$matrix.psi<- matrix.psi
     #RIS$misc$matrix.psi<- cbind(fixed=RIS$fixed.psi,drop(RE[cumsum(ni), , "G0", drop = FALSE]))
@@ -917,16 +1122,37 @@ segmented.lme <- function(obj, seg.Z, psi, npsi=1, fixed.psi=NULL, control = seg
   RIS$rangeZ<- tapply(Z, id, range)
   names(Z)<-id #names(psi.new)
   RIS$Z<-Z
+  
   #browser()
   class(RIS)<- "segmented.lme" #c("segmented.lme","segmented")
   #opz.control<-list(...)
   #if(!is.null(opz.control$n.boot)) n.boot<- opz.control$n.boot
   if(it >= (it.max+1) && n.boot==0) warning("max no. of iterations achieved.. 'n.boot>0' suggested", call. = FALSE)
   if(n.boot>0){
+    get_rand_state <- function() {
+      # Using `get0()` here to have `NULL` output in case object doesn't exist.
+      # Also using `inherits = FALSE` to get value exactly from global environment
+      # and not from one of its parent.
+      get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+    }
+    
+    set_rand_state <- function(state) {
+      # Assigning `NULL` state might lead to unwanted consequences
+      if (!is.null(state)) {
+        assign(".Random.seed", state,  envir = .GlobalEnv,  inherits = FALSE)
+      }
+    }
+    
+    old_state <- get_rand_state()
+    on.exit(set_rand_state(old_state))
     if(display) cat("Implementing bootstrap restarting..\n")
     RIS <- reboot.slme(RIS, B=n.boot, display=display, break.boot=control$break.boot ,
-                       seed=control$seed, msg=display)#, metodo=1, frac=1, it.max=6, it.max.b=5, start=NULL, msg=TRUE)
+                       seed=control$seed, msg=display)
   }
+  #browser()
+  RIS$call<-match.call()
+  RIS$call$psi.link<-psi.link #in questo modo il nome e' "completo".
+  RIS$misc$f.psi<- if(psi.link=="logit") function(xx){((min.Z+max.Z*exp(xx))/(1+exp(xx)))} else function(xx)xx
   RIS
 }
 

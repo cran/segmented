@@ -1,7 +1,7 @@
-plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, offs=0,
+plot.segmented.lme <-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, offs=0,
          yscale = 1, xscale = 1, n.plot, pos.leg = "topright", vline = FALSE, lines = TRUE, 
          by=NULL, add=FALSE, conf.level=0, withI=TRUE, vcov.=NULL, shade=FALSE, drop.var=NULL, text.leg=NULL, 
-         id.name=TRUE, ci.psi.pop=-1, ...) {
+         id.name=TRUE, ci.psi.pop=-1, dens.col=0, ...) {
   # plotting fitted segmented relationships for multiple subjects
   # obj: a 'segmented.lme' object 
   # id: the subject id to be plotted
@@ -103,6 +103,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
     # coef() o ranef) dove lev1 e' il livello dell'altro fattore. Quindi o in 'id' si
     # specifica il livello costruito 'lev1/lev2' oppure i nomi dei coef() si devono
     # modificare estraendo solo il valore dopo il '\'
+    #browser()
     rnfGrp <- obj$lme.fit.noG$groups
     if (missing(level)) level <- ncol(rnfGrp)
     # con nested funziona ma i valori dei fitted sono 'strani..', cio? dovrebbero essere
@@ -118,10 +119,17 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
            nomi[2], ",..,", nomi[length(nomi)], ")")
     # psi<- obj$psi.i[[paste(id)]] in realt? si possono ottenere i psi a diversi livelli
     # di nested
-    psi <- if (ncol(obj$misc$matrix.psi) <= 1)
-      obj$misc$matrix.psi[, 1] else obj$misc$matrix.psi[, (level + 1)]#rowSums(obj$misc$matrix.psi[, 1:(level + 1)])
+    
+    #devi cumularli..
+    matrix.psi=obj$misc$matrix.psi
+    matrix.psi=sapply(1:ncol(matrix.psi), function(.x) rowSums(matrix.psi[,1:.x, drop=FALSE]))
+    
+    psi <- if (ncol(matrix.psi) <= 1) matrix.psi[, 1] else matrix.psi[, (level + 1)]#rowSums(obj$misc$matrix.psi[, 1:(level + 1)])
+    
     # se ci sono nested, i nomi di psi saranno sempre con '/' che non e' coerente se
     # level=1
+    #psi=obj$psi.i
+    #
     if (level < ncol(rnfGrp)) {
       if (ncol(rnfGrp) >= 2) {
         names(psi) <- sapply(strsplit(names(psi), "/"), function(.x) .x[level])
@@ -129,9 +137,14 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
     }
     psi <- psi[[paste(id)]]
     nameID <- names(rnfGrp)[level]
-    y <- resid(obj$lme.fit.noG) + fitted(obj$lme.fit.noG)  #
+    fitt <- fitted(obj$lme.fit.noG)
+    y <- resid(obj$lme.fit.noG) + fitt  #
     if (level < ncol(rnfGrp))
       names(y) <- obj$lme.fit.noG$groups[, max(level, 0)]
+    
+    #browser()
+    
+    
     range.ok <- range(y)
     XY <- cbind(obj$Z, y)
     x <- XY[names(y) == id, 1]
@@ -377,7 +390,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
   }
   #========================================================================
   plotmarg<-function(obj, by=NULL, add=FALSE, conf.level=0, pos.leg=NULL, withI=TRUE, vcov.=NULL, 
-                     shade=FALSE, drop.var=NULL, text.leg, offs=0, ... ){
+                     shade=FALSE, drop.var=NULL, text.leg, offs=0, res=FALSE, ... ){
     #=========>> da provare con by con piu' termini e se leftSlope=0 
     #obj: the segmented.lme object
     #by: a named list indicating covariate names and corresponding values affecting the fitted segmented relationship.
@@ -402,6 +415,9 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
     #  if(conf.level!=0 && !is.null(by)) stop("Not yet implemented..")
     if(!is.null(by) && !is.list(by)) stop("if provided, 'by' should be a (named) list of scalars")
     opz<-list(...)
+    
+    #browser()
+    
     if("pos.legend" %in% names(opz)) warning("'pos.legend' ignored.. Do you mean 'pos.leg'?", call.=FALSE)
     if(!is.null(pos.leg)) pos.leg<- match.arg(pos.leg, c("bottomright", "bottom", "bottomleft", 
                                                          "left", "topleft", "top", "topright", "right", "center"))
@@ -414,6 +430,9 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
     nomiCoef <- if(nomeZ%in%nomiCoef) c(nomeZ, "U", "G0") else c("U", "G0")
     if("(Intercept)"%in%names(beta.noG)) nomiCoef <-c("(Intercept)", nomiCoef)
 
+    
+    #browser()
+    
     if(!is.null(by)) {
       a<-by
       #isZero<-sapply(a, function(x) x==0)
@@ -458,16 +477,17 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
       if(length(nomiNOdiff)>0) warning("The", paste(" '", nomiNOdiff,"' ",sep=""), "value supplied in 'by' does not modify the baseline line", call. = FALSE)
       
       nomiCoef<- c(nomiCoef, unlist(idList))
-      ##########################################    
-    } else { #se 'by' e' NULL
-      const<-matrix(0, length(nomiCoef),1)
-      values<-rep(1, length(nomiCoef))
-    }  
+      ##########################################
+      } else { #se 'by' e' NULL
+        const<-matrix(0, length(nomiCoef),1)
+        values<-rep(1, length(nomiCoef))
+      }
     ##########################################    
     #browser()  
+    
     #prepara la matrice del disegno..
-    est.psi.fixed <-fixef(obj$lme.fit)["G0"]+ sum(const[length(nomiCoef),])
-    if(obj$call$psi.link=="logit") est.psi.fixed <- plogis(est.psi.fixed)
+    est.psi.fixed <-fixef(obj$lme.fit)["G0"]+ sum(const[4,])#sum(const[length(nomiCoef),])
+    if(obj$call$psi.link=="logit") est.psi.fixed <- obj$misc$f.psi(est.psi.fixed) #plogis(est.psi.fixed)
     Z.new<-as.numeric(sort(c(seq(min(Z),max(Z),l=99), est.psi.fixed)))
     U<-pmax(Z.new-est.psi.fixed,0)
     
@@ -494,6 +514,8 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
       M<-M[, final.names]
     }
     
+    #browser()
+    
     XX<- X%*%M
     if(length(offs)>1 && length(offs)!=100) stop("If provided, 'offs' should have length = 100")
     r<-fit<- XX %*% beta.noG[final.names] +offs
@@ -510,16 +532,53 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
     #  b<-b+ rowSums(const[1:3,,drop=FALSE])
     #  b<-b[!is.na(b)]
     #  r<-fit<- drop(X  %*% b)
-    if(is.null(opz$col))  opz$col<-"1"
+    #devi estrarre qui l'info sul col dei res, perche' poi opz$col viene sovrascritta
+    #browser()
+    
+    if(res){
+      res.col <- if (!is.null(opz$col)) opz$col else grey(.7) #for residuals..
+      res.col <- adjustcolor(res.col, .5)
+    }
+    
+    opz$col<- if(is.null(opz$p.col))  adjustcolor(1, alpha.f = .7) else adjustcolor(opz$p.col, alpha.f = .65)
+    opz$p.col<-NULL
     if(is.null(opz$type)) opz$type<-"l"
-    if(is.null(opz$lty))  opz$lty<-1
-    if(is.null(opz$lwd))  opz$lwd<-1.8
+    if(is.null(opz$p.lty))  opz$lty<-1 else opz$lty<- opz$p.lty
+    opz$p.lty<-NULL
+    if(is.null(opz$p.lwd))  opz$lwd<-1.8 else opz$lwd<- opz$p.lwd 
+    opz$p.lwd<-NULL
     if(is.null(opz$xlab)) opz$xlab<-obj$namesGZ$nameZ
     if(is.null(opz$ylab)) opz$ylab<-all.vars(formula(obj[[1]]))[1]
     if(!is.null(opz$alpha.f)) {alpha.f<-opz$alpha.f;opz$alpha.f<-NULL} else {alpha.f<-.15}  
     opz$x<-Z.new
-    opz$y<-r
-    if(add) do.call(matlines, opz)  else do.call(matplot, opz)
+    opz$y<- r 
+    #browser()
+    
+    if(add) {
+      do.call(matlines, opz)
+      } else {
+        if(!res) {
+          do.call(matplot, opz)
+        } else {
+          fitt <- fitted(x$lme.fit.noG)
+          yy <- resid(x$lme.fit.noG) + fitt  #
+          if(is.null(opz$ylim)) opz$ylim <- range(yy)
+          #il col e' definito sopra per problemi legati al col delle linee
+          #col <- if (!is.null(opz$col)) opz$col else grey(.7) #for residuals..
+          #col <- adjustcolor(col, .5)
+          do.call(matplot, opz)
+          cex <- if (!is.null(opz$cex)) opz$cex else .7 #for residuals..
+          pch <- if (!is.null(opz$pch)) opz$pch else 19
+          points(obj$Z, yy, col=res.col, cex=cex, pch=pch)
+        }
+      }
+
+    #browser()
+    if(vline) {
+      segments(est.psi.fixed, par()$usr[3], est.psi.fixed, r[which.min(abs(Z.new-est.psi.fixed))], lty = 3, col = opz$col)
+      rug(est.psi.fixed, lwd=3, col=opz$col)
+    }
+    
     
     if (shade && conf.level>0) polygon(c(Z.new, rev(Z.new)), c(r[, 1], rev(r[, 3])), 
                                        col = adjustcolor(opz$col, alpha.f), border = NA)
@@ -538,13 +597,14 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
       if(!is.null(text.leg)) leg <- text.leg
       try(legend(pos.leg, leg, bty="n", col=min(opz$col), lty=min(opz$lty), lwd=max(opz$lwd)), silent=TRUE)
     }
-  }
+  } #end plotmarg
   
   #========================================================================
   #inizio funzione
   if(level==0){
     plotmarg(x, by=by, add=add, conf.level=conf.level, pos.leg = pos.leg, withI=withI, vcov.=vcov., 
-             shade=shade, drop.var=drop.var, text.leg=text.leg, offs=offs, ...)
+             shade=shade, drop.var=drop.var, text.leg=text.leg, offs=offs, res=res, ...)
+    return(invisible(NULL))
   } else {
     obj <- x
     rnfGrp <- obj$lme.fit.noG$groups
@@ -591,27 +651,45 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
     l.lty <- rep(l.lty, length(id))
     
     col <- if (!is.null(opz$col)) opz$col else grey(.7) #for residuals..
+    col <- adjustcolor(col, .5)
     col <- rep(col, length(id))
     
+    cex <- if (!is.null(opz$cex)) opz$cex else .7 #for residuals..
+    cex <- rep(cex, length(id))
+    
+    pch <- if (!is.null(opz$pch)) opz$pch else 19 #for residuals..
+    pch <- rep(pch, length(id))
+    
+    #browser()
+    
     p.col <- if (!is.null(opz$p.col)) opz$p.col else 1
-    p.lty <- if (!is.null(opz$p.lty)) opz$p.lty else 3
+    p.lty <- if (!is.null(opz$p.lty)) opz$p.lty else 1
     p.lwd <- if (!is.null(opz$p.lwd)) opz$p.lwd else 1
     #p.col <- rep(p.col, length(id))
     
     t.col <- if (!is.null(opz$t.col)) opz$t.col else 1 #for legend text..
     t.col <- rep(t.col, length(id))
     
-     #browser()   
+    #browser()   
     
     # if(dev.cur()==1) { #se non e' aperto alcun device..
     #unico grafico con tutti i profili individuali.. 
+    if(res){
+      fitt <- fitted(x$lme.fit.noG)
+      yy <- resid(x$lme.fit.noG) + fitt  #
+      yylim<-range(yy)
+    } else {
+      yylim=NULL
+    }
+    #browser()
+
     #======================================================
     xlim<- if(!is.null(opz$xlim)) opz$xlim else range(x$Z)
-    ylim<- if(!is.null(opz$ylim)) opz$ylim else NULL
+    ylim<- if(!is.null(opz$ylim)) opz$ylim else yylim
     k<-1
     if(prod(n.plot)==1 && length(id)>1){
       plotSegLme(obj=x, id=id[k], add=FALSE, pop=FALSE, res=FALSE, xLab='', yLab='', 
-                 l.col=l.col[k], l.lwd=l.lwd[k], l.lty=l.lty[k], xlim=xlim, ylim=ylim)
+                 l.col=l.col[k], l.lwd=l.lwd[k], l.lty=l.lty[k], xlim=xlim, ylim=ylim, yscale=1)
       for (i in id[-1]) {
         k<-k+1
         plotSegLme(obj=x, id=i, add=TRUE, pop=FALSE, res=FALSE, xLab='', yLab='', 
@@ -628,10 +706,37 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
         #do.call(plotSegLme, opz)
       }
       
+      if(res){
+        points(x$Z, yy, col=col, cex=cex, pch=pch)
+      }
+
       #browser()
       
-      box()
-      if(pop) plotmarg(obj, add=TRUE, col=p.col, lwd=p.lwd, lty=p.lty)
+      if(is.character(dens.col) | dens.col>0){
+        matrix.psi=x$misc$matrix.psi
+        matrix.psi=sapply(1:ncol(matrix.psi), function(.x) rowSums(matrix.psi[,1:.x, drop=FALSE]))
+        psi <- if (ncol(matrix.psi) <= 1) matrix.psi[, 1] else matrix.psi[, (level + 1)]#rowSums(obj$misc$matrix.psi[, 1:(level + 1)])
+        
+        density <- density(psi)
+        # the height of the densityity curve
+        max.density <- max(density$y)
+        # Get the boundaries of the plot to
+        # put the density polygon at the x-line
+        plot_coordinates <- par("usr")
+        # get the "length" and range of the y-axis
+        y.scale <- plot_coordinates[4] - plot_coordinates[3]
+        # transform the y-coordinates of the density
+        # to the lower 10% of the plotting panel
+        density$y <- (0.1 * y.scale / max.density) * density$y + plot_coordinates[3]
+        ## plot the polygon
+        polygon( density$x , density$y , border = FALSE , col = adjustcolor(dens.col, alpha.f = .5)) #grey(.8)) 
+        box()
+      }
+      
+      #browser()
+      
+      #box()
+      if(pop) plotmarg(obj, add=TRUE, p.col=p.col, p.lwd=p.lwd, p.lty=p.lty)
       if(ci.psi.pop>=0){
         y <- par()$usr[3]+abs(par()$usr[3])/10 
         points(fixef(obj)["G0"],y,type="p", col=p.col, pch=19, cex=.8)
@@ -686,6 +791,7 @@ plot.segmented.lme<-function(x, level=1, id = NULL, res = TRUE, pop = FALSE, off
       # vline=vline, xscale=xscale, level=level, ...)
       opz$id <- i
       opz$l.col <- l.col[k]
+      opz$l.lty <- l.lty[k]
       opz$p.col <- p.col[k]
       opz$col <- col[k]
       

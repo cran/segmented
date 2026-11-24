@@ -235,6 +235,8 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
       return(obj)
     }
     
+    #browser()
+    
     obj0 <- try(mylmOK(cbind(XREG, U), y, w, offs), silent = TRUE)
     #if (class(obj0)[1] == "try-error") obj0 <- lm.wfit(cbind(XREG, U), y, w, offs)
     L0 <- obj0$L0 #sum(obj0$residuals^2 * w)
@@ -328,7 +330,7 @@ segConstr.lm.fit <-function (y, XREG, Z, PSI, w, offs, opz, return.all.sol = FAL
         psi<-unlist(tapply(psi, opz$id.psi.group, sort), use.names =FALSE)
         #browser()
         
-        a<-optimize(search.min, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs, tol=tolOp[it])
+        a<-optimize(search.minOK, c(0,1), psi=psi, psi.old=psi.old, X=XREG, y=y, w=w, offs=offs, tol=tolOp[it])
         k.values[length(k.values) + 1] <- use.k <- a$minimum
         L1<- a$objective
         #L1.k[length(L1.k) + 1] <- L1<- a$objective

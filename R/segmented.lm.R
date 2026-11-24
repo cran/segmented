@@ -20,6 +20,23 @@ function(obj, seg.Z, psi, npsi, fixed.psi=NULL, control = seg.control(), model =
   }
   ##===inizio funzione
   
+  opz<-list(...)
+  if(!is.null(opz$z.psi)|| !is.null(opz$x.diff)) {
+    #browser()
+    if(!missing(npsi) && (npsi>1)) stop("a") 
+    if(!missing(psi) && length(psi)>1) stop("b")
+    if(missing(seg.Z)) {
+      if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
+    }
+
+    z.psi <- if(!is.null(opz$z.psi)) opz$z.psi else ~1
+    x.diff<-if(!is.null(opz$x.diff)) opz$x.diff else ~1
+    psi.link<- if(!is.null(opz$psi.link)) opz$psi.link else "identity" 
+    os=segmented.lme(obj, seg.Z, psi, npsi=1, fixed.psi, control, model, z.psi, x.diff, 
+                  psi.link=psi.link, random=NULL)
+    return(os)
+  }
+  
   if(missing(seg.Z)) {
       if(length(all.vars(formula(obj)))==2) seg.Z<- as.formula(paste("~", all.vars(formula(obj))[2])) else stop("please specify 'seg.Z'")
   }

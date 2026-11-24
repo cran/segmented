@@ -29,7 +29,7 @@ slope(ogg, parm, conf.level = 0.95, rev.sgn=FALSE,
   }
   \item{interc}{logical, only for \code{'stepmented'} fits. If \code{TRUE}, the mean levels also account for the intercept; otherwise the first level is assumed to be zero.
   }
-  \item{level}{Numeric, only for \code{'segmented.lme'} fits. If \code{0}, fixed effects left/right slopes are returned, otherwise the subject-specific values (with no confidence intervals).
+  \item{level}{Numeric, only for \code{'segmented.lme'} fits. If \code{0}, fixed effects left/right slopes are returned, otherwise the subject-specific values (with no confidence intervals ).
   }
   \item{...}{ Further arguments to be passed on to \code{vcov.segmented}, such as \code{var.diff} and \code{is}. See Details in \code{\link{vcov.segmented}} and \code{\link{summary.segmented}}.
   }

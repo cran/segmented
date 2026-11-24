@@ -1,6 +1,6 @@
 \name{segmented.lme}
 \alias{segmented.lme}
-\alias{segmented.glme}
+%\alias{segmented.glme}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Segmented relationships in linear mixed models
@@ -12,7 +12,7 @@ a numeric covariate. Random effects are allowed in each model parameter, includi
 \usage{
 \method{segmented}{lme}(obj, seg.Z, psi, npsi = 1, fixed.psi = NULL, 
     control = seg.control(), model = TRUE, 
-    z.psi = ~1, x.diff = ~1, random = NULL, 
+    z.psi = ~1, x.diff = ~1, random, 
     random.noG = NULL, start.pd = NULL, psi.link = c("identity", "logit"), 
     start = NULL, data, fixed.parms = NULL,...)
 }
@@ -20,10 +20,10 @@ a numeric covariate. Random effects are allowed in each model parameter, includi
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{obj}{
-A fit returned by \code{lme()} or simply its call (if using \code{segmented.lme}). See example below. This represents the linear mixed model where the segmented relationship is added. It has to include the argument \code{data}.
+A fit returned by \code{lme()} or simply its call, see example below. This represents the linear mixed model where the segmented relationship is added. It has to include the argument \code{data}. 
 }
   \item{seg.Z}{
-A one-sided formula indicating the segmented variable, i.e. the quantitative variable having a segmented relationship with
+A one-sided formula indicating the segmented variable, i.e. the numeric covariate having a segmented relationship with
   the response. In longitudinal studies typically it is the time.}
   \item{psi}{
 An optional starting value for the breakpoint. If missing, a starting value is obtained via the nadir estimate of a quadratic fit.
@@ -49,8 +49,8 @@ A list returned by \code{\link{seg.control}}, in particular \code{display}, \cod
 Ignored.
 }
   \item{random}{
-A list, as the one supplied in \code{random} of \code{lme()} including the random effects. Default to \code{NULL},
-meaning that the same random effect structure of the initial lme fit supplied in \code{obj} should be used. 
+A list, as the one supplied in \code{random} of \code{lme()} including the random effects. If missing (default), it means
+ that the same random effect structure of the initial 'lme' fit supplied in \code{obj} should be used. 
 When specified, this list could include the variables '\code{G0}' and '\code{U}'. 
 \code{G0} means random effects in the breakpoints and \code{U} means random effects in the
 slope-difference parameter. Assuming \code{id} is the the cluster variable and \code{x} the segmented variable, some examples are
@@ -60,7 +60,9 @@ slope-difference parameter. Assuming \code{id} is the the cluster variable and \
 
 \code{random = list(id = pdDiag(~1 + x + U + G0))} #ind. random eff. (in the changepoint too) 
 
-\code{random = list(id=pdBlocked(list(pdSymm(~1+x), pdSymm(~U+G0-1))))} #block diagonal 
+\code{random = list(id=pdBlocked(list(pdSymm(~1+x), pdSymm(~U+G0-1))))} #block diagonal
+
+A simple formula can be provided too, meaning a diagonal covariance matrix. The response is assumed to be the clustering variable and the others variables specify the random effects.
 }
   \item{random.noG}{
 Ignored.
@@ -138,13 +140,12 @@ A list of class \code{segmented.lme} with several components. The most relevant 
   \item{fixed.eta.delta}{The fixed-effect linear predictor of the slope difference regression equation. These values will different among 'clusters' only if at least one covariate has been specified in \code{x.diff}.}
 }
 \references{
+Muggeo, V.M.R. (2026) Fitting segmented mixed models with random changepoints in R. \emph{J of Reproducible Statistics},
+\bold{1}, art 12. doi:10.68365/jrepstat.2026.12.
+
 Muggeo V., Atkins D.C., Gallop R.J., Dimidjian S. (2014) 
 Segmented mixed models with random changepoints: a maximum likelihood approach 
 with application to treatment for depression study. Statistical Modelling, 14, 293-313.
-
-Muggeo V. (2016) 
-Segmented mixed models with random changepoints in R.  
-Working paper available on RG. doi: 10.13140/RG.2.1.4180.8402
 }
 \author{
 Vito M.R. Muggeo \email{vito.muggeo@unipa.it}
@@ -157,7 +158,7 @@ If \code{fit} is the segmented.lme fit, use \code{VarCorr(fit$lme.fit)} to extra
 
 \section{Warning }{
 The function deals with estimation of a \emph{single} breakpoint only (with or without random effects).
-%All the functions for segmented mixed models (*.segmented.lme) work pretty well, but you should are still at an experimental stage
+
 } 
 
 \seealso{
@@ -187,9 +188,9 @@ set.seed(69)
 Cefamandole$z <- rep(runif(6), rep(14,6))
 Cefamandole$group <- gl(2,42,labels=c('a','b'))
 
-#Here 'group' affects the slopes and 'z' affects the changepoint 
-
 o1 <-lme(lconc ~ lTime*group, random=~1|Subject, data=Cefamandole)
+
+#Below we assume that 'group' affects the slopes and 'z' affects the changepoint 
 os1 <- segmented(o1, ~lTime, x.diff=~group, z.psi=~z, 
   random=list(Subject=pdDiag(~1+lTime+U+G0)))
 

@@ -6,14 +6,14 @@
 Segmented Relationships in Regression Models with Breakpoints / Changepoints Estimation (with Possibly Random Effects) 
 }
 \description{
-Estimation and inference of regression models with piecewise linear relationships, also known as segmented regression models, with a number of break-points fixed or to be `selected'. Random effects changepoints are also allowed since version 1.6-0, and since version 2.0-0 it is also possible to fit regression models with piecewise constant (or `stepmented') relationships.
+Estimation and inference of regression models with piecewise linear relationships, also known as segmented regression models, with a number of break-points fixed or to be `selected'. Segmented mixed models, i.e. random effects changepoints are also allowed. It is also possible to fit regression models with several piecewise constant (or `stepmented') relationships with multiple changepoints.
 }
 \details{
 \tabular{ll}{
 Package: \tab segmented\cr
 Type: \tab Package\cr
-Version: \tab 2.2-2\cr
-Date: \tab 2026-09-10\cr
+Version: \tab 2.3-0\cr
+Date: \tab 2026-11-24\cr
 License: \tab GPL\cr
 }
  Package \code{segmented} aims to estimate linear and generalized linear models (and virtually any regression model) having one or more segmented or stepmented relationships in the linear predictor. Estimates of the slopes and
@@ -42,6 +42,9 @@ Finally, since 2.0-0, it is possible to fit (G)LM wherein one or more covariates
 Vito M.R. Muggeo <vito.muggeo@unipa.it>
   }
 \references{
+Muggeo, V.M.R. (2026) Fitting segmented mixed models with random changepoints in R. \emph{J of Reproducible Statistics} \bold{1}, art 12.
+10.68365/jrepstat.2026.12.
+
 Muggeo V.M.R., Atkins D.C., Gallop R.J., Dimidjian S. (2014) 
 Segmented mixed models with random changepoints: a maximum likelihood approach 
 with application to treatment for depression study. \emph{Statistical Modelling}, \bold{14}, 293-313.
